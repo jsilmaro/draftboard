@@ -136,43 +136,18 @@ const AdminDashboard: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching admin data:', error);
-        // Fallback to mock data if API fails
-        const mockBrands: User[] = [
-          { id: '1', email: 'nike@example.com', type: 'brand', companyName: 'Nike', isVerified: true, createdAt: '2024-01-15' },
-          { id: '2', email: 'adidas@example.com', type: 'brand', companyName: 'Adidas', isVerified: true, createdAt: '2024-02-20' },
-          { id: '3', email: 'puma@example.com', type: 'brand', companyName: 'Puma', isVerified: false, createdAt: '2024-03-10' },
-        ];
-
-        const mockCreators: User[] = [
-          { id: '1', email: 'john@example.com', type: 'creator', userName: 'john_creator', fullName: 'John Doe', isVerified: true, createdAt: '2024-01-10' },
-          { id: '2', email: 'jane@example.com', type: 'creator', userName: 'jane_creator', fullName: 'Jane Smith', isVerified: true, createdAt: '2024-02-15' },
-          { id: '3', email: 'mike@example.com', type: 'creator', userName: 'mike_creator', fullName: 'Mike Johnson', isVerified: false, createdAt: '2024-03-05' },
-        ];
-
-        const mockBriefs: Brief[] = [
-          { id: '1', title: 'Summer Campaign', brandId: '1', brandName: 'Nike', status: 'active', budget: 5000, submissions: 12, createdAt: '2024-04-01' },
-          { id: '2', title: 'Product Launch', brandId: '2', brandName: 'Adidas', status: 'completed', budget: 3000, submissions: 8, createdAt: '2024-03-15' },
-          { id: '3', title: 'Brand Awareness', brandId: '1', brandName: 'Nike', status: 'draft', budget: 2000, submissions: 0, createdAt: '2024-04-10' },
-        ];
-
-        const mockSubmissions: Submission[] = [
-          { id: '1', briefId: '1', briefTitle: 'Summer Campaign', creatorId: '1', creatorName: 'John Doe', status: 'approved', amount: 500, submittedAt: '2024-04-05' },
-          { id: '2', briefId: '1', briefTitle: 'Summer Campaign', creatorId: '2', creatorName: 'Jane Smith', status: 'pending', amount: 400, submittedAt: '2024-04-06' },
-          { id: '3', briefId: '2', briefTitle: 'Product Launch', creatorId: '1', creatorName: 'John Doe', status: 'approved', amount: 300, submittedAt: '2024-03-20' },
-        ];
-
-        setBrands(mockBrands);
-        setCreators(mockCreators);
-        setBriefs(mockBriefs);
-        setSubmissions(mockSubmissions);
-
+        // Set empty arrays when API fails
+        setBrands([]);
+        setCreators([]);
+        setBriefs([]);
+        setSubmissions([]);
         setAnalytics({
-          totalBrands: mockBrands.length,
-          totalCreators: mockCreators.length,
-          totalBriefs: mockBriefs.length,
-          totalSubmissions: mockSubmissions.length,
-          totalPayouts: mockSubmissions.filter(s => s.status === 'approved').reduce((sum, s) => sum + s.amount, 0),
-          monthlyRevenue: 15000
+          totalBrands: 0,
+          totalCreators: 0,
+          totalBriefs: 0,
+          totalSubmissions: 0,
+          totalPayouts: 0,
+          monthlyRevenue: 0
         });
       }
     };
