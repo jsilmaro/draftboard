@@ -18,7 +18,7 @@ const LoginForm: React.FC = () => {
 
     try {
       // Try brand login first
-      const brandResponse = await fetch('http://localhost:3001/api/brands/login', {
+      const brandResponse = await fetch('/api/brands/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ const LoginForm: React.FC = () => {
       }
 
       // If brand login fails, try creator login
-      const creatorResponse = await fetch('http://localhost:3001/api/creators/login', {
+      const creatorResponse = await fetch('/api/creators/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

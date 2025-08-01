@@ -63,11 +63,11 @@ const AdminDashboard: React.FC = () => {
       try {
         // Fetch all data in parallel
         const [brandsRes, creatorsRes, briefsRes, submissionsRes, analyticsRes] = await Promise.all([
-          fetch('http://localhost:3001/api/admin/brands'),
-          fetch('http://localhost:3001/api/admin/creators'),
-          fetch('http://localhost:3001/api/admin/briefs'),
-          fetch('http://localhost:3001/api/admin/submissions'),
-          fetch('http://localhost:3001/api/admin/analytics')
+          fetch('/api/admin/brands'),
+          fetch('/api/admin/creators'),
+          fetch('/api/admin/briefs'),
+          fetch('/api/admin/submissions'),
+          fetch('/api/admin/analytics')
         ]);
 
         if (brandsRes.ok) {

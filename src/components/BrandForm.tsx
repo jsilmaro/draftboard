@@ -179,7 +179,7 @@ const BrandForm: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/brands/register', {
+      const response = await fetch('/api/brands/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -198,7 +198,7 @@ const CreatorForm: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/creators/register', {
+      const response = await fetch('/api/creators/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

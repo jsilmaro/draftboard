@@ -143,7 +143,7 @@ const CreateBrief: React.FC = () => {
         createdAt: new Date().toISOString()
       };
 
-      const response = await fetch('http://localhost:3001/api/briefs', {
+      const response = await fetch('/api/briefs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
