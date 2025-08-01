@@ -11,6 +11,16 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
+// Database connection test
+prisma.$connect()
+  .then(() => {
+    console.log('✅ Database connected successfully');
+  })
+  .catch((error) => {
+    console.error('❌ Database connection failed:', error);
+    // Don't exit the process, let it continue and handle errors gracefully
+  });
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -18,7 +28,12 @@ app.use(express.static('uploads'));
 
 // Healthcheck endpoint for Railway
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' });
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Serve static files from the React build
@@ -62,6 +77,8 @@ const authenticateToken = (req, res, next) => {
 // Brand registration
 app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
   try {
+    console.log('📝 Brand registration attempt:', { email: req.body.email });
+    
     const {
       companyName,
       contactInfo,
@@ -70,6 +87,11 @@ app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
       password,
       bankingInfo
     } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !companyName) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     // Check if email already exists
     const existingBrand = await prisma.brand.findUnique({
@@ -95,6 +117,8 @@ app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
         logo: req.file ? `/uploads/${req.file.filename}` : null
       }
     });
+
+    console.log('✅ Brand created successfully:', { id: brand.id, email: brand.email });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -1543,11 +1567,26 @@ if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error('❌ Server error:', error);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: error.message,
+    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+  });
+});
+
 // Catch-all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Health check available at: http://localhost:${PORT}/health`);
+  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔐 JWT_SECRET: ${process.env.JWT_SECRET ? 'Set' : 'Missing!'}`);
+  console.log(`🗄️ DATABASE_URL: ${process.env.DATABASE_URL ? 'Set' : 'Missing!'}`);
 }); 
