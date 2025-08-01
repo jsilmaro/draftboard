@@ -98,6 +98,16 @@ A comprehensive platform connecting brands with creators, featuring user managem
 
 This will start both the backend server (port 3001) and frontend development server (port 3000).
 
+## 🚀 Quick Deploy
+
+Want to deploy this application to the web? Check out our [Deployment Guide](DEPLOYMENT.md) for step-by-step instructions to deploy on:
+
+- **Railway** (Recommended - Easiest setup)
+- **Render** (Great alternative)
+- **Vercel + Railway** (Split deployment)
+
+All platforms support SQLite and will handle your database setup automatically!
+
 ## Project Structure
 
 ```
