@@ -29,7 +29,11 @@ interface Creator {
   fullName: string;
   email: string;
   portfolio: string;
-  socialHandles: string;
+  socialInstagram?: string;
+  socialTwitter?: string;
+  socialLinkedIn?: string;
+  socialTikTok?: string;
+  socialYouTube?: string;
   isVerified: boolean;
 }
 
@@ -310,7 +314,15 @@ const BrandDashboard: React.FC = () => {
 
       if (response.ok) {
         const contactData = await response.json();
-        alert(`Creator Contact Details:\n\nName: ${contactData.fullName}\nUsername: @${contactData.userName}\nEmail: ${contactData.email}\nSocial Handles: ${contactData.socialHandles || 'Not provided'}\nPortfolio: ${contactData.portfolio || 'Not provided'}`);
+        const socialHandles = [
+          contactData.socialInstagram && `Instagram: ${contactData.socialInstagram}`,
+          contactData.socialTwitter && `Twitter: ${contactData.socialTwitter}`,
+          contactData.socialLinkedIn && `LinkedIn: ${contactData.socialLinkedIn}`,
+          contactData.socialTikTok && `TikTok: ${contactData.socialTikTok}`,
+          contactData.socialYouTube && `YouTube: ${contactData.socialYouTube}`
+        ].filter(Boolean).join('\n') || 'Not provided';
+        
+        alert(`Creator Contact Details:\n\nName: ${contactData.fullName}\nUsername: @${contactData.userName}\nEmail: ${contactData.email}\nSocial Handles:\n${socialHandles}\nPortfolio: ${contactData.portfolio || 'Not provided'}`);
       } else {
         console.error('Failed to get creator contact details');
         alert('Unable to get creator contact details. Make sure you have submissions from this creator.');
@@ -982,7 +994,15 @@ const BrandDashboard: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-medium">Social Handles:</span>
-                  <p className="text-gray-600">{selectedCreator.socialHandles || 'Not provided'}</p>
+                  <p className="text-gray-600">
+                    {[
+                      selectedCreator.socialInstagram && `Instagram: ${selectedCreator.socialInstagram}`,
+                      selectedCreator.socialTwitter && `Twitter: ${selectedCreator.socialTwitter}`,
+                      selectedCreator.socialLinkedIn && `LinkedIn: ${selectedCreator.socialLinkedIn}`,
+                      selectedCreator.socialTikTok && `TikTok: ${selectedCreator.socialTikTok}`,
+                      selectedCreator.socialYouTube && `YouTube: ${selectedCreator.socialYouTube}`
+                    ].filter(Boolean).join(', ') || 'Not provided'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1418,10 +1438,22 @@ const BrandDashboard: React.FC = () => {
                     <p className="text-gray-600">{detailedSubmission.creator.email}</p>
                   </div>
                 )}
-                {detailedSubmission?.creator?.socialHandles && (
+                {(detailedSubmission?.creator?.socialInstagram || 
+                  detailedSubmission?.creator?.socialTwitter || 
+                  detailedSubmission?.creator?.socialLinkedIn || 
+                  detailedSubmission?.creator?.socialTikTok || 
+                  detailedSubmission?.creator?.socialYouTube) && (
                   <div>
                     <span className="font-medium">Social:</span>
-                    <p className="text-gray-600">{detailedSubmission.creator.socialHandles}</p>
+                    <p className="text-gray-600">
+                      {[
+                        detailedSubmission.creator.socialInstagram && `Instagram: ${detailedSubmission.creator.socialInstagram}`,
+                        detailedSubmission.creator.socialTwitter && `Twitter: ${detailedSubmission.creator.socialTwitter}`,
+                        detailedSubmission.creator.socialLinkedIn && `LinkedIn: ${detailedSubmission.creator.socialLinkedIn}`,
+                        detailedSubmission.creator.socialTikTok && `TikTok: ${detailedSubmission.creator.socialTikTok}`,
+                        detailedSubmission.creator.socialYouTube && `YouTube: ${detailedSubmission.creator.socialYouTube}`
+                      ].filter(Boolean).join(', ')}
+                    </p>
                   </div>
                 )}
               </div>

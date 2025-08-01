@@ -109,14 +109,30 @@ const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
+  console.log('🔐 Authentication attempt:', {
+    hasAuthHeader: !!authHeader,
+    hasToken: !!token,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    url: req.url,
+    method: req.method
+  });
+
   if (!token) {
+    console.log('❌ No token provided');
     return res.status(401).json({ error: 'Access token required' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    console.log('❌ JWT_SECRET not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.log('❌ Token verification failed:', err.message);
       return res.status(403).json({ error: 'Invalid token' });
     }
+    console.log('✅ Token verified successfully for user:', user.id);
     req.user = user;
     next();
   });
@@ -269,11 +285,22 @@ app.post('/api/brands/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.log('❌ JWT_SECRET not configured during brand login');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const token = jwt.sign(
       { id: brand.id, email: brand.email, type: 'brand' },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    console.log('✅ Brand login successful:', { 
+      brandId: brand.id, 
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      tokenPreview: token.substring(0, 20) + '...'
+    });
 
     res.json({
       message: 'Login successful',
@@ -426,11 +453,22 @@ app.post('/api/creators/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.log('❌ JWT_SECRET not configured during creator login');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const token = jwt.sign(
       { id: creator.id, email: creator.email, type: 'creator' },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    console.log('✅ Creator login successful:', { 
+      creatorId: creator.id, 
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      tokenPreview: token.substring(0, 20) + '...'
+    });
 
     res.json({
       message: 'Login successful',
@@ -473,7 +511,11 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           userName: true,
           fullName: true,
           email: true,
-          socialHandles: true,
+          socialInstagram: true,
+          socialTwitter: true,
+          socialLinkedIn: true,
+          socialTikTok: true,
+          socialYouTube: true,
           portfolio: true,
           isVerified: true
         }
@@ -797,7 +839,11 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
             fullName: true,
             userName: true,
             email: true,
-            socialHandles: true,
+            socialInstagram: true,
+            socialTwitter: true,
+            socialLinkedIn: true,
+            socialTikTok: true,
+            socialYouTube: true,
             portfolio: true
           }
         },
@@ -848,7 +894,11 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
         fullName: submission.creator.fullName,
         userName: submission.creator.userName,
         email: submission.creator.email,
-        socialHandles: submission.creator.socialHandles,
+        socialInstagram: submission.creator.socialInstagram,
+        socialTwitter: submission.creator.socialTwitter,
+        socialLinkedIn: submission.creator.socialLinkedIn,
+        socialTikTok: submission.creator.socialTikTok,
+        socialYouTube: submission.creator.socialYouTube,
         portfolio: submission.creator.portfolio
       },
       brief: {
@@ -879,7 +929,11 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
         fullName: true,
         email: true,
         portfolio: true,
-        socialHandles: true,
+        socialInstagram: true,
+        socialTwitter: true,
+        socialLinkedIn: true,
+        socialTikTok: true,
+        socialYouTube: true,
         isVerified: true
       },
       orderBy: { createdAt: 'desc' }
@@ -1428,7 +1482,11 @@ app.get('/api/brands/creators/:creatorId/contact', authenticateToken, async (req
         fullName: true,
         userName: true,
         email: true,
-        socialHandles: true,
+        socialInstagram: true,
+        socialTwitter: true,
+        socialLinkedIn: true,
+        socialTikTok: true,
+        socialYouTube: true,
         portfolio: true
       }
     });
