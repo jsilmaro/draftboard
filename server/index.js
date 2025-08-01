@@ -9,16 +9,28 @@ require('dotenv').config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Database connection test
 prisma.$connect()
   .then(() => {
     console.log('✅ Database connected successfully');
+    console.log('🔍 Environment Variables:');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
+    console.log('  - PORT:', process.env.PORT || 'not set');
+    console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'MISSING!');
+    console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'MISSING!');
+    if (process.env.DATABASE_URL) {
+      console.log('  - DATABASE_URL preview:', process.env.DATABASE_URL.substring(0, 20) + '...');
+    }
   })
   .catch((error) => {
     console.error('❌ Database connection failed:', error);
-    // Don't exit the process, let it continue and handle errors gracefully
+    console.log('🔍 Environment Variables:');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
+    console.log('  - PORT:', process.env.PORT || 'not set');
+    console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'MISSING!');
+    console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'MISSING!');
   });
 
 // Middleware
@@ -32,7 +44,9 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     message: 'Server is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    hasDatabaseUrl: !!process.env.DATABASE_URL
   });
 });
 
@@ -1583,10 +1597,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check available at: http://localhost:${PORT}/health`);
-  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔐 JWT_SECRET: ${process.env.JWT_SECRET ? 'Set' : 'Missing!'}`);
-  console.log(`🗄️ DATABASE_URL: ${process.env.DATABASE_URL ? 'Set' : 'Missing!'}`);
+  console.log(`Server running on port ${PORT}`);
 }); 
