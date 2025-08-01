@@ -122,29 +122,50 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Brand registration
-app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
-  try {
-    console.log('📝 Brand registration attempt:', { email: req.body.email });
-    console.log('🔍 Environment check:', {
-      hasJwtSecret: !!process.env.JWT_SECRET,
-      hasDatabaseUrl: !!process.env.DATABASE_URL,
-      databaseUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'MISSING'
-    });
-    
-    const {
-      companyName,
-      contactInfo,
-      contactName,
-      email,
-      password,
-      bankingInfo
-    } = req.body;
+        // Brand registration
+        app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
+          try {
+            console.log('📝 Brand registration attempt:', { email: req.body.email });
+            console.log('🔍 Environment check:', {
+              hasJwtSecret: !!process.env.JWT_SECRET,
+              hasDatabaseUrl: !!process.env.DATABASE_URL,
+              databaseUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'MISSING'
+            });
+            
+            const {
+              companyName,
+              contactName,
+              email,
+              password,
+              // Contact Information
+              phoneCountry,
+              phoneNumber,
+              addressStreet,
+              addressCity,
+              addressState,
+              addressZip,
+              addressCountry,
+              // Social Media
+              socialInstagram,
+              socialTwitter,
+              socialLinkedIn,
+              socialWebsite,
+              // Banking Information
+              paymentMethod,
+              cardNumber,
+              cardType,
+              bankName,
+              bankAccountType,
+              bankRouting,
+              bankAccount,
+              // Terms
+              termsAccepted
+            } = req.body;
 
-    // Validate required fields
-    if (!email || !password || !companyName) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+                // Validate required fields
+            if (!email || !password || !companyName || !contactName || !termsAccepted) {
+              return res.status(400).json({ error: 'Missing required fields' });
+            }
 
     // Check if email already exists
     console.log('🔍 Checking if email exists in database...');
@@ -161,18 +182,40 @@ app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create brand
-    const brand = await prisma.brand.create({
-      data: {
-        companyName,
-        contactInfo,
-        contactName,
-        email,
-        password: hashedPassword,
-        bankingInfo,
-        logo: req.file ? `/uploads/${req.file.filename}` : null
-      }
-    });
+                // Create brand
+            const brand = await prisma.brand.create({
+              data: {
+                companyName,
+                contactName,
+                email,
+                password: hashedPassword,
+                // Contact Information
+                phoneCountry,
+                phoneNumber,
+                addressStreet,
+                addressCity,
+                addressState,
+                addressZip,
+                addressCountry,
+                // Social Media
+                socialInstagram,
+                socialTwitter,
+                socialLinkedIn,
+                socialWebsite,
+                // Banking Information
+                paymentMethod,
+                cardNumber,
+                cardType,
+                bankName,
+                bankAccountType,
+                bankRouting,
+                bankAccount,
+                // Terms
+                termsAccepted: termsAccepted === 'true' || termsAccepted === true,
+                // Profile
+                logo: req.file ? `/uploads/${req.file.filename}` : null
+              }
+            });
 
     console.log('✅ Brand created successfully:', { id: brand.id, email: brand.email });
 
@@ -256,9 +299,32 @@ app.post('/api/creators/register', async (req, res) => {
       email,
       password,
       fullName,
-      socialHandles,
+      // Contact Information
+      phoneCountry,
+      phoneNumber,
+      addressStreet,
+      addressCity,
+      addressState,
+      addressZip,
+      addressCountry,
+      // Social Media
+      socialInstagram,
+      socialTwitter,
+      socialLinkedIn,
+      socialTikTok,
+      socialYouTube,
       portfolio,
-      bankingInfo
+      // Banking Information
+      paymentMethod,
+      cardNumber,
+      cardType,
+      bankName,
+      bankAccountType,
+      bankRouting,
+      bankAccount,
+      paypalEmail,
+      // Terms
+      termsAccepted
     } = req.body;
 
     // Check if email or username already exists
@@ -275,6 +341,11 @@ app.post('/api/creators/register', async (req, res) => {
       return res.status(400).json({ error: 'Email or username already registered' });
     }
 
+    // Validate required fields
+    if (!userName || !email || !password || !fullName || !termsAccepted) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -285,9 +356,32 @@ app.post('/api/creators/register', async (req, res) => {
         email,
         password: hashedPassword,
         fullName,
-        socialHandles,
+        // Contact Information
+        phoneCountry,
+        phoneNumber,
+        addressStreet,
+        addressCity,
+        addressState,
+        addressZip,
+        addressCountry,
+        // Social Media
+        socialInstagram,
+        socialTwitter,
+        socialLinkedIn,
+        socialTikTok,
+        socialYouTube,
         portfolio,
-        bankingInfo
+        // Banking Information
+        paymentMethod,
+        cardNumber,
+        cardType,
+        bankName,
+        bankAccountType,
+        bankRouting,
+        bankAccount,
+        paypalEmail,
+        // Terms
+        termsAccepted: termsAccepted === 'true' || termsAccepted === true
       }
     });
 

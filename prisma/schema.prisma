@@ -13,13 +13,38 @@ datasource db {
 model Brand {
   id              String   @id @default(cuid())
   companyName     String
-  contactInfo     String
   contactName     String
-  logo            String?  // URL to logo file
   email           String   @unique
   password        String
-  bankingInfo     String   // Mocked banking information
+  
+  // Contact Information
+  phoneCountry    String?  // Country code for phone
+  phoneNumber     String?
+  addressStreet   String?
+  addressCity     String?
+  addressState    String?
+  addressZip      String?
+  addressCountry  String?
+  
+  // Social Media
+  socialInstagram String?
+  socialTwitter   String?
+  socialLinkedIn  String?
+  socialWebsite   String?
+  
+  // Banking Information
+  paymentMethod   String?  // "credit_card", "debit_card", "bank_transfer"
+  cardNumber      String?  // Last 4 digits only for security
+  cardType        String?  // Visa, Mastercard, etc.
+  bankName        String?
+  bankAccountType String?  // Checking, Savings, etc.
+  bankRouting     String?
+  bankAccount     String?  // Last 4 digits only
+  
+  // Profile
+  logo            String?  // URL to logo file
   isVerified      Boolean  @default(false)
+  termsAccepted   Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
@@ -35,10 +60,37 @@ model Creator {
   email           String   @unique
   password        String
   fullName        String
-  socialHandles   String?  // JSON string of social media handles
+  
+  // Contact Information
+  phoneCountry    String?  // Country code for phone
+  phoneNumber     String?
+  addressStreet   String?
+  addressCity     String?
+  addressState    String?
+  addressZip      String?
+  addressCountry  String?
+  
+  // Social Media
+  socialInstagram String?
+  socialTwitter   String?
+  socialLinkedIn  String?
+  socialTikTok    String?
+  socialYouTube   String?
   portfolio       String?  // URL to portfolio
-  bankingInfo     String   // Mocked banking information
+  
+  // Banking Information
+  paymentMethod   String?  // "credit_card", "debit_card", "bank_transfer", "paypal"
+  cardNumber      String?  // Last 4 digits only for security
+  cardType        String?  // Visa, Mastercard, etc.
+  bankName        String?
+  bankAccountType String?  // Checking, Savings, etc.
+  bankRouting     String?
+  bankAccount     String?  // Last 4 digits only
+  paypalEmail     String?
+  
+  // Profile
   isVerified      Boolean  @default(false)
+  termsAccepted   Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   

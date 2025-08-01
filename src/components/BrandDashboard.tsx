@@ -101,16 +101,27 @@ const BrandDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.log('No token found, user not authenticated');
+        return;
+      }
+
+      console.log('Fetching dashboard data with token:', token.substring(0, 20) + '...');
 
       // Fetch briefs
       const briefsResponse = await fetch('/api/brands/briefs', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       let briefsData = [];
       if (briefsResponse.ok) {
         briefsData = await briefsResponse.json();
         setBriefs(briefsData);
+        console.log('Briefs fetched:', briefsData.length);
+      } else {
+        console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
       }
 
       // Fetch submissions

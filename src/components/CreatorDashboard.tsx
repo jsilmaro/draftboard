@@ -85,16 +85,27 @@ const CreatorDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.log('No token found, user not authenticated');
+        return;
+      }
+
+      console.log('Fetching creator dashboard data with token:', token.substring(0, 20) + '...');
 
       // Fetch available briefs
       const briefsResponse = await fetch('/api/creators/briefs', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       let briefsData = [];
       if (briefsResponse.ok) {
         briefsData = await briefsResponse.json();
         setAvailableBriefs(briefsData);
+        console.log('Available briefs fetched:', briefsData.length);
+      } else {
+        console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
       }
 
       // Fetch submissions
