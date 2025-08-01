@@ -459,24 +459,24 @@ const BrandDashboard: React.FC = () => {
   const renderOverview = () => (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">
+      <div className="flex justify-between items-center fade-in">
+        <h1 className="text-3xl font-bold text-gray-900 slide-in-left">
           WELCOME, {user?.companyName?.toUpperCase() || 'BRAND'}
         </h1>
         <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger-children">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
           <h3 className="text-lg font-semibold text-gray-900">Active Briefs</h3>
           <p className="text-3xl font-bold text-blue-600">{metrics.activeBriefs}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
           <h3 className="text-lg font-semibold text-gray-900">Submissions This Week</h3>
           <p className="text-3xl font-bold text-green-600">{metrics.submissionsThisWeek}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
           <h3 className="text-lg font-semibold text-gray-900">Winners Selected</h3>
           <p className="text-3xl font-bold text-purple-600">{metrics.winnersSelected}</p>
         </div>
@@ -1678,9 +1678,9 @@ const BrandDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex fade-in">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white transition-all duration-300`}>
+      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white transition-all duration-300 slide-in-left`}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             {!sidebarCollapsed && (
@@ -1749,7 +1749,7 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 slide-in-right">
         <div className="p-8">
           {renderContent()}
         </div>

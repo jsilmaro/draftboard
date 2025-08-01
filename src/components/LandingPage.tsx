@@ -4,18 +4,18 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+        <div className="text-center mb-16 fade-in">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6 slide-in-up">
             Connect Brands with Creators
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto fade-in-delay-1">
             The ultimate platform for brands to discover talented creators and for creators to showcase their work to amazing brands.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto stagger-children">
           {/* Brand Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+          <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300 card-hover">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,14 +51,14 @@ const LandingPage = () => {
 
             <Link
               to="/brand/register"
-              className="btn-primary w-full text-center block"
+              className="btn-primary w-full text-center block hover-scale"
             >
               Register as Brand
             </Link>
           </div>
 
           {/* Creator Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+          <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300 card-hover">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +94,7 @@ const LandingPage = () => {
 
             <Link
               to="/creator/register"
-              className="btn-primary w-full text-center block"
+              className="btn-primary w-full text-center block hover-scale"
             >
               Register as Creator
             </Link>
