@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id              String   @id @default(cuid())
+  companyName     String
+  contactInfo     String
+  contactName     String
+  logo            String?  // URL to logo file
+  email           String   @unique
+  password        String
+  bankingInfo     String   // Mocked banking information
+  isVerified      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  briefs          Brief[]
+  awardDrafts     AwardDraft[]
+  publishedAwards PublishedAward[]
+}
+
+model Creator {
+  id              String   @id @default(cuid())
+  userName        String   @unique
+  email           String   @unique
+  password        String
+  fullName        String
+  socialHandles   String?  // JSON string of social media handles
+  portfolio       String?  // URL to portfolio
+  bankingInfo     String   // Mocked banking information
+  isVerified      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  submissions     Submission[]
+  portfolioItems  PortfolioItem[]
+}
+
+model Brief {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  requirements    String
+  budget          Float
+  deadline        DateTime
+  status          String   @default("draft") // draft, active, completed, cancelled
+  isPrivate       Boolean  @default(false)
+  additionalFields String? // JSON string of template-specific fields
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  submissions     Submission[]
+  awardDrafts     AwardDraft[]
+  publishedAwards PublishedAward[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  closedAt        DateTime?
+}
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  imageUrl    String?  // Main image URL
+  files       String?  // JSON string of file URLs
+  creatorId   String
+  creator     Creator  @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Submission {
+  id              String   @id @default(cuid())
+  briefId         String
+  brief           Brief    @relation(fields: [briefId], references: [id])
+  creatorId       String
+  creator         Creator  @relation(fields: [creatorId], references: [id])
+  content         String   // Description of the submission
+  files           String?  // JSON string of file URLs
+  amount          Float
+  status          String   @default("pending") // pending, approved, rejected
+  submittedAt     DateTime @default(now())
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AwardDraft {
+  id              String   @id @default(cuid())
+  briefId         String
+  brief           Brief    @relation(fields: [briefId], references: [id])
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  rewardTiers     String   // JSON string of reward tiers with winners
+  savedAt         DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PublishedAward {
+  id              String   @id @default(cuid())
+  briefId         String
+  brief           Brief    @relation(fields: [briefId], references: [id])
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  rewardTiers     String   // JSON string of reward tiers with winners
+  publishedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+} 
