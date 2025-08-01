@@ -16,6 +16,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('uploads'));
 
+// Healthcheck endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
+// Serve static files from the React build
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// API routes
+app.get('/api', (req, res) => {
+  res.json({ message: 'Brand-Creator Platform API' });
+});
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1529,6 +1542,11 @@ const fs = require('fs');
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
