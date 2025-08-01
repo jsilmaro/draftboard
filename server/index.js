@@ -90,10 +90,7 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Serve React app for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
+
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
