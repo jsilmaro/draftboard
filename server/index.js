@@ -58,6 +58,38 @@ app.get('/api', (req, res) => {
   res.json({ message: 'Brand-Creator Platform API' });
 });
 
+// Database test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    console.log('🔍 Testing database connection...');
+    await prisma.$connect();
+    console.log('✅ Database connection successful');
+    
+    // Try a simple query
+    const brandCount = await prisma.brand.count();
+    console.log('✅ Database query successful, brand count:', brandCount);
+    
+    res.json({ 
+      status: 'success', 
+      message: 'Database connection working',
+      brandCount,
+      environment: process.env.NODE_ENV || 'development',
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL
+    });
+  } catch (error) {
+    console.error('❌ Database test failed:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Database connection failed',
+      error: error.message,
+      environment: process.env.NODE_ENV || 'development',
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL
+    });
+  }
+});
+
 // Serve React app for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
@@ -97,6 +129,11 @@ const authenticateToken = (req, res, next) => {
 app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
   try {
     console.log('📝 Brand registration attempt:', { email: req.body.email });
+    console.log('🔍 Environment check:', {
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'MISSING'
+    });
     
     const {
       companyName,
@@ -113,13 +150,16 @@ app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
     }
 
     // Check if email already exists
+    console.log('🔍 Checking if email exists in database...');
     const existingBrand = await prisma.brand.findUnique({
       where: { email }
     });
 
     if (existingBrand) {
+      console.log('❌ Email already exists:', email);
       return res.status(400).json({ error: 'Email already registered' });
     }
+    console.log('✅ Email is available for registration');
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -157,8 +197,17 @@ app.post('/api/brands/register', upload.single('logo'), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Brand registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Brand registration error:', error);
+    console.error('🔍 Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 3).join('\n')
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database operation failed'
+    });
   }
 });
 
