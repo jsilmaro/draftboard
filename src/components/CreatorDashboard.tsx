@@ -519,7 +519,7 @@ const CreatorDashboard: React.FC = () => {
             Filter
           </button>
           <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-            Sort by Budget
+            Sort by Prize
           </button>
         </div>
       </div>
@@ -532,7 +532,7 @@ const CreatorDashboard: React.FC = () => {
               <span className="text-sm text-gray-600">{brief.brandName}</span>
             </div>
             <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <p>Budget: ${brief.budget.toLocaleString()}</p>
+              <p>Prize: ${brief.budget.toLocaleString()}</p>
               <p>Deadline: {new Date(brief.deadline).toLocaleDateString()}</p>
               <p>Status: {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}</p>
               {hasSubmittedToBrief(brief.id) && (
@@ -611,7 +611,7 @@ const CreatorDashboard: React.FC = () => {
                 <span>{selectedBrief.brandName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Budget:</span>
+                <span className="font-medium">Prize:</span>
                 <span>${selectedBrief.budget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
@@ -712,7 +712,7 @@ const CreatorDashboard: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">Brief Summary</h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
-                  <p><strong>Budget:</strong> ${selectedBrief.budget.toLocaleString()}</p>
+                  <p><strong>Prize:</strong> ${selectedBrief.budget.toLocaleString()}</p>
                   <p><strong>Deadline:</strong> {new Date(selectedBrief.deadline).toLocaleDateString()}</p>
                 </div>
               </div>
