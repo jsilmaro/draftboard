@@ -469,11 +469,10 @@ const BrandDashboard: React.FC = () => {
     { id: 'submissions', label: 'Submissions', icon: '📚' },
     { id: 'create', label: 'Create a Brief', icon: '📄➕' },
     { id: 'creators', label: 'Creators', icon: '👥' },
-    { id: 'awards', label: 'Awards', icon: '🏆' },
   ];
 
   const accountNav = [
-    { id: 'awards', label: 'Awards', icon: '💰' },
+    { id: 'awards', label: 'Rewards', icon: '💰' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
     { id: 'logout', label: 'Logout', icon: '🚪', action: logout },
   ];
@@ -1153,12 +1152,12 @@ const BrandDashboard: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Awards</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Rewards</h2>
           <button 
             onClick={() => setShowCreateReward(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Create Award
+            Create Reward
           </button>
         </div>
 
@@ -1226,10 +1225,10 @@ const BrandDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Published Awards Section */}
+        {/* Published Rewards Section */}
         {rewards.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Published Awards</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Published Rewards</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {rewards.map((reward) => (
                 <div key={reward.id} className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-200">
@@ -1295,14 +1294,14 @@ const BrandDashboard: React.FC = () => {
         {/* Empty State */}
         {rewards.length === 0 && drafts.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏆</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No awards yet</h3>
-            <p className="text-gray-600 mb-6">Create your first award to recognize outstanding creators</p>
+            <div className="text-6xl mb-4">🎁</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No rewards yet</h3>
+            <p className="text-gray-600 mb-6">Create your first reward to recognize outstanding creators</p>
             <button 
               onClick={() => setShowCreateReward(true)}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Create Your First Award
+              Create Your First Reward
             </button>
           </div>
         )}

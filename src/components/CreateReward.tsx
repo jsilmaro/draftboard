@@ -79,7 +79,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
         
         // Fetch shortlisted counts for each brief
         const briefsWithShortlistedCounts = await Promise.all(
-          activeBriefs.map(async (brief) => {
+          activeBriefs.map(async (brief: Brief) => {
             try {
               const submissionsResponse = await fetch('/api/brands/submissions', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -195,13 +195,13 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
       });
 
       if (response.ok) {
-        alert('Awards saved as draft successfully!');
+        alert('Rewards saved as draft successfully!');
       } else {
-        alert('Failed to save awards. Please try again.');
+        alert('Failed to save rewards. Please try again.');
       }
     } catch (error) {
       console.error('Error saving awards:', error);
-      alert('Error saving awards. Please try again.');
+      alert('Error saving rewards. Please try again.');
     }
   };
 
@@ -209,7 +209,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
          // Check if all tiers have winners assigned
      const incompleteTiers = rewardTiers.filter(tier => !tier.winnerId);
      if (incompleteTiers.length > 0) {
-       alert('Please assign winners to all award tiers before submitting.');
+       alert('Please assign winners to all reward tiers before submitting.');
        return;
      }
 
@@ -255,14 +255,14 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
          } else {
            const errorData = await closeBriefResponse.json();
            console.error('Failed to close brief:', errorData);
-           alert(`Awards submitted successfully, but there was an issue closing the brief: ${errorData.error || 'Unknown error'}. Please contact support.`);
+           alert(`Rewards submitted successfully, but there was an issue closing the brief: ${errorData.error || 'Unknown error'}. Please contact support.`);
          }
        } else {
-         alert('Failed to submit awards. Please try again.');
+         alert('Failed to submit rewards. Please try again.');
        }
      } catch (error) {
-       console.error('Error submitting awards:', error);
-       alert('Error submitting awards. Please try again.');
+       console.error('Error submitting rewards:', error);
+       alert('Error submitting rewards. Please try again.');
      }
   };
 
@@ -278,7 +278,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
               ← Back
             </button>
           )}
-          <h2 className="text-2xl font-bold text-gray-900">Create Awards</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Create Rewards</h2>
         </div>
       </div>
 
@@ -286,7 +286,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
       {!selectedBrief && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Step 1: Select a Brief</h3>
-                     <p className="text-gray-600 mb-4">Choose which brief you want to create awards for:</p>
+                     <p className="text-gray-600 mb-4">Choose which brief you want to create rewards for:</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {briefs.map((brief) => (
@@ -322,19 +322,19 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
           {/* Reward Tiers */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                          <div className="flex justify-between items-center mb-4">
-               <h3 className="text-lg font-semibold text-gray-900">Step 2: Create Award Tiers</h3>
+               <h3 className="text-lg font-semibold text-gray-900">Step 2: Create Reward Tiers</h3>
                <button 
                  onClick={addRewardTier}
                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                >
-                 + Add Award Tier
+                 + Add Reward Tier
                </button>
              </div>
 
                          {rewardTiers.length === 0 ? (
                <div className="text-center py-8 text-gray-500">
-                 <div className="text-4xl mb-2">🏆</div>
-                 <p>No award tiers yet. Click "Add Award Tier" to get started!</p>
+                 <div className="text-4xl mb-2">🎁</div>
+                 <p>No reward tiers yet. Click "Add Reward Tier" to get started!</p>
                </div>
              ) : (
               <div className="space-y-4">
@@ -349,7 +349,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
                             value={tier.name}
                             onChange={(e) => updateRewardTier(tier.id, 'name', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="e.g., 1st Place, Best Design, etc."
+                            placeholder="e.g., 1st Place, Best Design, Special Recognition, etc."
                           />
                         </div>
                         <div>
@@ -369,7 +369,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
                             value={tier.description}
                             onChange={(e) => updateRewardTier(tier.id, 'description', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Brief description of this award"
+                            placeholder="Brief description of this reward"
                           />
                         </div>
                       </div>
@@ -479,7 +479,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
               <div className="text-4xl mb-4">⚠️</div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Final Warning</h3>
                              <p className="text-gray-600 mb-6">
-                 Once you submit these awards, the list of winners will be released to the public. 
+                 Once you submit these rewards, the list of winners will be released to the public. 
                  This action cannot be undone.
                </p>
               <div className="flex space-x-3">
@@ -506,8 +506,8 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
          isVisible={showSuccessNotification}
          onClose={() => setShowSuccessNotification(false)}
          type="success"
-         title="Awards Published! 🏆"
-         message="The winners have been announced and the awards are now live!"
+         title="Rewards Published! 🎁"
+         message="The winners have been announced and the rewards are now live!"
          icon="🎉"
        />
     </div>

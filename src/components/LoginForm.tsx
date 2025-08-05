@@ -29,6 +29,7 @@ const LoginForm: React.FC = () => {
       if (brandResponse.ok) {
         const brandData = await brandResponse.json();
         login(brandData.user, brandData.token);
+        navigate('/brand/dashboard');
         return;
       }
 
@@ -44,6 +45,7 @@ const LoginForm: React.FC = () => {
       if (creatorResponse.ok) {
         const creatorData = await creatorResponse.json();
         login(creatorData.user, creatorData.token);
+        navigate('/creator/dashboard');
         return;
       }
 
