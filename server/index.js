@@ -341,7 +341,7 @@ app.post('/api/creators/register', async (req, res) => {
       socialTikTok,
       socialYouTube,
       portfolio,
-      // Banking Information
+      // Banking Information (optional - removed from registration flow)
       paymentMethod,
       cardNumber,
       cardType,
@@ -398,15 +398,15 @@ app.post('/api/creators/register', async (req, res) => {
         socialTikTok,
         socialYouTube,
         portfolio,
-        // Banking Information
-        paymentMethod,
-        cardNumber,
-        cardType,
-        bankName,
-        bankAccountType,
-        bankRouting,
-        bankAccount,
-        paypalEmail,
+        // Banking Information (optional - removed from registration flow)
+        paymentMethod: paymentMethod || null,
+        cardNumber: cardNumber || null,
+        cardType: cardType || null,
+        bankName: bankName || null,
+        bankAccountType: bankAccountType || null,
+        bankRouting: bankRouting || null,
+        bankAccount: bankAccount || null,
+        paypalEmail: paypalEmail || null,
         // Terms
         termsAccepted: termsAccepted === 'true' || termsAccepted === true
       }

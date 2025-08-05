@@ -28,17 +28,7 @@ interface CreatorFormData {
   socialYouTube: string;
   portfolio: string;
   
-  // Step 4: Banking Information
-  paymentMethod: string;
-  cardNumber: string;
-  cardType: string;
-  bankName: string;
-  bankAccountType: string;
-  bankRouting: string;
-  bankAccount: string;
-  paypalEmail: string;
-  
-  // Step 5: Terms
+  // Step 4: Terms
   termsAccepted: boolean;
 }
 
@@ -68,14 +58,6 @@ const CreatorForm: React.FC = () => {
     socialTikTok: '',
     socialYouTube: '',
     portfolio: '',
-    paymentMethod: '',
-    cardNumber: '',
-    cardType: '',
-    bankName: '',
-    bankAccountType: '',
-    bankRouting: '',
-    bankAccount: '',
-    paypalEmail: '',
     termsAccepted: false,
   });
 
@@ -92,20 +74,7 @@ const CreatorForm: React.FC = () => {
     { code: '+31', name: 'Netherlands' },
   ];
 
-  const cardTypes = [
-    'Visa',
-    'Mastercard',
-    'American Express',
-    'Discover',
-    'Other'
-  ];
 
-  const bankAccountTypes = [
-    'Checking',
-    'Savings',
-    'Business Checking',
-    'Business Savings'
-  ];
 
   const handleInputChange = (field: keyof CreatorFormData, value: string | boolean) => {
     setFormData(prev => ({
@@ -148,28 +117,6 @@ const CreatorForm: React.FC = () => {
         }
         break;
       case 4:
-        if (!formData.paymentMethod) {
-          setError('Please select a payment method');
-          return false;
-        }
-        if (formData.paymentMethod === 'credit_card' || formData.paymentMethod === 'debit_card') {
-          if (!formData.cardNumber || !formData.cardType) {
-            setError('Please fill in all card details');
-            return false;
-          }
-        } else if (formData.paymentMethod === 'bank_transfer') {
-          if (!formData.bankName || !formData.bankAccountType || !formData.bankRouting || !formData.bankAccount) {
-            setError('Please fill in all bank details');
-            return false;
-          }
-        } else if (formData.paymentMethod === 'paypal') {
-          if (!formData.paypalEmail) {
-            setError('Please provide your PayPal email');
-            return false;
-          }
-        }
-        break;
-      case 5:
         if (!formData.termsAccepted) {
           setError('You must accept the terms and conditions');
           return false;
@@ -182,7 +129,7 @@ const CreatorForm: React.FC = () => {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 4));
     }
   };
 
@@ -224,7 +171,7 @@ const CreatorForm: React.FC = () => {
   const renderStepIndicator = () => (
     <div className="flex justify-center mb-8">
       <div className="flex space-x-2">
-        {[1, 2, 3, 4, 5].map((step) => (
+        {[1, 2, 3, 4].map((step) => (
           <div
             key={step}
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -519,178 +466,6 @@ const CreatorForm: React.FC = () => {
   const renderStep4 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Payment Information</h2>
-        <p className="text-gray-600">This information is required to verify account legitimacy</p>
-      </div>
-
-      <div className="space-y-6">
-        <div className="form-field">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Payment Method *
-          </label>
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="credit_card"
-                checked={formData.paymentMethod === 'credit_card'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="mr-3"
-              />
-              <span>Credit Card</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="debit_card"
-                checked={formData.paymentMethod === 'debit_card'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="mr-3"
-              />
-              <span>Debit Card</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="bank_transfer"
-                checked={formData.paymentMethod === 'bank_transfer'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="mr-3"
-              />
-              <span>Bank Transfer</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="paypal"
-                checked={formData.paymentMethod === 'paypal'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="mr-3"
-              />
-              <span>PayPal</span>
-            </label>
-          </div>
-        </div>
-
-        {(formData.paymentMethod === 'credit_card' || formData.paymentMethod === 'debit_card') && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Card Number (Last 4 digits) *
-              </label>
-              <input
-                type="text"
-                value={formData.cardNumber}
-                onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="**** **** **** 1234"
-                maxLength={19}
-              />
-            </div>
-
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Card Type *
-              </label>
-              <select
-                value={formData.cardType}
-                onChange={(e) => handleInputChange('cardType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              >
-                <option value="">Select card type</option>
-                {cardTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
-        {formData.paymentMethod === 'bank_transfer' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bank Name *
-              </label>
-              <input
-                type="text"
-                value={formData.bankName}
-                onChange={(e) => handleInputChange('bankName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="Bank of America"
-              />
-            </div>
-
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Type *
-              </label>
-              <select
-                value={formData.bankAccountType}
-                onChange={(e) => handleInputChange('bankAccountType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              >
-                <option value="">Select account type</option>
-                {bankAccountTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Routing Number *
-              </label>
-              <input
-                type="text"
-                value={formData.bankRouting}
-                onChange={(e) => handleInputChange('bankRouting', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="123456789"
-              />
-            </div>
-
-            <div className="form-field">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Number (Last 4 digits) *
-              </label>
-              <input
-                type="text"
-                value={formData.bankAccount}
-                onChange={(e) => handleInputChange('bankAccount', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="**** 5678"
-                maxLength={8}
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.paymentMethod === 'paypal' && (
-          <div className="form-field">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              PayPal Email *
-            </label>
-            <input
-              type="email"
-              value={formData.paypalEmail}
-              onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              placeholder="your-email@paypal.com"
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderStep5 = () => (
-    <div className="space-y-6 fade-in">
-      <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Terms & Conditions</h2>
         <p className="text-gray-600">Please review and accept our terms</p>
       </div>
@@ -734,7 +509,6 @@ const CreatorForm: React.FC = () => {
       case 2: return renderStep2();
       case 3: return renderStep3();
       case 4: return renderStep4();
-      case 5: return renderStep5();
       default: return renderStep1();
     }
   };
@@ -767,7 +541,7 @@ const CreatorForm: React.FC = () => {
               
               <div className="flex-1"></div>
               
-              {currentStep < 5 ? (
+              {currentStep < 4 ? (
                 <button
                   type="button"
                   onClick={nextStep}
