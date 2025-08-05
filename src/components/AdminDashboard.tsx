@@ -197,7 +197,7 @@ const AdminDashboard: React.FC = () => {
             <span className="text-2xl">📋</span>
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600">Active Briefs</p>
+            <p className="text-sm font-medium text-gray-600">Available Briefs</p>
             <p className="text-2xl font-bold text-gray-900">{briefs.filter(b => b.status === 'active').length}</p>
           </div>
         </div>
@@ -489,7 +489,7 @@ const AdminDashboard: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Brief Performance</h3>
           <div className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Active Briefs</span>
+              <span className="text-sm text-gray-600">Available Briefs</span>
               <span className="text-sm font-medium">{briefs.filter(b => b.status === 'active').length}</span>
             </div>
             <div className="flex justify-between">

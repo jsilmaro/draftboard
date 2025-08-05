@@ -83,6 +83,8 @@ const CreatorForm: React.FC = () => {
     }));
   };
 
+
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
