@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,112 +8,92 @@ datasource db {
 }
 
 model Brand {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   companyName     String
   contactName     String
-  email           String   @unique
+  email           String           @unique
   password        String
-  
-  // Contact Information
-  phoneCountry    String?  // Country code for phone
+  phoneCountry    String?
   phoneNumber     String?
   addressStreet   String?
   addressCity     String?
   addressState    String?
   addressZip      String?
   addressCountry  String?
-  
-  // Social Media
   socialInstagram String?
   socialTwitter   String?
   socialLinkedIn  String?
   socialWebsite   String?
-  
-  // Banking Information
-  paymentMethod   String?  // "credit_card", "debit_card", "bank_transfer"
-  cardNumber      String?  // Last 4 digits only for security
-  cardType        String?  // Visa, Mastercard, etc.
+  paymentMethod   String?
+  cardNumber      String?
+  cardType        String?
   bankName        String?
-  bankAccountType String?  // Checking, Savings, etc.
+  bankAccountType String?
   bankRouting     String?
-  bankAccount     String?  // Last 4 digits only
-  
-  // Profile
-  logo            String?  // URL to logo file
-  isVerified      Boolean  @default(false)
-  termsAccepted   Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  briefs          Brief[]
+  bankAccount     String?
+  logo            String?
+  isVerified      Boolean          @default(false)
+  termsAccepted   Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   awardDrafts     AwardDraft[]
+  briefs          Brief[]
   publishedAwards PublishedAward[]
 }
 
 model Creator {
-  id              String   @id @default(cuid())
-  userName        String   @unique
-  email           String   @unique
+  id              String          @id @default(cuid())
+  userName        String          @unique
+  email           String          @unique
   password        String
   fullName        String
-  
-  // Contact Information
-  phoneCountry    String?  // Country code for phone
+  phoneCountry    String?
   phoneNumber     String?
   addressStreet   String?
   addressCity     String?
   addressState    String?
   addressZip      String?
   addressCountry  String?
-  
-  // Social Media
   socialInstagram String?
   socialTwitter   String?
   socialLinkedIn  String?
   socialTikTok    String?
   socialYouTube   String?
-  portfolio       String?  // URL to portfolio
-  
-  // Banking Information
-  paymentMethod   String?  // "credit_card", "debit_card", "bank_transfer", "paypal"
-  cardNumber      String?  // Last 4 digits only for security
-  cardType        String?  // Visa, Mastercard, etc.
+  portfolio       String?
+  paymentMethod   String?
+  cardNumber      String?
+  cardType        String?
   bankName        String?
-  bankAccountType String?  // Checking, Savings, etc.
+  bankAccountType String?
   bankRouting     String?
-  bankAccount     String?  // Last 4 digits only
+  bankAccount     String?
   paypalEmail     String?
-  
-  // Profile
-  isVerified      Boolean  @default(false)
-  termsAccepted   Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  submissions     Submission[]
+  isVerified      Boolean         @default(false)
+  termsAccepted   Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   portfolioItems  PortfolioItem[]
+  submissions     Submission[]
 }
 
 model Brief {
-  id              String   @id @default(cuid())
-  title           String
-  description     String
-  requirements    String
-  budget          Float
-  deadline        DateTime
-  status          String   @default("draft") // draft, active, completed, cancelled
-  isPrivate       Boolean  @default(false)
-  additionalFields String? // JSON string of template-specific fields
-  brandId         String
-  brand           Brand    @relation(fields: [brandId], references: [id])
-  submissions     Submission[]
-  awardDrafts     AwardDraft[]
-  publishedAwards PublishedAward[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  closedAt        DateTime?
+  id               String           @id @default(cuid())
+  title            String
+  description      String
+  requirements     String
+  budget           Float
+  deadline         DateTime
+  status           String           @default("draft")
+  isPrivate        Boolean          @default(false)
+  additionalFields String?
+  brandId          String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  closedAt         DateTime?
+  awardDrafts      AwardDraft[]
+  brand            Brand            @relation(fields: [brandId], references: [id])
+  publishedAwards  PublishedAward[]
+  submissions      Submission[]
 }
 
 model PortfolioItem {
@@ -124,50 +101,50 @@ model PortfolioItem {
   title       String
   description String
   category    String
-  imageUrl    String?  // Main image URL
-  files       String?  // JSON string of file URLs
+  imageUrl    String?
+  files       String?
   creatorId   String
-  creator     Creator  @relation(fields: [creatorId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  creator     Creator  @relation(fields: [creatorId], references: [id])
 }
 
 model Submission {
-  id              String   @id @default(cuid())
-  briefId         String
-  brief           Brief    @relation(fields: [briefId], references: [id])
-  creatorId       String
-  creator         Creator  @relation(fields: [creatorId], references: [id])
-  content         String   // Description of the submission
-  files           String?  // JSON string of file URLs
-  amount          Float
-  status          String   @default("pending") // pending, approved, rejected
-  submittedAt     DateTime @default(now())
-  reviewedAt      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String    @id @default(cuid())
+  briefId     String
+  creatorId   String
+  content     String
+  files       String?
+  amount      Float
+  status      String    @default("pending")
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  creator     Creator   @relation(fields: [creatorId], references: [id])
+  brief       Brief     @relation(fields: [briefId], references: [id])
 }
 
 model AwardDraft {
-  id              String   @id @default(cuid())
-  briefId         String
-  brief           Brief    @relation(fields: [briefId], references: [id])
-  brandId         String
-  brand           Brand    @relation(fields: [brandId], references: [id])
-  rewardTiers     String   // JSON string of reward tiers with winners
-  savedAt         DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  briefId     String
+  brandId     String
+  rewardTiers String
+  savedAt     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  brief       Brief    @relation(fields: [briefId], references: [id])
 }
 
 model PublishedAward {
-  id              String   @id @default(cuid())
-  briefId         String
-  brief           Brief    @relation(fields: [briefId], references: [id])
-  brandId         String
-  brand           Brand    @relation(fields: [brandId], references: [id])
-  rewardTiers     String   // JSON string of reward tiers with winners
-  publishedAt     DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-} 
+  id          String   @id @default(cuid())
+  briefId     String
+  brandId     String
+  rewardTiers String
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  brief       Brief    @relation(fields: [briefId], references: [id])
+}

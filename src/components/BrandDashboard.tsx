@@ -57,7 +57,6 @@ const BrandDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -1723,21 +1722,13 @@ const BrandDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex fade-in">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white transition-all duration-300 slide-in-left`}>
+      <div className="w-64 bg-gray-900 text-white slide-in-left">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
-            {!sidebarCollapsed && (
-              <div className="flex items-center">
-                <DefaultAvatar name={user?.companyName || 'Brand'} size="md" className="mr-3" />
-                <span className="font-bold text-lg">{user?.companyName || 'Brand'}</span>
-              </div>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-gray-300 hover:text-white"
-            >
-              {sidebarCollapsed ? '→' : '←'}
-            </button>
+          <div className="flex items-center mb-8">
+            <div className="flex items-center">
+              <DefaultAvatar name={user?.companyName || 'Brand'} size="md" className="mr-3" />
+              <span className="font-bold text-lg">{user?.companyName || 'Brand'}</span>
+            </div>
           </div>
 
           <nav className="space-y-2">
@@ -1745,23 +1736,21 @@ const BrandDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleTabClick(item.id)}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-300 hover:text-white hover:bg-gray-800'
                 }`}
-                title={sidebarCollapsed ? item.label : undefined}
+                title={item.label}
               >
-                <span className={`${sidebarCollapsed ? '' : 'mr-3'}`}>{item.icon}</span>
-                {!sidebarCollapsed && item.label}
+                <span className="mr-3">{item.icon}</span>
+                {item.label}
               </button>
             ))}
           </nav>
 
           <div className="mt-8 pt-8 border-t border-gray-700">
-            {!sidebarCollapsed && (
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account</h3>
-            )}
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account</h3>
             <nav className="space-y-2">
               {accountNav.map((item) => (
                 <button
@@ -1773,15 +1762,15 @@ const BrandDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === item.id
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
-                  title={sidebarCollapsed ? item.label : undefined}
+                  title={item.label}
                 >
-                  <span className={`${sidebarCollapsed ? '' : 'mr-3'}`}>{item.icon}</span>
-                  {!sidebarCollapsed && item.label}
+                  <span className="mr-3">{item.icon}</span>
+                  {item.label}
                 </button>
               ))}
             </nav>
