@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 
@@ -41,7 +40,6 @@ interface Earning {
 const CreatorDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
@@ -183,7 +181,7 @@ const CreatorDashboard: React.FC = () => {
       formData.append('amount', selectedBrief.budget.toString());
       
       // Add files if any
-      applyFormData.files.forEach((file, index) => {
+      applyFormData.files.forEach((file) => {
         formData.append(`files`, file);
       });
 
@@ -1191,21 +1189,13 @@ const CreatorDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white transition-all duration-300`}>
+      <div className="w-64 bg-gray-900 text-white">
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
-            {!sidebarCollapsed && (
-              <div className="flex items-center">
-                <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" className="mr-3" />
-                <span className="font-bold text-lg">{user?.userName || 'Creator'}</span>
-              </div>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-gray-300 hover:text-white"
-            >
-              {sidebarCollapsed ? '→' : '←'}
-            </button>
+            <div className="flex items-center">
+              <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" className="mr-3" />
+              <span className="font-bold text-lg">{user?.userName || 'Creator'}</span>
+            </div>
           </div>
 
           <nav className="space-y-2">
@@ -1213,23 +1203,21 @@ const CreatorDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-300 hover:text-white hover:bg-gray-800'
                 }`}
-                title={sidebarCollapsed ? item.label : undefined}
+                title={item.label}
               >
-                <span className={`${sidebarCollapsed ? '' : 'mr-3'}`}>{item.icon}</span>
-                {!sidebarCollapsed && item.label}
+                <span className="mr-3">{item.icon}</span>
+                {item.label}
               </button>
             ))}
           </nav>
 
           <div className="mt-8 pt-8 border-t border-gray-700">
-            {!sidebarCollapsed && (
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account</h3>
-            )}
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account</h3>
             <nav className="space-y-2">
               {accountNav.map((item) => (
                 <button
@@ -1241,15 +1229,15 @@ const CreatorDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === item.id
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
-                  title={sidebarCollapsed ? item.label : undefined}
+                  title={item.label}
                 >
-                  <span className={`${sidebarCollapsed ? '' : 'mr-3'}`}>{item.icon}</span>
-                  {!sidebarCollapsed && item.label}
+                  <span className="mr-3">{item.icon}</span>
+                  {item.label}
                 </button>
               ))}
             </nav>
