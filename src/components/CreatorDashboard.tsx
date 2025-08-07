@@ -91,19 +91,25 @@ const CreatorDashboard: React.FC = () => {
       console.log('Fetching creator dashboard data with token:', token.substring(0, 20) + '...');
 
       // Fetch available briefs
-      const briefsResponse = await fetch('/api/creators/briefs', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      try {
+        const briefsResponse = await fetch('/api/creators/briefs', {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        let briefsData = [];
+        if (briefsResponse.ok) {
+          briefsData = await briefsResponse.json();
+          console.log('Available briefs fetched:', briefsData.length, briefsData);
+          setAvailableBriefs(briefsData);
+        } else {
+          console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
+          const errorText = await briefsResponse.text();
+          console.error('Error response:', errorText);
         }
-      });
-      let briefsData = [];
-      if (briefsResponse.ok) {
-        briefsData = await briefsResponse.json();
-        setAvailableBriefs(briefsData);
-        console.log('Available briefs fetched:', briefsData.length);
-      } else {
-        console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
+      } catch (error) {
+        console.error('Error fetching briefs:', error);
       }
 
       // Fetch submissions
@@ -515,8 +521,11 @@ const CreatorDashboard: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Available Briefs</h2>
         <div className="flex space-x-2">
-          <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-            Filter
+          <button 
+            onClick={fetchDashboardData}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Refresh
           </button>
           <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
             Sort by Prize
@@ -524,73 +533,89 @@ const CreatorDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {availableBriefs.map((brief) => (
-          <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-semibold text-gray-900">{brief.title}</h3>
-              <span className="text-sm text-gray-600">{brief.brandName}</span>
-            </div>
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <p>Prize: ${brief.budget.toLocaleString()}</p>
-              <p>Deadline: {new Date(brief.deadline).toLocaleDateString()}</p>
-              <p>Status: {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}</p>
-              {hasSubmittedToBrief(brief.id) && (
-                <div className="flex items-center">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 text-green-800' :
-                    getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
-                     getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
-                     'Pending Review'}
-                  </span>
-                  <span className="text-xs text-gray-500 ml-2">Your submission</span>
-                  {getSubmissionStatus(brief.id) === 'rejected' && (
-                    <div className="ml-2 text-xs text-red-600">
-                      • Cannot resubmit to this brief
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex space-x-2">
-              <button 
-                onClick={() => handleViewBrief(brief)}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 text-sm"
-              >
-                View Details
-              </button>
-              {hasSubmittedToBrief(brief.id) ? (
-                getSubmissionStatus(brief.id) === 'rejected' ? (
-                  <button 
-                    disabled
-                    className="flex-1 border border-gray-400 text-gray-400 py-2 px-4 rounded-md cursor-not-allowed text-sm"
-                    title="This submission was rejected. You cannot edit rejected submissions."
-                  >
-                    Submission Rejected
-                  </button>
+      {availableBriefs.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">📄</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No available briefs</h3>
+          <p className="text-gray-600 mb-6">
+            There are currently no active briefs available. Check back later for new opportunities!
+          </p>
+          <button 
+            onClick={fetchDashboardData}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {availableBriefs.map((brief) => (
+            <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-semibold text-gray-900">{brief.title}</h3>
+                <span className="text-sm text-gray-600">{brief.brandName}</span>
+              </div>
+              <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <p>Prize: ${brief.budget?.toLocaleString() || '0'}</p>
+                <p>Deadline: {brief.deadline ? new Date(brief.deadline).toLocaleDateString() : 'No deadline'}</p>
+                <p>Status: {brief.status ? brief.status.charAt(0).toUpperCase() + brief.status.slice(1) : 'Unknown'}</p>
+                {hasSubmittedToBrief(brief.id) && (
+                  <div className="flex items-center">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 text-green-800' :
+                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
+                       getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
+                       'Pending Review'}
+                    </span>
+                    <span className="text-xs text-gray-500 ml-2">Your submission</span>
+                    {getSubmissionStatus(brief.id) === 'rejected' && (
+                      <div className="ml-2 text-xs text-red-600">
+                        • Cannot resubmit to this brief
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleViewBrief(brief)}
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 text-sm"
+                >
+                  View Details
+                </button>
+                {hasSubmittedToBrief(brief.id) ? (
+                  getSubmissionStatus(brief.id) === 'rejected' ? (
+                    <button 
+                      disabled
+                      className="flex-1 border border-gray-400 text-gray-400 py-2 px-4 rounded-md cursor-not-allowed text-sm"
+                      title="This submission was rejected. You cannot edit rejected submissions."
+                    >
+                      Submission Rejected
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleApplyToBrief(brief)}
+                      className="flex-1 border border-blue-600 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 text-sm"
+                    >
+                      Edit Submission
+                    </button>
+                  )
                 ) : (
                   <button 
                     onClick={() => handleApplyToBrief(brief)}
-                    className="flex-1 border border-blue-600 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 text-sm"
+                    className="flex-1 border border-green-600 text-green-600 py-2 px-4 rounded-md hover:bg-green-50 text-sm"
                   >
-                    Edit Submission
+                    Apply
                   </button>
-                )
-              ) : (
-                <button 
-                  onClick={() => handleApplyToBrief(brief)}
-                  className="flex-1 border border-green-600 text-green-600 py-2 px-4 rounded-md hover:bg-green-50 text-sm"
-                >
-                  Apply
-                </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* View Brief Modal */}
       {showViewModal && selectedBrief && (

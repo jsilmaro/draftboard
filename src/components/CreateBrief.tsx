@@ -11,7 +11,7 @@ interface BriefTemplate {
     title: string;
     description: string;
     requirements: string;
-    budget: number;
+    reward: number;
     deadline: string;
     additionalFields: Record<string, any>;
   };
@@ -26,7 +26,8 @@ const CreateBrief: React.FC = () => {
     title: '',
     description: '',
     requirements: '',
-    budget: 0,
+    reward: 0,
+    rewardType: '' as 'CASH' | 'CREDIT' | 'PRIZES' | '',
     deadline: '',
     additionalFields: {} as Record<string, any>
   });
@@ -44,7 +45,7 @@ const CreateBrief: React.FC = () => {
         title: 'Podcast Promotion Campaign',
         description: 'Create engaging content to promote our podcast episodes and live events',
         requirements: 'Create social media content, video clips, or graphics that highlight key moments from our podcast. Include call-to-action to subscribe and follow.',
-        budget: 2000,
+        reward: 0, // Default value
         deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         additionalFields: {
           podcastName: '',
@@ -63,7 +64,7 @@ const CreateBrief: React.FC = () => {
         title: 'Product Launch Campaign',
         description: 'Generate buzz and drive sales for our new product launch',
         requirements: 'Create authentic product reviews, unboxing videos, or lifestyle content featuring our products. Include honest feedback and genuine user experience.',
-        budget: 3000,
+        reward: 0, // Default value
         deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         additionalFields: {
           productName: '',
@@ -82,7 +83,7 @@ const CreateBrief: React.FC = () => {
         title: 'Talent Giveaway Campaign',
         description: 'Run an exciting giveaway to engage our community and reward our audience',
         requirements: 'Create engaging content that promotes our giveaway, explains the prizes, and encourages participation. Include clear entry instructions and deadline.',
-        budget: 1500,
+        reward: 0, // Default value
         deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         additionalFields: {
           giveawayType: '',
@@ -99,14 +100,18 @@ const CreateBrief: React.FC = () => {
     if (templateId && templateId !== 'scratch') {
       const template = templates.find(t => t.id === templateId);
       if (template) {
-        setFormData(template.fields);
+        setFormData({
+          ...template.fields,
+          rewardType: '' // Initialize with empty reward type
+        });
       }
     } else if (templateId === 'scratch') {
       setFormData({
         title: '',
         description: '',
         requirements: '',
-        budget: 0,
+        reward: 0, // Default value since we removed the budget field
+        rewardType: '',
         deadline: '',
         additionalFields: {}
       });
@@ -271,19 +276,6 @@ const CreateBrief: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Budget ($) *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.budget}
-                    onChange={(e) => handleInputChange('budget', parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Deadline *
                   </label>
                   <input
@@ -294,6 +286,29 @@ const CreateBrief: React.FC = () => {
                     required
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reward Type *
+                  </label>
+                  <select
+                    value={formData.rewardType}
+                    onChange={(e) => handleInputChange('rewardType', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select a reward type</option>
+                    <option value="CASH">💰 CASH - Monetary rewards</option>
+                    <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
+                    <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> You'll set the specific reward amounts and tiers in the Rewards page after creating this brief.
+                </p>
               </div>
             </div>
           </div>

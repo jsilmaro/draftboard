@@ -11,7 +11,8 @@ interface Brief {
   status: 'active' | 'draft' | 'completed';
   submissions: number;
   deadline: string;
-  budget: number;
+  reward: number;
+  rewardType?: string;
 }
 
 interface Submission {
@@ -88,6 +89,11 @@ const BrandDashboard: React.FC = () => {
   });
   const [showCreateReward, setShowCreateReward] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState<any>(null);
+  const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
+  const [editingRewards, setEditingRewards] = useState<any>(null);
+  const [editRewardTiers, setEditRewardTiers] = useState<any[]>([]);
+  const [editSelectedRewardType, setEditSelectedRewardType] = useState('');
+  const [editIsLoading, setEditIsLoading] = useState(false);
   const [metrics, setMetrics] = useState({
     activeBriefs: 0,
     submissionsThisWeek: 0,
@@ -95,6 +101,35 @@ const BrandDashboard: React.FC = () => {
     avgSubmissions: 0,
     totalSubmissions: 0
   });
+
+  // Helper function to get reward information for a brief
+  const getBriefRewardInfo = (briefId: string) => {
+    const publishedReward = rewards.find(r => r.briefId === briefId);
+    const draftReward = drafts.find(d => d.briefId === briefId);
+    
+    if (publishedReward) {
+      return {
+        type: 'published',
+        totalAmount: publishedReward.rewardTiers.reduce((sum: number, tier: any) => sum + tier.amount, 0),
+        tiers: publishedReward.rewardTiers.length,
+        status: 'published'
+      };
+    } else if (draftReward) {
+      return {
+        type: 'draft',
+        totalAmount: draftReward.rewardTiers.reduce((sum: number, tier: any) => sum + tier.amount, 0),
+        tiers: draftReward.rewardTiers.length,
+        status: 'draft'
+      };
+    } else {
+      return {
+        type: 'none',
+        totalAmount: 0,
+        tiers: 0,
+        status: 'not_set'
+      };
+    }
+  };
 
   useEffect(() => {
     // Fetch data from API
@@ -601,17 +636,63 @@ const BrandDashboard: React.FC = () => {
           <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-semibold text-gray-900">{brief.title}</h3>
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-              </span>
+              <div className="flex space-x-2">
+                {brief.rewardType && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {brief.rewardType === 'CASH' ? '💰 Cash' : 
+                     brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                     brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType}
+                  </span>
+                )}
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  brief.status === 'active' ? 'bg-green-100 text-green-800' :
+                  brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                </span>
+              </div>
             </div>
             <div className="space-y-2 text-sm text-gray-600">
               <p>Submissions: {brief.submissions}</p>
-              <p>Budget: ${brief.budget.toLocaleString()}</p>
+              {(() => {
+                const rewardInfo = getBriefRewardInfo(brief.id);
+                if (brief.rewardType) {
+                  const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
+                                           brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                                           brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
+                  
+                  if (rewardInfo.type === 'published') {
+                    return (
+                      <div>
+                        <p className="text-green-600 font-medium">Reward: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Published</p>
+                      </div>
+                    );
+                  } else if (rewardInfo.type === 'draft') {
+                    return (
+                      <div>
+                        <p className="text-yellow-600 font-medium">Reward: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Draft</p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div>
+                        <p className="text-blue-600 font-medium">Reward: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">Type set • No tiers configured</p>
+                      </div>
+                    );
+                  }
+                } else {
+                  return (
+                    <div>
+                      <p className="text-gray-500">Reward: Not set</p>
+                      <p className="text-xs text-red-500">Configure rewards to attract creators</p>
+                    </div>
+                  );
+                }
+              })()}
               <p>Deadline: {new Date(brief.deadline).toLocaleDateString()}</p>
             </div>
             <div className="mt-4 flex space-x-2">
@@ -627,6 +708,59 @@ const BrandDashboard: React.FC = () => {
               >
                 Edit
               </button>
+              {getBriefRewardInfo(brief.id).type === 'none' && brief.status === 'active' && (
+                <button 
+                  onClick={() => {
+                    setEditingRewards({
+                      brief,
+                      rewardData: null,
+                      type: 'new'
+                    });
+                    setEditRewardTiers([]);
+                    setEditSelectedRewardType(brief.rewardType || '');
+                    setShowEditRewardsModal(true);
+                  }}
+                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                >
+                  Set Rewards
+                </button>
+              )}
+              {getBriefRewardInfo(brief.id).type === 'draft' && (
+                <button 
+                  onClick={() => {
+                    const draftReward = drafts.find(d => d.briefId === brief.id);
+                    setEditingRewards({
+                      brief,
+                      rewardData: draftReward,
+                      type: 'draft'
+                    });
+                    setEditRewardTiers(draftReward?.rewardTiers || []);
+                    setEditSelectedRewardType(brief.rewardType || '');
+                    setShowEditRewardsModal(true);
+                  }}
+                  className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
+                >
+                  Edit Rewards
+                </button>
+              )}
+              {getBriefRewardInfo(brief.id).type === 'published' && (
+                <button 
+                  onClick={() => {
+                    const publishedReward = rewards.find(r => r.briefId === brief.id);
+                    setEditingRewards({
+                      brief,
+                      rewardData: publishedReward,
+                      type: 'published'
+                    });
+                    setEditRewardTiers(publishedReward?.rewardTiers || []);
+                    setEditSelectedRewardType(brief.rewardType || '');
+                    setShowEditRewardsModal(true);
+                  }}
+                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                >
+                  Manage Rewards
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -656,9 +790,56 @@ const BrandDashboard: React.FC = () => {
                   {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                 </span>
               </div>
+              {selectedBrief.rewardType && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Reward Type:</span>
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                    {selectedBrief.rewardType === 'CASH' ? '💰 Cash Rewards' : 
+                     selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit Rewards' : 
+                     selectedBrief.rewardType === 'PRIZES' ? '🎁 Prize Rewards' : selectedBrief.rewardType}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
-                <span className="font-medium">Budget:</span>
-                <span>${selectedBrief.budget.toLocaleString()}</span>
+                <span className="font-medium">Reward System:</span>
+                {(() => {
+                  const rewardInfo = getBriefRewardInfo(selectedBrief.id);
+                  if (selectedBrief.rewardType) {
+                    const rewardTypeDisplay = selectedBrief.rewardType === 'CASH' ? '💰 Cash' : 
+                                             selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                                             selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes' : selectedBrief.rewardType;
+                    
+                    if (rewardInfo.type === 'published') {
+                      return (
+                        <div className="text-right">
+                          <span className="text-green-600 font-medium">{rewardTypeDisplay}</span>
+                          <div className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Published</div>
+                        </div>
+                      );
+                    } else if (rewardInfo.type === 'draft') {
+                      return (
+                        <div className="text-right">
+                          <span className="text-yellow-600 font-medium">{rewardTypeDisplay}</span>
+                          <div className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Draft</div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="text-right">
+                          <span className="text-blue-600 font-medium">{rewardTypeDisplay}</span>
+                          <div className="text-xs text-gray-500">Type set • No tiers</div>
+                        </div>
+                      );
+                    }
+                  } else {
+                    return (
+                      <div className="text-right">
+                        <span className="text-gray-500">Not set</span>
+                        <div className="text-xs text-red-500">Configure rewards</div>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Deadline:</span>
@@ -708,7 +889,7 @@ const BrandDashboard: React.FC = () => {
               const formData = new FormData(e.currentTarget);
               handleUpdateBrief(selectedBrief.id, {
                 title: formData.get('title') as string,
-                budget: parseFloat(formData.get('budget') as string),
+                rewardType: formData.get('rewardType') as string,
                 deadline: formData.get('deadline') as string,
                 status: formData.get('status') as 'draft' | 'active'
               });
@@ -725,14 +906,18 @@ const BrandDashboard: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Budget</label>
-                  <input
-                    type="number"
-                    name="budget"
-                    defaultValue={selectedBrief.budget}
+                  <label className="block text-sm font-medium text-gray-700">Reward Type</label>
+                  <select
+                    name="rewardType"
+                    defaultValue={selectedBrief.rewardType || ''}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                     required
-                  />
+                  >
+                    <option value="">Select a reward type</option>
+                    <option value="CASH">💰 CASH - Monetary rewards</option>
+                    <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
+                    <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Deadline</label>
@@ -1699,6 +1884,232 @@ const BrandDashboard: React.FC = () => {
     )
   );
 
+  const renderEditRewardsModal = () => {
+    if (!showEditRewardsModal || !editingRewards) return null;
+
+    const { brief, rewardData, type } = editingRewards;
+
+    const handleSave = async () => {
+      setEditIsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/brands/rewards/draft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            briefId: brief.id,
+            briefTitle: brief.title,
+            rewardTiers: editRewardTiers,
+            savedAt: new Date().toISOString()
+          })
+        });
+
+        if (response.ok) {
+          setShowSuccessNotification(true);
+          setSuccessNotification({
+            title: 'Rewards Updated',
+            message: 'Rewards have been saved successfully!',
+            icon: '✅'
+          });
+          setShowEditRewardsModal(false);
+          setEditingRewards(null);
+          fetchDashboardData();
+        } else {
+          alert('Failed to save rewards. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error saving rewards:', error);
+        alert('Error saving rewards. Please try again.');
+      } finally {
+        setEditIsLoading(false);
+      }
+    };
+
+    const addRewardTier = () => {
+      if (!editSelectedRewardType) {
+        alert('Please select a reward type first');
+        return;
+      }
+
+      const newTier = {
+        id: Date.now().toString(),
+        name: `${editSelectedRewardType} Reward ${editRewardTiers.length + 1}`,
+        amount: 0,
+        description: '',
+        type: editSelectedRewardType
+      };
+      setEditRewardTiers([...editRewardTiers, newTier]);
+    };
+
+    const updateRewardTier = (id: string, field: string, value: any) => {
+      setEditRewardTiers((prev: any[]) => prev.map((tier: any) => 
+        tier.id === id ? { ...tier, [field]: value } : tier
+      ));
+    };
+
+    const removeRewardTier = (id: string) => {
+      setEditRewardTiers((prev: any[]) => prev.filter((tier: any) => tier.id !== id));
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Edit Rewards</h3>
+              <p className="text-sm text-gray-600 mt-1">{brief.title}</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowEditRewardsModal(false);
+                setEditingRewards(null);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Brief Info */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-blue-900">Status:</span>
+                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                  brief.status === 'active' ? 'bg-green-100 text-green-800' :
+                  brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-blue-900">Reward Type:</span>
+                <span className="ml-2">
+                  {brief.rewardType ? (
+                    brief.rewardType === 'CASH' ? '💰 Cash' : 
+                    brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                    brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType
+                  ) : 'Not set'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Reward Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Reward Type</label>
+            <select
+              value={editSelectedRewardType}
+              onChange={(e) => setEditSelectedRewardType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select a reward type</option>
+              <option value="CASH">💰 CASH - Monetary rewards</option>
+              <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
+              <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
+            </select>
+          </div>
+
+          {/* Reward Tiers */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Reward Tiers</h4>
+              <button 
+                onClick={addRewardTier}
+                disabled={!editSelectedRewardType}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                + Add Tier
+              </button>
+            </div>
+
+            {editRewardTiers.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <div className="text-4xl mb-2">🎁</div>
+                <p>No reward tiers yet. Select a reward type and click "Add Tier" to get started!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {editRewardTiers.map((tier: any, index: number) => (
+                  <div key={tier.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <h5 className="font-medium text-gray-900">Tier {index + 1}</h5>
+                      <button
+                        onClick={() => removeRewardTier(tier.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input
+                          type="text"
+                          value={tier.name}
+                          onChange={(e) => updateRewardTier(tier.id, 'name', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {tier.type === 'CASH' ? 'Amount ($)' : 
+                           tier.type === 'CREDIT' ? 'Credit Value' : 'Prize Value ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          value={tier.amount}
+                          onChange={(e) => updateRewardTier(tier.id, 'amount', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={tier.description}
+                          onChange={(e) => updateRewardTier(tier.id, 'description', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <button
+              onClick={() => {
+                setShowEditRewardsModal(false);
+                setEditingRewards(null);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={editIsLoading || editRewardTiers.length === 0}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {editIsLoading ? 'Saving...' : 'Save Rewards'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -1790,6 +2201,7 @@ const BrandDashboard: React.FC = () => {
       {renderReviewModal()}
       {renderRejectModal()}
       {renderApproveModal()}
+      {renderEditRewardsModal()}
 
       {/* Animated Notifications */}
       <AnimatedNotification

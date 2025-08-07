@@ -81,7 +81,8 @@ model Brief {
   title            String
   description      String
   requirements     String
-  budget           Float
+  reward           Float
+  rewardType       String?          // CASH, CREDIT, PRIZES, or null if not set
   deadline         DateTime
   status           String           @default("draft")
   isPrivate        Boolean          @default(false)
