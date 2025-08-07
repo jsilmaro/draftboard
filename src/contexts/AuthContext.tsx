@@ -13,6 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (userData: User, token: string) => void;
+  googleLogin: (googleUserData: any, token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -73,6 +74,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const googleLogin = (googleUserData: any, token: string) => {
+    // For Google login, we need to handle the user data differently
+    // The backend will return the proper user structure
+    setUser(googleUserData);
+    setIsAuthenticated(true);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(googleUserData));
+    
+    // Redirect based on user type
+    if (googleUserData.type === 'brand') {
+      navigate('/brand/dashboard');
+    } else {
+      navigate('/creator/dashboard');
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -84,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     login,
+    googleLogin,
     logout,
     isAuthenticated,
     isLoading,

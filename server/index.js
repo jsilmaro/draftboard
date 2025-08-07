@@ -9,7 +9,7 @@ require('dotenv').config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 
 // Database connection test
 prisma.$connect()
@@ -276,11 +276,19 @@ app.post('/api/brands/login', async (req, res) => {
       where: { email }
     });
 
-    if (!brand) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+          if (!brand) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
-    const validPassword = await bcrypt.compare(password, brand.password);
+      // Check if this is a Google OAuth account (empty password)
+      if (!brand.password || brand.password === '') {
+        return res.status(401).json({ 
+          error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
+          googleOAuthRequired: true
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, brand.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -444,11 +452,19 @@ app.post('/api/creators/login', async (req, res) => {
       where: { email }
     });
 
-    if (!creator) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+          if (!creator) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
-    const validPassword = await bcrypt.compare(password, creator.password);
+      // Check if this is a Google OAuth account (empty password)
+      if (!creator.password || creator.password === '') {
+        return res.status(401).json({ 
+          error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
+          googleOAuthRequired: true
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, creator.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -482,6 +498,179 @@ app.post('/api/creators/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Creator login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Google OAuth endpoint
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    console.log('🔐 Google OAuth request received:', { 
+      hasCredential: !!req.body.credential, 
+      userType: req.body.userType,
+      bodyKeys: Object.keys(req.body)
+    });
+
+    const { credential, userType } = req.body;
+
+    if (!credential) {
+      console.log('❌ No credential provided');
+      return res.status(400).json({ error: 'Google credential is required' });
+    }
+
+    // Decode the JWT token from Google
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.decode(credential);
+    
+    if (!decoded) {
+      console.log('❌ Invalid credential format');
+      return res.status(400).json({ error: 'Invalid Google credential' });
+    }
+
+    const { email, name, picture } = decoded;
+    console.log('✅ Google credential decoded:', { email, name: name?.substring(0, 20) + '...' });
+
+    // Check if user already exists
+    let existingUser = null;
+    let userTypeFound = null;
+
+    console.log('🔍 Checking for existing user with email:', email);
+
+    // Check as brand first
+    const existingBrand = await prisma.brand.findUnique({
+      where: { email }
+    });
+
+    if (existingBrand) {
+      existingUser = existingBrand;
+      userTypeFound = 'brand';
+      console.log('✅ Found existing brand user:', existingBrand.id);
+    } else {
+      console.log('❌ No existing brand found');
+      // Check as creator
+      const existingCreator = await prisma.creator.findUnique({
+        where: { email }
+      });
+
+      if (existingCreator) {
+        existingUser = existingCreator;
+        userTypeFound = 'creator';
+        console.log('✅ Found existing creator user:', existingCreator.id);
+      } else {
+        console.log('❌ No existing creator found');
+      }
+    }
+
+    if (existingUser) {
+      // User exists, log them in
+      if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+
+      const token = jwt.sign(
+        { 
+          id: existingUser.id, 
+          email: existingUser.email, 
+          type: userTypeFound 
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      const userData = {
+        id: existingUser.id,
+        email: existingUser.email,
+        type: userTypeFound,
+        ...(userTypeFound === 'brand' ? {
+          companyName: existingUser.companyName
+        } : {
+          userName: existingUser.userName,
+          fullName: existingUser.fullName
+        })
+      };
+
+      console.log('✅ Login successful for existing user:', userData.id);
+      res.json({
+        message: 'Login successful',
+        token,
+        user: userData
+      });
+    } else {
+      // User doesn't exist, create new account
+      console.log('🆕 Creating new user account, userType:', userType);
+      
+      if (!userType) {
+        console.log('❌ No userType provided for new account');
+        return res.status(400).json({ error: 'User type is required for new accounts' });
+      }
+
+      if (!process.env.JWT_SECRET) {
+        console.log('❌ JWT_SECRET not configured');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+
+      let newUser;
+      let userData;
+
+      if (userType === 'brand') {
+        console.log('🏢 Creating new brand account...');
+        newUser = await prisma.brand.create({
+          data: {
+            email,
+            companyName: name || 'New Brand',
+            contactName: name || 'New Brand Contact',
+            password: '', // Empty password for Google OAuth accounts
+            isVerified: true
+          }
+        });
+
+        userData = {
+          id: newUser.id,
+          email: newUser.email,
+          companyName: newUser.companyName,
+          type: 'brand'
+        };
+        console.log('✅ Brand account created:', newUser.id);
+      } else {
+        console.log('👤 Creating new creator account...');
+        newUser = await prisma.creator.create({
+          data: {
+            email,
+            userName: email.split('@')[0], // Use email prefix as username
+            fullName: name || 'New Creator',
+            password: '', // Empty password for Google OAuth accounts
+            isVerified: true
+          }
+        });
+
+        userData = {
+          id: newUser.id,
+          email: newUser.email,
+          userName: newUser.userName,
+          type: 'creator'
+        };
+        console.log('✅ Creator account created:', newUser.id);
+      }
+
+      const token = jwt.sign(
+        { 
+          id: newUser.id, 
+          email: newUser.email, 
+          type: userType 
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      console.log('✅ Account created and login successful:', userData.id);
+      res.status(201).json({
+        message: 'Account created and login successful',
+        token,
+        user: userData
+      });
+    }
+  } catch (error) {
+    console.error('❌ Google OAuth error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

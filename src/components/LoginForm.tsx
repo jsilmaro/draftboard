@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
+import GoogleSignInLogin from './GoogleSignInLogin';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -50,7 +51,23 @@ const LoginForm: React.FC = () => {
       }
 
       // If both fail, show error
-      setError('Invalid email or password');
+      if (brandResponse.status === 401) {
+        const brandError = await brandResponse.json();
+        if (brandError.googleOAuthRequired) {
+          setError('This account was created with Google Sign-In. Please use the Google Sign-In button below.');
+        } else {
+          setError('Invalid email or password');
+        }
+      } else if (creatorResponse.status === 401) {
+        const creatorError = await creatorResponse.json();
+        if (creatorError.googleOAuthRequired) {
+          setError('This account was created with Google Sign-In. Please use the Google Sign-In button below.');
+        } else {
+          setError('Invalid email or password');
+        }
+      } else {
+        setError('Invalid email or password');
+      }
     } catch (error) {
       setError('An error occurred. Please try again.');
     } finally {
@@ -132,6 +149,14 @@ const LoginForm: React.FC = () => {
               </button>
             </div>
           </form>
+
+          {/* Google Sign-In Option */}
+          <GoogleSignInLogin
+            onError={(error: string) => {
+              setError(error);
+            }}
+            className="mt-6"
+          />
 
           <div className="mt-6">
             <div className="relative">

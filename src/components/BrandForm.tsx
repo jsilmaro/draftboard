@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
+import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 
 interface BrandFormData {
@@ -232,6 +233,19 @@ const BrandForm: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
         <p className="text-gray-600">Let's start with your company details</p>
       </div>
+
+      {/* Google Sign-In Option */}
+      <GoogleSignIn
+        userType="brand"
+        onSuccess={(userData) => {
+          console.log('Google sign-in successful for brand:', userData);
+          // The GoogleSignIn component will handle the login and navigation
+        }}
+        onError={(error) => {
+          setError(error);
+        }}
+        className="mb-6"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
