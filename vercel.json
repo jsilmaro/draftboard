@@ -13,22 +13,22 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/[...path].js"
+      "source": "/api/(.*)",
+      "destination": "/api/[...path].js"
     },
     {
-      "src": "/uploads/(.*)",
-      "dest": "/api/[...path].js"
+      "source": "/uploads/(.*)",
+      "destination": "/api/[...path].js"
     },
     {
-      "src": "/health",
-      "dest": "/api/[...path].js"
+      "source": "/health",
+      "destination": "/api/[...path].js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/dist/index.html"
+      "source": "/(.*)",
+      "destination": "/dist/index.html"
     }
   ],
   "env": {
