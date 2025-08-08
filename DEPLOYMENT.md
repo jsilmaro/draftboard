@@ -57,14 +57,14 @@ This guide will help you deploy your Brand-Creator Platform to various hosting p
 Set these in your deployment platform:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://username:password@host:port/database"
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 PORT=3001
 ```
 
 ## Database Setup
 
-The application uses SQLite with Prisma. Railway and Render will handle the database setup automatically.
+The application uses PostgreSQL with Prisma. Railway and Render will handle the database setup automatically. Make sure to use a PostgreSQL database URL in your DATABASE_URL environment variable.
 
 ## File Uploads
 
