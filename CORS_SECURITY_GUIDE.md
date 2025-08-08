@@ -36,8 +36,10 @@ app.use(cors({
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://your-actual-domain.vercel.app', // Replace with your actual domain
-        'https://www.your-actual-domain.vercel.app', // Include www version
+        'https://draftboard-b44q.vercel.app', // Replace with your actual domain
+        'https://www.draftboard-b44q.vercel.app', // Include www version
+        'https://draftboard-b44q-git-master-jsilmaros-projects.vercel.app',
+        'https://draftboard-b44q-guyh12yl8-jsilmaros-projects.vercel.app',
         // Add custom domains if you have them:
         // 'https://your-custom-domain.com',
         // 'https://www.your-custom-domain.com'

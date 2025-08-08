@@ -112,10 +112,10 @@ app.use(cors({
         'https://draftboard-ecru.vercel.app',
         'https://draftboard-octj8189e-jsilmaros-projects.vercel.app'
       ]
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'https://draftboard-b44q.vercel.app', ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept', 'https://draftboard-b44q-git-master-jsilmaros-projects.vercel.app', 'https://draftboard-b44q-guyh12yl8-jsilmaros-projects.vercel.app']
 }));
 app.use(express.json());
 app.use(express.static('uploads'));
