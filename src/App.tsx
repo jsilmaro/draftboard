@@ -14,7 +14,7 @@ import { AuthProvider } from './contexts/AuthContext'
 
 function App() {
   // Replace with your actual Google OAuth Client ID
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '372392441019-enmf1383232m9g0rn0kp8bool99jav7h.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id';
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

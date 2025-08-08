@@ -53,11 +53,11 @@ Your application is now fully configured for Vercel deployment with:
 
 3. **Set Environment Variables** in Vercel:
    ```
-   DATABASE_URL=postgresql://neondb_owner:npg_2pogUYukbEa8@ep-orange-flower-a1m9dei5-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   DATABASE_URL=your-neon-database-connection-string
    JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
    NODE_ENV=production
-   VITE_GOOGLE_CLIENT_ID=372392441019-enmf1383232m9g0rn0kp8bool99jav7h.apps.googleusercontent.com
-   GOOGLE_CLIENT_ID=372392441019-enmf1383232m9g0rn0kp8bool99jav7h.apps.googleusercontent.com
+   VITE_GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_ID=your-google-client-id
    ```
 
 4. **Deploy** - Click deploy and Vercel will handle the rest!

@@ -8,13 +8,81 @@ const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
 const app = express();
-const prisma = new PrismaClient();
+
+// Function to enhance DATABASE_URL with connection pool settings
+function getEnhancedDatabaseUrl() {
+  const baseUrl = process.env.DATABASE_URL;
+  if (!baseUrl) return baseUrl;
+  
+  // Add connection pool parameters to prevent timeout issues
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  const poolParams = [
+    'connection_limit=10',
+    'pool_timeout=20',
+    'idle_timeout=30',
+    'connect_timeout=10'
+  ].join('&');
+  
+  return `${baseUrl}${separator}${poolParams}`;
+}
+
+// Configure Prisma client with connection pool settings to prevent timeout issues
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: getEnhancedDatabaseUrl(),
+    },
+  },
+  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+});
+
+// Configure connection pool settings to prevent timeout issues
+// These settings help manage database connections more efficiently
+prisma.$use(async (params, next) => {
+  const before = Date.now();
+  
+  // Retry logic for connection pool timeouts
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const result = await next(params);
+      const after = Date.now();
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
+      }
+      return result;
+    } catch (error) {
+      retries--;
+      if (error.code === 'P2024' && retries > 0) {
+        // Connection pool timeout - wait and retry
+        console.log(`Connection pool timeout, retrying... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      throw error;
+    }
+  }
+});
+
+// Add connection pool event listeners for better error handling
+prisma.$on('query', (e) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Query: ' + e.query);
+    console.log('Params: ' + e.params);
+    console.log('Duration: ' + e.duration + 'ms');
+  }
+});
+
+prisma.$on('error', (e) => {
+  console.error('Prisma Error:', e);
+});
+
 const PORT = process.env.PORT || 3001;
 
-// Database connection test
+// Database connection test with connection pool optimization
 prisma.$connect()
   .then(() => {
-    console.log('✅ Database connected successfully');
+    console.log('✅ Database connected successfully with optimized connection pool');
     console.log('🔍 Environment Variables:');
     console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
     console.log('  - PORT:', process.env.PORT || 'not set');
@@ -37,30 +105,55 @@ prisma.$connect()
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'draftboard-ecru.vercel.app', // Replace with your actual Vercel domain
-        'draftboard-octj8189e-jsilmaros-projects.vercel.app', // Include www version if needed
-        // Add your custom domain if you have one:
-        // 'https://your-custom-domain.com',
-        // 'https://www.your-custom-domain.com'
+        'https://draftboard-ecru.vercel.app',
+        'https://draftboard-octj8189e-jsilmaros-projects.vercel.app',
+        'https://draftboard-ecru.vercel.app',
+        'https://www.draftboard-ecru.vercel.app'
       ]
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
 }));
 app.use(express.json());
 app.use(express.static('uploads'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.url} - ${new Date().toISOString()}`);
+  next();
+});
+
 // Healthcheck endpoint for Railway
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    hasJwtSecret: !!process.env.JWT_SECRET,
-    hasDatabaseUrl: !!process.env.DATABASE_URL
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$connect();
+    const brandCount = await prisma.brand.count();
+    
+    res.status(200).json({ 
+      status: 'OK', 
+      message: 'Server is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseConnected: true,
+      brandCount
+    });
+  } catch (error) {
+    console.error('❌ Health check failed:', error);
+    res.status(500).json({ 
+      status: 'ERROR',
+      message: 'Server is running but database connection failed',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseConnected: false,
+      error: error.message
+    });
+  }
 });
 
 // Serve static files from the React build
@@ -68,13 +161,38 @@ app.use(express.static(path.join(__dirname, '../dist')));
 
 // API routes
 app.get('/api', (req, res) => {
-  res.json({ message: 'Brand-Creator Platform API' });
+  res.json({ 
+    message: 'Brand-Creator Platform API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test endpoint for debugging
+app.get('/api/debug', (req, res) => {
+  res.json({
+    environment: process.env.NODE_ENV || 'development',
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    corsOrigins: process.env.NODE_ENV === 'production' 
+      ? ['https://draftboard-ecru.vercel.app', 'https://draftboard-octj8189e-jsilmaros-projects.vercel.app']
+      : ['http://localhost:3000', 'http://localhost:3001'],
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Database test endpoint
 app.get('/api/test-db', async (req, res) => {
   try {
     console.log('🔍 Testing database connection...');
+    console.log('🔍 Environment variables:', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'NOT SET'
+    });
+    
     await prisma.$connect();
     console.log('✅ Database connection successful');
     
@@ -82,20 +200,35 @@ app.get('/api/test-db', async (req, res) => {
     const brandCount = await prisma.brand.count();
     console.log('✅ Database query successful, brand count:', brandCount);
     
+    // Test all models
+    const [brands, creators, briefs, submissions] = await Promise.all([
+      prisma.brand.count(),
+      prisma.creator.count(),
+      prisma.brief.count(),
+      prisma.submission.count()
+    ]);
+    
     res.json({ 
       status: 'success', 
       message: 'Database connection working',
-      brandCount,
+      counts: { brands, creators, briefs, submissions },
       environment: process.env.NODE_ENV || 'development',
       hasJwtSecret: !!process.env.JWT_SECRET,
       hasDatabaseUrl: !!process.env.DATABASE_URL
     });
   } catch (error) {
     console.error('❌ Database test failed:', error);
+    console.error('🔍 Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n')
+    });
     res.status(500).json({ 
       status: 'error',
       message: 'Database connection failed',
       error: error.message,
+      code: error.code,
       environment: process.env.NODE_ENV || 'development',
       hasJwtSecret: !!process.env.JWT_SECRET,
       hasDatabaseUrl: !!process.env.DATABASE_URL
@@ -283,7 +416,13 @@ const authenticateToken = (req, res, next) => {
 // Brand login
 app.post('/api/brands/login', async (req, res) => {
   try {
+    console.log('🔐 Brand login attempt:', { email: req.body.email });
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      console.log('❌ Missing email or password');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     const brand = await prisma.brand.findUnique({
       where: { email }
@@ -459,7 +598,13 @@ app.post('/api/creators/register', async (req, res) => {
 // Creator login
 app.post('/api/creators/login', async (req, res) => {
   try {
+    console.log('🔐 Creator login attempt:', { email: req.body.email });
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      console.log('❌ Missing email or password');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     const creator = await prisma.creator.findUnique({
       where: { email }
@@ -734,6 +879,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 // Get all brands
 app.get('/api/admin/brands', async (req, res) => {
   try {
+    console.log('🔍 Admin: Fetching brands...');
     const brands = await prisma.brand.findMany({
       select: {
         id: true,
@@ -744,16 +890,22 @@ app.get('/api/admin/brands', async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
+    console.log(`✅ Admin: Found ${brands.length} brands`);
     res.json(brands);
   } catch (error) {
-    console.error('Error fetching brands:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Admin: Error fetching brands:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
 // Get all creators
 app.get('/api/admin/creators', async (req, res) => {
   try {
+    console.log('🔍 Admin: Fetching creators...');
     const creators = await prisma.creator.findMany({
       select: {
         id: true,
@@ -765,16 +917,22 @@ app.get('/api/admin/creators', async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
+    console.log(`✅ Admin: Found ${creators.length} creators`);
     res.json(creators);
   } catch (error) {
-    console.error('Error fetching creators:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Admin: Error fetching creators:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
 // Get all briefs
 app.get('/api/admin/briefs', async (req, res) => {
   try {
+    console.log('🔍 Admin: Fetching briefs...');
     const briefs = await prisma.brief.findMany({
       include: {
         brand: {
@@ -790,16 +948,22 @@ app.get('/api/admin/briefs', async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
+    console.log(`✅ Admin: Found ${briefs.length} briefs`);
     res.json(briefs);
   } catch (error) {
-    console.error('Error fetching briefs:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Admin: Error fetching briefs:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
 // Get all submissions
 app.get('/api/admin/submissions', async (req, res) => {
   try {
+    console.log('🔍 Admin: Fetching submissions...');
     const submissions = await prisma.submission.findMany({
       include: {
         brief: {
@@ -815,16 +979,22 @@ app.get('/api/admin/submissions', async (req, res) => {
       },
       orderBy: { submittedAt: 'desc' }
     });
+    console.log(`✅ Admin: Found ${submissions.length} submissions`);
     res.json(submissions);
   } catch (error) {
-    console.error('Error fetching submissions:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Admin: Error fetching submissions:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
 // Get admin analytics
 app.get('/api/admin/analytics', async (req, res) => {
   try {
+    console.log('🔍 Admin: Fetching analytics...');
     const [
       totalBrands,
       totalCreators,
@@ -845,6 +1015,7 @@ app.get('/api/admin/analytics', async (req, res) => {
     const totalPayouts = approvedSubmissions.reduce((sum, sub) => sum + sub.amount, 0);
     const monthlyRevenue = totalPayouts * 1.3; // 30% platform fee
 
+    console.log('✅ Admin: Analytics calculated successfully');
     res.json({
       totalBrands,
       totalCreators,
@@ -1989,9 +2160,18 @@ if (!fs.existsSync('uploads')) {
 // Global error handler
 app.use((error, req, res, _next) => {
   console.error('❌ Server error:', error);
+  console.error('🔍 Error details:', {
+    name: error.name,
+    message: error.message,
+    code: error.code,
+    url: req.url,
+    method: req.method,
+    stack: error.stack?.split('\n').slice(0, 5).join('\n')
+  });
   res.status(500).json({ 
     error: 'Internal server error',
     message: error.message,
+    code: error.code,
     stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
   });
 });
@@ -2003,12 +2183,34 @@ app.get('*', (req, res) => {
 
 // Only start the server if this file is run directly (not imported)
 if (require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health check available at: http://localhost:${PORT}/health`);
     console.log(`🔗 API available at: http://localhost:${PORT}/api`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
+
+  // Graceful shutdown handling
+  const gracefulShutdown = async (signal) => {
+    console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+    
+    server.close(async () => {
+      console.log('✅ HTTP server closed');
+      
+      try {
+        await prisma.$disconnect();
+        console.log('✅ Prisma client disconnected');
+        process.exit(0);
+      } catch (error) {
+        console.error('❌ Error during shutdown:', error);
+        process.exit(1);
+      }
+    });
+  };
+
+  // Handle shutdown signals
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 // Export the app for serverless deployment

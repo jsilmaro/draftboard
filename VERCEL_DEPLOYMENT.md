@@ -19,7 +19,7 @@ Before deploying, you need to set up the following environment variables in Verc
 
 1. **DATABASE_URL**
    ```
-   postgresql://neondb_owner:npg_2pogUYukbEa8@ep-orange-flower-a1m9dei5-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   your-neon-database-connection-string
    ```
 
 2. **JWT_SECRET**
@@ -34,12 +34,12 @@ Before deploying, you need to set up the following environment variables in Verc
 
 4. **VITE_GOOGLE_CLIENT_ID** (Frontend)
    ```
-   372392441019-enmf1383232m9g0rn0kp8bool99jav7h.apps.googleusercontent.com
+   your-google-client-id
    ```
 
 5. **GOOGLE_CLIENT_ID** (Backend)
    ```
-   372392441019-enmf1383232m9g0rn0kp8bool99jav7h.apps.googleusercontent.com
+   your-google-client-id
    ```
 
 ## 🚀 Deployment Steps
