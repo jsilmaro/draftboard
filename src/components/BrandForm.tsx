@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import DefaultAvatar from './DefaultAvatar';
+import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -44,7 +43,6 @@ const BrandForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
   const { login } = useAuth();
   
   const [formData, setFormData] = useState<BrandFormData>({
@@ -231,14 +229,14 @@ const BrandForm: React.FC = () => {
           <span className="text-2xl font-bold text-yellow-600">B</span>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
-        <p className="text-gray-600">Let's start with your company details</p>
+        <p className="text-gray-600">Let&apos;s start with your company details</p>
       </div>
 
       {/* Google Sign-In Option */}
       <GoogleSignIn
         userType="brand"
-        onSuccess={(userData) => {
-          console.log('Google sign-in successful for brand:', userData);
+        onSuccess={(_userData) => {
+          // Google sign-in successful for brand
           // The GoogleSignIn component will handle the login and navigation
         }}
         onError={(error) => {

@@ -10,10 +10,15 @@ interface GoogleUser {
   sub: string;
 }
 
+interface CredentialResponse {
+  credential?: string;
+  select_by?: string;
+}
+
 interface GoogleSignInProps {
   onSuccess: (userData: GoogleUser) => void;
   onError: (error: string) => void;
-  userType: 'brand' | 'creator';
+  userType: 'brand' | 'creator' | 'admin';
   className?: string;
 }
 
@@ -24,7 +29,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
   className = '' 
 }) => {
   const { googleLogin } = useAuth();
-  const handleSuccess = async (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       if (credentialResponse.credential) {
         const decoded: GoogleUser = jwtDecode(credentialResponse.credential);
@@ -53,7 +58,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         }
       }
     } catch (error) {
-      console.error('Google authentication error:', error);
+      // Google authentication error
       onError('Failed to authenticate with Google');
     }
   };

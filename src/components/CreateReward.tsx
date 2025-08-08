@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import AnimatedNotification from './AnimatedNotification';
 
 interface Brief {
@@ -51,7 +50,6 @@ interface CreateRewardProps {
 }
 
 const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
-  const { user } = useAuth();
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [shortlistedSubmissions, setShortlistedSubmissions] = useState<Submission[]>([]);
@@ -113,7 +111,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
                 };
               }
             } catch (error) {
-              console.error('Error fetching submissions for brief:', error);
+              // Error fetching submissions for brief
             }
     
             return {
@@ -126,7 +124,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
         setBriefs(briefsWithShortlistedCounts);
       }
     } catch (error) {
-      console.error('Error fetching briefs:', error);
+      // Error fetching briefs
     }
   };
 
@@ -154,7 +152,6 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
         alert('Failed to publish brief. Please try again.');
       }
     } catch (error) {
-      console.error('Error publishing brief:', error);
       alert('Error publishing brief. Please try again.');
     }
   };
@@ -194,7 +191,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
         setShortlistedSubmissions(shortlisted);
       }
     } catch (error) {
-      console.error('Error fetching shortlisted submissions:', error);
+      // Error fetching shortlisted submissions
     }
   };
 
@@ -281,7 +278,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
         alert('Failed to save rewards. Please try again.');
       }
     } catch (error) {
-      console.error('Error saving awards:', error);
+      // Error saving awards
       alert('Error saving rewards. Please try again.');
     }
   };
@@ -336,14 +333,13 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
           setSelectedRewardType('');
         } else {
           const errorData = await closeBriefResponse.json();
-          console.error('Failed to close brief:', errorData);
+          // Failed to close brief
           alert(`Rewards submitted successfully, but there was an issue closing the brief: ${errorData.error || 'Unknown error'}. Please contact support.`);
         }
       } else {
         alert('Failed to submit rewards. Please try again.');
       }
     } catch (error) {
-      console.error('Error submitting rewards:', error);
       alert('Error submitting rewards. Please try again.');
     }
   };
@@ -636,11 +632,11 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
                     {selectedRewardType === 'CREDIT' && '🎫'}
                     {selectedRewardType === 'PRIZES' && '🎁'}
                   </div>
-                  <p>No {selectedRewardType.toLowerCase()} reward tiers yet. Click "Add {selectedRewardType} Reward" to get started!</p>
+                  <p>No {selectedRewardType.toLowerCase()} reward tiers yet. Click &quot;Add {selectedRewardType} Reward&quot; to get started!</p>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {rewardTiers.map((tier, index) => (
+                  {rewardTiers.map((tier, _index) => (
                     <div key={tier.id} className="border border-gray-200 rounded-lg p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">

@@ -13,8 +13,18 @@ interface BriefTemplate {
     requirements: string;
     reward: number;
     deadline: string;
-    additionalFields: Record<string, any>;
+    additionalFields: Record<string, string | string[]>;
   };
+}
+
+interface FormData {
+  title: string;
+  description: string;
+  requirements: string;
+  reward: number;
+  rewardType: 'CASH' | 'CREDIT' | 'PRIZES' | '';
+  deadline: string;
+  additionalFields: Record<string, string | string[]>;
 }
 
 const CreateBrief: React.FC = () => {
@@ -22,14 +32,14 @@ const CreateBrief: React.FC = () => {
   const { user } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     requirements: '',
     reward: 0,
     rewardType: '' as 'CASH' | 'CREDIT' | 'PRIZES' | '',
     deadline: '',
-    additionalFields: {} as Record<string, any>
+    additionalFields: {} as Record<string, string | string[]>
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -119,14 +129,14 @@ const CreateBrief: React.FC = () => {
     setCurrentStep(2);
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleAdditionalFieldChange = (field: string, value: any) => {
+  const handleAdditionalFieldChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({
       ...prev,
       additionalFields: {
@@ -163,7 +173,7 @@ const CreateBrief: React.FC = () => {
         setShowShareModal(true);
       }
     } catch (error) {
-      console.error('Error creating brief:', error);
+      // Error creating brief
     }
   };
 
@@ -174,7 +184,7 @@ const CreateBrief: React.FC = () => {
         await navigator.clipboard.writeText(shareableLink);
         alert('Link copied to clipboard!');
       } catch (error) {
-        console.error('Failed to copy link:', error);
+        // Failed to copy link
       }
     }
   };
@@ -307,7 +317,7 @@ const CreateBrief: React.FC = () => {
 
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> You'll set the specific reward amounts and tiers in the Rewards page after creating this brief.
+                  <strong>Note:</strong> You&apos;ll set the specific reward amounts and tiers in the Rewards page after creating this brief.
                 </p>
               </div>
             </div>
@@ -410,7 +420,7 @@ const CreateBrief: React.FC = () => {
               </label>
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              Private briefs won't appear in the public marketplace but you'll still get a shareable link to send to creators directly.
+              Private briefs won&apos;t appear in the public marketplace but you&apos;ll still get a shareable link to send to creators directly.
             </p>
           </div>
 

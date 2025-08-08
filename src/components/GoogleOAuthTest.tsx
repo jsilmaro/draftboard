@@ -10,6 +10,11 @@ interface GoogleUser {
   sub: string;
 }
 
+interface CredentialResponse {
+  credential?: string;
+  select_by?: string;
+}
+
 const GoogleOAuthTest: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const { googleLogin } = useAuth();
@@ -18,7 +23,7 @@ const GoogleOAuthTest: React.FC = () => {
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
   };
 
-  const handleSuccess = async (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       addLog('Google OAuth success callback triggered');
       
@@ -81,7 +86,7 @@ const GoogleOAuthTest: React.FC = () => {
       }
     } catch (error) {
       addLog(`Error: ${error}`);
-      console.error('Google authentication error:', error);
+      // Google authentication error
     }
   };
 

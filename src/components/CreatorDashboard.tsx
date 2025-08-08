@@ -84,32 +84,20 @@ const CreatorDashboard: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('No token found, user not authenticated');
+        // No token found, user not authenticated
         return;
       }
 
-      console.log('Fetching creator dashboard data with token:', token.substring(0, 20) + '...');
-
       // Fetch available briefs
-      try {
-        const briefsResponse = await fetch('/api/creators/briefs', {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        let briefsData = [];
-        if (briefsResponse.ok) {
-          briefsData = await briefsResponse.json();
-          console.log('Available briefs fetched:', briefsData.length, briefsData);
-          setAvailableBriefs(briefsData);
-        } else {
-          console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
-          const errorText = await briefsResponse.text();
-          console.error('Error response:', errorText);
-        }
-      } catch (error) {
-        console.error('Error fetching briefs:', error);
+      const briefsResponse = await fetch('/api/creators/briefs', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      let briefsData = [];
+      if (briefsResponse.ok) {
+        briefsData = await briefsResponse.json();
+        setAvailableBriefs(briefsData);
+      } else {
+        // Failed to fetch briefs
       }
 
       // Fetch submissions
@@ -159,7 +147,7 @@ const CreatorDashboard: React.FC = () => {
         avgSubmissions: submissionsData.length
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Error fetching dashboard data
     }
   };
 
@@ -214,11 +202,11 @@ const CreatorDashboard: React.FC = () => {
         });
         setShowSuccessNotification(true);
       } else {
-        console.error('Failed to submit application');
+        // Failed to submit application
         alert('Failed to submit application. Please try again.');
       }
     } catch (error) {
-      console.error('Error submitting application:', error);
+      // Error submitting application
       alert('Error submitting application. Please try again.');
     }
   };
@@ -308,11 +296,11 @@ const CreatorDashboard: React.FC = () => {
         });
         setShowSuccessNotification(true);
       } else {
-        console.error('Failed to save portfolio item');
+        // Failed to save portfolio item
         alert('Failed to save portfolio item. Please try again.');
       }
     } catch (error) {
-      console.error('Error saving portfolio item:', error);
+      // Error saving portfolio item
       alert('Error saving portfolio item. Please try again.');
     }
   };
@@ -335,11 +323,11 @@ const CreatorDashboard: React.FC = () => {
         fetchDashboardData();
         alert('Portfolio item deleted successfully!');
       } else {
-        console.error('Failed to delete portfolio item');
+        // Failed to delete portfolio item
         alert('Failed to delete portfolio item. Please try again.');
       }
     } catch (error) {
-      console.error('Error deleting portfolio item:', error);
+      // Error deleting portfolio item
       alert('Error deleting portfolio item. Please try again.');
     }
   };

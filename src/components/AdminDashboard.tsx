@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 interface User {
   id: string;
   email: string;
-  type: 'brand' | 'creator';
+  type: 'brand' | 'creator' | 'admin';
   companyName?: string;
   userName?: string;
   fullName?: string;
@@ -43,6 +43,53 @@ interface Analytics {
   monthlyRevenue: number;
 }
 
+interface ApiBrand {
+  id: string;
+  email: string;
+  companyName: string;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+interface ApiCreator {
+  id: string;
+  email: string;
+  userName: string;
+  fullName: string;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+interface ApiBrief {
+  id: string;
+  title: string;
+  brandId: string;
+  brand: {
+    companyName: string;
+  };
+  status: 'active' | 'completed' | 'draft';
+  budget: number;
+  _count: {
+    submissions: number;
+  };
+  createdAt: string;
+}
+
+interface ApiSubmission {
+  id: string;
+  briefId: string;
+  brief: {
+    title: string;
+  };
+  creatorId: string;
+  creator: {
+    fullName: string;
+  };
+  status: 'pending' | 'approved' | 'rejected';
+  amount: number;
+  submittedAt: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [brands, setBrands] = useState<User[]>([]);
@@ -72,7 +119,7 @@ const AdminDashboard: React.FC = () => {
 
         if (brandsRes.ok) {
           const brandsData = await brandsRes.json();
-          setBrands(brandsData.map((brand: any) => ({
+          setBrands(brandsData.map((brand: ApiBrand) => ({
             id: brand.id,
             email: brand.email,
             type: 'brand' as const,
@@ -84,7 +131,7 @@ const AdminDashboard: React.FC = () => {
 
         if (creatorsRes.ok) {
           const creatorsData = await creatorsRes.json();
-          setCreators(creatorsData.map((creator: any) => ({
+          setCreators(creatorsData.map((creator: ApiCreator) => ({
             id: creator.id,
             email: creator.email,
             type: 'creator' as const,
@@ -97,7 +144,7 @@ const AdminDashboard: React.FC = () => {
 
         if (briefsRes.ok) {
           const briefsData = await briefsRes.json();
-          setBriefs(briefsData.map((brief: any) => ({
+          setBriefs(briefsData.map((brief: ApiBrief) => ({
             id: brief.id,
             title: brief.title,
             brandId: brief.brandId,
@@ -111,7 +158,7 @@ const AdminDashboard: React.FC = () => {
 
         if (submissionsRes.ok) {
           const submissionsData = await submissionsRes.json();
-          setSubmissions(submissionsData.map((submission: any) => ({
+          setSubmissions(submissionsData.map((submission: ApiSubmission) => ({
             id: submission.id,
             briefId: submission.briefId,
             briefTitle: submission.brief.title,
@@ -135,8 +182,7 @@ const AdminDashboard: React.FC = () => {
           });
         }
       } catch (error) {
-        console.error('Error fetching admin data:', error);
-        // Set empty arrays when API fails
+        // Error fetching admin data - set empty arrays when API fails
         setBrands([]);
         setCreators([]);
         setBriefs([]);

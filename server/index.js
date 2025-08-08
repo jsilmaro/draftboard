@@ -527,7 +527,7 @@ app.post('/api/auth/google', async (req, res) => {
       return res.status(400).json({ error: 'Invalid Google credential' });
     }
 
-    const { email, name, picture } = decoded;
+    const { email, name } = decoded;
     console.log('✅ Google credential decoded:', { email, name: name?.substring(0, 20) + '...' });
 
     // Check if user already exists
@@ -1144,7 +1144,7 @@ app.get('/api/brands/rewards', authenticateToken, async (req, res) => {
 
     // For now, return empty arrays as rewards table doesn't exist yet
     // In a real app, you would fetch from rewards and rewards_drafts tables
-    const rewards = [];
+    // const rewards = [];
 
     // Fetch real drafts from database
     const drafts = await prisma.awardDraft.findMany({
@@ -1793,7 +1793,7 @@ app.post('/api/brands/invite-creator', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Only brands can invite creators' });
     }
 
-    const { creatorId, message, briefId } = req.body;
+    const { creatorId, briefId } = req.body;
 
     // Check if creator exists
     const creator = await prisma.creator.findUnique({
@@ -1974,7 +1974,7 @@ if (!fs.existsSync('uploads')) {
 }
 
 // Global error handler
-app.use((error, req, res, next) => {
+app.use((error, req, res, _next) => {
   console.error('❌ Server error:', error);
   res.status(500).json({ 
     error: 'Internal server error',

@@ -1,18 +1,15 @@
 import React from 'react';
 import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../contexts/AuthContext';
-
-interface GoogleUser {
-  email: string;
-  name: string;
-  picture: string;
-  sub: string;
-}
 
 interface GoogleSignInLoginProps {
   onError: (error: string) => void;
   className?: string;
+}
+
+interface CredentialResponse {
+  credential?: string;
+  select_by?: string;
 }
 
 const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({ 
@@ -21,12 +18,10 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
 }) => {
   const { googleLogin } = useAuth();
 
-  const handleSuccess = async (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       if (credentialResponse.credential) {
-        const decoded: GoogleUser = jwtDecode(credentialResponse.credential);
-        
-        console.log('Google OAuth successful, attempting authentication...');
+        // Google OAuth successful, attempting authentication...
         
         // Try brand login first
         const brandResponse = await fetch('/api/auth/google', {
@@ -42,7 +37,7 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
 
         if (brandResponse.ok) {
           const data = await brandResponse.json();
-          console.log('Brand authentication successful:', data);
+          // Brand authentication successful
           googleLogin(data.user, data.token);
           return;
         }
@@ -61,20 +56,16 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
 
         if (creatorResponse.ok) {
           const data = await creatorResponse.json();
-          console.log('Creator authentication successful:', data);
+          // Creator authentication successful
           googleLogin(data.user, data.token);
           return;
         }
 
         // If both fail, show error
-        const brandError = await brandResponse.json().catch(() => ({}));
-        const creatorError = await creatorResponse.json().catch(() => ({}));
-        
-        console.log('Authentication failed:', { brandError, creatorError });
         onError('No account found with this Google email. Please register first.');
       }
     } catch (error) {
-      console.error('Google authentication error:', error);
+      // Google authentication error
       onError('Failed to authenticate with Google. Please try again.');
     }
   };

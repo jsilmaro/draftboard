@@ -54,6 +54,57 @@ interface Reward {
   status: 'published';
 }
 
+interface Draft {
+  id: string;
+  briefId: string;
+  briefTitle: string;
+  rewardTiers: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    description: string;
+    type: 'CASH' | 'CREDIT' | 'PRIZES';
+  }>;
+  savedAt: string;
+}
+
+interface DetailedSubmission {
+  id: string;
+  content: string;
+  files?: string[];
+  amount: number;
+  submittedAt: string;
+  creator: {
+    fullName: string;
+    userName: string;
+    email: string;
+    socialInstagram?: string;
+    socialTwitter?: string;
+    socialLinkedIn?: string;
+    socialTikTok?: string;
+    socialYouTube?: string;
+  };
+  brief: {
+    title: string;
+  };
+}
+
+interface EditingRewards {
+  brief: Brief;
+  rewardData?: Reward | Draft | null;
+  type?: string;
+}
+
+interface RewardTier {
+  id: string;
+  name: string;
+  amount: number;
+  description: string;
+  type: 'CASH' | 'CREDIT' | 'PRIZES';
+  winnerName?: string;
+  winnerId?: string;
+}
+
 const BrandDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -62,7 +113,7 @@ const BrandDashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [drafts, setDrafts] = useState<any[]>([]);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -78,7 +129,7 @@ const BrandDashboard: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
-  const [detailedSubmission, setDetailedSubmission] = useState<any>(null);
+  const [detailedSubmission, setDetailedSubmission] = useState<DetailedSubmission | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [submissionFilter, setSubmissionFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
@@ -88,10 +139,10 @@ const BrandDashboard: React.FC = () => {
     icon: ''
   });
   const [showCreateReward, setShowCreateReward] = useState(false);
-  const [selectedDraft, setSelectedDraft] = useState<any>(null);
+  const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
-  const [editingRewards, setEditingRewards] = useState<any>(null);
-  const [editRewardTiers, setEditRewardTiers] = useState<any[]>([]);
+  const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
+  const [editRewardTiers, setEditRewardTiers] = useState<RewardTier[]>([]);
   const [editSelectedRewardType, setEditSelectedRewardType] = useState('');
   const [editIsLoading, setEditIsLoading] = useState(false);
   const [metrics, setMetrics] = useState({
@@ -110,14 +161,14 @@ const BrandDashboard: React.FC = () => {
     if (publishedReward) {
       return {
         type: 'published',
-        totalAmount: publishedReward.rewardTiers.reduce((sum: number, tier: any) => sum + tier.amount, 0),
+        totalAmount: publishedReward.rewardTiers.reduce((sum: number, tier) => sum + tier.amount, 0),
         tiers: publishedReward.rewardTiers.length,
         status: 'published'
       };
     } else if (draftReward) {
       return {
         type: 'draft',
-        totalAmount: draftReward.rewardTiers.reduce((sum: number, tier: any) => sum + tier.amount, 0),
+        totalAmount: draftReward.rewardTiers.reduce((sum: number, tier) => sum + tier.amount, 0),
         tiers: draftReward.rewardTiers.length,
         status: 'draft'
       };
@@ -140,11 +191,9 @@ const BrandDashboard: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('No token found, user not authenticated');
+        // No token found, user not authenticated
         return;
       }
-
-      console.log('Fetching dashboard data with token:', token.substring(0, 20) + '...');
 
       // Fetch briefs
       const briefsResponse = await fetch('/api/brands/briefs', {
@@ -157,9 +206,6 @@ const BrandDashboard: React.FC = () => {
       if (briefsResponse.ok) {
         briefsData = await briefsResponse.json();
         setBriefs(briefsData);
-        console.log('Briefs fetched:', briefsData.length);
-      } else {
-        console.error('Failed to fetch briefs:', briefsResponse.status, briefsResponse.statusText);
       }
 
       // Fetch submissions
@@ -213,7 +259,7 @@ const BrandDashboard: React.FC = () => {
         totalSubmissions: submissionsData.length
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Error fetching dashboard data
     }
   };
 
@@ -249,10 +295,10 @@ const BrandDashboard: React.FC = () => {
         setShowEditModal(false);
         setSelectedBrief(null);
       } else {
-        console.error('Failed to publish brief');
+        // Failed to publish brief
       }
     } catch (error) {
-      console.error('Error publishing brief:', error);
+      // Error publishing brief
     }
   };
 
@@ -276,10 +322,10 @@ const BrandDashboard: React.FC = () => {
         setShowEditModal(false);
         setSelectedBrief(null);
       } else {
-        console.error('Failed to update brief');
+        // Failed to update brief
       }
     } catch (error) {
-      console.error('Error updating brief:', error);
+      // Error updating brief
     }
   };
 
@@ -326,11 +372,11 @@ const BrandDashboard: React.FC = () => {
         setSelectedCreator(null);
         setInviteFormData({ message: '', briefId: '' });
       } else {
-        console.error('Failed to send invitation');
+        // Failed to send invitation
         alert('Failed to send invitation. Please try again.');
       }
     } catch (error) {
-      console.error('Error sending invitation:', error);
+      // Error sending invitation
       alert('Error sending invitation. Please try again.');
     }
   };
@@ -358,11 +404,11 @@ const BrandDashboard: React.FC = () => {
         
         alert(`Creator Contact Details:\n\nName: ${contactData.fullName}\nUsername: @${contactData.userName}\nEmail: ${contactData.email}\nSocial Handles:\n${socialHandles}\nPortfolio: ${contactData.portfolio || 'Not provided'}`);
       } else {
-        console.error('Failed to get creator contact details');
+        // Failed to get creator contact details
         alert('Unable to get creator contact details. Make sure you have submissions from this creator.');
       }
     } catch (error) {
-      console.error('Error getting creator contact details:', error);
+      // Error getting creator contact details
       alert('Error getting creator contact details. Please try again.');
     }
   };
@@ -385,11 +431,11 @@ const BrandDashboard: React.FC = () => {
         const detailedData = await response.json();
         setDetailedSubmission(detailedData);
       } else {
-        console.error('Failed to fetch detailed submission data');
+        // Failed to fetch detailed submission data
         setDetailedSubmission(null);
       }
     } catch (error) {
-      console.error('Error fetching detailed submission:', error);
+      // Error fetching detailed submission
       setDetailedSubmission(null);
     }
   };
@@ -437,11 +483,11 @@ const BrandDashboard: React.FC = () => {
         // Show simple notification for rejection (no animation for bad news)
         alert('Submission rejected successfully. The creator has been notified.');
       } else {
-        console.error('Failed to reject submission');
+        // Failed to reject submission
         alert('Failed to reject submission. Please try again.');
       }
     } catch (error) {
-      console.error('Error rejecting submission:', error);
+      // Error rejecting submission
       alert('Error rejecting submission. Please try again.');
     }
   };
@@ -481,11 +527,11 @@ const BrandDashboard: React.FC = () => {
         });
         setShowSuccessNotification(true);
       } else {
-        console.error('Failed to approve submission');
+        // Failed to approve submission
         alert('Failed to approve submission. Please try again.');
       }
     } catch (error) {
-      console.error('Error approving submission:', error);
+      // Error approving submission
       alert('Error approving submission. Please try again.');
     }
   };
@@ -752,7 +798,15 @@ const BrandDashboard: React.FC = () => {
                       rewardData: publishedReward,
                       type: 'published'
                     });
-                    setEditRewardTiers(publishedReward?.rewardTiers || []);
+                    setEditRewardTiers(publishedReward?.rewardTiers.map(tier => ({
+                      id: tier.winnerId || `tier-${Date.now()}`,
+                      name: tier.name,
+                      amount: tier.amount,
+                      description: tier.description,
+                      type: brief.rewardType as 'CASH' | 'CREDIT' | 'PRIZES' || 'CASH',
+                      winnerName: tier.winnerName,
+                      winnerId: tier.winnerId
+                    })) || []);
                     setEditSelectedRewardType(brief.rewardType || '');
                     setShowEditRewardsModal(true);
                   }}
@@ -1298,9 +1352,9 @@ const BrandDashboard: React.FC = () => {
                 To invite a creator, you can:
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600">
-                <li>Click "Invite" on any creator card to send them a direct invitation</li>
+                <li>Click &quot;Invite&quot; on any creator card to send them a direct invitation</li>
                 <li>Share your brief link with creators you know</li>
-                <li>Use the "View Profile" button to see more details about creators</li>
+                <li>Use the &quot;View Profile&quot; button to see more details about creators</li>
                 <li>Contact creators directly if you have their contact information</li>
               </ul>
               <div className="bg-blue-50 p-4 rounded-lg">
@@ -1330,7 +1384,20 @@ const BrandDashboard: React.FC = () => {
           setShowCreateReward(false);
           setSelectedDraft(null);
         }} 
-        draftToEdit={selectedDraft}
+        draftToEdit={selectedDraft ? {
+          briefId: selectedDraft.briefId,
+          briefTitle: selectedDraft.briefTitle,
+          rewardTiers: selectedDraft.rewardTiers.map(tier => ({
+            id: tier.id,
+            name: tier.name,
+            amount: tier.amount,
+            description: tier.description,
+            type: tier.type,
+            winnerId: tier.id,
+            winnerName: undefined
+          })),
+          savedAt: selectedDraft.savedAt
+        } : undefined}
       />;
     }
 
@@ -1394,7 +1461,7 @@ const BrandDashboard: React.FC = () => {
                                alert('Failed to delete draft');
                              }
                            } catch (error) {
-                             console.error('Error deleting draft:', error);
+                             // Error deleting draft
                              alert('Error deleting draft');
                            }
                          }
@@ -1424,7 +1491,7 @@ const BrandDashboard: React.FC = () => {
                     </span>
                   </div>
                   <div className="space-y-3 mb-4">
-                    {reward.rewardTiers.map((tier, index) => (
+                    {reward.rewardTiers.map((tier, index: number) => (
                       <div key={index} className="bg-white p-3 rounded border border-green-100">
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-medium text-gray-700">{tier.name}</span>
@@ -1449,7 +1516,7 @@ const BrandDashboard: React.FC = () => {
                   {/* Winners Section */}
                   <div className="space-y-3 mb-4">
                     <h5 className="font-medium text-gray-900">Winners</h5>
-                    {reward.rewardTiers.map((tier: any, index: number) => (
+                    {reward.rewardTiers.map((tier, index: number) => (
                       <div key={index} className="bg-gray-50 p-3 rounded-lg">
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-medium text-gray-900">{tier.name}</span>
@@ -1651,7 +1718,7 @@ const BrandDashboard: React.FC = () => {
                     {/* Text Content */}
                     {detailedSubmission.content && (
                       <div className="mb-4">
-                        <h5 className="font-medium text-gray-900 mb-2">Creator's Proposal</h5>
+                        <h5 className="font-medium text-gray-900 mb-2">Creator&apos;s Proposal</h5>
                         <div className="bg-white p-3 rounded border text-sm text-gray-700 whitespace-pre-wrap">
                           {detailedSubmission.content}
                         </div>
@@ -1798,7 +1865,7 @@ const BrandDashboard: React.FC = () => {
                 <h4 className="font-semibold text-gray-900 mb-2">What happens next?</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• The creator will be notified of the rejection</li>
-                  <li>• The submission will be moved to the "Rejected" tab</li>
+                  <li>• The submission will be moved to the &quot;Rejected&quot; tab</li>
                   <li>• The rejection reason will be tracked for future reference</li>
                   <li>• The creator can still apply to other briefs</li>
                 </ul>
@@ -1856,7 +1923,7 @@ const BrandDashboard: React.FC = () => {
                 <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• The creator will be notified that their work has been shortlisted</li>
-                  <li>• The submission will be moved to the "Shortlist" tab</li>
+                  <li>• The submission will be moved to the &quot;Shortlist&quot; tab</li>
                   <li>• You can review all shortlisted submissions before making final decisions</li>
                   <li>• The creator will be excited to work with your brand</li>
                 </ul>
@@ -1887,7 +1954,7 @@ const BrandDashboard: React.FC = () => {
   const renderEditRewardsModal = () => {
     if (!showEditRewardsModal || !editingRewards) return null;
 
-    const { brief, rewardData, type } = editingRewards;
+    const { brief } = editingRewards;
 
     const handleSave = async () => {
       setEditIsLoading(true);
@@ -1923,7 +1990,7 @@ const BrandDashboard: React.FC = () => {
           alert('Failed to save rewards. Please try again.');
         }
       } catch (error) {
-        console.error('Error saving rewards:', error);
+        // Error saving rewards
         alert('Error saving rewards. Please try again.');
       } finally {
         setEditIsLoading(false);
@@ -1936,24 +2003,24 @@ const BrandDashboard: React.FC = () => {
         return;
       }
 
-      const newTier = {
+      const newTier: RewardTier = {
         id: Date.now().toString(),
         name: `${editSelectedRewardType} Reward ${editRewardTiers.length + 1}`,
         amount: 0,
         description: '',
-        type: editSelectedRewardType
+        type: editSelectedRewardType as 'CASH' | 'CREDIT' | 'PRIZES'
       };
       setEditRewardTiers([...editRewardTiers, newTier]);
     };
 
-    const updateRewardTier = (id: string, field: string, value: any) => {
-      setEditRewardTiers((prev: any[]) => prev.map((tier: any) => 
+    const updateRewardTier = (id: string, field: keyof RewardTier, value: string | number) => {
+      setEditRewardTiers((prev: RewardTier[]) => prev.map((tier: RewardTier) => 
         tier.id === id ? { ...tier, [field]: value } : tier
       ));
     };
 
     const removeRewardTier = (id: string) => {
-      setEditRewardTiers((prev: any[]) => prev.filter((tier: any) => tier.id !== id));
+      setEditRewardTiers((prev: RewardTier[]) => prev.filter((tier: RewardTier) => tier.id !== id));
     };
 
     return (
@@ -2033,11 +2100,11 @@ const BrandDashboard: React.FC = () => {
             {editRewardTiers.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-2">🎁</div>
-                <p>No reward tiers yet. Select a reward type and click "Add Tier" to get started!</p>
+                <p>No reward tiers yet. Select a reward type and click &quot;Add Tier&quot; to get started!</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {editRewardTiers.map((tier: any, index: number) => (
+                {editRewardTiers.map((tier, index: number) => (
                   <div key={tier.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <h5 className="font-medium text-gray-900">Tier {index + 1}</h5>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 interface User {
   id: string;
   email: string;
-  type: 'brand' | 'creator';
+  type: 'brand' | 'creator' | 'admin';
   companyName?: string;
   userName?: string;
   fullName?: string;
@@ -13,7 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (userData: User, token: string) => void;
-  googleLogin: (googleUserData: any, token: string) => void;
+  googleLogin: (googleUserData: User, token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
+        // Error parsing stored user data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -69,12 +69,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Redirect based on user type
     if (userData.type === 'brand') {
       navigate('/brand/dashboard');
-    } else {
+    } else if (userData.type === 'creator') {
       navigate('/creator/dashboard');
+    } else if (userData.type === 'admin') {
+      navigate('/admin');
     }
   };
 
-  const googleLogin = (googleUserData: any, token: string) => {
+  const googleLogin = (googleUserData: User, token: string) => {
     // For Google login, we need to handle the user data differently
     // The backend will return the proper user structure
     setUser(googleUserData);
@@ -85,8 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Redirect based on user type
     if (googleUserData.type === 'brand') {
       navigate('/brand/dashboard');
-    } else {
+    } else if (googleUserData.type === 'creator') {
       navigate('/creator/dashboard');
+    } else if (googleUserData.type === 'admin') {
+      navigate('/admin');
     }
   };
 
