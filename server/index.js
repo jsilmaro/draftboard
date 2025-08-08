@@ -105,10 +105,9 @@ prisma.$connect()
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
+        'https://draftboard-rf3ugm5tg-jsilmaros-projects.vercel.app',
         'https://draftboard-ecru.vercel.app',
-        'https://draftboard-octj8189e-jsilmaros-projects.vercel.app',
-        'https://draftboard-ecru.vercel.app',
-        'https://www.draftboard-ecru.vercel.app'
+        'https://draftboard-octj8189e-jsilmaros-projects.vercel.app'
       ]
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
@@ -176,7 +175,7 @@ app.get('/api/debug', (req, res) => {
     hasJwtSecret: !!process.env.JWT_SECRET,
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     corsOrigins: process.env.NODE_ENV === 'production' 
-      ? ['https://draftboard-ecru.vercel.app', 'https://draftboard-octj8189e-jsilmaros-projects.vercel.app']
+      ? ['https://draftboard-rf3ugm5tg-jsilmaros-projects.vercel.app', 'https://draftboard-ecru.vercel.app', 'https://draftboard-octj8189e-jsilmaros-projects.vercel.app']
       : ['http://localhost:3000', 'http://localhost:3001'],
     timestamp: new Date().toISOString()
   });
