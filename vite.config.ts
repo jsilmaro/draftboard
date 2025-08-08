@@ -25,4 +25,8 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    // Define API base URL for production
+    __API_BASE_URL__: JSON.stringify(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001'),
+  },
 })
