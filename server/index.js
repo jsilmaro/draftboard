@@ -34,7 +34,20 @@ prisma.$connect()
   });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://your-app-name.vercel.app', // Replace with your actual Vercel domain
+        'https://www.your-app-name.vercel.app', // Include www version if needed
+        // Add your custom domain if you have one:
+        // 'https://your-custom-domain.com',
+        // 'https://www.your-custom-domain.com'
+      ]
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 app.use(express.static('uploads'));
 
