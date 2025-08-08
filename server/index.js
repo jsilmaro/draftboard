@@ -37,8 +37,8 @@ prisma.$connect()
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://your-app-name.vercel.app', // Replace with your actual Vercel domain
-        'https://www.your-app-name.vercel.app', // Include www version if needed
+        'draftboard-ecru.vercel.app', // Replace with your actual Vercel domain
+        'draftboard-octj8189e-jsilmaros-projects.vercel.app', // Include www version if needed
         // Add your custom domain if you have one:
         // 'https://your-custom-domain.com',
         // 'https://www.your-custom-domain.com'
