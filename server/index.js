@@ -241,16 +241,57 @@ app.get('/api/test-db', async (req, res) => {
 
 
 // Multer configuration for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+// In serverless environments (Vercel), use memory storage instead of disk storage
+const storage = process.env.VERCEL || process.env.NODE_ENV === 'production' 
+  ? multer.memoryStorage() // Use memory storage for serverless
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+      },
+      filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+      }
+    });
+
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   }
 });
 
-const upload = multer({ storage });
+// Helper function to handle file uploads in different environments
+const handleFileUpload = (file) => {
+  if (!file) return null;
+  
+  // In serverless environments, we'd typically upload to cloud storage
+  // For now, we'll return a placeholder or handle differently
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    // In production, you might want to upload to AWS S3, Cloudinary, etc.
+    // For now, return a data URL or handle differently
+    return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+  } else {
+    // In development, use local file system
+    return `/uploads/${file.filename}`;
+  }
+};
+
+// Helper function to handle multiple file uploads
+const handleMultipleFileUploads = (files) => {
+  if (!files || files.length === 0) return null;
+  
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    // Convert multiple files to JSON string with data URLs
+    return JSON.stringify(files.map(file => ({
+      name: file.originalname,
+      type: file.mimetype,
+      data: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
+    })));
+  } else {
+    // In development, use local file paths
+    return JSON.stringify(files.map(file => `/uploads/${file.filename}`));
+  }
+};
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -377,7 +418,7 @@ const authenticateToken = (req, res, next) => {
                 // Terms
                 termsAccepted: termsAccepted === 'true' || termsAccepted === true,
                 // Profile
-                logo: req.file ? `/uploads/${req.file.filename}` : null
+                logo: handleFileUpload(req.file)
               }
             });
 
@@ -1724,15 +1765,16 @@ app.post('/api/creators/portfolio', authenticateToken, upload.array('files'), as
     const { title, description, category } = req.body;
 
     // Handle file uploads
-    const fileUrls = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const filesData = handleMultipleFileUploads(req.files);
+    const firstFileUrl = req.files && req.files.length > 0 ? handleFileUpload(req.files[0]) : null;
 
     const portfolioItem = await prisma.portfolioItem.create({
       data: {
         title,
         description,
         category,
-        imageUrl: fileUrls.length > 0 ? fileUrls[0] : null, // Use first file as main image
-        files: fileUrls.length > 0 ? JSON.stringify(fileUrls) : null,
+        imageUrl: firstFileUrl, // Use first file as main image
+        files: filesData,
         creatorId: req.user.id
       }
     });
@@ -1770,7 +1812,8 @@ app.put('/api/creators/portfolio/:id', authenticateToken, upload.array('files'),
     }
 
     // Handle file uploads
-    const fileUrls = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const filesData = handleMultipleFileUploads(req.files);
+    const firstFileUrl = req.files && req.files.length > 0 ? handleFileUpload(req.files[0]) : null;
 
     const updatedItem = await prisma.portfolioItem.update({
       where: { id },
@@ -1778,8 +1821,8 @@ app.put('/api/creators/portfolio/:id', authenticateToken, upload.array('files'),
         title,
         description,
         category,
-        imageUrl: fileUrls.length > 0 ? fileUrls[0] : existingItem.imageUrl,
-        files: fileUrls.length > 0 ? JSON.stringify(fileUrls) : existingItem.files
+        imageUrl: firstFileUrl || existingItem.imageUrl,
+        files: filesData || existingItem.files
       }
     });
 
@@ -1948,7 +1991,7 @@ app.post('/api/briefs/:id/apply', authenticateToken, upload.array('files'), asyn
     }
 
     // Handle file uploads
-    const fileUrls = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const filesData = handleMultipleFileUploads(req.files);
 
     // Create submission
     const submission = await prisma.submission.create({
@@ -1956,7 +1999,7 @@ app.post('/api/briefs/:id/apply', authenticateToken, upload.array('files'), asyn
         briefId: id,
         creatorId: req.user.id,
         content,
-        files: fileUrls.length > 0 ? JSON.stringify(fileUrls) : null,
+        files: filesData,
         amount: parseFloat(amount),
         status: 'pending'
       }
@@ -2153,10 +2196,15 @@ app.put('/api/brands/submissions/:id/approve', authenticateToken, async (req, re
   }
 });
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist (only in non-serverless environments)
 const fs = require('fs');
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL && !fs.existsSync('uploads')) {
+  try {
+    fs.mkdirSync('uploads');
+    console.log('✅ Uploads directory created');
+  } catch (error) {
+    console.warn('⚠️ Could not create uploads directory:', error.message);
+  }
 }
 
 // Global error handler
