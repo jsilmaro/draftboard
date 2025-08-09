@@ -82,7 +82,7 @@ model Brief {
   description      String
   requirements     String
   reward           Float
-  rewardType       String?          // CASH, CREDIT, PRIZES, or null if not set
+  rewardType       String?
   deadline         DateTime
   status           String           @default("draft")
   isPrivate        Boolean          @default(false)
@@ -122,8 +122,8 @@ model Submission {
   reviewedAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  creator     Creator   @relation(fields: [creatorId], references: [id])
   brief       Brief     @relation(fields: [briefId], references: [id])
+  creator     Creator   @relation(fields: [creatorId], references: [id])
 }
 
 model AwardDraft {
