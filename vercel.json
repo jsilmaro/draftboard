@@ -27,8 +27,8 @@
       "destination": "/api/[...path].js"
     },
     {
-      "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "source": "/((?!api|uploads|health|_next/static|favicon.ico|.*\\.).*)",
+      "destination": "/index.html"
     }
   ],
   "env": {
