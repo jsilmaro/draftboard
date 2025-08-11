@@ -7,6 +7,7 @@ import BrandDashboard from './components/BrandDashboard'
 import CreatorDashboard from './components/CreatorDashboard'
 import LoginForm from './components/LoginForm'
 import AdminDashboard from './components/AdminDashboard'
+import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import ProtectedRoute from './components/ProtectedRoute'
 import GoogleOAuthTest from './components/GoogleOAuthTest'
@@ -23,7 +24,15 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requiredUserType="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/brand/register" element={<BrandForm />} />
             <Route path="/creator/register" element={<CreatorForm />} />
             <Route path="/test-oauth" element={<GoogleOAuthTest />} />

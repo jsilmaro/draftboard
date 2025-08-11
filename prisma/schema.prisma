@@ -149,3 +149,14 @@ model PublishedAward {
   brand       Brand    @relation(fields: [brandId], references: [id])
   brief       Brief    @relation(fields: [briefId], references: [id])
 }
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      String   @default("admin") // admin, super_admin, etc.
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

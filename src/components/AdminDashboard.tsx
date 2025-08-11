@@ -45,7 +45,6 @@ interface Analytics {
 
 interface ApiBrand {
   id: string;
-  email: string;
   companyName: string;
   isVerified: boolean;
   createdAt: string;
@@ -53,7 +52,6 @@ interface ApiBrand {
 
 interface ApiCreator {
   id: string;
-  email: string;
   userName: string;
   fullName: string;
   isVerified: boolean;
@@ -121,7 +119,7 @@ const AdminDashboard: React.FC = () => {
           const brandsData = await brandsRes.json();
           setBrands(brandsData.map((brand: ApiBrand) => ({
             id: brand.id,
-            email: brand.email,
+            email: '***@***.***', // Privacy protected
             type: 'brand' as const,
             companyName: brand.companyName,
             isVerified: brand.isVerified,
@@ -133,7 +131,7 @@ const AdminDashboard: React.FC = () => {
           const creatorsData = await creatorsRes.json();
           setCreators(creatorsData.map((creator: ApiCreator) => ({
             id: creator.id,
-            email: creator.email,
+            email: '***@***.***', // Privacy protected
             type: 'creator' as const,
             userName: creator.userName,
             fullName: creator.fullName,
@@ -267,14 +265,13 @@ const AdminDashboard: React.FC = () => {
     <div className="bg-white rounded-lg shadow-md">
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Brand Management</h3>
-        <p className="text-sm text-gray-600 mt-1">Manage all registered brands</p>
+        <p className="text-sm text-gray-600 mt-1">Overview of registered brands (privacy protected)</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -293,7 +290,6 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{brand.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     brand.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -305,7 +301,7 @@ const AdminDashboard: React.FC = () => {
                   {new Date(brand.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
                   <button className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>
@@ -320,14 +316,13 @@ const AdminDashboard: React.FC = () => {
     <div className="bg-white rounded-lg shadow-md">
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Creator Management</h3>
-        <p className="text-sm text-gray-600 mt-1">Manage all registered creators</p>
+        <p className="text-sm text-gray-600 mt-1">Overview of registered creators (privacy protected)</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -347,7 +342,6 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{creator.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     creator.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -359,7 +353,7 @@ const AdminDashboard: React.FC = () => {
                   {new Date(creator.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
                   <button className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>

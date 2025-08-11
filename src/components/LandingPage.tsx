@@ -102,19 +102,18 @@ const LandingPage = () => {
         </div>
 
         <div className="text-center mt-16">
-          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <p className="text-gray-500 text-sm">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 font-medium hover:text-primary-700">
-                Sign in here
-              </Link>
-            </p>
-            <div className="h-px w-8 bg-gray-300 sm:h-8 sm:w-px"></div>
+          <p className="text-gray-500 text-sm">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary-600 font-medium hover:text-primary-700">
+              Sign in here
+            </Link>
+          </p>
+          <div className="mt-4">
             <Link 
-              to="/admin" 
-              className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+              to="/admin/login" 
+              className="text-xs text-gray-400 hover:text-gray-600 font-mono"
             >
-              Admin Dashboard →
+              Admin Access
             </Link>
           </div>
         </div>

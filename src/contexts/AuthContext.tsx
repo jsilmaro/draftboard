@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   login: (userData: User, token: string) => void;
   googleLogin: (googleUserData: User, token: string) => void;
+  adminLogin: (userData: User, token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -94,6 +95,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const adminLogin = (userData: User, token: string) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Admin users go directly to admin dashboard
+    navigate('/admin');
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -106,6 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     login,
     googleLogin,
+    adminLogin,
     logout,
     isAuthenticated,
     isLoading,

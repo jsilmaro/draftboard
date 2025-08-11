@@ -918,16 +918,76 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin endpoints (no authentication required for demo)
+// Admin login endpoint (no authentication required)
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    console.log('🔐 Admin login attempt:', { email: req.body.email });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      console.log('❌ Missing email or password');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const admin = await prisma.admin.findUnique({
+      where: { email }
+    });
+
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!admin.isActive) {
+      return res.status(401).json({ error: 'Admin account is deactivated' });
+    }
+
+    const validPassword = await bcrypt.compare(password, admin.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.log('❌ JWT_SECRET not configured during admin login');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    const token = jwt.sign(
+      { id: admin.id, email: admin.email, type: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    console.log('✅ Admin login successful:', { 
+      adminId: admin.id, 
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      tokenPreview: token.substring(0, 20) + '...'
+    });
+
+    res.json({
+      message: 'Admin login successful',
+      token,
+      user: {
+        id: admin.id,
+        email: admin.email,
+        fullName: admin.fullName,
+        type: 'admin'
+      }
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin endpoints (require authentication)
 // Get all brands
-app.get('/api/admin/brands', async (req, res) => {
+app.get('/api/admin/brands', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Admin: Fetching brands...');
     const brands = await prisma.brand.findMany({
       select: {
         id: true,
         companyName: true,
-        email: true,
         isVerified: true,
         createdAt: true
       },
@@ -946,7 +1006,7 @@ app.get('/api/admin/brands', async (req, res) => {
 });
 
 // Get all creators
-app.get('/api/admin/creators', async (req, res) => {
+app.get('/api/admin/creators', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Admin: Fetching creators...');
     const creators = await prisma.creator.findMany({
@@ -954,7 +1014,6 @@ app.get('/api/admin/creators', async (req, res) => {
         id: true,
         userName: true,
         fullName: true,
-        email: true,
         isVerified: true,
         createdAt: true
       },
@@ -973,7 +1032,7 @@ app.get('/api/admin/creators', async (req, res) => {
 });
 
 // Get all briefs
-app.get('/api/admin/briefs', async (req, res) => {
+app.get('/api/admin/briefs', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Admin: Fetching briefs...');
     const briefs = await prisma.brief.findMany({
@@ -1004,7 +1063,7 @@ app.get('/api/admin/briefs', async (req, res) => {
 });
 
 // Get all submissions
-app.get('/api/admin/submissions', async (req, res) => {
+app.get('/api/admin/submissions', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Admin: Fetching submissions...');
     const submissions = await prisma.submission.findMany({
@@ -1035,7 +1094,7 @@ app.get('/api/admin/submissions', async (req, res) => {
 });
 
 // Get admin analytics
-app.get('/api/admin/analytics', async (req, res) => {
+app.get('/api/admin/analytics', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Admin: Fetching analytics...');
     const [
