@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 
+
 interface Brief {
   id: string;
   title: string;
@@ -1268,14 +1269,13 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Animated Notifications */}
-      <AnimatedNotification
-        isVisible={showSuccessNotification}
-        onClose={() => setShowSuccessNotification(false)}
-        type="success"
-        title={successNotification.title}
-        message={successNotification.message}
-        icon={successNotification.icon}
-      />
+      {showSuccessNotification && (
+        <AnimatedNotification
+          message={successNotification.message}
+          type="success"
+          onClose={() => setShowSuccessNotification(false)}
+        />
+      )}
     </div>
   );
 };

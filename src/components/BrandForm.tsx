@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+
 
 interface BrandFormData {
   // Step 1: Basic Information
@@ -44,6 +46,7 @@ const BrandForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { showSuccessToast } = useToast();
   
   const [formData, setFormData] = useState<BrandFormData>({
     companyName: '',
@@ -190,7 +193,9 @@ const BrandForm: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // Use the login function to properly set authentication state
+        // Show welcome toast for new brand
+        showSuccessToast(`Welcome to DraftBoard, ${data.user.companyName}! 🎉 Your brand account has been created successfully.`);
+        // Use the login function to properly set authentication state (mark as new registration)
         login(data.user, data.token);
       } else {
         const errorData = await response.json();
@@ -235,11 +240,11 @@ const BrandForm: React.FC = () => {
       {/* Google Sign-In Option */}
       <GoogleSignIn
         userType="brand"
-        onSuccess={(_userData) => {
+        onSuccess={(_userData: unknown) => {
           // Google sign-in successful for brand
           // The GoogleSignIn component will handle the login and navigation
         }}
-        onError={(error) => {
+        onError={(error: string) => {
           setError(error);
         }}
         className="mb-6"

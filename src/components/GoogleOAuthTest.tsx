@@ -85,8 +85,17 @@ const GoogleOAuthTest: React.FC = () => {
         addLog(`Creator error: ${JSON.stringify(creatorError)}`);
       }
     } catch (error) {
-      addLog(`Error: ${error}`);
-      // Google authentication error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      addLog(`Error: ${errorMessage}`);
+      
+      // Enhanced COOP error handling
+      if (errorMessage.includes('Cross-Origin-Opener-Policy') || 
+          errorMessage.includes('postMessage call') ||
+          errorMessage.includes('window.closed call')) {
+        addLog('⚠️ COOP Warning: This is expected behavior with Google OAuth and should not affect functionality.');
+        addLog('ℹ️ The authentication should still work despite this warning.');
+        addLog('🔧 If authentication fails, please check your browser popup settings.');
+      }
     }
   };
 
@@ -104,7 +113,7 @@ const GoogleOAuthTest: React.FC = () => {
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={handleError}
-            useOneTap
+            useOneTap={false}
             theme="outline"
             size="large"
             text="signin_with"

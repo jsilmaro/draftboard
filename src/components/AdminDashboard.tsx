@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface User {
   id: string;
@@ -46,6 +47,7 @@ interface Analytics {
 interface ApiBrand {
   id: string;
   companyName: string;
+  email: string;
   isVerified: boolean;
   createdAt: string;
 }
@@ -54,6 +56,7 @@ interface ApiCreator {
   id: string;
   userName: string;
   fullName: string;
+  email: string;
   isVerified: boolean;
   createdAt: string;
 }
@@ -89,6 +92,7 @@ interface ApiSubmission {
 }
 
 const AdminDashboard: React.FC = () => {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [brands, setBrands] = useState<User[]>([]);
   const [creators, setCreators] = useState<User[]>([]);
@@ -106,20 +110,53 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all data in parallel
+        // Get the authentication token
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          // No authentication token found
+          return;
+        }
+
+        // Fetch all data in parallel with authentication headers
         const [brandsRes, creatorsRes, briefsRes, submissionsRes, analyticsRes] = await Promise.all([
-          fetch('/api/admin/brands'),
-          fetch('/api/admin/creators'),
-          fetch('/api/admin/briefs'),
-          fetch('/api/admin/submissions'),
-          fetch('/api/admin/analytics')
+          fetch('/api/admin/brands', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('/api/admin/creators', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('/api/admin/briefs', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('/api/admin/submissions', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('/api/admin/analytics', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
         ]);
 
         if (brandsRes.ok) {
           const brandsData = await brandsRes.json();
           setBrands(brandsData.map((brand: ApiBrand) => ({
             id: brand.id,
-            email: '***@***.***', // Privacy protected
+            email: brand.email,
             type: 'brand' as const,
             companyName: brand.companyName,
             isVerified: brand.isVerified,
@@ -131,7 +168,7 @@ const AdminDashboard: React.FC = () => {
           const creatorsData = await creatorsRes.json();
           setCreators(creatorsData.map((creator: ApiCreator) => ({
             id: creator.id,
-            email: '***@***.***', // Privacy protected
+            email: creator.email,
             type: 'creator' as const,
             userName: creator.userName,
             fullName: creator.fullName,
@@ -265,13 +302,14 @@ const AdminDashboard: React.FC = () => {
     <div className="bg-white rounded-lg shadow-md">
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Brand Management</h3>
-        <p className="text-sm text-gray-600 mt-1">Overview of registered brands (privacy protected)</p>
+        <p className="text-sm text-gray-600 mt-1">Overview of registered brands with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -289,6 +327,9 @@ const AdminDashboard: React.FC = () => {
                       <div className="text-sm font-medium text-gray-900">{brand.companyName}</div>
                     </div>
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {brand.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -316,13 +357,14 @@ const AdminDashboard: React.FC = () => {
     <div className="bg-white rounded-lg shadow-md">
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Creator Management</h3>
-        <p className="text-sm text-gray-600 mt-1">Overview of registered creators (privacy protected)</p>
+        <p className="text-sm text-gray-600 mt-1">Overview of registered creators with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -341,6 +383,9 @@ const AdminDashboard: React.FC = () => {
                       <div className="text-sm text-gray-500">@{creator.userName}</div>
                     </div>
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {creator.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -612,11 +657,17 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/" className="text-gray-600 hover:text-gray-900">
-                ← Back to Home
-              </Link>
-            </div>
+                         <div className="flex items-center space-x-4">
+               <Link to="/" className="text-gray-600 hover:text-gray-900">
+                 ← Back to Home
+               </Link>
+               <button
+                 onClick={logout}
+                 className="text-red-600 hover:text-red-900 font-medium"
+               >
+                 Logout
+               </button>
+             </div>
           </div>
         </div>
       </div>

@@ -12,6 +12,18 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    headers: {
+      // Enhanced COOP headers for Google OAuth compatibility
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept, X-Client-Version, X-Client-Name',
+      'X-Frame-Options': 'SAMEORIGIN',
+      'Permissions-Policy': 'interest-cohort=(), camera=(), microphone=(), geolocation=()',
+    },
   },
   build: {
     outDir: 'dist',

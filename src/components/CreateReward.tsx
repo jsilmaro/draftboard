@@ -481,7 +481,7 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
               <h4 className="text-lg font-semibold text-gray-900 mb-2">No briefs found</h4>
               <p className="text-gray-600 mb-4">You need to create and publish a brief before you can create rewards.</p>
               <button 
-                onClick={() => window.location.href = '/brand-dashboard?tab=briefs'}
+                onClick={() => window.location.href = '/brand/dashboard?tab=briefs'}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Go to Briefs
@@ -814,14 +814,13 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
       )}
 
       {/* Success Notification */}
-      <AnimatedNotification
-        isVisible={showSuccessNotification}
-        onClose={() => setShowSuccessNotification(false)}
-        type="success"
-        title="Rewards Published! 🎁"
-        message="The winners have been announced and the rewards are now live!"
-        icon="🎉"
-      />
+      {showSuccessNotification && (
+        <AnimatedNotification
+          message="Rewards have been saved successfully! 🎁"
+          type="success"
+          onClose={() => setShowSuccessNotification(false)}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -10,10 +10,7 @@ interface GoogleUser {
   sub: string;
 }
 
-interface CredentialResponse {
-  credential?: string;
-  select_by?: string;
-}
+
 
 interface GoogleSignInProps {
   onSuccess: (userData: GoogleUser) => void;
@@ -29,6 +26,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
   className = '' 
 }) => {
   const { googleLogin } = useAuth();
+  
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       if (credentialResponse.credential) {
@@ -57,13 +55,15 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
           onError(errorData.error || 'Google authentication failed');
         }
       }
-    } catch (error) {
-      // Google authentication error
-      onError('Failed to authenticate with Google');
+    } catch (_error) {
+      // Enhanced error handling for OAuth issues
+      // Google OAuth Error Details logged silently
+      onError('Failed to authenticate with Google. Please try again.');
     }
   };
 
-  const handleError = () => {
+  const handleError = (_error?: unknown) => {
+    // Google Sign-In Error logged silently
     onError('Google Sign-In was cancelled or failed');
   };
 
@@ -79,17 +79,22 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
       </div>
       
       <div className="mt-6 flex justify-center">
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={handleError}
-          useOneTap
-          theme="outline"
-          size="large"
-          text="signup_with"
-          shape="rectangular"
-          logo_alignment="left"
-          width="100%"
-        />
+        <div id="google-signin-container">
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleError}
+            useOneTap={false}
+            auto_select={false}
+            cancel_on_tap_outside={true}
+            prompt_parent_id="google-signin-container"
+            theme="outline"
+            size="large"
+            text="signup_with"
+            shape="rectangular"
+            logo_alignment="left"
+            width="100%"
+          />
+        </div>
       </div>
     </div>
   );

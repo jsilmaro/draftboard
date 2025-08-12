@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+
 
 interface CreatorFormData {
   // Step 1: Basic Information
@@ -37,6 +39,7 @@ const CreatorForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { showSuccessToast } = useToast();
   
   const [formData, setFormData] = useState<CreatorFormData>({
     userName: '',
@@ -156,7 +159,9 @@ const CreatorForm: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // Use the login function to properly set authentication state
+        // Show welcome toast for new creator
+        showSuccessToast(`Welcome to DraftBoard, ${data.user.fullName}! 🎉 Your creator account has been created successfully.`);
+        // Use the login function to properly set authentication state (mark as new registration)
         login(data.user, data.token);
       } else {
         const errorData = await response.json();
@@ -201,11 +206,11 @@ const CreatorForm: React.FC = () => {
       {/* Google Sign-In Option */}
       <GoogleSignIn
         userType="creator"
-        onSuccess={(_userData) => {
+        onSuccess={(_userData: unknown) => {
           // Google sign-in successful for creator
           // The GoogleSignIn component will handle the login and navigation
         }}
-        onError={(error) => {
+        onError={(error: string) => {
           setError(error);
         }}
         className="mb-6"

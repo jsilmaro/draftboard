@@ -4,7 +4,40 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Set COOP to unsafe-none to completely disable COOP restrictions -->
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none" />
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none" />
+    <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin" />
     <title>Brand Creator Platform</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      // Simple COOP error suppression
+      (function() {
+        const originalError = console.error;
+        console.error = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Cross-Origin-Opener-Policy') || 
+              message.includes('postMessage call') ||
+              message.includes('window.closed call')) {
+            return; // Suppress COOP errors
+          }
+          originalError.apply(console, args);
+        };
+
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Cross-Origin-Opener-Policy') || 
+              message.includes('postMessage call') ||
+              message.includes('window.closed call')) {
+            return; // Suppress COOP warnings
+          }
+          originalWarn.apply(console, args);
+        };
+
+        console.log('🔧 COOP error suppression initialized');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

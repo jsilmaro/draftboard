@@ -75,6 +75,22 @@ prisma.$on('query', (e) => {
 
 prisma.$on('error', (e) => {
   console.error('Prisma Error:', e);
+  
+  // Handle connection errors more gracefully
+  if (e.message && e.message.includes('connection')) {
+    console.error('❌ Database connection error detected');
+    console.error('🔧 Please check your DATABASE_URL and database service status');
+    
+    // In production, you might want to restart the connection
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔄 Attempting to reconnect...');
+      setTimeout(() => {
+        prisma.$connect().catch(err => {
+          console.error('❌ Reconnection failed:', err);
+        });
+      }, 5000);
+    }
+  }
 });
 
 const PORT = process.env.PORT || 3001;
@@ -117,6 +133,41 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept', 'https://draftboard-b44q-git-master-jsilmaros-projects.vercel.app', 'https://draftboard-b44q-guyh12yl8-jsilmaros-projects.vercel.app']
 }));
+
+// Enhanced COOP and security headers middleware for Google OAuth compatibility
+app.use((req, res, next) => {
+  // Primary COOP headers - using unsafe-none to completely disable COOP restrictions
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // CORS headers for cross-origin requests
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept, X-Client-Version, X-Client-Name');
+  
+  // Security headers that don't interfere with OAuth
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from ALLOWALL for better security
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Additional headers for Google OAuth compatibility
+  res.setHeader('Permissions-Policy', 'interest-cohort=(), camera=(), microphone=(), geolocation=()');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Handle preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.static('uploads'));
 
@@ -628,6 +679,7 @@ app.post('/api/creators/register', async (req, res) => {
       user: {
         id: creator.id,
         userName: creator.userName,
+        fullName: creator.fullName,
         email: creator.email,
         type: 'creator'
       }
@@ -702,6 +754,8 @@ app.post('/api/creators/login', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
 
 // Google OAuth endpoint
 app.post('/api/auth/google', async (req, res) => {
@@ -988,6 +1042,7 @@ app.get('/api/admin/brands', authenticateToken, async (req, res) => {
       select: {
         id: true,
         companyName: true,
+        email: true,
         isVerified: true,
         createdAt: true
       },
@@ -1014,6 +1069,7 @@ app.get('/api/admin/creators', authenticateToken, async (req, res) => {
         id: true,
         userName: true,
         fullName: true,
+        email: true,
         isVerified: true,
         createdAt: true
       },

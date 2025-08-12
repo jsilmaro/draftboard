@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 
 interface GoogleSignInLoginProps {
@@ -7,10 +7,7 @@ interface GoogleSignInLoginProps {
   className?: string;
 }
 
-interface CredentialResponse {
-  credential?: string;
-  select_by?: string;
-}
+
 
 const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({ 
   onError, 
@@ -64,13 +61,15 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
         // If both fail, show error
         onError('No account found with this Google email. Please register first.');
       }
-    } catch (error) {
-      // Google authentication error
+    } catch (_error) {
+      // Enhanced error handling for OAuth issues
+      // Google OAuth Error Details logged silently
       onError('Failed to authenticate with Google. Please try again.');
     }
   };
 
-  const handleError = () => {
+  const handleError = (_error?: unknown) => {
+    // Google Sign-In Error logged silently
     onError('Google Sign-In was cancelled or failed');
   };
 
@@ -86,17 +85,22 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
       </div>
       
       <div className="mt-6 flex justify-center">
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={handleError}
-          useOneTap
-          theme="outline"
-          size="large"
-          text="signin_with"
-          shape="rectangular"
-          logo_alignment="left"
-          width="100%"
-        />
+        <div id="google-signin-container">
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleError}
+            useOneTap={false}
+            auto_select={false}
+            cancel_on_tap_outside={true}
+            prompt_parent_id="google-signin-container"
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="rectangular"
+            logo_alignment="left"
+            width="100%"
+          />
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import CreateReward from './CreateReward';
+import { useToast } from '../contexts/ToastContext';
 
 interface Brief {
   id: string;
@@ -108,6 +109,7 @@ interface RewardTier {
 const BrandDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { showSuccessToast, showErrorToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -294,8 +296,10 @@ const BrandDashboard: React.FC = () => {
         fetchDashboardData();
         setShowEditModal(false);
         setSelectedBrief(null);
+        showSuccessToast('Brief published successfully! 📢 Your brief is now live and accepting submissions.');
       } else {
         // Failed to publish brief
+        showErrorToast('Failed to publish brief. Please try again.');
       }
     } catch (error) {
       // Error publishing brief
@@ -2271,14 +2275,13 @@ const BrandDashboard: React.FC = () => {
       {renderEditRewardsModal()}
 
       {/* Animated Notifications */}
-      <AnimatedNotification
-        isVisible={showSuccessNotification}
-        onClose={() => setShowSuccessNotification(false)}
-        type="success"
-        title={successNotification.title}
-        message={successNotification.message}
-        icon={successNotification.icon}
-      />
+      {showSuccessNotification && (
+        <AnimatedNotification
+          message={successNotification.message}
+          type="success"
+          onClose={() => setShowSuccessNotification(false)}
+        />
+      )}
     </div>
   );
 };
