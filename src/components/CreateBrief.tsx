@@ -102,6 +102,44 @@ const CreateBrief: React.FC = () => {
           promotionChannels: ['instagram', 'tiktok', 'youtube', 'twitter']
         }
       }
+    },
+    {
+      id: 'tweets',
+      name: 'Tweets',
+      description: 'Perfect for Twitter/X campaigns, viral content, and social media engagement',
+      icon: '🐦',
+      fields: {
+        title: 'Twitter/X Campaign',
+        description: 'Create engaging tweets and Twitter content to boost brand awareness and engagement',
+        requirements: 'Create compelling tweets, threads, or Twitter content that resonates with our audience. Focus on engagement, virality, and brand voice consistency.',
+        reward: 0, // Default value
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        additionalFields: {
+          campaignTheme: '',
+          hashtags: '',
+          targetAudience: '',
+          tweetStyle: ['informative', 'humorous', 'promotional', 'storytelling', 'thread']
+        }
+      }
+    },
+    {
+      id: 'ig-story-blitz',
+      name: 'IG Story Blitz',
+      description: 'Ideal for Instagram Stories campaigns, quick engagement, and visual storytelling',
+      icon: '📱',
+      fields: {
+        title: 'Instagram Stories Campaign',
+        description: 'Create engaging Instagram Stories content to drive engagement and brand awareness',
+        requirements: 'Create visually appealing Instagram Stories that tell our brand story, showcase products, or engage followers. Include interactive elements and compelling visuals.',
+        reward: 0, // Default value
+        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        additionalFields: {
+          storyTheme: '',
+          visualStyle: '',
+          interactiveElements: '',
+          storyFormat: ['single-story', 'story-series', 'highlights', 'reels']
+        }
+      }
     }
   ];
 
@@ -396,6 +434,76 @@ const CreateBrief: React.FC = () => {
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Describe the prizes and their value"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {template.id === 'tweets' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Theme</label>
+                    <input
+                      type="text"
+                      value={formData.additionalFields.campaignTheme || ''}
+                      onChange={(e) => handleAdditionalFieldChange('campaignTheme', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Product launch, Brand awareness, Customer testimonials"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hashtags</label>
+                    <input
+                      type="text"
+                      value={formData.additionalFields.hashtags || ''}
+                      onChange={(e) => handleAdditionalFieldChange('hashtags', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., #BrandName #ProductLaunch #Innovation"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
+                    <textarea
+                      value={formData.additionalFields.targetAudience || ''}
+                      onChange={(e) => handleAdditionalFieldChange('targetAudience', e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Describe your target audience demographics and interests"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {template.id === 'ig-story-blitz' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Story Theme</label>
+                    <input
+                      type="text"
+                      value={formData.additionalFields.storyTheme || ''}
+                      onChange={(e) => handleAdditionalFieldChange('storyTheme', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Behind the scenes, Product showcase, User-generated content"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Visual Style</label>
+                    <input
+                      type="text"
+                      value={formData.additionalFields.visualStyle || ''}
+                      onChange={(e) => handleAdditionalFieldChange('visualStyle', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Minimalist, Bold colors, Vintage, Modern"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Interactive Elements</label>
+                    <textarea
+                      value={formData.additionalFields.interactiveElements || ''}
+                      onChange={(e) => handleAdditionalFieldChange('interactiveElements', e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Polls, Questions, Swipe-up links, Music stickers"
                     />
                   </div>
                 </div>
