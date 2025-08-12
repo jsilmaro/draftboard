@@ -17,6 +17,13 @@ interface BriefTemplate {
   };
 }
 
+interface RewardTier {
+  position: number;
+  cashAmount: number;
+  creditAmount: number;
+  prizeDescription: string;
+}
+
 interface FormData {
   title: string;
   description: string;
@@ -24,6 +31,8 @@ interface FormData {
   reward: number;
   rewardType: 'CASH' | 'CREDIT' | 'PRIZES' | '';
   deadline: string;
+  amountOfWinners: number;
+  rewardTiers: RewardTier[];
   additionalFields: Record<string, string | string[]>;
 }
 
@@ -39,6 +48,8 @@ const CreateBrief: React.FC = () => {
     reward: 0,
     rewardType: '' as 'CASH' | 'CREDIT' | 'PRIZES' | '',
     deadline: '',
+    amountOfWinners: 1,
+    rewardTiers: [],
     additionalFields: {} as Record<string, string | string[]>
   });
   const [currentStep, setCurrentStep] = useState(1);
@@ -150,7 +161,9 @@ const CreateBrief: React.FC = () => {
       if (template) {
         setFormData({
           ...template.fields,
-          rewardType: '' // Initialize with empty reward type
+          rewardType: '', // Initialize with empty reward type
+          amountOfWinners: 1,
+          rewardTiers: []
         });
       }
     } else if (templateId === 'scratch') {
@@ -158,9 +171,11 @@ const CreateBrief: React.FC = () => {
         title: '',
         description: '',
         requirements: '',
-        reward: 0, // Default value since we removed the budget field
+        reward: 0, // Default value for reward field
         rewardType: '',
         deadline: '',
+        amountOfWinners: 1,
+        rewardTiers: [],
         additionalFields: {}
       });
     }
@@ -183,6 +198,44 @@ const CreateBrief: React.FC = () => {
       }
     }));
   };
+
+  const handleAmountOfWinnersChange = (amount: number) => {
+    setFormData(prev => {
+      const newRewardTiers = [];
+      for (let i = 1; i <= amount; i++) {
+        newRewardTiers.push({
+          position: i,
+          cashAmount: 0,
+          creditAmount: 0,
+          prizeDescription: ''
+        });
+      }
+      return {
+        ...prev,
+        amountOfWinners: amount,
+        rewardTiers: newRewardTiers
+      };
+    });
+  };
+
+  const handleRewardTierChange = (position: number, field: keyof RewardTier, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      rewardTiers: prev.rewardTiers.map(tier => 
+        tier.position === position 
+          ? { ...tier, [field]: value }
+          : tier
+      )
+    }));
+  };
+
+  const calculateTotalReward = () => {
+    return formData.rewardTiers.reduce((total, tier) => {
+      return total + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+    }, 0);
+  };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,7 +374,7 @@ const CreateBrief: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Deadline *
@@ -333,6 +386,22 @@ const CreateBrief: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amount of Winners *
+                  </label>
+                  <select
+                    value={formData.amountOfWinners}
+                    onChange={(e) => handleAmountOfWinnersChange(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                      <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -352,13 +421,89 @@ const CreateBrief: React.FC = () => {
                   </select>
                 </div>
               </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> You&apos;ll set the specific reward amounts and tiers in the Rewards page after creating this brief.
-                </p>
-              </div>
             </div>
+          </div>
+
+          {/* Reward Tiers Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reward Tiers</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Set rewards for each winning position. You can mix cash, credits, and prizes.
+            </p>
+            
+            {formData.rewardTiers.length > 0 && (
+              <div className="space-y-4">
+                {formData.rewardTiers.map((tier) => (
+                  <div key={tier.position} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        {tier.position === 1 ? '🥇 1st Place' : 
+                         tier.position === 2 ? '🥈 2nd Place' : 
+                         tier.position === 3 ? '🥉 3rd Place' : 
+                         `${tier.position}th Place`}
+                      </h4>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Cash Amount ($)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={tier.cashAmount || ''}
+                          onChange={(e) => handleRewardTierChange(tier.position, 'cashAmount', Number(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Credit Amount
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={tier.creditAmount || ''}
+                          onChange={(e) => handleRewardTierChange(tier.position, 'creditAmount', Number(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Prize Description
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.prizeDescription || ''}
+                          onChange={(e) => handleRewardTierChange(tier.position, 'prizeDescription', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Product bundle, Gift card, Experience"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Total Calculator */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold text-blue-900">Campaign Total:</span>
+                    <span className="text-2xl font-bold text-blue-900">
+                      ${calculateTotalReward().toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-2">
+                    Total cash value of all rewards (excluding prizes)
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Template-specific fields */}

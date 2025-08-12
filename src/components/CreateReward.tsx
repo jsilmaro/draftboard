@@ -174,6 +174,8 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
       setSelectedRewardType(brief.rewardType as 'CASH' | 'CREDIT' | 'PRIZES');
     }
     
+
+    
     // Fetch shortlisted submissions for this brief
     try {
       const token = localStorage.getItem('token');
@@ -252,6 +254,8 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
     setShowWinnerModal(false);
     setSelectedTier(null);
   };
+
+
 
   const handleSaveRewards = async () => {
     try {
@@ -717,6 +721,8 @@ const CreateReward: React.FC<CreateRewardProps> = ({ onBack, draftToEdit }) => {
                   ))}
                 </div>
               )}
+
+
             </div>
           )}
 

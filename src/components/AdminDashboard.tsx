@@ -19,7 +19,7 @@ interface Brief {
   brandId: string;
   brandName: string;
   status: 'active' | 'completed' | 'draft';
-  budget: number;
+  reward: number;
   submissions: number;
   createdAt: string;
 }
@@ -69,7 +69,7 @@ interface ApiBrief {
     companyName: string;
   };
   status: 'active' | 'completed' | 'draft';
-  budget: number;
+  reward: number;
   _count: {
     submissions: number;
   };
@@ -185,7 +185,7 @@ const AdminDashboard: React.FC = () => {
             brandId: brief.brandId,
             brandName: brief.brand.companyName,
             status: brief.status as 'active' | 'completed' | 'draft',
-            budget: brief.budget,
+            reward: brief.reward,
             submissions: brief._count.submissions,
             createdAt: brief.createdAt
           })));
@@ -421,7 +421,7 @@ const AdminDashboard: React.FC = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reward</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submissions</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -435,7 +435,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="text-sm text-gray-500">Created {new Date(brief.createdAt).toLocaleDateString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{brief.brandName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${brief.budget.toLocaleString()}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${brief.reward.toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     brief.status === 'active' ? 'bg-green-100 text-green-800' :

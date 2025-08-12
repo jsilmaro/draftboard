@@ -8,7 +8,7 @@ interface Brief {
   id: string;
   title: string;
   brandName: string;
-  budget: number;
+  reward: number;
   deadline: string;
   status: 'active' | 'draft' | 'completed';
 }
@@ -173,7 +173,7 @@ const CreatorDashboard: React.FC = () => {
 
       const formData = new FormData();
       formData.append('content', applyFormData.content);
-      formData.append('amount', selectedBrief.budget.toString());
+              formData.append('amount', selectedBrief.reward.toString());
       
       // Add files if any
       applyFormData.files.forEach((file) => {
@@ -484,7 +484,7 @@ const CreatorDashboard: React.FC = () => {
                 <span className="text-sm text-gray-600">
                   {Math.ceil((new Date(brief.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
                 </span>
-                <p className="text-sm font-medium text-green-600">${brief.budget}</p>
+                                    <p className="text-sm font-medium text-green-600">${brief.reward}</p>
               </div>
             </div>
           ))}
@@ -545,7 +545,7 @@ const CreatorDashboard: React.FC = () => {
                 <span className="text-sm text-gray-600">{brief.brandName}</span>
               </div>
               <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <p>Prize: ${brief.budget?.toLocaleString() || '0'}</p>
+                                  <p>Prize: ${brief.reward?.toLocaleString() || '0'}</p>
                 <p>Deadline: {brief.deadline ? new Date(brief.deadline).toLocaleDateString() : 'No deadline'}</p>
                 <p>Status: {brief.status ? brief.status.charAt(0).toUpperCase() + brief.status.slice(1) : 'Unknown'}</p>
                 {hasSubmittedToBrief(brief.id) && (
@@ -626,7 +626,7 @@ const CreatorDashboard: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Prize:</span>
-                <span>${selectedBrief.budget.toLocaleString()}</span>
+                                  <span>${selectedBrief.reward.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Deadline:</span>
@@ -726,7 +726,7 @@ const CreatorDashboard: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">Brief Summary</h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
-                  <p><strong>Prize:</strong> ${selectedBrief.budget.toLocaleString()}</p>
+                  <p><strong>Prize:</strong> ${selectedBrief.reward.toLocaleString()}</p>
                   <p><strong>Deadline:</strong> {new Date(selectedBrief.deadline).toLocaleDateString()}</p>
                 </div>
               </div>
