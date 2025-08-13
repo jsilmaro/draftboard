@@ -95,6 +95,16 @@ prisma.$on('error', (e) => {
 
 const PORT = process.env.PORT || 3001;
 
+// Utility function to validate URLs
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 // Database connection test with connection pool optimization
 prisma.$connect()
   .then(() => {
@@ -1392,14 +1402,10 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Submission not found or access denied' });
     }
 
-    // Parse files if they exist
-    let files = [];
+    // Get content submission URL
+    let contentUrl = null;
     if (submission.files) {
-      try {
-        files = JSON.parse(submission.files);
-      } catch (e) {
-        console.error('Error parsing submission files:', e);
-      }
+      contentUrl = submission.files; // Now stores a single URL string
     }
 
     // Parse content if it's stored as JSON (for rejected/approved submissions)
@@ -1417,7 +1423,7 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
     const detailedSubmission = {
       id: submission.id,
       content: content,
-      files: files,
+      files: contentUrl,
       amount: submission.amount,
       status: submission.status,
       submittedAt: submission.submittedAt,
@@ -1851,6 +1857,143 @@ app.get('/api/creators/submissions', authenticateToken, async (req, res) => {
   }
 });
 
+// Get specific submission details for editing
+app.get('/api/creators/submissions/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { id } = req.params;
+
+    const submission = await prisma.submission.findFirst({
+      where: {
+        id,
+        creatorId: req.user.id
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    res.json({
+      id: submission.id,
+      content: submission.content,
+      files: submission.files, // This will be the content URL
+      amount: submission.amount,
+      status: submission.status,
+      submittedAt: submission.submittedAt
+    });
+  } catch (error) {
+    console.error('Error fetching submission details:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update submission
+app.put('/api/creators/submissions/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Only creators can update submissions' });
+    }
+
+    const { id } = req.params;
+    const { contentUrl } = req.body;
+
+    console.log('📝 Updating submission:', { submissionId: id, contentUrl });
+
+    // Check if submission exists and belongs to the creator
+    const existingSubmission = await prisma.submission.findFirst({
+      where: {
+        id,
+        creatorId: req.user.id
+      }
+    });
+
+    if (!existingSubmission) {
+      console.log('❌ Submission not found or access denied:', { submissionId: id, creatorId: req.user.id });
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    // Check if submission can be edited (not approved or rejected)
+    if (existingSubmission.status === 'approved' || existingSubmission.status === 'rejected') {
+      console.log('❌ Cannot edit submission with status:', existingSubmission.status);
+      return res.status(400).json({ error: 'Cannot edit approved or rejected submissions' });
+    }
+
+    // Validate URL format
+    if (!contentUrl || !isValidUrl(contentUrl)) {
+      console.log('❌ Invalid content URL:', contentUrl);
+      return res.status(400).json({ error: 'Please provide a valid content submission URL' });
+    }
+
+    // Update submission
+    const updatedSubmission = await prisma.submission.update({
+      where: { id },
+      data: {
+        content: '', // Empty content since we removed the proposal field
+        files: contentUrl, // Store the URL in the files field
+        updatedAt: new Date()
+      }
+    });
+
+    console.log('✅ Submission updated successfully:', { submissionId: id });
+    res.json({
+      message: 'Submission updated successfully',
+      submission: updatedSubmission
+    });
+  } catch (error) {
+    console.error('❌ Error updating submission:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete submission
+app.delete('/api/creators/submissions/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Only creators can delete submissions' });
+    }
+
+    const { id } = req.params;
+
+    console.log('🗑️ Deleting submission:', { submissionId: id, creatorId: req.user.id });
+
+    // Check if submission exists and belongs to the creator
+    const existingSubmission = await prisma.submission.findFirst({
+      where: {
+        id,
+        creatorId: req.user.id
+      }
+    });
+
+    if (!existingSubmission) {
+      console.log('❌ Submission not found or access denied:', { submissionId: id, creatorId: req.user.id });
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    // Check if submission can be deleted (not approved or rejected)
+    if (existingSubmission.status === 'approved' || existingSubmission.status === 'rejected') {
+      console.log('❌ Cannot delete submission with status:', existingSubmission.status);
+      return res.status(400).json({ error: 'Cannot delete approved or rejected submissions' });
+    }
+
+    // Delete submission
+    await prisma.submission.delete({
+      where: { id }
+    });
+
+    console.log('✅ Submission deleted successfully:', { submissionId: id });
+    res.json({
+      message: 'Submission deleted successfully'
+    });
+  } catch (error) {
+    console.error('❌ Error deleting submission:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get portfolio for a creator
 app.get('/api/creators/portfolio', authenticateToken, async (req, res) => {
   try {
@@ -2078,18 +2221,29 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
 });
 
 // Apply to a brief (creator submits application)
-app.post('/api/briefs/:id/apply', authenticateToken, upload.array('files'), async (req, res) => {
+app.post('/api/briefs/:id/apply', authenticateToken, async (req, res) => {
   try {
+    console.log('📝 Brief application received:', {
+      briefId: req.params.id,
+      userId: req.user.id,
+      userType: req.user.type,
+      body: req.body
+    });
+
     if (req.user.type !== 'creator') {
+      console.log('❌ Non-creator attempting to apply:', req.user.type);
       return res.status(403).json({ error: 'Only creators can apply to briefs' });
     }
 
     const { id } = req.params;
-    const { content, amount } = req.body;
+    const { contentUrl, amount } = req.body;
+
+    console.log('🔍 Validating application data:', { contentUrl, amount });
 
     // Check if brief exists and is active
     const brief = await prisma.brief.findUnique({ where: { id } });
     if (!brief || brief.status !== 'active') {
+      console.log('❌ Brief not found or inactive:', { briefId: id, briefStatus: brief?.status });
       return res.status(404).json({ error: 'Brief not found or not available for applications' });
     }
 
@@ -2102,30 +2256,36 @@ app.post('/api/briefs/:id/apply', authenticateToken, upload.array('files'), asyn
     });
 
     if (existingSubmission) {
+      console.log('❌ Creator already applied:', { briefId: id, creatorId: req.user.id });
       return res.status(400).json({ error: 'You have already applied to this brief' });
     }
 
-    // Handle file uploads
-    const filesData = handleMultipleFileUploads(req.files);
+    // Validate URL format
+    if (!contentUrl || !isValidUrl(contentUrl)) {
+      console.log('❌ Invalid content URL:', contentUrl);
+      return res.status(400).json({ error: 'Please provide a valid content submission URL' });
+    }
 
+    console.log('✅ Creating submission...');
     // Create submission
     const submission = await prisma.submission.create({
       data: {
         briefId: id,
         creatorId: req.user.id,
-        content,
-        files: filesData,
+        content: '', // Empty content since we removed the proposal field
+        files: contentUrl, // Store the URL in the files field
         amount: parseFloat(amount),
         status: 'pending'
       }
     });
 
+    console.log('✅ Application submitted successfully:', { submissionId: submission.id });
     res.status(201).json({
       message: 'Application submitted successfully',
       submission
     });
   } catch (error) {
-    console.error('Error submitting application:', error);
+    console.error('❌ Error submitting application:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

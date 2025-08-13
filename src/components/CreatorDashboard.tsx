@@ -52,8 +52,7 @@ const CreatorDashboard: React.FC = () => {
   const [showEditPortfolioModal, setShowEditPortfolioModal] = useState(false);
   const [selectedPortfolioItem, setSelectedPortfolioItem] = useState<PortfolioItem | null>(null);
   const [applyFormData, setApplyFormData] = useState({
-    content: '',
-    files: [] as File[]
+    contentUrl: ''
   });
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [successNotification, setSuccessNotification] = useState({
@@ -159,7 +158,101 @@ const CreatorDashboard: React.FC = () => {
 
   const handleApplyToBrief = (brief: Brief) => {
     setSelectedBrief(brief);
-    setShowApplyModal(true);
+    
+    // Check if user has already submitted to this brief
+    const existingSubmission = getExistingSubmission(brief.id);
+    
+    if (existingSubmission) {
+      // This is an edit - load existing data
+      // We'll need to fetch the full submission details
+      fetchSubmissionDetails(existingSubmission.id);
+    } else {
+      // This is a new application - clear form
+      setApplyFormData({ contentUrl: '' });
+      setShowApplyModal(true);
+    }
+  };
+
+  const fetchSubmissionDetails = async (submissionId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`/api/creators/submissions/${submissionId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const submissionData = await response.json();
+        setApplyFormData({
+          contentUrl: submissionData.files || ''
+        });
+        setShowApplyModal(true);
+      } else {
+        // Fallback to empty form
+        setApplyFormData({ contentUrl: '' });
+        setShowApplyModal(true);
+      }
+    } catch (error) {
+      // Fallback to empty form
+      setApplyFormData({ contentUrl: '' });
+      setShowApplyModal(true);
+    }
+  };
+
+  const handleEditSubmission = (submission: Submission) => {
+    // Find the brief for this submission
+    const brief = availableBriefs.find(b => b.title === submission.briefTitle);
+    if (brief) {
+      setSelectedBrief(brief);
+      fetchSubmissionDetails(submission.id);
+    } else {
+      alert('Brief not found for this submission');
+    }
+  };
+
+  const handleDeleteSubmission = async (submission: Submission) => {
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
+
+
+
+      const response = await fetch(`/api/creators/submissions/${submission.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Refresh data
+        fetchDashboardData();
+        
+        // Show animated success notification
+        setSuccessNotification({
+          title: 'Submission Deleted! 🗑️',
+          message: 'Your submission has been deleted successfully.',
+          icon: '🗑️'
+        });
+        setShowSuccessNotification(true);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to delete submission: ${errorData.error || 'Please try again.'}`);
+      }
+    } catch (error) {
+      alert('Error deleting submission. Please try again.');
+    }
   };
 
   const handleSubmitApplication = async (e: React.FormEvent) => {
@@ -169,42 +262,65 @@ const CreatorDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
 
-      const formData = new FormData();
-      formData.append('content', applyFormData.content);
-              formData.append('amount', selectedBrief.reward.toString());
-      
-      // Add files if any
-      applyFormData.files.forEach((file) => {
-        formData.append(`files`, file);
-      });
+      // Check if this is an edit or new application
+      const existingSubmission = getExistingSubmission(selectedBrief.id);
+      const isEdit = !!existingSubmission;
 
-      const response = await fetch(`/api/briefs/${selectedBrief.id}/apply`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+
+
+      let response;
+      if (isEdit) {
+        // Update existing submission
+        response = await fetch(`/api/creators/submissions/${existingSubmission.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contentUrl: applyFormData.contentUrl
+          })
+        });
+      } else {
+        // Create new submission
+        response = await fetch(`/api/briefs/${selectedBrief.id}/apply`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contentUrl: applyFormData.contentUrl,
+            amount: selectedBrief.reward.toString()
+          })
+        });
+      }
+
+
 
       if (response.ok) {
         // Refresh data
         fetchDashboardData();
         setShowApplyModal(false);
         setSelectedBrief(null);
-        setApplyFormData({ content: '', files: [] });
+        setApplyFormData({ contentUrl: '' });
         
         // Show animated success notification
         setSuccessNotification({
-          title: 'Application Submitted! 🚀',
-          message: 'Your application has been sent to the brand. Good luck!',
-          icon: '📤'
+          title: isEdit ? 'Application Updated! ✏️' : 'Application Submitted! 🚀',
+          message: isEdit ? 'Your application has been updated successfully!' : 'Your application has been sent to the brand. Good luck!',
+          icon: isEdit ? '✏️' : '📤'
         });
         setShowSuccessNotification(true);
       } else {
         // Failed to submit application
-        alert('Failed to submit application. Please try again.');
+        const errorData = await response.json();
+        alert(`Failed to ${isEdit ? 'update' : 'submit'} application: ${errorData.error || 'Please try again.'}`);
       }
     } catch (error) {
       // Error submitting application
@@ -212,14 +328,7 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setApplyFormData(prev => ({
-        ...prev,
-        files: Array.from(e.target.files || [])
-      }));
-    }
-  };
+
 
   const handleAddPortfolioItem = () => {
     setShowAddPortfolioModal(true);
@@ -356,6 +465,14 @@ const CreatorDashboard: React.FC = () => {
     
     const submission = mySubmissions.find(s => s.briefTitle === brief.title);
     return submission ? submission.status : null;
+  };
+
+  // Helper function to get existing submission data for a brief
+  const getExistingSubmission = (briefId: string) => {
+    const brief = availableBriefs.find(b => b.id === briefId);
+    if (!brief) return null;
+    
+    return mySubmissions.find(s => s.briefTitle === brief.title);
   };
 
   const navigation = [
@@ -650,29 +767,6 @@ const CreatorDashboard: React.FC = () => {
               >
                 Close
               </button>
-              <button
-                onClick={() => {
-                  setShowViewModal(false);
-                  handleApplyToBrief(selectedBrief);
-                }}
-                disabled={hasSubmittedToBrief(selectedBrief.id) && getSubmissionStatus(selectedBrief.id) === 'rejected'}
-                className={`px-4 py-2 rounded-md ${
-                  hasSubmittedToBrief(selectedBrief.id) && getSubmissionStatus(selectedBrief.id) === 'rejected'
-                    ? 'bg-gray-400 text-white cursor-not-allowed' 
-                    : hasSubmittedToBrief(selectedBrief.id)
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-                title={hasSubmittedToBrief(selectedBrief.id) && getSubmissionStatus(selectedBrief.id) === 'rejected' 
-                  ? 'This submission was rejected. You cannot edit rejected submissions.' 
-                  : undefined}
-              >
-                {hasSubmittedToBrief(selectedBrief.id) && getSubmissionStatus(selectedBrief.id) === 'rejected' 
-                  ? 'Submission Rejected' 
-                  : hasSubmittedToBrief(selectedBrief.id) 
-                  ? 'Edit Submission' 
-                  : 'Apply Now'}
-              </button>
             </div>
           </div>
         </div>
@@ -683,7 +777,9 @@ const CreatorDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Apply to {selectedBrief.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                {hasSubmittedToBrief(selectedBrief.id) ? 'Edit Submission' : 'Apply to'} {selectedBrief.title}
+              </h3>
               <button
                 onClick={() => setShowApplyModal(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -694,31 +790,18 @@ const CreatorDashboard: React.FC = () => {
             <form onSubmit={handleSubmitApplication} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Proposal *
-                </label>
-                <textarea
-                  value={applyFormData.content}
-                  onChange={(e) => setApplyFormData(prev => ({ ...prev, content: e.target.value }))}
-                  rows={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Describe your approach, experience, and why you're the best fit for this brief..."
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Attachments (Optional)
+                  Content Submission link:
                 </label>
                 <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
+                  type="url"
+                  value={applyFormData.contentUrl}
+                  onChange={(e) => setApplyFormData(prev => ({ ...prev, contentUrl: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  accept="image/*,video/*,.pdf,.doc,.docx"
+                  placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
+                  required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: Images, Videos, PDF, Word documents
+                  Paste a link to your content (Google Drive, YouTube, Instagram, etc.)
                 </p>
               </div>
 
@@ -743,7 +826,7 @@ const CreatorDashboard: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
-                  Submit Application
+                  {hasSubmittedToBrief(selectedBrief.id) ? 'Update Submission' : 'Submit Application'}
                 </button>
               </div>
             </form>
@@ -792,7 +875,38 @@ const CreatorDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button className="text-green-600 hover:text-green-900 mr-3">View</button>
-                    <button className="text-gray-600 hover:text-gray-900">Edit</button>
+                    <button 
+                      onClick={() => handleEditSubmission(submission)}
+                      disabled={submission.status === 'approved' || submission.status === 'rejected'}
+                      className={`mr-3 ${
+                        submission.status === 'approved' || submission.status === 'rejected'
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title={
+                        submission.status === 'approved' || submission.status === 'rejected'
+                          ? 'Cannot edit approved or rejected submissions'
+                          : 'Edit submission'
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteSubmission(submission)}
+                      disabled={submission.status === 'approved' || submission.status === 'rejected'}
+                      className={`${
+                        submission.status === 'approved' || submission.status === 'rejected'
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-red-600 hover:text-red-900'
+                      }`}
+                      title={
+                        submission.status === 'approved' || submission.status === 'rejected'
+                          ? 'Cannot delete approved or rejected submissions'
+                          : 'Delete submission'
+                      }
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}

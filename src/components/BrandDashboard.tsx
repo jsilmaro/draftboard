@@ -72,7 +72,7 @@ interface Draft {
 interface DetailedSubmission {
   id: string;
   content: string;
-  files?: string[];
+  files?: string; // Now stores a single URL instead of array of file paths
   amount: number;
   submittedAt: string;
   creator: {
@@ -1729,26 +1729,19 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Files */}
-                    {detailedSubmission.files && detailedSubmission.files.length > 0 && (
+                    {/* Content Submission Link */}
+                    {detailedSubmission.files && (
                       <div className="mb-4">
-                        <h5 className="font-medium text-gray-900 mb-2">Attached Files</h5>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {detailedSubmission.files.map((file: string, index: number) => (
-                            <div key={index} className="bg-white p-3 rounded border">
-                              <div className="text-sm text-gray-600 mb-1">
-                                File {index + 1}
-                              </div>
-                              <a 
-                                href={file} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-sm"
-                              >
-                                View File
-                              </a>
-                            </div>
-                          ))}
+                        <h5 className="font-medium text-gray-900 mb-2">Content Submission Link</h5>
+                        <div className="bg-white p-3 rounded border">
+                          <a 
+                            href={detailedSubmission.files} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                          >
+                            {detailedSubmission.files}
+                          </a>
                         </div>
                       </div>
                     )}
@@ -1757,7 +1750,7 @@ const BrandDashboard: React.FC = () => {
                     <div className="text-sm text-gray-500 border-t pt-3">
                       <p><strong>Amount:</strong> ${detailedSubmission.amount}</p>
                       <p><strong>Submitted:</strong> {new Date(detailedSubmission.submittedAt).toLocaleString()}</p>
-                      <p><strong>Files:</strong> {detailedSubmission.files ? detailedSubmission.files.length : 0} attached</p>
+                      <p><strong>Content Link:</strong> {detailedSubmission.files ? 'Provided' : 'Not provided'}</p>
                     </div>
                   </>
                 ) : (
