@@ -1870,6 +1870,20 @@ app.get('/api/creators/submissions/:id', authenticateToken, async (req, res) => 
       where: {
         id,
         creatorId: req.user.id
+      },
+      include: {
+        brief: {
+          select: {
+            id: true,
+            title: true,
+            deadline: true,
+            brand: {
+              select: {
+                companyName: true
+              }
+            }
+          }
+        }
       }
     });
 
@@ -1883,7 +1897,13 @@ app.get('/api/creators/submissions/:id', authenticateToken, async (req, res) => 
       files: submission.files, // This will be the content URL
       amount: submission.amount,
       status: submission.status,
-      submittedAt: submission.submittedAt
+      submittedAt: submission.submittedAt,
+      brief: submission.brief ? {
+        id: submission.brief.id,
+        title: submission.brief.title,
+        brandName: submission.brief.brand.companyName,
+        deadline: submission.brief.deadline
+      } : null
     });
   } catch (error) {
     console.error('Error fetching submission details:', error);

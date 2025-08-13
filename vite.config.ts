@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+  },
   server: {
     port: 3000,
     proxy: {
@@ -28,11 +31,24 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
+        manualChunks: (id) => {
+          // Create a vendor chunk for node_modules
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) {
+              return 'vendor';
+            }
+            if (id.includes('react-router')) {
+              return 'router';
+            }
+            if (id.includes('@react-oauth') || id.includes('jwt-decode')) {
+              return 'oauth';
+            }
+            // Put other node_modules in a separate chunk
+            return 'deps';
+          }
         },
       },
     },

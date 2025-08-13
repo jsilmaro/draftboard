@@ -48,6 +48,22 @@ const CreatorDashboard: React.FC = () => {
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showSubmissionViewModal, setShowSubmissionViewModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [submissionDetails, setSubmissionDetails] = useState<{
+    id: string;
+    content: string;
+    files: string;
+    amount: number;
+    status: string;
+    submittedAt: string;
+    brief?: {
+      id: string;
+      title: string;
+      brandName: string;
+      deadline: string;
+    };
+  } | null>(null);
   const [showAddPortfolioModal, setShowAddPortfolioModal] = useState(false);
   const [showEditPortfolioModal, setShowEditPortfolioModal] = useState(false);
   const [selectedPortfolioItem, setSelectedPortfolioItem] = useState<PortfolioItem | null>(null);
@@ -189,6 +205,19 @@ const CreatorDashboard: React.FC = () => {
         setApplyFormData({
           contentUrl: submissionData.files || ''
         });
+        
+        // Update the selectedBrief with the complete brief information
+        if (submissionData.brief) {
+          setSelectedBrief({
+            id: submissionData.brief.id,
+            title: submissionData.brief.title,
+            brandName: submissionData.brief.brandName || '',
+            reward: submissionData.amount,
+            deadline: submissionData.brief.deadline || new Date().toISOString(),
+            status: 'active'
+          });
+        }
+        
         setShowApplyModal(true);
       } else {
         // Fallback to empty form
@@ -202,16 +231,34 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  const handleEditSubmission = (submission: Submission) => {
-    // Find the brief for this submission
-    const brief = availableBriefs.find(b => b.title === submission.briefTitle);
-    if (brief) {
-      setSelectedBrief(brief);
-      fetchSubmissionDetails(submission.id);
-    } else {
-      alert('Brief not found for this submission');
+  const handleViewSubmission = async (submission: Submission) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
+
+      const response = await fetch(`/api/creators/submissions/${submission.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const details = await response.json();
+        setSubmissionDetails(details);
+        setSelectedSubmission(submission);
+        setShowSubmissionViewModal(true);
+      } else {
+        alert('Failed to load submission details');
+      }
+    } catch (error) {
+      alert('Error loading submission details');
     }
   };
+
+
 
   const handleDeleteSubmission = async (submission: Submission) => {
     // Confirm deletion
@@ -874,22 +921,11 @@ const CreatorDashboard: React.FC = () => {
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-green-600 hover:text-green-900 mr-3">View</button>
                     <button 
-                      onClick={() => handleEditSubmission(submission)}
-                      disabled={submission.status === 'approved' || submission.status === 'rejected'}
-                      className={`mr-3 ${
-                        submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                      title={
-                        submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'Cannot edit approved or rejected submissions'
-                          : 'Edit submission'
-                      }
+                      onClick={() => handleViewSubmission(submission)}
+                      className="text-green-600 hover:text-green-900 mr-3"
                     >
-                      Edit
+                      View
                     </button>
                     <button 
                       onClick={() => handleDeleteSubmission(submission)}
@@ -1389,6 +1425,68 @@ const CreatorDashboard: React.FC = () => {
           type="success"
           onClose={() => setShowSuccessNotification(false)}
         />
+      )}
+
+      {/* Submission View Modal */}
+      {showSubmissionViewModal && selectedSubmission && submissionDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Submission Details</h3>
+              <button
+                onClick={() => setShowSubmissionViewModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Brief Information</h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
+                  <p><strong>Amount:</strong> ${selectedSubmission.amount}</p>
+                  <p><strong>Status:</strong> 
+                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                      selectedSubmission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      selectedSubmission.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {selectedSubmission.status.charAt(0).toUpperCase() + selectedSubmission.status.slice(1)}
+                    </span>
+                  </p>
+                  <p><strong>Submitted:</strong> {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {submissionDetails.files && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Content Submission Link</h4>
+                  <div className="bg-white p-3 rounded border">
+                    <a 
+                      href={submissionDetails.files} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                    >
+                      {submissionDetails.files}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowSubmissionViewModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
