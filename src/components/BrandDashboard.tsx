@@ -325,11 +325,46 @@ const BrandDashboard: React.FC = () => {
         fetchDashboardData();
         setShowEditModal(false);
         setSelectedBrief(null);
+        showSuccessToast('Brief updated successfully! ✏️ Your changes have been saved.');
       } else {
         // Failed to update brief
+        showErrorToast('Failed to update brief. Please try again.');
       }
     } catch (error) {
       // Error updating brief
+      showErrorToast('Error updating brief. Please try again.');
+    }
+  };
+
+  const handleDeleteBrief = async (briefId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`/api/briefs/${briefId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Refresh the briefs data
+        fetchDashboardData();
+        setShowViewModal(false);
+        setSelectedBrief(null);
+        showSuccessToast('Brief deleted successfully! 🗑️ The brief has been permanently removed.');
+      } else {
+        const errorData = await response.json();
+        if (response.status === 400) {
+          showErrorToast(errorData.error || 'Cannot delete brief with existing submissions.');
+        } else {
+          showErrorToast('Failed to delete brief. Please try again.');
+        }
+      }
+    } catch (error) {
+      showErrorToast('Error deleting brief. Please try again.');
     }
   };
 
@@ -785,6 +820,7 @@ const BrandDashboard: React.FC = () => {
               >
                 Edit Rewards
               </button>
+
             </div>
           </div>
         ))}
@@ -1687,6 +1723,7 @@ const BrandDashboard: React.FC = () => {
                       >
                         View
                       </button>
+
                     </div>
                   </div>
                 );
@@ -1790,6 +1827,7 @@ const BrandDashboard: React.FC = () => {
                     >
                       View
                     </button>
+
                   </div>
                 </div>
               ))}
@@ -2798,6 +2836,7 @@ const BrandDashboard: React.FC = () => {
               >
                 Edit Brief
               </button>
+
             </div>
           </div>
         </div>
@@ -2944,6 +2983,17 @@ const BrandDashboard: React.FC = () => {
 
               {/* Actions */}
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete "${selectedBrief.title}"? This action cannot be undone.`)) {
+                      handleDeleteBrief(selectedBrief.id);
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  🗑️ Delete Brief
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}

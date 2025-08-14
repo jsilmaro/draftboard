@@ -1296,6 +1296,60 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Delete a brief
+app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can delete briefs' });
+    }
+
+    const { id } = req.params;
+
+    // Find the brief and check ownership
+    const brief = await prisma.brief.findUnique({ 
+      where: { id },
+      include: {
+        _count: {
+          select: { submissions: true }
+        }
+      }
+    });
+
+    if (!brief || brief.brandId !== req.user.id) {
+      return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    // Check if brief has submissions
+    if (brief._count.submissions > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete brief with existing submissions. Please review and handle submissions first.' 
+      });
+    }
+
+    // Delete related records first (award drafts, published awards)
+    await prisma.awardDraft.deleteMany({
+      where: { briefId: id }
+    });
+
+    await prisma.publishedAward.deleteMany({
+      where: { briefId: id }
+    });
+
+    // Delete the brief
+    await prisma.brief.delete({
+      where: { id }
+    });
+
+    res.json({
+      message: 'Brief deleted successfully',
+      deletedBriefId: id
+    });
+  } catch (error) {
+    console.error('Error deleting brief:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get briefs for a brand
 app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
   try {
