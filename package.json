@@ -15,8 +15,7 @@
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "postinstall": "prisma generate",
-    "vercel-build": "npm run build && prisma generate",
-    "test-deployment": "node test-deployment.js"
+    "vercel-build": "npm run build && prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

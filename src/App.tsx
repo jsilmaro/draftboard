@@ -11,7 +11,6 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import ProtectedRoute from './components/ProtectedRoute'
-import GoogleOAuthTest from './components/GoogleOAuthTest'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 
@@ -47,7 +46,7 @@ function App() {
               />
               <Route path="/brand/register" element={<BrandForm />} />
               <Route path="/creator/register" element={<CreatorForm />} />
-              <Route path="/test-oauth" element={<GoogleOAuthTest />} />
+
               <Route 
                 path="/brand/dashboard" 
                 element={

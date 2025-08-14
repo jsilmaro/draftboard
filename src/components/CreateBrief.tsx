@@ -415,9 +415,9 @@ const CreateBrief: React.FC = () => {
                     required
                   >
                     <option value="">Select a reward type</option>
-                    <option value="CASH">💰 CASH - Monetary rewards</option>
-                    <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
-                    <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
+                    <option value="CASH">💰 CASH - Primary monetary rewards</option>
+                    <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
+                    <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
                   </select>
                 </div>
               </div>
@@ -428,7 +428,8 @@ const CreateBrief: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Reward Tiers</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Set rewards for each winning position. You can mix cash, credits, and prizes.
+              Set rewards for each winning position. You can mix cash, credits, and prizes for each tier. 
+              The primary reward type above indicates the main focus, but individual tiers can vary.
             </p>
             
             {formData.rewardTiers.length > 0 && (

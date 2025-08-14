@@ -83,6 +83,7 @@ model Brief {
   requirements     String
   reward           Float
   rewardType       String?
+  amountOfWinners  Int              @default(1)
   deadline         DateTime
   status           String           @default("draft")
   isPrivate        Boolean          @default(false)

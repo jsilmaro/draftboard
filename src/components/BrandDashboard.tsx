@@ -3,17 +3,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
-import CreateReward from './CreateReward';
 import { useToast } from '../contexts/ToastContext';
 
 interface Brief {
   id: string;
   title: string;
+  description?: string;
+  requirements?: string;
   status: 'active' | 'draft' | 'completed';
   submissions: number;
   deadline: string;
   reward: number;
   rewardType?: string;
+  amountOfWinners?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Submission {
@@ -96,15 +100,7 @@ interface EditingRewards {
   type?: string;
 }
 
-interface RewardTier {
-  id: string;
-  name: string;
-  amount: number;
-  description: string;
-  type: 'CASH' | 'CREDIT' | 'PRIZES';
-  winnerName?: string;
-  winnerId?: string;
-}
+
 
 const BrandDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -140,13 +136,17 @@ const BrandDashboard: React.FC = () => {
     message: '',
     icon: ''
   });
-  const [showCreateReward, setShowCreateReward] = useState(false);
-  const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
-  const [editRewardTiers, setEditRewardTiers] = useState<RewardTier[]>([]);
   const [editSelectedRewardType, setEditSelectedRewardType] = useState('');
   const [editIsLoading, setEditIsLoading] = useState(false);
+  const [editAmountOfWinners, setEditAmountOfWinners] = useState(1);
+  const [editWinnerRewards, setEditWinnerRewards] = useState<Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+  }>>([]);
   const [metrics, setMetrics] = useState({
     activeBriefs: 0,
     submissionsThisWeek: 0,
@@ -705,6 +705,7 @@ const BrandDashboard: React.FC = () => {
             </div>
             <div className="space-y-2 text-sm text-gray-600">
               <p>Submissions: {brief.submissions}</p>
+              <p>Winners: {brief.amountOfWinners || 1}</p>
               {(() => {
                 const rewardInfo = getBriefRewardInfo(brief.id);
                 if (brief.rewardType) {
@@ -715,30 +716,30 @@ const BrandDashboard: React.FC = () => {
                   if (rewardInfo.type === 'published') {
                     return (
                       <div>
-                        <p className="text-green-600 font-medium">Reward: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Published</p>
+                        <p className="text-green-600 font-medium">Primary: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers configured • Published</p>
                       </div>
                     );
                   } else if (rewardInfo.type === 'draft') {
                     return (
                       <div>
-                        <p className="text-yellow-600 font-medium">Reward: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Draft</p>
+                        <p className="text-yellow-600 font-medium">Primary: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers configured • Draft</p>
                       </div>
                     );
                   } else {
                     return (
                       <div>
-                        <p className="text-blue-600 font-medium">Reward: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">Type set • No tiers configured</p>
+                        <p className="text-blue-600 font-medium">Primary: {rewardTypeDisplay}</p>
+                        <p className="text-xs text-gray-500">Primary type set • Configure tiers</p>
                       </div>
                     );
                   }
                 } else {
                   return (
                     <div>
-                      <p className="text-gray-500">Reward: Not set</p>
-                      <p className="text-xs text-red-500">Configure rewards to attract creators</p>
+                      <p className="text-gray-500">Primary Reward: Not set</p>
+                      <p className="text-xs text-red-500">Select primary reward type to attract creators</p>
                     </div>
                   );
                 }
@@ -758,67 +759,32 @@ const BrandDashboard: React.FC = () => {
               >
                 Edit
               </button>
-              {getBriefRewardInfo(brief.id).type === 'none' && brief.status === 'active' && (
-                <button 
-                  onClick={() => {
-                    setEditingRewards({
-                      brief,
-                      rewardData: null,
-                      type: 'new'
+              <button 
+                onClick={() => {
+                  setEditingRewards({
+                    brief,
+                    rewardData: null,
+                    type: 'edit'
+                  });
+                  setEditSelectedRewardType(brief.rewardType || '');
+                  setEditAmountOfWinners(brief.amountOfWinners || 1);
+                  // Initialize winner rewards based on current amount of winners
+                  const initialRewards = [];
+                  for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                    initialRewards.push({
+                      position: i,
+                      cashAmount: 0,
+                      creditAmount: 0,
+                      prizeDescription: ''
                     });
-                    setEditRewardTiers([]);
-                    setEditSelectedRewardType(brief.rewardType || '');
-                    setShowEditRewardsModal(true);
-                  }}
-                  className="text-green-600 hover:text-green-800 text-sm font-medium"
-                >
-                  Set Rewards
-                </button>
-              )}
-              {getBriefRewardInfo(brief.id).type === 'draft' && (
-                <button 
-                  onClick={() => {
-                    const draftReward = drafts.find(d => d.briefId === brief.id);
-                    setEditingRewards({
-                      brief,
-                      rewardData: draftReward,
-                      type: 'draft'
-                    });
-                    setEditRewardTiers(draftReward?.rewardTiers || []);
-                    setEditSelectedRewardType(brief.rewardType || '');
-                    setShowEditRewardsModal(true);
-                  }}
-                  className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
-                >
-                  Edit Rewards
-                </button>
-              )}
-              {getBriefRewardInfo(brief.id).type === 'published' && (
-                <button 
-                  onClick={() => {
-                    const publishedReward = rewards.find(r => r.briefId === brief.id);
-                    setEditingRewards({
-                      brief,
-                      rewardData: publishedReward,
-                      type: 'published'
-                    });
-                    setEditRewardTiers(publishedReward?.rewardTiers.map(tier => ({
-                      id: tier.winnerId || `tier-${Date.now()}`,
-                      name: tier.name,
-                      amount: tier.amount,
-                      description: tier.description,
-                      type: brief.rewardType as 'CASH' | 'CREDIT' | 'PRIZES' || 'CASH',
-                      winnerName: tier.winnerName,
-                      winnerId: tier.winnerId
-                    })) || []);
-                    setEditSelectedRewardType(brief.rewardType || '');
-                    setShowEditRewardsModal(true);
-                  }}
-                  className="text-green-600 hover:text-green-800 text-sm font-medium"
-                >
-                  Manage Rewards
-                </button>
-              )}
+                  }
+                  setEditWinnerRewards(initialRewards);
+                  setShowEditRewardsModal(true);
+                }}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Edit Rewards
+              </button>
             </div>
           </div>
         ))}
@@ -827,102 +793,238 @@ const BrandDashboard: React.FC = () => {
       {/* View Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">{selectedBrief.title}</h3>
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedBrief.title}</h3>
+                <p className="text-sm text-gray-600 mt-1">Brief Details</p>
+              </div>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-xl"
               >
                 ✕
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="font-medium">Status:</span>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
-                  selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
-                </span>
-              </div>
-              {selectedBrief.rewardType && (
+
+            {/* Brief Overview */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+              <h4 className="text-lg font-semibold text-blue-900 mb-3">Brief Overview</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between">
-                  <span className="font-medium">Reward Type:</span>
-                  <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                    {selectedBrief.rewardType === 'CASH' ? '💰 Cash Rewards' : 
-                     selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit Rewards' : 
-                     selectedBrief.rewardType === 'PRIZES' ? '🎁 Prize Rewards' : selectedBrief.rewardType}
+                  <span className="font-medium text-blue-900">Status:</span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
+                    selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                   </span>
                 </div>
-              )}
-              <div className="flex justify-between">
-                <span className="font-medium">Reward System:</span>
-                {(() => {
-                  const rewardInfo = getBriefRewardInfo(selectedBrief.id);
-                  if (selectedBrief.rewardType) {
-                    const rewardTypeDisplay = selectedBrief.rewardType === 'CASH' ? '💰 Cash' : 
-                                             selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                                             selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes' : selectedBrief.rewardType;
-                    
-                    if (rewardInfo.type === 'published') {
-                      return (
-                        <div className="text-right">
-                          <span className="text-green-600 font-medium">{rewardTypeDisplay}</span>
-                          <div className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Published</div>
-                        </div>
-                      );
-                    } else if (rewardInfo.type === 'draft') {
-                      return (
-                        <div className="text-right">
-                          <span className="text-yellow-600 font-medium">{rewardTypeDisplay}</span>
-                          <div className="text-xs text-gray-500">{rewardInfo.tiers} tiers • Draft</div>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div className="text-right">
-                          <span className="text-blue-600 font-medium">{rewardTypeDisplay}</span>
-                          <div className="text-xs text-gray-500">Type set • No tiers</div>
-                        </div>
-                      );
-                    }
-                  } else {
-                    return (
-                      <div className="text-right">
-                        <span className="text-gray-500">Not set</span>
-                        <div className="text-xs text-red-500">Configure rewards</div>
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Deadline:</span>
-                <span>{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Submissions:</span>
-                <span>{selectedBrief.submissions}</span>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Deadline:</span>
+                  <span className="text-blue-900">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Submissions:</span>
+                  <span className="text-blue-900">{selectedBrief.submissions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Amount of Winners:</span>
+                  <span className="text-blue-900">{selectedBrief.amountOfWinners || 1}</span>
+                </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
+
+            {/* Reward Information */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
+              
+              {selectedBrief.rewardType ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div>
+                      <span className="font-medium text-green-900">Primary Reward Type:</span>
+                      <div className="text-sm text-green-700 mt-1">
+                        {selectedBrief.rewardType === 'CASH' ? '💰 Cash - Monetary rewards' : 
+                         selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit - Platform credits/points' : 
+                         selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes - Physical items & experiences' : selectedBrief.rewardType}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl">
+                        {selectedBrief.rewardType === 'CASH' ? '💰' : 
+                         selectedBrief.rewardType === 'CREDIT' ? '🎫' : 
+                         selectedBrief.rewardType === 'PRIZES' ? '🎁' : '🎯'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-2">Reward Status</h5>
+                      <div className="text-sm text-gray-600">
+                        {(() => {
+                          const rewardInfo = getBriefRewardInfo(selectedBrief.id);
+                          if (rewardInfo.type === 'published') {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                <span className="text-green-700">Published</span>
+                              </div>
+                            );
+                          } else if (rewardInfo.type === 'draft') {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                                <span className="text-yellow-700">Draft</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                <span className="text-blue-700">Primary type set</span>
+                              </div>
+                            );
+                          }
+                        })()}
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-2">Winner Configuration</h5>
+                      <div className="text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span>Total Winners:</span>
+                          <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span>Reward Type:</span>
+                          <span className="font-medium">
+                            {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                             selectedBrief.rewardType === 'CREDIT' ? 'Credit' : 
+                             selectedBrief.rewardType === 'PRIZES' ? 'Prizes' : 'Mixed'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <h5 className="text-lg font-semibold text-orange-900 mb-2">No Rewards Configured</h5>
+                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any reward type set up yet.</p>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setEditingRewards({
+                        brief: selectedBrief,
+                        rewardData: null,
+                        type: 'edit'
+                      });
+                      setEditSelectedRewardType('');
+                      setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
+                      const initialRewards = [];
+                      for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
+                        initialRewards.push({
+                          position: i,
+                          cashAmount: 0,
+                          creditAmount: 0,
+                          prizeDescription: ''
+                        });
+                      }
+                      setEditWinnerRewards(initialRewards);
+                      setShowEditRewardsModal(true);
+                    }}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    Set Up Rewards
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Brief Details */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Details</h4>
+              <div className="space-y-4">
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-2">Description</h5>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {selectedBrief.description || 'No description provided'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-2">Requirements</h5>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {selectedBrief.requirements || 'No requirements specified'}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Created</h5>
+                    <p className="text-gray-600 text-sm">
+                      {selectedBrief.createdAt ? new Date(selectedBrief.createdAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Last Updated</h5>
+                    <p className="text-gray-600 text-sm">
+                      {selectedBrief.updatedAt ? new Date(selectedBrief.updatedAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 onClick={() => setShowViewModal(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 Close
               </button>
+              {selectedBrief.rewardType && (
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setEditingRewards({
+                      brief: selectedBrief,
+                      rewardData: null,
+                      type: 'edit'
+                    });
+                    setEditSelectedRewardType(selectedBrief.rewardType || '');
+                    setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
+                    const initialRewards = [];
+                    for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
+                      initialRewards.push({
+                        position: i,
+                        cashAmount: 0,
+                        creditAmount: 0,
+                        prizeDescription: ''
+                      });
+                    }
+                    setEditWinnerRewards(initialRewards);
+                    setShowEditRewardsModal(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Edit Rewards
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowViewModal(false);
                   handleEditBrief(selectedBrief);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
               >
-                Edit
+                Edit Brief
               </button>
             </div>
           </div>
@@ -932,74 +1034,142 @@ const BrandDashboard: React.FC = () => {
       {/* Edit Modal */}
       {showEditModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Edit Brief</h3>
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Edit Brief</h3>
+                <p className="text-sm text-gray-600 mt-1">Update brief information and settings</p>
+              </div>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-xl"
               >
                 ✕
               </button>
             </div>
+            
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
               handleUpdateBrief(selectedBrief.id, {
                 title: formData.get('title') as string,
+                description: formData.get('description') as string,
+                requirements: formData.get('requirements') as string,
                 rewardType: formData.get('rewardType') as string,
+                amountOfWinners: parseInt(formData.get('amountOfWinners') as string) || 1,
                 deadline: formData.get('deadline') as string,
                 status: formData.get('status') as 'draft' | 'active'
               });
             }}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input
-                    type="text"
-                    name="title"
-                    defaultValue={selectedBrief.title}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  />
+              
+              {/* Basic Information */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                <h4 className="text-lg font-semibold text-blue-900 mb-4">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Brief Title *</label>
+                    <input
+                      type="text"
+                      name="title"
+                      defaultValue={selectedBrief.title}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      name="status"
+                      defaultValue={selectedBrief.status}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="draft">📝 Draft</option>
+                      <option value="active">🚀 Active</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Reward Type</label>
-                  <select
-                    name="rewardType"
-                    defaultValue={selectedBrief.rewardType || ''}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  >
-                    <option value="">Select a reward type</option>
-                    <option value="CASH">💰 CASH - Monetary rewards</option>
-                    <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
-                    <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
-                  </select>
+              </div>
+
+              {/* Content */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Content</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea
+                      name="description"
+                      defaultValue={selectedBrief.description || ''}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Describe what you're looking for from creators..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Requirements *</label>
+                    <textarea
+                      name="requirements"
+                      defaultValue={selectedBrief.requirements || ''}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="List specific requirements, deliverables, and guidelines..."
+                      required
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* Reward Configuration */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
+                <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Reward Type *</label>
+                    <select
+                      name="rewardType"
+                      defaultValue={selectedBrief.rewardType || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select a reward type</option>
+                      <option value="CASH">💰 CASH - Primary monetary rewards</option>
+                      <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
+                      <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
+                    <select
+                      name="amountOfWinners"
+                      defaultValue={selectedBrief.amountOfWinners || 1}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mb-6">
+                <h4 className="text-lg font-semibold text-purple-900 mb-4">Timeline</h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Deadline</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Deadline *</label>
                   <input
                     type="date"
                     name="deadline"
                     defaultValue={new Date(selectedBrief.deadline).toISOString().split('T')[0]}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select
-                    name="status"
-                    defaultValue={selectedBrief.status}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                  </select>
-                </div>
               </div>
-              <div className="mt-6 flex justify-end space-x-2">
+
+              {/* Actions */}
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
@@ -1019,7 +1189,7 @@ const BrandDashboard: React.FC = () => {
                     onClick={() => handlePublishBrief(selectedBrief.id)}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
-                    Publish
+                    🚀 Publish Brief
                   </button>
                 )}
               </div>
@@ -1382,185 +1552,283 @@ const BrandDashboard: React.FC = () => {
   );
 
   const renderRewards = () => {
-    if (showCreateReward) {
-      return <CreateReward 
-        onBack={() => {
-          setShowCreateReward(false);
-          setSelectedDraft(null);
-        }} 
-        draftToEdit={selectedDraft ? {
-          briefId: selectedDraft.briefId,
-          briefTitle: selectedDraft.briefTitle,
-          rewardTiers: selectedDraft.rewardTiers.map(tier => ({
-            id: tier.id,
-            name: tier.name,
-            amount: tier.amount,
-            description: tier.description,
-            type: tier.type,
-            winnerId: tier.id,
-            winnerName: undefined
-          })),
-          savedAt: selectedDraft.savedAt
-        } : undefined}
-      />;
-    }
-
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Rewards</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Rewards Management</h2>
           <button 
-            onClick={() => setShowCreateReward(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            onClick={() => setActiveTab('briefs')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Create Reward
+            Manage Briefs
           </button>
         </div>
 
-        {/* Drafts Section */}
-        {drafts.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Drafts</h3>
+        {/* Overview Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <div className="text-3xl mr-3">📋</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Total Briefs</h3>
+                <p className="text-3xl font-bold text-blue-600">{briefs.length}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">Active and draft briefs</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <div className="text-3xl mr-3">💰</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Rewards Configured</h3>
+                <p className="text-3xl font-bold text-green-600">
+                  {briefs.filter(brief => brief.rewardType).length}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">Briefs with reward types set</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center mb-4">
+              <div className="text-3xl mr-3">🎯</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Total Winners</h3>
+                <p className="text-3xl font-bold text-purple-600">
+                  {briefs.reduce((total, brief) => total + (brief.amountOfWinners || 0), 0)}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">Across all briefs</p>
+          </div>
+        </div>
+
+        {/* Briefs with Rewards Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Briefs with Rewards</h3>
+          {briefs.filter(brief => brief.rewardType).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {drafts.map((draft) => (
-                <div key={draft.id} className="bg-yellow-50 p-6 rounded-lg shadow-sm border border-yellow-200">
+              {briefs.filter(brief => brief.rewardType).map((brief) => {
+                const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
+                                         brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                                         brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
+                
+                return (
+                  <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <h4 className="font-semibold text-gray-900 line-clamp-2">{brief.title}</h4>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        brief.status === 'active' ? 'bg-green-100 text-green-800' :
+                        brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Primary Reward:</span>
+                        <span className="text-sm font-medium text-blue-600">{rewardTypeDisplay}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Winners:</span>
+                        <span className="text-sm font-medium text-gray-900">{brief.amountOfWinners || 1}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Submissions:</span>
+                        <span className="text-sm font-medium text-gray-900">{brief.submissions}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Deadline:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {new Date(brief.deadline).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => {
+                          setEditingRewards({
+                            brief,
+                            rewardData: null,
+                            type: 'edit'
+                          });
+                          setEditSelectedRewardType(brief.rewardType || '');
+                          setEditAmountOfWinners(brief.amountOfWinners || 1);
+                          // Initialize winner rewards
+                          const initialRewards = [];
+                          for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                            initialRewards.push({
+                              position: i,
+                              cashAmount: 0,
+                              creditAmount: 0,
+                              prizeDescription: ''
+                            });
+                          }
+                          setEditWinnerRewards(initialRewards);
+                          setShowEditRewardsModal(true);
+                        }}
+                        className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 text-sm transition-colors"
+                      >
+                        Edit Rewards
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedBrief(brief);
+                          setShowViewModal(true);
+                        }}
+                        className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-50 text-sm transition-colors"
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="text-4xl mb-4">🎁</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No rewards configured yet</h3>
+              <p className="text-gray-600 mb-4">Start by creating a brief and setting up rewards for your campaigns</p>
+              <div className="flex justify-center space-x-3">
+                <button 
+                  onClick={() => navigate('/create-brief')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create Brief
+                </button>
+                <button 
+                  onClick={() => setActiveTab('briefs')}
+                  className="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  View All Briefs
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Briefs without Rewards Section */}
+        {briefs.filter(brief => !brief.rewardType).length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Briefs Needing Rewards</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {briefs.filter(brief => !brief.rewardType).map((brief) => (
+                <div key={brief.id} className="bg-orange-50 p-6 rounded-lg shadow-sm border border-orange-200">
                   <div className="flex justify-between items-start mb-4">
-                    <h4 className="font-semibold text-gray-900">{draft.briefTitle}</h4>
-                    <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                      Draft
+                    <h4 className="font-semibold text-gray-900 line-clamp-2">{brief.title}</h4>
+                    <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                      No Rewards
                     </span>
                   </div>
-                  <div className="space-y-2 mb-4">
-                    <p className="text-sm text-gray-600">
-                      {draft.rewardTiers.length} reward tier{draft.rewardTiers.length !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Saved: {new Date(draft.savedAt).toLocaleDateString()}
-                    </p>
+                  
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Status:</span>
+                      <span className={`text-sm px-2 py-1 rounded-full ${
+                        brief.status === 'active' ? 'bg-green-100 text-green-800' :
+                        brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Submissions:</span>
+                      <span className="text-sm font-medium text-gray-900">{brief.submissions}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Deadline:</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {new Date(brief.deadline).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                                     <div className="flex space-x-2">
-                     <button 
-                       onClick={() => {
-                         setSelectedDraft(draft);
-                         setShowCreateReward(true);
-                       }}
-                       className="text-blue-600 hover:text-blue-800 text-sm"
-                     >
-                       Continue Editing
-                     </button>
-                     <button 
-                       onClick={async () => {
-                         if (confirm('Are you sure you want to delete this draft?')) {
-                           try {
-                             const token = localStorage.getItem('token');
-                             const response = await fetch(`/api/brands/rewards/draft/${draft.id}`, {
-                               method: 'DELETE',
-                               headers: { Authorization: `Bearer ${token}` }
-                             });
-                             
-                             if (response.ok) {
-                               // Refresh dashboard data
-                               fetchDashboardData();
-                             } else {
-                               alert('Failed to delete draft');
-                             }
-                           } catch (error) {
-                             // Error deleting draft
-                             alert('Error deleting draft');
-                           }
-                         }
-                       }}
-                       className="text-red-600 hover:text-red-800 text-sm"
-                     >
-                       Delete
-                     </button>
-                   </div>
+                  
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => {
+                        setEditingRewards({
+                          brief,
+                          rewardData: null,
+                          type: 'edit'
+                        });
+                        setEditSelectedRewardType('');
+                        setEditAmountOfWinners(brief.amountOfWinners || 1);
+                        // Initialize winner rewards
+                        const initialRewards = [];
+                        for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                          initialRewards.push({
+                            position: i,
+                            cashAmount: 0,
+                            creditAmount: 0,
+                            prizeDescription: ''
+                          });
+                        }
+                        setEditWinnerRewards(initialRewards);
+                        setShowEditRewardsModal(true);
+                      }}
+                      className="flex-1 bg-orange-600 text-white py-2 px-3 rounded-md hover:bg-orange-700 text-sm transition-colors"
+                    >
+                      Set Rewards
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedBrief(brief);
+                        setShowViewModal(true);
+                      }}
+                      className="flex-1 border border-orange-300 text-orange-700 py-2 px-3 rounded-md hover:bg-orange-50 text-sm transition-colors"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Published Rewards Section */}
-        {rewards.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Published Rewards</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rewards.map((reward) => (
-                <div key={reward.id} className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-200">
-                  <div className="flex justify-between items-start mb-4">
-                    <h4 className="font-semibold text-gray-900">{reward.briefTitle}</h4>
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                      Published
-                    </span>
-                  </div>
-                  <div className="space-y-3 mb-4">
-                    {reward.rewardTiers.map((tier, index: number) => (
-                      <div key={index} className="bg-white p-3 rounded border border-green-100">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-gray-700">{tier.name}</span>
-                          <span className="text-green-600 font-semibold">${tier.amount}</span>
-                        </div>
-                        {tier.winnerName && (
-                          <div className="flex items-center text-sm">
-                            <span className="text-gray-500">Winner:</span>
-                            <span className="text-green-600 font-medium ml-1">🏆 {tier.winnerName}</span>
-                          </div>
-                        )}
-                        {tier.description && (
-                          <p className="text-xs text-gray-500 mt-1">{tier.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Published: {new Date(reward.publishedAt || reward.submittedAt).toLocaleDateString()}
-                  </p>
-                  
-                  {/* Winners Section */}
-                  <div className="space-y-3 mb-4">
-                    <h5 className="font-medium text-gray-900">Winners</h5>
-                    {reward.rewardTiers.map((tier, index: number) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-gray-900">{tier.name}</span>
-                          <span className="text-sm font-bold text-green-600">${tier.amount}</span>
-                        </div>
-                        {tier.winnerName && (
-                          <div className="flex items-center">
-                            <span className="text-sm text-gray-600">🏆 {tier.winnerName}</span>
-                          </div>
-                        )}
-                        {tier.description && (
-                          <p className="text-xs text-gray-500 mt-1">{tier.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="text-xs text-gray-500">
-                    Published: {new Date(reward.submittedAt).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {rewards.length === 0 && drafts.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎁</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No rewards yet</h3>
-            <p className="text-gray-600 mb-6">Create your first reward to recognize outstanding creators</p>
+        {/* Quick Actions */}
+        <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+          <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
-              onClick={() => setShowCreateReward(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => navigate('/create-brief')}
+              className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-left"
             >
-              Create Your First Reward
+              <div className="text-2xl mb-2">📝</div>
+              <h4 className="font-semibold mb-1">Create New Brief</h4>
+              <p className="text-sm text-blue-100">Start a new campaign with rewards</p>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('briefs')}
+              className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors text-left"
+            >
+              <div className="text-2xl mb-2">📋</div>
+              <h4 className="font-semibold mb-1">Manage Briefs</h4>
+              <p className="text-sm text-green-100">View and edit all your briefs</p>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('submissions')}
+              className="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors text-left"
+            >
+              <div className="text-2xl mb-2">📥</div>
+              <h4 className="font-semibold mb-1">Review Submissions</h4>
+              <p className="text-sm text-purple-100">Evaluate creator submissions</p>
             </button>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -1959,65 +2227,67 @@ const BrandDashboard: React.FC = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetch('/api/brands/rewards/draft', {
-          method: 'POST',
+        // Update the brief with new reward type and amount of winners
+        const briefResponse = await fetch(`/api/briefs/${brief.id}`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            briefId: brief.id,
-            briefTitle: brief.title,
-            rewardTiers: editRewardTiers,
-            savedAt: new Date().toISOString()
+            rewardType: editSelectedRewardType,
+            amountOfWinners: editAmountOfWinners
           })
         });
 
-        if (response.ok) {
+        if (briefResponse.ok) {
           setShowSuccessNotification(true);
           setSuccessNotification({
             title: 'Rewards Updated',
-            message: 'Rewards have been saved successfully!',
+            message: 'Primary reward type and winner rewards have been updated successfully!',
             icon: '✅'
           });
           setShowEditRewardsModal(false);
           setEditingRewards(null);
           fetchDashboardData();
         } else {
-          alert('Failed to save rewards. Please try again.');
+          alert('Failed to update rewards. Please try again.');
         }
       } catch (error) {
-        // Error saving rewards
-        alert('Error saving rewards. Please try again.');
+        alert('Error updating rewards. Please try again.');
       } finally {
         setEditIsLoading(false);
       }
     };
 
-    const addRewardTier = () => {
-      if (!editSelectedRewardType) {
-        alert('Please select a reward type first');
-        return;
+    const handleAmountOfWinnersChange = (amount: number) => {
+      setEditAmountOfWinners(amount);
+      // Update winner rewards array
+      const newRewards = [];
+      for (let i = 1; i <= amount; i++) {
+        const existingReward = editWinnerRewards.find(r => r.position === i);
+        newRewards.push({
+          position: i,
+          cashAmount: existingReward?.cashAmount || 0,
+          creditAmount: existingReward?.creditAmount || 0,
+          prizeDescription: existingReward?.prizeDescription || ''
+        });
       }
-
-      const newTier: RewardTier = {
-        id: Date.now().toString(),
-        name: `${editSelectedRewardType} Reward ${editRewardTiers.length + 1}`,
-        amount: 0,
-        description: '',
-        type: editSelectedRewardType as 'CASH' | 'CREDIT' | 'PRIZES'
-      };
-      setEditRewardTiers([...editRewardTiers, newTier]);
+      setEditWinnerRewards(newRewards);
     };
 
-    const updateRewardTier = (id: string, field: keyof RewardTier, value: string | number) => {
-      setEditRewardTiers((prev: RewardTier[]) => prev.map((tier: RewardTier) => 
-        tier.id === id ? { ...tier, [field]: value } : tier
+    const handleWinnerRewardChange = (position: number, field: string, value: string | number) => {
+      setEditWinnerRewards(prev => prev.map(reward => 
+        reward.position === position 
+          ? { ...reward, [field]: value }
+          : reward
       ));
     };
 
-    const removeRewardTier = (id: string) => {
-      setEditRewardTiers((prev: RewardTier[]) => prev.filter((tier: RewardTier) => tier.id !== id));
+    const calculateTotalReward = () => {
+      return editWinnerRewards.reduce((total, reward) => {
+        return total + (reward.cashAmount || 0) + (reward.creditAmount || 0);
+      }, 0);
     };
 
     return (
@@ -2054,7 +2324,7 @@ const BrandDashboard: React.FC = () => {
                 </span>
               </div>
               <div>
-                <span className="font-medium text-blue-900">Reward Type:</span>
+                <span className="font-medium text-blue-900">Current Reward Type:</span>
                 <span className="ml-2">
                   {brief.rewardType ? (
                     brief.rewardType === 'CASH' ? '💰 Cash' : 
@@ -2066,86 +2336,117 @@ const BrandDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Reward Type Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Reward Type</label>
-            <select
-              value={editSelectedRewardType}
-              onChange={(e) => setEditSelectedRewardType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select a reward type</option>
-              <option value="CASH">💰 CASH - Monetary rewards</option>
-              <option value="CREDIT">🎫 CREDIT - Platform credits/points</option>
-              <option value="PRIZES">🎁 PRIZES - Physical items & experiences</option>
-            </select>
-          </div>
-
-          {/* Reward Tiers */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold text-gray-900">Reward Tiers</h4>
-              <button 
-                onClick={addRewardTier}
-                disabled={!editSelectedRewardType}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          {/* Primary Reward Type Selection */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Primary Reward Type</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reward Type *</label>
+              <select
+                value={editSelectedRewardType}
+                onChange={(e) => setEditSelectedRewardType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                + Add Tier
-              </button>
+                <option value="">Select a reward type</option>
+                <option value="CASH">💰 CASH - Primary monetary rewards</option>
+                <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
+                <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
+              </select>
             </div>
 
-            {editRewardTiers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">🎁</div>
-                <p>No reward tiers yet. Select a reward type and click &quot;Add Tier&quot; to get started!</p>
-              </div>
-            ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
+              <select
+                value={editAmountOfWinners}
+                onChange={(e) => handleAmountOfWinnersChange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                  <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Winner Rewards */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Winner Rewards</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Set rewards for each winning position. You can mix cash, credits, and prizes for each winner.
+            </p>
+            
+            {editWinnerRewards.length > 0 && (
               <div className="space-y-4">
-                {editRewardTiers.map((tier, index: number) => (
-                  <div key={tier.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h5 className="font-medium text-gray-900">Tier {index + 1}</h5>
-                      <button
-                        onClick={() => removeRewardTier(tier.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        ✕
-                      </button>
+                {editWinnerRewards.map((reward) => (
+                  <div key={reward.position} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        {reward.position === 1 ? '🥇 1st Place' : 
+                         reward.position === 2 ? '🥈 2nd Place' : 
+                         reward.position === 3 ? '🥉 3rd Place' : 
+                         `${reward.position}th Place`}
+                      </h4>
                     </div>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input
-                          type="text"
-                          value={tier.name}
-                          onChange={(e) => updateRewardTier(tier.id, 'name', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {tier.type === 'CASH' ? 'Amount ($)' : 
-                           tier.type === 'CREDIT' ? 'Credit Value' : 'Prize Value ($)'}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Cash Amount ($)
                         </label>
                         <input
                           type="number"
-                          value={tier.amount}
-                          onChange={(e) => updateRewardTier(tier.id, 'amount', parseFloat(e.target.value) || 0)}
+                          min="0"
+                          step="0.01"
+                          value={reward.cashAmount || ''}
+                          onChange={(e) => handleWinnerRewardChange(reward.position, 'cashAmount', Number(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
                         />
                       </div>
+                      
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Credit Amount
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={reward.creditAmount || ''}
+                          onChange={(e) => handleWinnerRewardChange(reward.position, 'creditAmount', Number(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Prize Description
+                        </label>
                         <input
                           type="text"
-                          value={tier.description}
-                          onChange={(e) => updateRewardTier(tier.id, 'description', e.target.value)}
+                          value={reward.prizeDescription || ''}
+                          onChange={(e) => handleWinnerRewardChange(reward.position, 'prizeDescription', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Product bundle, Gift card, Experience"
                         />
                       </div>
                     </div>
                   </div>
                 ))}
+                
+                {/* Total Calculator */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold text-blue-900">Campaign Total:</span>
+                    <span className="text-2xl font-bold text-blue-900">
+                      ${calculateTotalReward().toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-2">
+                    Total cash value of all rewards (excluding prizes)
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -2163,10 +2464,10 @@ const BrandDashboard: React.FC = () => {
             </button>
             <button
               onClick={handleSave}
-              disabled={editIsLoading || editRewardTiers.length === 0}
+              disabled={editIsLoading || !editSelectedRewardType}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {editIsLoading ? 'Saving...' : 'Save Rewards'}
+              {editIsLoading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -2262,10 +2563,414 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Modals */}
+      {showViewModal && selectedBrief && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedBrief.title}</h3>
+                <p className="text-sm text-gray-600 mt-1">Brief Details</p>
+              </div>
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Brief Overview */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+              <h4 className="text-lg font-semibold text-blue-900 mb-3">Brief Overview</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Status:</span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
+                    selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Deadline:</span>
+                  <span className="text-blue-900">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Submissions:</span>
+                  <span className="text-blue-900">{selectedBrief.submissions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-blue-900">Amount of Winners:</span>
+                  <span className="text-blue-900">{selectedBrief.amountOfWinners || 1}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Reward Information */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
+              
+              {selectedBrief.rewardType ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div>
+                      <span className="font-medium text-green-900">Primary Reward Type:</span>
+                      <div className="text-sm text-green-700 mt-1">
+                        {selectedBrief.rewardType === 'CASH' ? '💰 Cash - Monetary rewards' : 
+                         selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit - Platform credits/points' : 
+                         selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes - Physical items & experiences' : selectedBrief.rewardType}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl">
+                        {selectedBrief.rewardType === 'CASH' ? '💰' : 
+                         selectedBrief.rewardType === 'CREDIT' ? '🎫' : 
+                         selectedBrief.rewardType === 'PRIZES' ? '🎁' : '🎯'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-2">Reward Status</h5>
+                      <div className="text-sm text-gray-600">
+                        {(() => {
+                          const rewardInfo = getBriefRewardInfo(selectedBrief.id);
+                          if (rewardInfo.type === 'published') {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                <span className="text-green-700">Published</span>
+                              </div>
+                            );
+                          } else if (rewardInfo.type === 'draft') {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                                <span className="text-yellow-700">Draft</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                <span className="text-blue-700">Primary type set</span>
+                              </div>
+                            );
+                          }
+                        })()}
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-2">Winner Configuration</h5>
+                      <div className="text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span>Total Winners:</span>
+                          <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span>Reward Type:</span>
+                          <span className="font-medium">
+                            {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                             selectedBrief.rewardType === 'CREDIT' ? 'Credit' : 
+                             selectedBrief.rewardType === 'PRIZES' ? 'Prizes' : 'Mixed'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <h5 className="text-lg font-semibold text-orange-900 mb-2">No Rewards Configured</h5>
+                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any reward type set up yet.</p>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setEditingRewards({
+                        brief: selectedBrief,
+                        rewardData: null,
+                        type: 'edit'
+                      });
+                      setEditSelectedRewardType('');
+                      setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
+                      const initialRewards = [];
+                      for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
+                        initialRewards.push({
+                          position: i,
+                          cashAmount: 0,
+                          creditAmount: 0,
+                          prizeDescription: ''
+                        });
+                      }
+                      setEditWinnerRewards(initialRewards);
+                      setShowEditRewardsModal(true);
+                    }}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    Set Up Rewards
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Brief Details */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Details</h4>
+              <div className="space-y-4">
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-2">Description</h5>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {selectedBrief.description || 'No description provided'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-2">Requirements</h5>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {selectedBrief.requirements || 'No requirements specified'}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Created</h5>
+                    <p className="text-gray-600 text-sm">
+                      {selectedBrief.createdAt ? new Date(selectedBrief.createdAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Last Updated</h5>
+                    <p className="text-gray-600 text-sm">
+                      {selectedBrief.updatedAt ? new Date(selectedBrief.updatedAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+              {selectedBrief.rewardType && (
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setEditingRewards({
+                      brief: selectedBrief,
+                      rewardData: null,
+                      type: 'edit'
+                    });
+                    setEditSelectedRewardType(selectedBrief.rewardType || '');
+                    setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
+                    const initialRewards = [];
+                    for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
+                      initialRewards.push({
+                        position: i,
+                        cashAmount: 0,
+                        creditAmount: 0,
+                        prizeDescription: ''
+                      });
+                    }
+                    setEditWinnerRewards(initialRewards);
+                    setShowEditRewardsModal(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Edit Rewards
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleEditBrief(selectedBrief);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Edit Brief
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {renderReviewModal()}
       {renderRejectModal()}
       {renderApproveModal()}
       {renderEditRewardsModal()}
+      {showEditModal && selectedBrief && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Edit Brief</h3>
+                <p className="text-sm text-gray-600 mt-1">Update brief information and settings</p>
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleUpdateBrief(selectedBrief.id, {
+                title: formData.get('title') as string,
+                description: formData.get('description') as string,
+                requirements: formData.get('requirements') as string,
+                rewardType: formData.get('rewardType') as string,
+                amountOfWinners: parseInt(formData.get('amountOfWinners') as string) || 1,
+                deadline: formData.get('deadline') as string,
+                status: formData.get('status') as 'draft' | 'active'
+              });
+            }}>
+              
+              {/* Basic Information */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                <h4 className="text-lg font-semibold text-blue-900 mb-4">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Brief Title *</label>
+                    <input
+                      type="text"
+                      name="title"
+                      defaultValue={selectedBrief.title}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      name="status"
+                      defaultValue={selectedBrief.status}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="draft">📝 Draft</option>
+                      <option value="active">🚀 Active</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Content</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea
+                      name="description"
+                      defaultValue={selectedBrief.description || ''}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Describe what you're looking for from creators..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Requirements *</label>
+                    <textarea
+                      name="requirements"
+                      defaultValue={selectedBrief.requirements || ''}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="List specific requirements, deliverables, and guidelines..."
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Reward Configuration */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
+                <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Reward Type *</label>
+                    <select
+                      name="rewardType"
+                      defaultValue={selectedBrief.rewardType || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select a reward type</option>
+                      <option value="CASH">💰 CASH - Primary monetary rewards</option>
+                      <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
+                      <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
+                    <select
+                      name="amountOfWinners"
+                      defaultValue={selectedBrief.amountOfWinners || 1}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mb-6">
+                <h4 className="text-lg font-semibold text-purple-900 mb-4">Timeline</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Deadline *</label>
+                  <input
+                    type="date"
+                    name="deadline"
+                    defaultValue={new Date(selectedBrief.deadline).toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Update Brief
+                </button>
+                {selectedBrief.status === 'draft' && (
+                  <button
+                    type="button"
+                    onClick={() => handlePublishBrief(selectedBrief.id)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    🚀 Publish Brief
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Animated Notifications */}
       {showSuccessNotification && (
