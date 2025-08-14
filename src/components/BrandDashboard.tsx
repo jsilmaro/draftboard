@@ -1736,7 +1736,7 @@ const BrandDashboard: React.FC = () => {
               <p className="text-gray-600 mb-4">Start by creating a brief and setting up rewards for your campaigns</p>
               <div className="flex justify-center space-x-3">
                 <button 
-                  onClick={() => navigate('/create-brief')}
+                  onClick={() => navigate('/brand/create-brief')}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Create Brief
@@ -1840,7 +1840,7 @@ const BrandDashboard: React.FC = () => {
           <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
-              onClick={() => navigate('/create-brief')}
+              onClick={() => navigate('/brand/create-brief')}
               className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-left"
             >
               <div className="text-2xl mb-2">📝</div>

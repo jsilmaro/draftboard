@@ -87,6 +87,7 @@ This document summarizes all the features, improvements, and fixes we implemente
 - **Fixed View Button**: Now works properly in Rewards page
 - **Fixed Edit Brief Button**: Properly opens edit modal from view modal
 - **Modal State Management**: Fixed modal opening/closing issues
+- **Fixed Navigation**: "Create Brief" buttons now correctly redirect to `/brand/create-brief`
 
 ### 3. **Code Quality**
 - **Linting Issues**: Fixed all ESLint errors and warnings
