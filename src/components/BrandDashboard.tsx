@@ -34,7 +34,7 @@ interface Creator {
   userName: string;
   fullName: string;
   email: string;
-  portfolio: string;
+  
   socialInstagram?: string;
   socialTwitter?: string;
   socialLinkedIn?: string;
@@ -441,7 +441,7 @@ const BrandDashboard: React.FC = () => {
           contactData.socialYouTube && `YouTube: ${contactData.socialYouTube}`
         ].filter(Boolean).join('\n') || 'Not provided';
         
-        alert(`Creator Contact Details:\n\nName: ${contactData.fullName}\nUsername: @${contactData.userName}\nEmail: ${contactData.email}\nSocial Handles:\n${socialHandles}\nPortfolio: ${contactData.portfolio || 'Not provided'}`);
+        alert(`Creator Contact Details:\n\nName: ${contactData.fullName}\nUsername: @${contactData.userName}\nEmail: ${contactData.email}\nSocial Handles:\n${socialHandles}\n`);
       } else {
         // Failed to get creator contact details
         alert('Unable to get creator contact details. Make sure you have submissions from this creator.');
@@ -1384,7 +1384,7 @@ const BrandDashboard: React.FC = () => {
             </div>
             <div className="space-y-2 text-sm text-gray-600 mb-4">
               <p>Email: {creator.email}</p>
-              <p>Portfolio: {creator.portfolio ? 'Available' : 'Not available'}</p>
+      
               <p>Verified: {creator.isVerified ? 'Yes' : 'No'}</p>
             </div>
             <div className="flex space-x-2">
@@ -1432,8 +1432,7 @@ const BrandDashboard: React.FC = () => {
                   <p className="text-gray-600">{selectedCreator.email}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Portfolio:</span>
-                  <p className="text-gray-600">{selectedCreator.portfolio ? 'Available' : 'Not available'}</p>
+                  
                 </div>
                 <div>
                   <span className="font-medium">Verified:</span>
@@ -2068,22 +2067,7 @@ const BrandDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Creator Portfolio Preview */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Creator Portfolio</h4>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-600 mb-3">
-                  Previous work and portfolio items from {selectedSubmission.creatorName}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div key={item} className="bg-gray-200 h-20 rounded flex items-center justify-center">
-                      <span className="text-gray-500 text-xs">Portfolio Item {item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+
           </div>
 
           <div className="mt-6 flex justify-end space-x-2">

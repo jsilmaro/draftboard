@@ -22,13 +22,12 @@ interface CreatorFormData {
   addressZip: string;
   addressCountry: string;
   
-  // Step 3: Social Media & Portfolio
+  // Step 3: Social Media
   socialInstagram: string;
   socialTwitter: string;
   socialLinkedIn: string;
   socialTikTok: string;
   socialYouTube: string;
-  portfolio: string;
   
   // Step 4: Terms
   termsAccepted: boolean;
@@ -59,7 +58,6 @@ const CreatorForm: React.FC = () => {
     socialLinkedIn: '',
     socialTikTok: '',
     socialYouTube: '',
-    portfolio: '',
     termsAccepted: false,
   });
 
@@ -114,11 +112,7 @@ const CreatorForm: React.FC = () => {
         }
         break;
       case 3:
-        // Social media and portfolio are optional, but portfolio is recommended
-        if (!formData.portfolio) {
-          setError('Please provide your portfolio URL to help brands discover you');
-          return false;
-        }
+            // Social media is optional
         break;
       case 4:
         if (!formData.termsAccepted) {
@@ -396,24 +390,11 @@ const CreatorForm: React.FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Social Media & Portfolio</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Social Media</h2>
         <p className="text-gray-600">Help brands discover your work</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="form-field">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Portfolio URL *
-          </label>
-          <input
-            type="url"
-            value={formData.portfolio}
-            onChange={(e) => handleInputChange('portfolio', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-            placeholder="https://your-portfolio.com"
-          />
-        </div>
-
         <div className="form-field">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Instagram

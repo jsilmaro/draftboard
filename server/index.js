@@ -337,22 +337,7 @@ const handleFileUpload = (file) => {
   }
 };
 
-// Helper function to handle multiple file uploads
-const handleMultipleFileUploads = (files) => {
-  if (!files || files.length === 0) return null;
-  
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    // Convert multiple files to JSON string with data URLs
-    return JSON.stringify(files.map(file => ({
-      name: file.originalname,
-      type: file.mimetype,
-      data: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
-    })));
-  } else {
-    // In development, use local file paths
-    return JSON.stringify(files.map(file => `/uploads/${file.filename}`));
-  }
-};
+
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -715,7 +700,6 @@ app.post('/api/creators/register', async (req, res) => {
       socialLinkedIn,
       socialTikTok,
       socialYouTube,
-      portfolio,
       // Banking Information (optional - removed from registration flow)
       paymentMethod,
       cardNumber,
@@ -772,7 +756,6 @@ app.post('/api/creators/register', async (req, res) => {
         socialLinkedIn,
         socialTikTok,
         socialYouTube,
-        portfolio,
         // Banking Information (optional - removed from registration flow)
         paymentMethod: paymentMethod || null,
         cardNumber: cardNumber || null,
@@ -1081,7 +1064,6 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           socialLinkedIn: true,
           socialTikTok: true,
           socialYouTube: true,
-          portfolio: true,
           isVerified: true
         }
       });
@@ -1557,8 +1539,7 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
             socialTwitter: true,
             socialLinkedIn: true,
             socialTikTok: true,
-            socialYouTube: true,
-            portfolio: true
+            socialYouTube: true
           }
         },
         brief: {
@@ -1608,8 +1589,7 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
         socialTwitter: submission.creator.socialTwitter,
         socialLinkedIn: submission.creator.socialLinkedIn,
         socialTikTok: submission.creator.socialTikTok,
-        socialYouTube: submission.creator.socialYouTube,
-        portfolio: submission.creator.portfolio
+        socialYouTube: submission.creator.socialYouTube
       },
       brief: {
         title: submission.brief.title,
@@ -1638,7 +1618,6 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
         userName: true,
         fullName: true,
         email: true,
-        portfolio: true,
         socialInstagram: true,
         socialTwitter: true,
         socialLinkedIn: true,
@@ -2187,139 +2166,7 @@ app.delete('/api/creators/submissions/:id', authenticateToken, async (req, res) 
   }
 });
 
-// Get portfolio for a creator
-app.get('/api/creators/portfolio', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
 
-    const portfolioItems = await prisma.portfolioItem.findMany({
-      where: { creatorId: req.user.id },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json(portfolioItems);
-  } catch (error) {
-    console.error('Error fetching portfolio:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Add portfolio item
-app.post('/api/creators/portfolio', authenticateToken, upload.array('files'), async (req, res) => {
-  try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can add portfolio items' });
-    }
-
-    const { title, description, category } = req.body;
-
-    // Handle file uploads
-    const filesData = handleMultipleFileUploads(req.files);
-    const firstFileUrl = req.files && req.files.length > 0 ? handleFileUpload(req.files[0]) : null;
-
-    const portfolioItem = await prisma.portfolioItem.create({
-      data: {
-        title,
-        description,
-        category,
-        imageUrl: firstFileUrl, // Use first file as main image
-        files: filesData,
-        creatorId: req.user.id
-      }
-    });
-
-    res.status(201).json({
-      message: 'Portfolio item added successfully',
-      portfolioItem
-    });
-  } catch (error) {
-    console.error('Error adding portfolio item:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Update portfolio item
-app.put('/api/creators/portfolio/:id', authenticateToken, upload.array('files'), async (req, res) => {
-  try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can update portfolio items' });
-    }
-
-    const { id } = req.params;
-    const { title, description, category } = req.body;
-
-    // Check ownership
-    const existingItem = await prisma.portfolioItem.findFirst({
-      where: { 
-        id,
-        creatorId: req.user.id 
-      }
-    });
-
-    if (!existingItem) {
-      return res.status(404).json({ error: 'Portfolio item not found or access denied' });
-    }
-
-    // Handle file uploads
-    const filesData = handleMultipleFileUploads(req.files);
-    const firstFileUrl = req.files && req.files.length > 0 ? handleFileUpload(req.files[0]) : null;
-
-    const updatedItem = await prisma.portfolioItem.update({
-      where: { id },
-      data: {
-        title,
-        description,
-        category,
-        imageUrl: firstFileUrl || existingItem.imageUrl,
-        files: filesData || existingItem.files
-      }
-    });
-
-    res.json({
-      message: 'Portfolio item updated successfully',
-      portfolioItem: updatedItem
-    });
-  } catch (error) {
-    console.error('Error updating portfolio item:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Delete portfolio item
-app.delete('/api/creators/portfolio/:id', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can delete portfolio items' });
-    }
-
-    const { id } = req.params;
-
-    // Check ownership
-    const existingItem = await prisma.portfolioItem.findFirst({
-      where: { 
-        id,
-        creatorId: req.user.id 
-      }
-    });
-
-    if (!existingItem) {
-      return res.status(404).json({ error: 'Portfolio item not found or access denied' });
-    }
-
-    await prisma.portfolioItem.delete({
-      where: { id }
-    });
-
-    res.json({
-      message: 'Portfolio item deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting portfolio item:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Get creator contact details for brands (when they have submissions)
 app.get('/api/brands/creators/:creatorId/contact', authenticateToken, async (req, res) => {
@@ -2356,7 +2203,7 @@ app.get('/api/brands/creators/:creatorId/contact', authenticateToken, async (req
         socialLinkedIn: true,
         socialTikTok: true,
         socialYouTube: true,
-        portfolio: true
+
       }
     });
 

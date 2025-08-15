@@ -59,7 +59,6 @@ model Creator {
   socialLinkedIn  String?
   socialTikTok    String?
   socialYouTube   String?
-  portfolio       String?
   paymentMethod   String?
   cardNumber      String?
   cardType        String?
@@ -72,7 +71,6 @@ model Creator {
   termsAccepted   Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  portfolioItems  PortfolioItem[]
   submissions     Submission[]
 }
 
@@ -98,18 +96,7 @@ model Brief {
   submissions      Submission[]
 }
 
-model PortfolioItem {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  category    String
-  imageUrl    String?
-  files       String?
-  creatorId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  creator     Creator  @relation(fields: [creatorId], references: [id])
-}
+
 
 model Submission {
   id          String    @id @default(cuid())
