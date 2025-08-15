@@ -517,7 +517,118 @@ const authenticateToken = (req, res, next) => {
   }
 });
 
-// Brand login
+// Unified login endpoint
+app.post('/api/login', async (req, res) => {
+  try {
+    console.log('🔐 Unified login attempt:', { email: req.body.email });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      console.log('❌ Missing email or password');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Check if user exists as a brand
+    const brand = await prisma.brand.findUnique({
+      where: { email }
+    });
+
+    if (brand) {
+      // Check if this is a Google OAuth account (empty password)
+      if (!brand.password || brand.password === '') {
+        return res.status(401).json({ 
+          error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
+          googleOAuthRequired: true
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, brand.password);
+      if (validPassword) {
+        if (!process.env.JWT_SECRET) {
+          console.log('❌ JWT_SECRET not configured during brand login');
+          return res.status(500).json({ error: 'Server configuration error' });
+        }
+
+        const token = jwt.sign(
+          { id: brand.id, email: brand.email, type: 'brand' },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+
+        console.log('✅ Brand login successful:', { 
+          brandId: brand.id, 
+          hasJwtSecret: !!process.env.JWT_SECRET,
+          tokenPreview: token.substring(0, 20) + '...'
+        });
+
+        return res.json({
+          message: 'Login successful',
+          token,
+          user: {
+            id: brand.id,
+            companyName: brand.companyName,
+            email: brand.email,
+            type: 'brand'
+          }
+        });
+      }
+    }
+
+    // Check if user exists as a creator
+    const creator = await prisma.creator.findUnique({
+      where: { email }
+    });
+
+    if (creator) {
+      // Check if this is a Google OAuth account (empty password)
+      if (!creator.password || creator.password === '') {
+        return res.status(401).json({ 
+          error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
+          googleOAuthRequired: true
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, creator.password);
+      if (validPassword) {
+        if (!process.env.JWT_SECRET) {
+          console.log('❌ JWT_SECRET not configured during creator login');
+          return res.status(500).json({ error: 'Server configuration error' });
+        }
+
+        const token = jwt.sign(
+          { id: creator.id, email: creator.email, type: 'creator' },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+
+        console.log('✅ Creator login successful:', { 
+          creatorId: creator.id, 
+          hasJwtSecret: !!process.env.JWT_SECRET,
+          tokenPreview: token.substring(0, 20) + '...'
+        });
+
+        return res.json({
+          message: 'Login successful',
+          token,
+          user: {
+            id: creator.id,
+            userName: creator.userName,
+            email: creator.email,
+            type: 'creator'
+          }
+        });
+      }
+    }
+
+    // If we get here, either the user doesn't exist or the password is wrong
+    return res.status(401).json({ error: 'Invalid credentials' });
+  } catch (error) {
+    console.error('Unified login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Brand login (kept for backward compatibility)
 app.post('/api/brands/login', async (req, res) => {
   try {
     console.log('🔐 Brand login attempt:', { email: req.body.email });

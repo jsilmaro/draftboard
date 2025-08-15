@@ -19,8 +19,8 @@ const LoginForm: React.FC = () => {
     setError('');
 
     try {
-      // Try brand login first
-      const brandResponse = await fetch('/api/brands/login', {
+      // Use unified login endpoint
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,40 +28,23 @@ const LoginForm: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      if (brandResponse.ok) {
-        const brandData = await brandResponse.json();
-        login(brandData.user, brandData.token);
-        navigate('/brand/dashboard');
-        return;
-      }
-
-      // If brand login fails, try creator login
-      const creatorResponse = await fetch('/api/creators/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (creatorResponse.ok) {
-        const creatorData = await creatorResponse.json();
-        login(creatorData.user, creatorData.token);
-        navigate('/creator/dashboard');
-        return;
-      }
-
-      // If both fail, show error
-      if (brandResponse.status === 401) {
-        const brandError = await brandResponse.json();
-        if (brandError.googleOAuthRequired) {
-          setError('This account was created with Google Sign-In. Please use the Google Sign-In button below.');
-        } else {
-          setError('Invalid email or password');
+      if (response.ok) {
+        const data = await response.json();
+        login(data.user, data.token);
+        
+        // Navigate based on user type
+        if (data.user.type === 'brand') {
+          navigate('/brand/dashboard');
+        } else if (data.user.type === 'creator') {
+          navigate('/creator/dashboard');
         }
-      } else if (creatorResponse.status === 401) {
-        const creatorError = await creatorResponse.json();
-        if (creatorError.googleOAuthRequired) {
+        return;
+      }
+
+      // Handle error responses
+      if (response.status === 401) {
+        const errorData = await response.json();
+        if (errorData.googleOAuthRequired) {
           setError('This account was created with Google Sign-In. Please use the Google Sign-In button below.');
         } else {
           setError('Invalid email or password');
