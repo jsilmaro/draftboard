@@ -9,6 +9,8 @@ interface Brief {
   title: string;
   brandName: string;
   reward: number;
+  rewardType?: 'CASH' | 'CREDIT' | 'PRIZES';
+  amountOfWinners?: number;
   deadline: string;
   status: 'active' | 'draft' | 'completed';
 }
@@ -526,7 +528,7 @@ const CreatorDashboard: React.FC = () => {
             Refresh
           </button>
           <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-            Sort by Prize
+            Sort by Reward
           </button>
         </div>
       </div>
@@ -554,7 +556,11 @@ const CreatorDashboard: React.FC = () => {
                 <span className="text-sm text-gray-600">{brief.brandName}</span>
               </div>
               <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                  <p>Prize: ${brief.reward?.toLocaleString() || '0'}</p>
+                                  <p>Reward: {brief.rewardType === 'CASH' ? 'Cash' : 
+                           brief.rewardType === 'CREDIT' ? 'Credit' :
+                           brief.rewardType === 'PRIZES' ? 'Prize' :
+                           'Cash'}</p>
+                <p>Winners: {brief.amountOfWinners !== null && brief.amountOfWinners !== undefined ? brief.amountOfWinners : 1}</p>
                 <p>Deadline: {brief.deadline ? new Date(brief.deadline).toLocaleDateString() : 'No deadline'}</p>
                 <p>Status: {brief.status ? brief.status.charAt(0).toUpperCase() + brief.status.slice(1) : 'Unknown'}</p>
                 {hasSubmittedToBrief(brief.id) && (
@@ -634,8 +640,15 @@ const CreatorDashboard: React.FC = () => {
                 <span>{selectedBrief.brandName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Prize:</span>
-                                  <span>${selectedBrief.reward.toLocaleString()}</span>
+                <span className="font-medium">Reward:</span>
+                <span>{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                       selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
+                       selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
+                       'Cash'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Winners:</span>
+                <span>{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Deadline:</span>
@@ -701,7 +714,11 @@ const CreatorDashboard: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">Brief Summary</h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
-                  <p><strong>Prize:</strong> ${selectedBrief.reward.toLocaleString()}</p>
+                  <p><strong>Reward:</strong> {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                       selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
+                       selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
+                       'Cash'}</p>
+                  <p><strong>Winners:</strong> {selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</p>
                   <p><strong>Deadline:</strong> {new Date(selectedBrief.deadline).toLocaleDateString()}</p>
                 </div>
               </div>

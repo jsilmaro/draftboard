@@ -1963,6 +1963,8 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
       title: brief.title,
       brandName: brief.brand.companyName,
       reward: brief.reward,
+      rewardType: brief.rewardType,
+      amountOfWinners: brief.amountOfWinners,
       deadline: brief.deadline,
       status: brief.status
     }));

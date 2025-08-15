@@ -417,7 +417,7 @@ const CreateBrief: React.FC = () => {
                     <option value="">Select a reward type</option>
                     <option value="CASH">💰 CASH - Primary monetary rewards</option>
                     <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
-                    <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
+                    <option value="PRIZES">🎁 REWARDS - Primary physical items & experiences</option>
                   </select>
                 </div>
               </div>

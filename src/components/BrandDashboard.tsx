@@ -726,7 +726,7 @@ const BrandDashboard: React.FC = () => {
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {brief.rewardType === 'CASH' ? '💰 Cash' : 
                      brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                     brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType}
+                     brief.rewardType === 'PRIZES' ? '🎁 Rewards' : brief.rewardType}
                   </span>
                 )}
                 <span className={`px-2 py-1 text-xs rounded-full ${
@@ -746,7 +746,7 @@ const BrandDashboard: React.FC = () => {
                 if (brief.rewardType) {
                   const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
                                            brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                                           brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
+                                           brief.rewardType === 'PRIZES' ? '🎁 Rewards' : brief.rewardType;
                   
                   if (rewardInfo.type === 'published') {
                     return (
