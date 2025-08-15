@@ -3,6 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
+import NotificationBell from './NotificationBell';
+import WinnerSelectionModal from './WinnerSelectionModal';
+import BrandWallet from './BrandWallet';
+import PaymentManagement from './PaymentManagement';
 import { useToast } from '../contexts/ToastContext';
 
 interface Brief {
@@ -16,6 +20,7 @@ interface Brief {
   reward: number;
   rewardType?: string;
   amountOfWinners?: number;
+  winnersSelected?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -147,6 +152,19 @@ const BrandDashboard: React.FC = () => {
     creditAmount: number;
     prizeDescription: string;
   }>>([]);
+  
+  // Winner selection state
+  const [showWinnerSelectionModal, setShowWinnerSelectionModal] = useState(false);
+  const [selectedBriefForWinners, setSelectedBriefForWinners] = useState<Brief | null>(null);
+  const [briefSubmissions, setBriefSubmissions] = useState<Array<{
+    id: string;
+    creatorName: string;
+    content: string;
+    files?: string;
+    submittedAt: string;
+    amount: number;
+  }>>([]);
+  
   const [metrics, setMetrics] = useState({
     activeBriefs: 0,
     submissionsThisWeek: 0,
@@ -154,6 +172,37 @@ const BrandDashboard: React.FC = () => {
     avgSubmissions: 0,
     totalSubmissions: 0
   });
+
+  // Winner selection functions
+  const handleSelectWinners = async (brief: Brief) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/brands/briefs/${brief.id}/submissions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const submissionsData = await response.json();
+        setBriefSubmissions(submissionsData);
+        setSelectedBriefForWinners(brief);
+        setShowWinnerSelectionModal(true);
+      } else {
+        showErrorToast('Failed to load submissions');
+      }
+    } catch (error) {
+      showErrorToast('Failed to load submissions');
+    }
+  };
+
+  const handleWinnersSelected = async (_winners: { submissionId: string; position: number }[]) => {
+    try {
+      // Refresh briefs data to show updated winner selection status
+      await fetchDashboardData();
+      showSuccessToast('Winners selected successfully!');
+    } catch (error) {
+      // Error refreshing data
+    }
+  };
 
   // Helper function to get reward information for a brief
   const getBriefRewardInfo = (briefId: string) => {
@@ -589,6 +638,8 @@ const BrandDashboard: React.FC = () => {
     { id: 'submissions', label: 'Submissions', icon: '📚' },
     { id: 'create', label: 'Create a Brief', icon: '📄➕' },
     { id: 'creators', label: 'Creators', icon: '👥' },
+    { id: 'wallet', label: 'Wallet', icon: '💳' },
+    { id: 'payments', label: 'Payments', icon: '💰' },
   ];
 
   const accountNav = [
@@ -604,7 +655,10 @@ const BrandDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 slide-in-left">
           WELCOME, {user?.companyName?.toUpperCase() || 'BRAND'}
         </h1>
-        <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
+        <div className="flex items-center space-x-4">
+          <NotificationBell />
+          <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -820,6 +874,14 @@ const BrandDashboard: React.FC = () => {
               >
                 Edit Rewards
               </button>
+              {brief.status === 'active' && new Date(brief.deadline) <= new Date() && brief.submissions > 0 && !brief.winnersSelected && (
+                <button 
+                  onClick={() => handleSelectWinners(brief)}
+                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                >
+                  Select Winners
+                </button>
+              )}
 
             </div>
           </div>
@@ -2018,26 +2080,14 @@ const BrandDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Submission Content */}
+            {/* Content Submission Link */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Submission Content</h4>
+              <h4 className="font-semibold text-gray-900 mb-3">Content Submission Link</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
                 {detailedSubmission ? (
                   <>
-                    {/* Text Content */}
-                    {detailedSubmission.content && (
+                    {detailedSubmission.files ? (
                       <div className="mb-4">
-                        <h5 className="font-medium text-gray-900 mb-2">Creator&apos;s Proposal</h5>
-                        <div className="bg-white p-3 rounded border text-sm text-gray-700 whitespace-pre-wrap">
-                          {detailedSubmission.content}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Content Submission Link */}
-                    {detailedSubmission.files && (
-                      <div className="mb-4">
-                        <h5 className="font-medium text-gray-900 mb-2">Content Submission Link</h5>
                         <div className="bg-white p-3 rounded border">
                           <a 
                             href={detailedSubmission.files} 
@@ -2049,13 +2099,18 @@ const BrandDashboard: React.FC = () => {
                           </a>
                         </div>
                       </div>
+                    ) : (
+                      <div className="mb-4">
+                        <div className="bg-white p-3 rounded border text-sm text-gray-500">
+                          No content submission link provided
+                        </div>
+                      </div>
                     )}
 
                     {/* Submission Details */}
                     <div className="text-sm text-gray-500 border-t pt-3">
                       <p><strong>Amount:</strong> ${detailedSubmission.amount}</p>
                       <p><strong>Submitted:</strong> {new Date(detailedSubmission.submittedAt).toLocaleString()}</p>
-                      <p><strong>Content Link:</strong> {detailedSubmission.files ? 'Provided' : 'Not provided'}</p>
                     </div>
                   </>
                 ) : (
@@ -2507,6 +2562,10 @@ const BrandDashboard: React.FC = () => {
         return renderSubmissions();
       case 'creators':
         return renderCreators();
+      case 'wallet':
+        return <BrandWallet />;
+      case 'payments':
+        return <PaymentManagement />;
       case 'awards':
         return renderRewards();
       case 'settings':
@@ -3005,6 +3064,15 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Winner Selection Modal */}
+      <WinnerSelectionModal
+        brief={selectedBriefForWinners}
+        submissions={briefSubmissions}
+        isOpen={showWinnerSelectionModal}
+        onClose={() => setShowWinnerSelectionModal(false)}
+        onWinnersSelected={handleWinnersSelected}
+      />
 
       {/* Animated Notifications */}
       {showSuccessNotification && (

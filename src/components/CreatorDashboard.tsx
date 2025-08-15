@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
+import NotificationBell from './NotificationBell';
+import CreatorWallet from './CreatorWallet';
 
 
 interface Brief {
@@ -13,6 +15,12 @@ interface Brief {
   amountOfWinners?: number;
   deadline: string;
   status: 'active' | 'draft' | 'completed';
+  winnerRewards?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+  }>;
 }
 
 interface Submission {
@@ -386,6 +394,7 @@ const CreatorDashboard: React.FC = () => {
     { id: 'briefs', label: 'Available Briefs', icon: '📄' },
     { id: 'submissions', label: 'My Submissions', icon: '📚' },
     { id: 'earnings', label: 'Earnings', icon: '💰' },
+    { id: 'wallet', label: 'Wallet', icon: '💳' },
     { id: 'profile', label: 'Profile', icon: '👤' },
   ];
 
@@ -402,7 +411,10 @@ const CreatorDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">
           WELCOME, {user?.fullName?.toUpperCase() || 'CREATOR'}
         </h1>
+        <div className="flex items-center space-x-4">
+          <NotificationBell />
         <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -640,7 +652,7 @@ const CreatorDashboard: React.FC = () => {
                 <span>{selectedBrief.brandName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Reward:</span>
+                <span className="font-medium">Reward Type:</span>
                 <span>{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
                        selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
                        selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
@@ -665,6 +677,38 @@ const CreatorDashboard: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {/* Detailed Reward Information */}
+            {selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-[#00FF85] to-[#00C853] rounded-lg">
+                <h4 className="text-lg font-semibold text-white mb-3">🏆 Reward Breakdown</h4>
+                <div className="space-y-3">
+                  {selectedBrief.winnerRewards.map((reward, index) => (
+                    <div key={index} className="bg-white bg-opacity-20 p-3 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium text-white">
+                          {reward.position === 1 ? '🥇 1st Place' : 
+                           reward.position === 2 ? '🥈 2nd Place' : 
+                           reward.position === 3 ? '🥉 3rd Place' : 
+                           `${reward.position}th Place`}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm text-white">
+                        {reward.cashAmount > 0 && (
+                          <p>💰 Cash: ${reward.cashAmount.toLocaleString()}</p>
+                        )}
+                        {reward.creditAmount > 0 && (
+                          <p>🎫 Credits: {reward.creditAmount.toLocaleString()}</p>
+                        )}
+                        {reward.prizeDescription && (
+                          <p>🎁 Prize: {reward.prizeDescription}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowViewModal(false)}
@@ -948,6 +992,8 @@ const CreatorDashboard: React.FC = () => {
 
       case 'earnings':
         return renderEarnings();
+      case 'wallet':
+        return <CreatorWallet />;
       case 'profile':
         return renderProfile();
       default:

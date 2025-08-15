@@ -39,6 +39,7 @@ model Brand {
   awardDrafts     AwardDraft[]
   briefs          Brief[]
   publishedAwards PublishedAward[]
+  wallet          BrandWallet?
 }
 
 model Creator {
@@ -72,6 +73,8 @@ model Creator {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   submissions     Submission[]
+  winners         Winner[]
+  wallet          CreatorWallet?
 }
 
 model Brief {
@@ -87,6 +90,7 @@ model Brief {
   isPrivate        Boolean          @default(false)
   additionalFields String?
   brandId          String
+  winnersSelected  Boolean          @default(false)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   closedAt         DateTime?
@@ -94,6 +98,8 @@ model Brief {
   brand            Brand            @relation(fields: [brandId], references: [id])
   publishedAwards  PublishedAward[]
   submissions      Submission[]
+  winners          Winner[]
+  winnerRewards    WinnerReward[]
 }
 
 
@@ -112,6 +118,7 @@ model Submission {
   updatedAt   DateTime  @updatedAt
   brief       Brief     @relation(fields: [briefId], references: [id])
   creator     Creator   @relation(fields: [creatorId], references: [id])
+  winner      Winner?
 }
 
 model AwardDraft {
@@ -147,4 +154,110 @@ model Admin {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Winner {
+  id           String     @id @default(cuid())
+  briefId      String
+  submissionId String     @unique
+  creatorId    String
+  position     Int        // 1st, 2nd, 3rd place, etc.
+  selectedAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  brief        Brief      @relation(fields: [briefId], references: [id])
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  creator      Creator    @relation(fields: [creatorId], references: [id])
+  rewardId     String?    @unique
+  reward       WinnerReward? @relation(fields: [rewardId], references: [id])
+  payment      Payment?
+}
+
+model WinnerReward {
+  id              String   @id @default(cuid())
+  briefId         String
+  position        Int      // 1st, 2nd, 3rd place, etc.
+  cashAmount      Float    @default(0)
+  creditAmount    Float    @default(0)
+  prizeDescription String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  brief           Brief    @relation(fields: [briefId], references: [id])
+  winner          Winner?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   // Can be either brand or creator ID
+  userType  String   // "brand" or "creator"
+  title     String
+  message   String
+  type      String   // "winner", "submission", "brief", etc.
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  winnerId        String   @unique
+  amount          Float
+  currency        String   @default("USD")
+  paymentMethod   String   // "bank_transfer", "paypal", "stripe", "credits"
+  status          String   @default("pending") // "pending", "processing", "completed", "failed"
+  transactionId   String?  // External payment processor transaction ID
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  winner          Winner   @relation(fields: [winnerId], references: [id])
+}
+
+model CreatorWallet {
+  id              String   @id @default(cuid())
+  creatorId       String   @unique
+  balance         Float    @default(0)
+  totalEarned     Float    @default(0)
+  totalWithdrawn  Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  creator         Creator  @relation(fields: [creatorId], references: [id])
+  transactions    WalletTransaction[]
+}
+
+model WalletTransaction {
+  id              String   @id @default(cuid())
+  walletId        String
+  type            String   // "credit", "debit", "withdrawal"
+  amount          Float
+  description     String
+  referenceId     String?  // Payment ID or other reference
+  balanceBefore   Float
+  balanceAfter    Float
+  createdAt       DateTime @default(now())
+  wallet          CreatorWallet @relation(fields: [walletId], references: [id])
+}
+
+model BrandWallet {
+  id              String   @id @default(cuid())
+  brandId         String   @unique
+  balance         Float    @default(0)
+  totalSpent      Float    @default(0)
+  totalDeposited  Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  transactions    BrandWalletTransaction[]
+}
+
+model BrandWalletTransaction {
+  id              String   @id @default(cuid())
+  walletId        String
+  type            String   // "credit", "debit", "deposit"
+  amount          Float
+  description     String
+  referenceId     String?  // Brief ID or other reference
+  balanceBefore   Float
+  balanceAfter    Float
+  createdAt       DateTime @default(now())
+  wallet          BrandWallet @relation(fields: [walletId], references: [id])
 }
