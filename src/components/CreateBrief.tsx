@@ -29,7 +29,6 @@ interface FormData {
   description: string;
   requirements: string;
   reward: number;
-  rewardType: 'CASH' | 'CREDIT' | 'PRIZES' | '';
   deadline: string;
   amountOfWinners: number;
   rewardTiers: RewardTier[];
@@ -46,7 +45,6 @@ const CreateBrief: React.FC = () => {
     description: '',
     requirements: '',
     reward: 0,
-    rewardType: '' as 'CASH' | 'CREDIT' | 'PRIZES' | '',
     deadline: '',
     amountOfWinners: 1,
     rewardTiers: [],
@@ -161,7 +159,7 @@ const CreateBrief: React.FC = () => {
       if (template) {
         setFormData({
           ...template.fields,
-          rewardType: '', // Initialize with empty reward type
+          reward: 0, // Initialize with empty reward type
           amountOfWinners: 1,
           rewardTiers: []
         });
@@ -172,7 +170,6 @@ const CreateBrief: React.FC = () => {
         description: '',
         requirements: '',
         reward: 0, // Default value for reward field
-        rewardType: '',
         deadline: '',
         amountOfWinners: 1,
         rewardTiers: [],
@@ -374,7 +371,7 @@ const CreateBrief: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Deadline *
@@ -399,25 +396,8 @@ const CreateBrief: React.FC = () => {
                     required
                   >
                     {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                      <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
+                      <option key={num} value={num}>{num} Spot{num === 1 ? '' : 's'}</option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reward Type *
-                  </label>
-                  <select
-                    value={formData.rewardType}
-                    onChange={(e) => handleInputChange('rewardType', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select a reward type</option>
-                    <option value="CASH">💰 CASH - Primary monetary rewards</option>
-                    <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
-                    <option value="PRIZES">🎁 REWARDS - Primary physical items & experiences</option>
                   </select>
                 </div>
               </div>
@@ -428,8 +408,7 @@ const CreateBrief: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Reward Tiers</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Set rewards for each winning position. You can mix cash, credits, and prizes for each tier. 
-              The primary reward type above indicates the main focus, but individual tiers can vary.
+              Set rewards for each winning position. You can mix cash, credits, and prizes for each tier.
             </p>
             
             {formData.rewardTiers.length > 0 && (
@@ -438,10 +417,7 @@ const CreateBrief: React.FC = () => {
                   <div key={tier.position} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-lg font-medium text-gray-900">
-                        {tier.position === 1 ? '🥇 1st Place' : 
-                         tier.position === 2 ? '🥈 2nd Place' : 
-                         tier.position === 3 ? '🥉 3rd Place' : 
-                         `${tier.position}th Place`}
+                        Reward {tier.position}
                       </h4>
                     </div>
                     
