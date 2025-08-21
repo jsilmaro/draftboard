@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
-import NotificationBell from './NotificationBell';
 import CreatorWallet from './CreatorWallet';
 import BriefCard from './BriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 
 interface Brief {
@@ -75,6 +75,14 @@ const CreatorDashboard: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
+  
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Brief[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Recent activity carousel
+  const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
 
   const [submissionDetails, setSubmissionDetails] = useState<{
     id: string;
@@ -198,6 +206,77 @@ const CreatorDashboard: React.FC = () => {
   //     setShowApplyModal(true);
   //   }
   // };
+
+  // Search functionality
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    setIsSearching(true);
+    
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`/api/briefs/search?q=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const results = await response.json();
+        setSearchResults(results);
+      } else {
+        // Fallback to client-side search
+        const filtered = availableBriefs.filter(brief => 
+          brief.title.toLowerCase().includes(query.toLowerCase()) ||
+          brief.description.toLowerCase().includes(query.toLowerCase()) ||
+          brief.brandName.toLowerCase().includes(query.toLowerCase())
+        );
+        setSearchResults(filtered);
+      }
+    } catch (error) {
+      // Fallback to client-side search
+      const filtered = availableBriefs.filter(brief => 
+        brief.title.toLowerCase().includes(query.toLowerCase()) ||
+        brief.description.toLowerCase().includes(query.toLowerCase()) ||
+        brief.brandName.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+    }
+    
+    setIsSearching(false);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(searchQuery);
+  };
+
+  // Recent activity carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentActivityIndex(prev => 
+        prev >= availableBriefs.length - 1 ? 0 : prev + 1
+      );
+    }, 3000); // Change every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [availableBriefs.length]);
+
+  const getRecentActivities = () => {
+    return availableBriefs.slice(0, 4).map((brief, _index) => ({
+      id: brief.id,
+      title: brief.title,
+      brand: brief.brandName,
+      type: 'brief',
+      time: `${Math.floor(Math.random() * 10) + 1}m ago`,
+      icon: '📋'
+    }));
+  };
 
   // const fetchSubmissionDetails = async (submissionId: string) => {
   //   try {
@@ -439,166 +518,217 @@ const CreatorDashboard: React.FC = () => {
 
   const renderOverview = () => (
     <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome, {user?.fullName || 'Creator'}
+      {/* Hero Section with Search */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+        <div className="flex-1">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Connect with Amazing Brands 🚀
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Discover new opportunities and track your creative journey
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            Showcase your creativity and discover exciting opportunities with top brands worldwide.
           </p>
+          
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="max-w-2xl">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search anything..."
+                className="w-full pl-4 pr-12 py-4 text-lg border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
-        <div className="flex items-center space-x-4">
-          <ThemeToggle />
-          <NotificationBell />
-          <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
-        </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        {/* Live Activity Feed */}
+        <div className="lg:w-96">
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Live Activity</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Real-time brief updates</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-600 dark:text-green-400 font-semibold">LIVE</span>
+              </div>
             </div>
-            <input
-              type="text"
-              placeholder="Search available briefs, brands, or opportunities..."
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
-            Search
-          </button>
-        </div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Active Submissions</h3>
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-green-600 dark:text-green-400 text-lg">📄</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{metrics.activeBriefs}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Currently pending review</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Submissions This Week</h3>
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-blue-600 dark:text-blue-400 text-lg">📈</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{metrics.submissionsThisWeek}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">New submissions made</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Earnings</h3>
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-purple-600 dark:text-purple-400 text-lg">💰</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">${metrics.totalEarnings}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total earnings to date</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Submissions */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Submissions</h3>
-            <div className="space-y-4">
-              {mySubmissions.slice(0, 3).map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center">
-                    <DefaultAvatar name={user?.fullName || 'Creator'} size="md" className="mr-3" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{submission.briefTitle}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">${submission.amount}</p>
+            
+            <div className="relative overflow-hidden">
+              <div className="space-y-4">
+                {getRecentActivities().map((activity, index) => (
+                  <div 
+                    key={activity.id}
+                    className={`relative p-4 rounded-2xl border-2 transition-all duration-700 transform ${
+                      index === currentActivityIndex 
+                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-blue-300 dark:border-blue-600 scale-105 shadow-lg' 
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 scale-100 shadow-sm'
+                    } ${index === currentActivityIndex ? 'animate-slide-in' : ''}`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 ${
+                        index === currentActivityIndex 
+                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                      }`}>
+                        {activity.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          New brief from {activity.brand}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                          {activity.time}
+                        </span>
+                        {index === currentActivityIndex && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-1 animate-bounce"></div>
+                        )}
+                      </div>
                     </div>
+                    {index === currentActivityIndex && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/20 dark:via-blue-900/20 to-transparent animate-pulse"></div>
+                    )}
                   </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    submission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                  </span>
+                ))}
+              </div>
+              
+              {/* Flowing animation overlay */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-blue-50/10 dark:via-blue-900/10 to-transparent animate-flow-down pointer-events-none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Creator Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl p-8 border border-blue-200 dark:border-blue-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">💰</span>
+          </div>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            ${metrics.totalEarnings.toLocaleString()}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Total Earnings</p>
+        </div>
+        <div className="text-center bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-3xl p-8 border border-green-200 dark:border-green-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">📝</span>
+          </div>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            {metrics.submissionsThisWeek.toLocaleString()}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">This Week</p>
+        </div>
+        <div className="text-center bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-3xl p-8 border border-orange-200 dark:border-orange-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">🎯</span>
+          </div>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            {metrics.activeBriefs.toLocaleString()}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Active Briefs</p>
+        </div>
+      </div>
+
+      {/* Search Results */}
+      {searchQuery && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Search Results for &quot;{searchQuery}&quot;
+          </h3>
+          {isSearching ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Searching...</p>
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {searchResults.map((brief) => (
+                <div key={brief.id} className="p-4 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{brief.title}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{brief.brandName}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">${brief.reward}</p>
                 </div>
               ))}
             </div>
+          ) : (
+            <p className="text-gray-600 dark:text-gray-400">No results found.</p>
+          )}
+        </div>
+      )}
+
+      {/* Featured Opportunities */}
+      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">Featured Opportunities</h3>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Handpicked briefs perfect for your skills</p>
           </div>
-        </div>
-
-        {/* Action Cards */}
-        <div className="space-y-4">
-          <button 
-            onClick={() => setActiveTab('briefs')}
-            className="w-full bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-500 cursor-pointer text-left"
-          >
-            <div className="flex items-center mb-3">
-              <span className="text-2xl mr-3">📄</span>
-              <h4 className="font-semibold text-gray-900 dark:text-white">Browse Briefs</h4>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Discover new opportunities and apply to briefs that match your skills.
-            </p>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('earnings')}
-            className="w-full bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-500 cursor-pointer text-left"
-          >
-            <div className="flex items-center mb-3">
-              <span className="text-2xl mr-3">💰</span>
-              <h4 className="font-semibold text-gray-900 dark:text-white">Track Earnings</h4>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Monitor your income and payment status from approved submissions.
-            </p>
+          <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+            View All &rarr;
           </button>
         </div>
-      </div>
-
-      {/* Upcoming Deadlines */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upcoming Deadlines</h3>
-        <div className="space-y-3">
-          {availableBriefs.slice(0, 2).map((brief) => (
-            <div key={brief.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div>
-                <span className="font-medium text-gray-900 dark:text-white">{brief.title}</span>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{brief.brandName}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {Math.ceil((new Date(brief.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
-                </span>
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">${brief.reward}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {availableBriefs.slice(0, 6).map((brief, index) => (
+            <div key={brief.id} className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+                {/* Gradient overlay */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    #{index + 1}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                      ${brief.reward}
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Reward</p>
+                  </div>
+                </div>
+                
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 text-lg">
+                  {brief.title}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-medium">
+                  by {brief.brandName}
+                </p>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      {brief.submissions.length} creators applied
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-yellow-400 text-sm">★★★★★</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">5.0</span>
+                  </div>
+                </div>
+                
+                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                  Apply Now
+                </button>
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Performance Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Performance Overview</h3>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics.avgSubmissions} Avg. Submissions This Month</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Approval Rate</h3>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round((metrics.approvedSubmissions / Math.max(metrics.submissionsThisWeek, 1)) * 100)}%</p>
         </div>
       </div>
     </div>
@@ -669,9 +799,9 @@ const CreatorDashboard: React.FC = () => {
                 {hasSubmittedToBrief(brief.id) && (
                   <div className="absolute top-4 right-4 z-10">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 text-green-800' :
-                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                      'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
                     }`}>
                       {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
                        getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
@@ -688,42 +818,42 @@ const CreatorDashboard: React.FC = () => {
       {/* View Brief Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">{selectedBrief.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedBrief.title}</h3>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 ✕
               </button>
             </div>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="font-medium">Brand:</span>
-                <span>{selectedBrief.brandName}</span>
+                <span className="font-medium text-gray-900 dark:text-white">Brand:</span>
+                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.brandName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Reward Type:</span>
-                <span>{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                <span className="font-medium text-gray-900 dark:text-white">Reward Type:</span>
+                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
                        selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
                        selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
                        'Cash'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Spots:</span>
-                <span>{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
+                <span className="font-medium text-gray-900 dark:text-white">Spots:</span>
+                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Deadline:</span>
-                <span>{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                <span className="font-medium text-gray-900 dark:text-white">Deadline:</span>
+                <span className="text-gray-700 dark:text-gray-300">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Status:</span>
+                <span className="font-medium text-gray-900 dark:text-white">Status:</span>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
-                  selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
+                  selectedBrief.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                  selectedBrief.status === 'draft' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400' :
+                  'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                 }`}>
                   {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                 </span>
@@ -764,7 +894,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>
@@ -843,45 +973,45 @@ const CreatorDashboard: React.FC = () => {
 
   const renderSubmissions = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">My Submissions</h2>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Submissions</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {mySubmissions.map((submission) => (
                 <tr key={submission.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" className="mr-3" />
-                      <span className="text-sm font-medium text-gray-900">{submission.briefTitle}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{submission.briefTitle}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${submission.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                      submission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                      'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
                     }`}>
                       {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => handleViewSubmission(submission)}
-                      className="text-green-600 hover:text-green-900 mr-3"
+                      className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3"
                     >
                       View
                     </button>
@@ -890,8 +1020,8 @@ const CreatorDashboard: React.FC = () => {
                       disabled={submission.status === 'approved' || submission.status === 'rejected'}
                       className={`${
                         submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-red-600 hover:text-red-900'
+                          ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                          : 'text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300'
                       }`}
                       title={
                         submission.status === 'approved' || submission.status === 'rejected'
@@ -915,28 +1045,28 @@ const CreatorDashboard: React.FC = () => {
 
   const renderEarnings = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Earnings</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Earnings</h2>
       
       {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Total Earnings</h3>
-          <p className="text-3xl font-bold text-green-600">${metrics.totalEarnings}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Earnings</h3>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">${metrics.totalEarnings}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">This Month</h3>
-          <p className="text-3xl font-bold text-green-600">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">This Month</h3>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Pending</h3>
-          <p className="text-3xl font-bold text-yellow-600">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending</h3>
+          <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
       </div>
 
       {/* Earnings Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
@@ -1114,6 +1244,27 @@ const CreatorDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'briefs' ? 'Available Briefs' :
+                 activeTab === 'submissions' ? 'My Submissions' :
+                 activeTab === 'earnings' ? 'Earnings' :
+                 activeTab === 'wallet' ? 'Wallet' :
+                 activeTab === 'profile' ? 'Profile' : 'Dashboard'}
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+              <ThemeToggle />
+              <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
+            </div>
+          </div>
+        </div>
+        
         <div className="p-8">
           {renderContent()}
         </div>
@@ -1131,62 +1282,62 @@ const CreatorDashboard: React.FC = () => {
       {/* Submission View Modal */}
       {showSubmissionViewModal && selectedSubmission && submissionDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Submission Details</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Submission Details</h3>
+            <button
+              onClick={() => setShowSubmissionViewModal(false)}
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Brief Information</h4>
+              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
+                <p><strong>Amount:</strong> ${selectedSubmission.amount}</p>
+                <p><strong>Status:</strong> 
+                  <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedSubmission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                    selectedSubmission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                    'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                  }`}>
+                    {selectedSubmission.status.charAt(0).toUpperCase() + selectedSubmission.status.slice(1)}
+                  </span>
+                </p>
+                <p><strong>Submitted:</strong> {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
+              </div>
+            </div>
+
+            {submissionDetails.files && (
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Content Submission Link</h4>
+                <div className="bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600">
+                  <a 
+                    href={submissionDetails.files} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm break-all"
+                  >
+                    {submissionDetails.files}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowSubmissionViewModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                ✕
+                Close
               </button>
             </div>
-            
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Brief Information</h4>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
-                  <p><strong>Amount:</strong> ${selectedSubmission.amount}</p>
-                  <p><strong>Status:</strong> 
-                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                      selectedSubmission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      selectedSubmission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {selectedSubmission.status.charAt(0).toUpperCase() + selectedSubmission.status.slice(1)}
-                    </span>
-                  </p>
-                  <p><strong>Submitted:</strong> {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
-                </div>
-              </div>
-
-              {submissionDetails.files && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Content Submission Link</h4>
-                  <div className="bg-white p-3 rounded border">
-                    <a 
-                      href={submissionDetails.files} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-sm break-all"
-                    >
-                      {submissionDetails.files}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setShowSubmissionViewModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
           </div>
+        </div>
         </div>
       )}
 

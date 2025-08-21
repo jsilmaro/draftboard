@@ -140,14 +140,14 @@ const CreatorWallet: React.FC = () => {
           <p className="text-3xl font-bold">{formatCurrency(wallet?.balance || 0)}</p>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Earned</h3>
-          <p className="text-3xl font-bold text-green-600">{formatCurrency(wallet?.totalEarned || 0)}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Earned</h3>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(wallet?.totalEarned || 0)}</p>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Withdrawn</h3>
-          <p className="text-3xl font-bold text-blue-600">{formatCurrency(wallet?.totalWithdrawn || 0)}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Withdrawn</h3>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(wallet?.totalWithdrawn || 0)}</p>
         </div>
       </div>
 
@@ -163,31 +163,31 @@ const CreatorWallet: React.FC = () => {
         
         <button
           onClick={fetchWalletData}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           🔄 Refresh
         </button>
       </div>
 
       {/* Transaction History */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transaction History</h3>
         </div>
         
         <div className="overflow-hidden">
           {wallet?.transactions && wallet.transactions.length > 0 ? (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {wallet.transactions.map((transaction) => (
-                <div key={transaction.id} className="p-6 hover:bg-gray-50">
+                <div key={transaction.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="text-2xl">
                         {getTransactionIcon(transaction.type)}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{transaction.description}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-gray-900 dark:text-white">{transaction.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(transaction.createdAt).toLocaleDateString()} at{' '}
                           {new Date(transaction.createdAt).toLocaleTimeString()}
                         </p>
@@ -198,7 +198,7 @@ const CreatorWallet: React.FC = () => {
                       <p className={`font-semibold ${getTransactionColor(transaction.type)}`}>
                         {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Balance: {formatCurrency(transaction.balanceAfter)}
                       </p>
                     </div>
@@ -209,7 +209,7 @@ const CreatorWallet: React.FC = () => {
           ) : (
             <div className="p-12 text-center">
               <div className="text-4xl mb-4">💳</div>
-              <p className="text-gray-500">No transactions yet</p>
+              <p className="text-gray-500 dark:text-gray-400">No transactions yet</p>
             </div>
           )}
         </div>

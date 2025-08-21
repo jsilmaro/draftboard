@@ -172,18 +172,18 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Brief Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Brief Details</h2>
             <div className="flex items-center space-x-3">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor()}`}>
                 {calculateTimeRemaining()}
               </span>
               <button
                 onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 text-xl"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
               >
                 ✕
               </button>
@@ -199,8 +199,8 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
             </div>
           ) : error || !brief ? (
             <div className="text-center py-12">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Brief Not Found</h3>
-              <p className="text-gray-600 mb-6">{error || 'The brief you are looking for does not exist.'}</p>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Brief Not Found</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">{error || 'The brief you are looking for does not exist.'}</p>
               <button
                 onClick={onClose}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -213,7 +213,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Brand Information */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center space-x-4 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                       {brief.brand.logo ? (
@@ -228,8 +228,8 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                         </span>
                       )}
                     </div>
-                                         <div>
-                                               <h3 className="text-lg font-bold text-gray-900">{brief.brand.companyName}</h3>
+                                                             <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">{brief.brand.companyName}</h3>
                        
                        {/* Social Media Links */}
                        {(brief.brand.socialInstagram || brief.brand.socialTwitter || brief.brand.socialLinkedIn || brief.brand.socialWebsite) && (
@@ -269,7 +269,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                                href={brief.brand.socialWebsite.startsWith('http') ? brief.brand.socialWebsite : `https://${brief.brand.socialWebsite}`}
                                target="_blank"
                                rel="noopener noreferrer"
-                               className="text-gray-600 hover:text-gray-700 text-lg"
+                               className="text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-lg"
                              >
                                🌐 Website
                              </a>
@@ -281,32 +281,32 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                 </div>
 
                 {/* Brief Title and Description */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">{brief.title}</h1>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{brief.title}</h1>
                   <div className="prose max-w-none">
-                    <p className="text-gray-700 leading-relaxed">{brief.description}</p>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{brief.description}</p>
                   </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h3>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Requirements</h3>
                   <div className="prose max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{brief.requirements}</p>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{brief.requirements}</p>
                   </div>
                 </div>
 
                 {/* Additional Fields */}
                 {brief.additionalFields && Object.keys(brief.additionalFields).length > 0 && (
-                  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Information</h3>
                     <div className="space-y-4">
                       {Object.entries(brief.additionalFields).map(([key, value]) => (
                         <div key={key}>
-                          <h4 className="font-medium text-gray-900 mb-2 capitalize">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2 capitalize">
                             {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                           </h4>
-                          <p className="text-gray-700">
+                          <p className="text-gray-700 dark:text-gray-300">
                             {Array.isArray(value) ? value.join(', ') : String(value)}
                           </p>
                         </div>
@@ -319,30 +319,30 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Reward Information */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h3>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reward Information</h3>
                   <div className="space-y-4">
-                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100">
-                      <p className="text-sm text-gray-600 mb-1">Total Reward</p>
-                      <p className="text-2xl font-bold text-green-600">${brief.reward.toLocaleString()}</p>
-                                             <p className="text-sm text-gray-600 mt-1">for {brief.amountOfWinners} reward{brief.amountOfWinners > 1 ? 's' : ''}</p>
+                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-100 dark:border-green-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Reward</p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">${brief.reward.toLocaleString()}</p>
+                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">for {brief.amountOfWinners} reward{brief.amountOfWinners > 1 ? 's' : ''}</p>
                     </div>
 
                     {brief.rewardTiers && brief.rewardTiers.length > 0 && (
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-3">Reward Tiers</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Reward Tiers</h4>
                         <div className="space-y-3">
                           {brief.rewardTiers.map((tier) => (
-                            <div key={tier.position} className="p-3 bg-gray-50 rounded-lg">
+                            <div key={tier.position} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                                              <div className="flex justify-between items-center mb-2">
-                                 <span className="font-medium text-gray-900">Reward {tier.position}</span>
-                                 <span className="text-green-600 font-semibold">${tier.cashAmount}</span>
+                                 <span className="font-medium text-gray-900 dark:text-white">Reward {tier.position}</span>
+                                 <span className="text-green-600 dark:text-green-400 font-semibold">${tier.cashAmount}</span>
                                </div>
                               {tier.creditAmount > 0 && (
-                                <p className="text-sm text-gray-600">+ {tier.creditAmount} credits</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">+ {tier.creditAmount} credits</p>
                               )}
                               {tier.prizeDescription && (
-                                <p className="text-sm text-gray-600">+ {tier.prizeDescription}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">+ {tier.prizeDescription}</p>
                               )}
                             </div>
                           ))}
@@ -353,37 +353,37 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                 </div>
 
                 {/* Campaign Stats */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Stats</h3>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Campaign Stats</h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Creators Applied</span>
-                      <span className="font-semibold text-gray-900">{brief.submissions.length}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Creators Applied</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{brief.submissions.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Rewards Given</span>
-                      <span className="font-semibold text-gray-900">{brief.totalRewardsPaid}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Rewards Given</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{brief.totalRewardsPaid}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Status</span>
+                      <span className="text-gray-600 dark:text-gray-400">Status</span>
                       <span className={`font-semibold ${getStatusColor()}`}>
                         {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
                       </span>
                     </div>
                     {brief.location && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Location</span>
-                        <span className="font-semibold text-gray-900">{brief.location}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Location</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{brief.location}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Deadline */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Deadline</h3>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Deadline</h3>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-gray-900">
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
                       {new Date(brief.deadline).toLocaleDateString()}
                     </p>
                     <p className={`text-lg font-medium mt-1 ${getStatusColor()}`}>
@@ -393,7 +393,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                 </div>
 
                 {/* Apply Button */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => setShowApplyModal(true)}
                     className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors"
@@ -409,15 +409,15 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
         {/* Apply Modal */}
         {showApplyModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Apply to Brief</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Apply to Brief</h3>
                 <button
                   onClick={() => {
                     setShowApplyModal(false);
                     setSubmissionError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   ✕
                 </button>
@@ -425,7 +425,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
               
               <form onSubmit={handleApply} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Content URL *
                   </label>
                   <input
@@ -433,14 +433,14 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                     required
                     value={applyFormData.contentUrl}
                     onChange={(e) => setApplyFormData({...applyFormData, contentUrl: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="https://..."
                   />
                 </div>
                 
                 {submissionError && (
-                  <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                    <p className="text-red-600 text-sm">{submissionError}</p>
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                    <p className="text-red-600 dark:text-red-400 text-sm">{submissionError}</p>
                   </div>
                 )}
                 
@@ -451,7 +451,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                       setShowApplyModal(false);
                       setSubmissionError(null);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Cancel
                   </button>

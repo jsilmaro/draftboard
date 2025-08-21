@@ -233,8 +233,8 @@ const BrandForm: React.FC = () => {
         <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl font-bold text-yellow-600">B</span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
-        <p className="text-gray-600">Let&apos;s start with your company details</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Basic Information</h2>
+        <p className="text-gray-600 dark:text-gray-400">Let&apos;s start with your company details</p>
       </div>
 
       {/* Google Sign-In Option */}
@@ -322,8 +322,8 @@ const BrandForm: React.FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-        <p className="text-gray-600">Provide your business contact details</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Information</h2>
+        <p className="text-gray-600 dark:text-gray-400">Provide your business contact details</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -430,8 +430,8 @@ const BrandForm: React.FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Social Media (Optional)</h2>
-        <p className="text-gray-600">Help creators discover your brand</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Social Media (Optional)</h2>
+        <p className="text-gray-600 dark:text-gray-400">Help creators discover your brand</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -493,8 +493,8 @@ const BrandForm: React.FC = () => {
   const renderStep4 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Payment Information</h2>
-        <p className="text-gray-600">This information is required to process payments to creators</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payment Information</h2>
+        <p className="text-gray-600 dark:text-gray-400">This information is required to process payments to creators</p>
       </div>
 
       <div className="space-y-6">
@@ -639,13 +639,13 @@ const BrandForm: React.FC = () => {
   const renderStep5 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Terms & Conditions</h2>
-        <p className="text-gray-600">Please review and accept our terms</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Terms & Conditions</h2>
+        <p className="text-gray-600 dark:text-gray-400">Please review and accept our terms</p>
       </div>
 
       <div className="bg-gray-50 p-6 rounded-lg max-h-64 overflow-y-auto">
-        <h3 className="font-semibold text-gray-900 mb-4">Terms of Service</h3>
-        <div className="text-sm text-gray-600 space-y-3">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Terms of Service</h3>
+        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-3">
           <p>By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
           <p>You acknowledge that:</p>
           <ul className="list-disc list-inside space-y-1 ml-4">
@@ -687,9 +687,9 @@ const BrandForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {renderStepIndicator()}
           
           {error && (

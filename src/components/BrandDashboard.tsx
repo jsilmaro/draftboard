@@ -3,13 +3,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
-import NotificationBell from './NotificationBell';
 import WinnerSelectionModal from './WinnerSelectionModal';
 import BrandWallet from './BrandWallet';
 import PaymentManagement from './PaymentManagement';
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 interface Brief {
   id: string;
@@ -653,83 +653,136 @@ const BrandDashboard: React.FC = () => {
 
   const renderOverview = () => (
     <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back, {user?.companyName || 'Brand'}
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Here&apos;s what&apos;s happening with your briefs and submissions
+      {/* Hero Section with Search */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+        <div className="flex-1">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Grow Your Brand with Amazing Creators 🚀
+        </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            Connect with talented creators and bring your brand vision to life with compelling content.
           </p>
+          
+          {/* Search Bar */}
+          <form className="max-w-2xl">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search creators, briefs, or submissions..."
+                className="w-full pl-4 pr-12 py-4 text-lg border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
+
+        {/* Live Activity Feed */}
+        <div className="lg:w-96">
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Live Activity</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Real-time creator activity</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-600 dark:text-green-400 font-semibold">LIVE</span>
+              </div>
+            </div>
+            
+            <div className="relative overflow-hidden">
+              <div className="space-y-4">
+                {submissions.slice(0, 4).map((submission, index) => (
+                  <div 
+                    key={submission.id}
+                    className={`relative p-4 rounded-2xl border-2 transition-all duration-700 transform ${
+                      index === 0 
+                        ? 'bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/30 dark:to-blue-900/30 border-green-300 dark:border-green-600 scale-105 shadow-lg' 
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 scale-100 shadow-sm'
+                    } ${index === 0 ? 'animate-slide-in' : ''}`}
+                  >
         <div className="flex items-center space-x-4">
-          <ThemeToggle />
-          <NotificationBell />
-          <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 ${
+                        index === 0 
+                          ? 'bg-gradient-to-br from-green-500 to-blue-600 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                      }`}>
+                        👤
+        </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {submission.creatorName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Applied to {submission.briefTitle}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                          {Math.floor(Math.random() * 10) + 1}m ago
+                        </span>
+                        {index === 0 && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-1 animate-bounce"></div>
+                        )}
+                      </div>
+                    </div>
+                    {index === 0 && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-100/20 dark:via-green-900/20 to-transparent animate-pulse"></div>
+                    )}
+                  </div>
+                ))}
+      </div>
+
+              {/* Flowing animation overlay */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-green-50/10 dark:via-green-900/10 to-transparent animate-flow-down pointer-events-none"></div>
+        </div>
+        </div>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search briefs, creators, or submissions..."
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      {/* Brand Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="text-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-3xl p-8 border border-blue-200 dark:border-blue-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">📄</span>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
-            Search
-          </button>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            {metrics.activeBriefs}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Active Briefs</p>
         </div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Active Briefs</h3>
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-blue-600 dark:text-blue-400 text-lg">📄</span>
-            </div>
+        <div className="text-center bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-3xl p-8 border border-green-200 dark:border-green-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">📈</span>
           </div>
-          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{metrics.activeBriefs}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Currently accepting submissions</p>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            {metrics.submissionsThisWeek}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">This Week</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">This Week</h3>
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-green-600 dark:text-green-400 text-lg">📈</span>
-            </div>
+        <div className="text-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-3xl p-8 border border-purple-200 dark:border-purple-700">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-white">🏆</span>
           </div>
-          <p className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{metrics.submissionsThisWeek}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">New submissions received</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Winners</h3>
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-              <span className="text-purple-600 dark:text-purple-400 text-lg">🏆</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">{metrics.winnersSelected}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Selected this month</p>
+          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            {metrics.winnersSelected}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Winners Selected</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Submissions */}
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Submissions</h3>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Submissions</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {submissions.slice(0, 3).map((submission) => (
                 <div key={submission.id} className="text-center">
@@ -745,7 +798,7 @@ const BrandDashboard: React.FC = () => {
 
         {/* Action Cards */}
         <div className="space-y-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-3">
               <span className="text-2xl mr-3">📄➡️</span>
               <h4 className="font-semibold text-gray-900">Post a Brief</h4>
@@ -755,7 +808,7 @@ const BrandDashboard: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-3">
               <span className="text-2xl mr-3">📋❗</span>
               <h4 className="font-semibold text-gray-900">View My Briefs</h4>
@@ -765,7 +818,7 @@ const BrandDashboard: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-3">
               <span className="text-2xl mr-3">🔍👤</span>
               <h4 className="font-semibold text-gray-900">Discover Creators</h4>
@@ -778,8 +831,8 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Upcoming Deadlines */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Deadlines</h3>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upcoming Deadlines</h3>
         <div className="space-y-3">
           {briefs.filter(b => b.status === 'active').slice(0, 2).map((brief) => (
             <div key={brief.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
@@ -794,12 +847,12 @@ const BrandDashboard: React.FC = () => {
 
       {/* Engagement Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Engagement Overview</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Engagement Overview</h3>
           <p className="text-2xl font-bold text-blue-600">{metrics.avgSubmissions} Avg. Submissions This Month</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Submissions</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Submissions</h3>
           <p className="text-2xl font-bold text-green-600">{metrics.totalSubmissions} Total Submissions This Month</p>
         </div>
       </div>
@@ -835,25 +888,25 @@ const BrandDashboard: React.FC = () => {
             onViewClick={(_briefData) => handleViewBrief(brief)}
             onEditClick={(_briefData) => handleEditBrief(brief)}
             onEditRewardsClick={(_briefData) => {
-              setEditingRewards({
-                brief,
-                rewardData: null,
-                type: 'edit'
-              });
-              setEditAmountOfWinners(brief.amountOfWinners || 1);
-              // Initialize winner rewards based on current amount of winners
-              const initialRewards = [];
-              for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                initialRewards.push({
-                  position: i,
-                  cashAmount: 0,
-                  creditAmount: 0,
-                  prizeDescription: ''
-                });
-              }
-              setEditWinnerRewards(initialRewards);
-              setShowEditRewardsModal(true);
-            }}
+                  setEditingRewards({
+                    brief,
+                    rewardData: null,
+                    type: 'edit'
+                  });
+                  setEditAmountOfWinners(brief.amountOfWinners || 1);
+                  // Initialize winner rewards based on current amount of winners
+                  const initialRewards = [];
+                  for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                    initialRewards.push({
+                      position: i,
+                      cashAmount: 0,
+                      creditAmount: 0,
+                      prizeDescription: ''
+                    });
+                  }
+                  setEditWinnerRewards(initialRewards);
+                  setShowEditRewardsModal(true);
+                }}
             onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
             onViewSubmissionsClick={() => {
               setActiveTab('submissions');
@@ -866,7 +919,7 @@ const BrandDashboard: React.FC = () => {
       {/* View Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{selectedBrief.title}</h3>
@@ -922,8 +975,8 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Reward Information */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reward Information</h4>
               
               {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
@@ -1024,8 +1077,8 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Details */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Details</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Brief Details</h4>
               <div className="space-y-4">
                 <div>
                   <h5 className="font-medium text-gray-900 mb-2">Description</h5>
@@ -1110,7 +1163,7 @@ const BrandDashboard: React.FC = () => {
       {/* Edit Modal */}
       {showEditModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">Edit Brief</h3>
@@ -1166,27 +1219,27 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Content */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Content</h4>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Brief Content</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
                     <textarea
                       name="description"
                       defaultValue={selectedBrief.description || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="Describe what you're looking for from creators..."
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Requirements *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requirements *</label>
                     <textarea
                       name="requirements"
                       defaultValue={selectedBrief.requirements || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="List specific requirements, deliverables, and guidelines..."
                       required
                     />
@@ -1195,45 +1248,45 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Reward Configuration */}
-              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
-                <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Rewards *</label>
+              <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700 mb-6">
+                <h4 className="text-lg font-semibold text-green-900 dark:text-green-400 mb-4">Reward Configuration</h4>
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount of Rewards *</label>
                   <input
                     type="number"
-                    name="amountOfWinners"
+                      name="amountOfWinners"
                     min="1"
                     max="50"
-                    defaultValue={selectedBrief.amountOfWinners || 1}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      defaultValue={selectedBrief.amountOfWinners || 1}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Enter number of rewards (1-50)"
-                    required
+                      required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter a number between 1 and 50</p>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mb-6">
-                <h4 className="text-lg font-semibold text-purple-900 mb-4">Timeline</h4>
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700 mb-6">
+                <h4 className="text-lg font-semibold text-purple-900 dark:text-purple-400 mb-4">Timeline</h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Deadline *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deadline *</label>
                   <input
                     type="date"
                     name="deadline"
                     defaultValue={new Date(selectedBrief.deadline).toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     required
                   />
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
@@ -1314,10 +1367,10 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
@@ -1327,7 +1380,7 @@ const BrandDashboard: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredSubmissions.map((submission) => (
                   <tr key={submission.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1426,15 +1479,15 @@ const BrandDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {creators.map((creator) => (
-          <div key={creator.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div key={creator.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-4">
               <DefaultAvatar name={creator.fullName} size="md" className="mr-3" />
               <div>
-                <h3 className="font-semibold text-gray-900">{creator.fullName}</h3>
-                <p className="text-sm text-gray-600">@{creator.userName}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{creator.fullName}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">@{creator.userName}</p>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
               <p>Email: {creator.email}</p>
       
               <p>Verified: {creator.isVerified ? 'Yes' : 'No'}</p>
@@ -1460,12 +1513,12 @@ const BrandDashboard: React.FC = () => {
       {/* Creator Profile Modal */}
       {showCreatorProfileModal && selectedCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Creator Profile</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Creator Profile</h3>
               <button
                 onClick={() => setShowCreatorProfileModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 ✕
               </button>
@@ -1474,25 +1527,25 @@ const BrandDashboard: React.FC = () => {
               <div className="flex items-center">
                 <DefaultAvatar name={selectedCreator.fullName} size="xl" className="mr-4" />
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{selectedCreator.fullName}</h4>
-                  <p className="text-gray-600">@{selectedCreator.userName}</p>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedCreator.fullName}</h4>
+                  <p className="text-gray-600 dark:text-gray-300">@{selectedCreator.userName}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <span className="font-medium">Email:</span>
-                  <p className="text-gray-600">{selectedCreator.email}</p>
+                  <span className="font-medium text-gray-900 dark:text-white">Email:</span>
+                  <p className="text-gray-600 dark:text-gray-300">{selectedCreator.email}</p>
                 </div>
                 <div>
                   
                 </div>
                 <div>
-                  <span className="font-medium">Verified:</span>
-                  <p className="text-gray-600">{selectedCreator.isVerified ? 'Yes' : 'No'}</p>
+                  <span className="font-medium text-gray-900 dark:text-white">Verified:</span>
+                  <p className="text-gray-600 dark:text-gray-300">{selectedCreator.isVerified ? 'Yes' : 'No'}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Social Handles:</span>
-                  <p className="text-gray-600">
+                  <span className="font-medium text-gray-900 dark:text-white">Social Handles:</span>
+                  <p className="text-gray-600 dark:text-gray-300">
                     {[
                       selectedCreator.socialInstagram && `Instagram: ${selectedCreator.socialInstagram}`,
                       selectedCreator.socialTwitter && `Twitter: ${selectedCreator.socialTwitter}`,
@@ -1507,7 +1560,7 @@ const BrandDashboard: React.FC = () => {
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowCreatorProfileModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>
@@ -1534,7 +1587,7 @@ const BrandDashboard: React.FC = () => {
       {/* Invite Creator Modal */}
       {showInviteModal && selectedCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-900">Invite {selectedCreator.fullName}</h3>
               <button
@@ -1598,7 +1651,7 @@ const BrandDashboard: React.FC = () => {
       {/* General Invite Creator Modal */}
       {showInviteCreatorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-900">Invite Creator</h3>
               <button
@@ -1653,7 +1706,7 @@ const BrandDashboard: React.FC = () => {
 
         {/* Overview Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">📋</div>
               <div>
@@ -1664,7 +1717,7 @@ const BrandDashboard: React.FC = () => {
             <p className="text-sm text-gray-600">Active and draft briefs</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">💰</div>
               <div>
@@ -1677,7 +1730,7 @@ const BrandDashboard: React.FC = () => {
             <p className="text-sm text-gray-600">Briefs with reward types set</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">🎯</div>
               <div>
@@ -1712,30 +1765,30 @@ const BrandDashboard: React.FC = () => {
                   onViewClick={(_briefData) => handleViewBrief(brief)}
                   onEditClick={(_briefData) => handleEditBrief(brief)}
                   onEditRewardsClick={(_briefData) => {
-                    setEditingRewards({
-                      brief,
-                      rewardData: null,
-                      type: 'edit'
-                    });
-                    setEditAmountOfWinners(brief.amountOfWinners || 1);
-                    // Initialize winner rewards
-                    const initialRewards = [];
-                    for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                      initialRewards.push({
-                        position: i,
-                        cashAmount: 0,
-                        creditAmount: 0,
-                        prizeDescription: ''
-                      });
-                    }
-                    setEditWinnerRewards(initialRewards);
-                    setShowEditRewardsModal(true);
-                  }}
+                          setEditingRewards({
+                            brief,
+                            rewardData: null,
+                            type: 'edit'
+                          });
+                          setEditAmountOfWinners(brief.amountOfWinners || 1);
+                          // Initialize winner rewards
+                          const initialRewards = [];
+                          for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                            initialRewards.push({
+                              position: i,
+                              cashAmount: 0,
+                              creditAmount: 0,
+                              prizeDescription: ''
+                            });
+                          }
+                          setEditWinnerRewards(initialRewards);
+                          setShowEditRewardsModal(true);
+                        }}
                   onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
                   onViewSubmissionsClick={() => {
-                    setActiveTab('submissions');
-                    setSubmissionFilter('all');
-                  }}
+                          setActiveTab('submissions');
+                          setSubmissionFilter('all');
+                        }}
                 />
               ))}
             </div>
@@ -1783,25 +1836,25 @@ const BrandDashboard: React.FC = () => {
                   onViewClick={(_briefData) => handleViewBrief(brief)}
                   onEditClick={(_briefData) => handleEditBrief(brief)}
                   onEditRewardsClick={(_briefData) => {
-                    setEditingRewards({
-                      brief,
-                      rewardData: null,
-                      type: 'edit'
-                    });
-                    setEditAmountOfWinners(brief.amountOfWinners || 1);
-                    // Initialize winner rewards
-                    const initialRewards = [];
-                    for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                      initialRewards.push({
-                        position: i,
-                        cashAmount: 0,
-                        creditAmount: 0,
-                        prizeDescription: ''
-                      });
-                    }
-                    setEditWinnerRewards(initialRewards);
-                    setShowEditRewardsModal(true);
-                  }}
+                        setEditingRewards({
+                          brief,
+                          rewardData: null,
+                          type: 'edit'
+                        });
+                        setEditAmountOfWinners(brief.amountOfWinners || 1);
+                        // Initialize winner rewards
+                        const initialRewards = [];
+                        for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                          initialRewards.push({
+                            position: i,
+                            cashAmount: 0,
+                            creditAmount: 0,
+                            prizeDescription: ''
+                          });
+                        }
+                        setEditWinnerRewards(initialRewards);
+                        setShowEditRewardsModal(true);
+                      }}
                   onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
                   onViewSubmissionsClick={() => {
                     setActiveTab('submissions');
@@ -1853,55 +1906,55 @@ const BrandDashboard: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center mb-6">
           <DefaultAvatar name={user?.companyName || 'Brand'} size="xl" className="mr-4" />
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">{user?.companyName || 'Brand Name'}</h3>
-            <p className="text-gray-600">{user?.email || 'brand@example.com'}</p>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.companyName || 'Brand Name'}</h3>
+            <p className="text-gray-600 dark:text-gray-400">{user?.email || 'brand@example.com'}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Company Information</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Company Information</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                <input type="text" defaultValue={user?.companyName || ''} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company Name</label>
+                <input type="text" defaultValue={user?.companyName || ''} className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Contact Name</label>
-                <input type="text" placeholder="Contact person name" className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label>
+                <input type="text" placeholder="Contact person name" className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
               </div>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Preferences</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Preferences</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Notification Settings</label>
-                <select className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Settings</label>
+                <select className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                   <option>All notifications</option>
                   <option>Important only</option>
                   <option>None</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Privacy Level</label>
-                <select className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Privacy Level</label>
+                <select className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                   <option>Public</option>
                   <option>Private</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Language</label>
-                <select className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
+                <select className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                   <option>English</option>
                   <option>Spanish</option>
                   <option>French</option>
@@ -1924,15 +1977,15 @@ const BrandDashboard: React.FC = () => {
   const renderReviewModal = () => (
     showReviewModal && selectedSubmission && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Review Submission</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Review Submission</h3>
             <button
               onClick={() => {
                 setShowReviewModal(false);
                 setDetailedSubmission(null);
               }}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               ✕
             </button>
@@ -1940,8 +1993,8 @@ const BrandDashboard: React.FC = () => {
           
           <div className="space-y-6">
             {/* Creator Information */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-3">Creator Information</h4>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Creator Information</h4>
               <div className="flex items-center mb-3">
                 <DefaultAvatar name={detailedSubmission?.creator?.fullName || selectedSubmission.creatorName} size="md" className="mr-3" />
                 <div>
@@ -2540,6 +2593,29 @@ const BrandDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'briefs' ? 'My Briefs' :
+                 activeTab === 'submissions' ? 'Submissions' :
+                 activeTab === 'creators' ? 'Creators' :
+                 activeTab === 'wallet' ? 'Wallet' :
+                 activeTab === 'payments' ? 'Payments' :
+                 activeTab === 'awards' ? 'Rewards' :
+                 activeTab === 'settings' ? 'Settings' : 'Dashboard'}
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+              <ThemeToggle />
+              <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
+            </div>
+          </div>
+        </div>
+        
         <div className="p-8">
           {renderContent()}
         </div>
@@ -2548,7 +2624,7 @@ const BrandDashboard: React.FC = () => {
       {/* Modals */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{selectedBrief.title}</h3>
@@ -2604,8 +2680,8 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Reward Information */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reward Information</h4>
               
               {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
@@ -2706,33 +2782,33 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Details */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Brief Details</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Brief Details</h4>
               <div className="space-y-4">
                 <div>
-                  <h5 className="font-medium text-gray-900 mb-2">Description</h5>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <h5 className="font-medium text-gray-900 dark:text-white mb-2">Description</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                     {selectedBrief.description || 'No description provided'}
                   </p>
                 </div>
                 
                 <div>
-                  <h5 className="font-medium text-gray-900 mb-2">Requirements</h5>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <h5 className="font-medium text-gray-900 dark:text-white mb-2">Requirements</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                     {selectedBrief.requirements || 'No requirements specified'}
                   </p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Created</h5>
-                    <p className="text-gray-600 text-sm">
+                    <h5 className="font-medium text-gray-900 dark:text-white mb-2">Created</h5>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">
                       {selectedBrief.createdAt ? new Date(selectedBrief.createdAt).toLocaleDateString() : 'Unknown'}
                     </p>
                   </div>
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Last Updated</h5>
-                    <p className="text-gray-600 text-sm">
+                    <h5 className="font-medium text-gray-900 dark:text-white mb-2">Last Updated</h5>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">
                       {selectedBrief.updatedAt ? new Date(selectedBrief.updatedAt).toLocaleDateString() : 'Unknown'}
                     </p>
                   </div>
@@ -2741,10 +2817,10 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>
@@ -2795,12 +2871,12 @@ const BrandDashboard: React.FC = () => {
       {renderEditRewardsModal()}
       {showEditModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Edit Brief</h3>
-                <p className="text-sm text-gray-600 mt-1">Update brief information and settings</p>
-              </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Brief</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Update brief information and settings</p>
+            </div>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-xl"
@@ -2883,17 +2959,17 @@ const BrandDashboard: React.FC = () => {
               {/* Reward Configuration */}
               <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
                 <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
-                <div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Rewards *</label>
                   <input
                     type="number"
-                    name="amountOfWinners"
+                      name="amountOfWinners"
                     min="1"
                     max="50"
-                    defaultValue={selectedBrief.amountOfWinners || 1}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      defaultValue={selectedBrief.amountOfWinners || 1}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter number of rewards (1-50)"
-                    required
+                      required
                   />
                   <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
                 </div>
