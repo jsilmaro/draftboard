@@ -8,6 +8,7 @@ import WinnerSelectionModal from './WinnerSelectionModal';
 import BrandWallet from './BrandWallet';
 import PaymentManagement from './PaymentManagement';
 import { useToast } from '../contexts/ToastContext';
+import BrandBriefCard from './BrandBriefCard';
 
 interface Brief {
   id: string;
@@ -773,131 +774,47 @@ const BrandDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {briefs.map((brief) => (
-          <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-semibold text-gray-900">{brief.title}</h3>
-              <div className="flex space-x-2">
-                {brief.rewardType && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {brief.rewardType === 'CASH' ? '💰 Cash' : 
-                     brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                     brief.rewardType === 'PRIZES' ? '🎁 Rewards' : brief.rewardType}
-                  </span>
-                )}
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                  brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>Submissions: {(() => {
-                try {
-                  if (typeof brief.submissions === 'number') {
-                    return brief.submissions;
-                  } else if (Array.isArray(brief.submissions)) {
-                    return (brief.submissions as unknown[]).length;
-                  } else {
-                    return 0;
-                  }
-                } catch (error) {
-                  return 0;
-                }
-              })()}</p>
-              <p>Winners: {brief.amountOfWinners || 1}</p>
-              {(() => {
-                const rewardInfo = getBriefRewardInfo(brief.id);
-                if (brief.rewardType) {
-                  const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
-                                           brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                                           brief.rewardType === 'PRIZES' ? '🎁 Rewards' : brief.rewardType;
-                  
-                  if (rewardInfo.type === 'published') {
-                    return (
-                      <div>
-                        <p className="text-green-600 font-medium">Primary: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers configured • Published</p>
-                      </div>
-                    );
-                  } else if (rewardInfo.type === 'draft') {
-                    return (
-                      <div>
-                        <p className="text-yellow-600 font-medium">Primary: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">{rewardInfo.tiers} tiers configured • Draft</p>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div>
-                        <p className="text-blue-600 font-medium">Primary: {rewardTypeDisplay}</p>
-                        <p className="text-xs text-gray-500">Primary type set • Configure tiers</p>
-                      </div>
-                    );
-                  }
-                } else {
-                  return (
-                    <div>
-                      <p className="text-gray-500">Primary Reward: Not set</p>
-                      <p className="text-xs text-red-500">Select primary reward type to attract creators</p>
-                    </div>
-                  );
-                }
-              })()}
-              <p>Deadline: {new Date(brief.deadline).toLocaleDateString()}</p>
-            </div>
-            <div className="mt-4 flex space-x-2">
-              <button 
-                onClick={() => handleViewBrief(brief)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                View
-              </button>
-              <button 
-                onClick={() => handleEditBrief(brief)}
-                className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-              >
-                Edit
-              </button>
-              <button 
-                onClick={() => {
-                  setEditingRewards({
-                    brief,
-                    rewardData: null,
-                    type: 'edit'
-                  });
-                  setEditSelectedRewardType(brief.rewardType || '');
-                  setEditAmountOfWinners(brief.amountOfWinners || 1);
-                  // Initialize winner rewards based on current amount of winners
-                  const initialRewards = [];
-                  for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                    initialRewards.push({
-                      position: i,
-                      cashAmount: 0,
-                      creditAmount: 0,
-                      prizeDescription: ''
-                    });
-                  }
-                  setEditWinnerRewards(initialRewards);
-                  setShowEditRewardsModal(true);
-                }}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                Edit Rewards
-              </button>
-              {brief.status === 'active' && new Date(brief.deadline) <= new Date() && brief.submissions > 0 && !brief.winnersSelected && (
-                <button 
-                  onClick={() => handleSelectWinners(brief)}
-                  className="text-green-600 hover:text-green-800 text-sm font-medium"
-                >
-                  Select Winners
-                </button>
-              )}
-
-            </div>
-          </div>
+          <BrandBriefCard
+            key={brief.id}
+            brief={{
+              ...brief,
+              description: brief.description || '',
+              amountOfWinners: brief.amountOfWinners || 1,
+              brand: {
+                id: brief.id,
+                companyName: 'Your Brand',
+                logo: undefined
+              }
+            }}
+            onViewClick={(_briefData) => handleViewBrief(brief)}
+            onEditClick={(_briefData) => handleEditBrief(brief)}
+            onEditRewardsClick={(_briefData) => {
+              setEditingRewards({
+                brief,
+                rewardData: null,
+                type: 'edit'
+              });
+              setEditSelectedRewardType(brief.rewardType || '');
+              setEditAmountOfWinners(brief.amountOfWinners || 1);
+              // Initialize winner rewards based on current amount of winners
+              const initialRewards = [];
+              for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                initialRewards.push({
+                  position: i,
+                  cashAmount: 0,
+                  creditAmount: 0,
+                  prizeDescription: ''
+                });
+              }
+              setEditWinnerRewards(initialRewards);
+              setShowEditRewardsModal(true);
+            }}
+            onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
+            onViewSubmissionsClick={() => {
+              setActiveTab('submissions');
+              setSubmissionFilter('all');
+            }}
+          />
         ))}
       </div>
 
@@ -1759,111 +1676,49 @@ const BrandDashboard: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">Briefs with Rewards</h3>
           {briefs.filter(brief => brief.rewardType).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {briefs.filter(brief => brief.rewardType).map((brief) => {
-                const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
-                                         brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                                         brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
-                
-                return (
-                  <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <h4 className="font-semibold text-gray-900 line-clamp-2">{brief.title}</h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                        brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Primary Reward:</span>
-                        <span className="text-sm font-medium text-blue-600">{rewardTypeDisplay}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Winners:</span>
-                        <span className="text-sm font-medium text-gray-900">{brief.amountOfWinners || 1}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Submissions:</span>
-                        <span className="text-sm font-medium text-gray-900">{(() => {
-                          try {
-                            if (typeof brief.submissions === 'number') {
-                              return brief.submissions;
-                            } else if (Array.isArray(brief.submissions)) {
-                              return (brief.submissions as unknown[]).length;
-                            } else {
-                              return 0;
-                            }
-                          } catch (error) {
-                            return 0;
-                          }
-                        })()}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Deadline:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {new Date(brief.deadline).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => {
-                          setEditingRewards({
-                            brief,
-                            rewardData: null,
-                            type: 'edit'
-                          });
-                          setEditSelectedRewardType(brief.rewardType || '');
-                          setEditAmountOfWinners(brief.amountOfWinners || 1);
-                          // Initialize winner rewards
-                          const initialRewards = [];
-                          for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                            initialRewards.push({
-                              position: i,
-                              cashAmount: 0,
-                              creditAmount: 0,
-                              prizeDescription: ''
-                            });
-                          }
-                          setEditWinnerRewards(initialRewards);
-                          setShowEditRewardsModal(true);
-                        }}
-                        className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 text-sm transition-colors"
-                      >
-                        Edit Rewards
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setSelectedBrief(brief);
-                          setShowViewModal(true);
-                        }}
-                        className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-50 text-sm transition-colors"
-                      >
-                        View
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setActiveTab('submissions');
-                          // Set filter to show submissions for this specific brief
-                          setSubmissionFilter('all');
-                        }}
-                        className="flex-1 border border-green-300 text-green-700 py-2 px-3 rounded-md hover:bg-green-50 text-sm transition-colors"
-                      >
-                        View Submissions
-                      </button>
-
-                    </div>
-                  </div>
-                );
-              })}
+              {briefs.filter(brief => brief.rewardType).map((brief) => (
+                <BrandBriefCard
+                  key={brief.id}
+                  brief={{
+                    ...brief,
+                    description: brief.description || '',
+                    amountOfWinners: brief.amountOfWinners || 1,
+                    brand: {
+                      id: brief.id,
+                      companyName: 'Your Brand',
+                      logo: undefined
+                    }
+                  }}
+                  onViewClick={(_briefData) => handleViewBrief(brief)}
+                  onEditClick={(_briefData) => handleEditBrief(brief)}
+                  onEditRewardsClick={(_briefData) => {
+                    setEditingRewards({
+                      brief,
+                      rewardData: null,
+                      type: 'edit'
+                    });
+                    setEditSelectedRewardType(brief.rewardType || '');
+                    setEditAmountOfWinners(brief.amountOfWinners || 1);
+                    // Initialize winner rewards
+                    const initialRewards = [];
+                    for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                      initialRewards.push({
+                        position: i,
+                        cashAmount: 0,
+                        creditAmount: 0,
+                        prizeDescription: ''
+                      });
+                    }
+                    setEditWinnerRewards(initialRewards);
+                    setShowEditRewardsModal(true);
+                  }}
+                  onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
+                  onViewSubmissionsClick={() => {
+                    setActiveTab('submissions');
+                    setSubmissionFilter('all');
+                  }}
+                />
+              ))}
             </div>
           ) : (
             <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
@@ -1894,90 +1749,47 @@ const BrandDashboard: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">Briefs Needing Rewards</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {briefs.filter(brief => !brief.rewardType).map((brief) => (
-                <div key={brief.id} className="bg-orange-50 p-6 rounded-lg shadow-sm border border-orange-200">
-                  <div className="flex justify-between items-start mb-4">
-                    <h4 className="font-semibold text-gray-900 line-clamp-2">{brief.title}</h4>
-                    <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
-                      No Rewards
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Status:</span>
-                      <span className={`text-sm px-2 py-1 rounded-full ${
-                        brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                        brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Submissions:</span>
-                      <span className="text-sm font-medium text-gray-900">{(() => {
-                        try {
-                          if (typeof brief.submissions === 'number') {
-                            return brief.submissions;
-                          } else if (Array.isArray(brief.submissions)) {
-                            return (brief.submissions as unknown[]).length;
-                          } else {
-                            return 0;
-                          }
-                        } catch (error) {
-                          return 0;
-                        }
-                      })()}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Deadline:</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {new Date(brief.deadline).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => {
-                        setEditingRewards({
-                          brief,
-                          rewardData: null,
-                          type: 'edit'
-                        });
-                        setEditSelectedRewardType('');
-                        setEditAmountOfWinners(brief.amountOfWinners || 1);
-                        // Initialize winner rewards
-                        const initialRewards = [];
-                        for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                          initialRewards.push({
-                            position: i,
-                            cashAmount: 0,
-                            creditAmount: 0,
-                            prizeDescription: ''
-                          });
-                        }
-                        setEditWinnerRewards(initialRewards);
-                        setShowEditRewardsModal(true);
-                      }}
-                      className="flex-1 bg-orange-600 text-white py-2 px-3 rounded-md hover:bg-orange-700 text-sm transition-colors"
-                    >
-                      Set Rewards
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setSelectedBrief(brief);
-                        setShowViewModal(true);
-                      }}
-                      className="flex-1 border border-orange-300 text-orange-700 py-2 px-3 rounded-md hover:bg-orange-50 text-sm transition-colors"
-                    >
-                      View
-                    </button>
-
-                  </div>
-                </div>
+                <BrandBriefCard
+                  key={brief.id}
+                  brief={{
+                    ...brief,
+                    description: brief.description || '',
+                    amountOfWinners: brief.amountOfWinners || 1,
+                    brand: {
+                      id: brief.id,
+                      companyName: 'Your Brand',
+                      logo: undefined
+                    }
+                  }}
+                  onViewClick={(_briefData) => handleViewBrief(brief)}
+                  onEditClick={(_briefData) => handleEditBrief(brief)}
+                  onEditRewardsClick={(_briefData) => {
+                    setEditingRewards({
+                      brief,
+                      rewardData: null,
+                      type: 'edit'
+                    });
+                    setEditSelectedRewardType('');
+                    setEditAmountOfWinners(brief.amountOfWinners || 1);
+                    // Initialize winner rewards
+                    const initialRewards = [];
+                    for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                      initialRewards.push({
+                        position: i,
+                        cashAmount: 0,
+                        creditAmount: 0,
+                        prizeDescription: ''
+                      });
+                    }
+                    setEditWinnerRewards(initialRewards);
+                    setShowEditRewardsModal(true);
+                  }}
+                  onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
+                  onViewSubmissionsClick={() => {
+                    setActiveTab('submissions');
+                    setSubmissionFilter('all');
+                  }}
+                />
               ))}
             </div>
           </div>
