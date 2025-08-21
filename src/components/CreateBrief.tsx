@@ -31,6 +31,7 @@ interface FormData {
   reward: number;
   deadline: string;
   amountOfWinners: number;
+  location: string;
   rewardTiers: RewardTier[];
   additionalFields: Record<string, string | string[]>;
 }
@@ -47,6 +48,7 @@ const CreateBrief: React.FC = () => {
     reward: 0,
     deadline: '',
     amountOfWinners: 1,
+    location: '',
     rewardTiers: [],
     additionalFields: {} as Record<string, string | string[]>
   });
@@ -161,6 +163,7 @@ const CreateBrief: React.FC = () => {
           ...template.fields,
           reward: 0, // Initialize with empty reward type
           amountOfWinners: 1,
+          location: '',
           rewardTiers: []
         });
       }
@@ -172,6 +175,7 @@ const CreateBrief: React.FC = () => {
         reward: 0, // Default value for reward field
         deadline: '',
         amountOfWinners: 1,
+        location: '',
         rewardTiers: [],
         additionalFields: {}
       });
@@ -234,35 +238,38 @@ const CreateBrief: React.FC = () => {
 
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
+      const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      try {
       const briefData = {
         ...formData,
         brandId: user?.id,
         status: 'draft',
         isPrivate,
         createdAt: new Date().toISOString()
-      };
-
-      const response = await fetch('/api/briefs', {
+              };
+      
+        const response = await fetch('/api/briefs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(briefData)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setBriefId(result.id);
+              });
+      
+        if (response.ok) {
+          const result = await response.json();
+          setBriefId(result.id);
         setShowShareModal(true);
+              } else {
+          const errorData = await response.json();
+          alert('Failed to create brief: ' + (errorData.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error creating brief: ' + error);
       }
-    } catch (error) {
-      // Error creating brief
-    }
   };
 
   const copyToClipboard = async () => {
@@ -387,18 +394,39 @@ const CreateBrief: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount of Winners *
+                    Amount of Rewards *
                   </label>
-                  <select
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
                     value={formData.amountOfWinners}
-                    onChange={(e) => handleAmountOfWinnersChange(Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 1 && value <= 50) {
+                        handleAmountOfWinnersChange(value);
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter number of rewards (1-50)"
                     required
-                  >
-                    {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                      <option key={num} value={num}>{num} Spot{num === 1 ? '' : 's'}</option>
-                    ))}
-                  </select>
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., New York, NY or London, UK"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Specify the location for this brief (required)</p>
                 </div>
               </div>
             </div>
@@ -408,7 +436,7 @@ const CreateBrief: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Reward Tiers</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Set rewards for each winning position. You can mix cash, credits, and prizes for each tier.
+              Set rewards for each reward tier. You can mix cash, credits, and prizes for each position.
             </p>
             
             {formData.rewardTiers.length > 0 && (

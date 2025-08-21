@@ -19,14 +19,11 @@ function App() {
   // Replace with your actual Google OAuth Client ID
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id';
 
-
-
   return (
     <GoogleOAuthProvider 
       clientId={GOOGLE_CLIENT_ID}
       onScriptLoadError={() => {
-        // Google OAuth script load error - handled silently
-        // COOP errors are expected with Google OAuth and should not affect functionality
+        // Google OAuth script load error - continuing without OAuth
       }}
     >
       <ToastProvider>
@@ -63,6 +60,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+
               <Route 
                 path="/brand/create-brief" 
                 element={

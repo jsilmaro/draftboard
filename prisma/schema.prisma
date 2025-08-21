@@ -83,14 +83,15 @@ model Brief {
   description      String
   requirements     String
   reward           Float
-  rewardType       String?
   amountOfWinners  Int              @default(1)
+  location         String?          // Location for the brief (optional)
   deadline         DateTime
   status           String           @default("draft")
   isPrivate        Boolean          @default(false)
   additionalFields String?
   brandId          String
   winnersSelected  Boolean          @default(false)
+  totalRewardsPaid Float            @default(0)  // Track total rewards paid out
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   closedAt         DateTime?
@@ -180,6 +181,8 @@ model WinnerReward {
   cashAmount      Float    @default(0)
   creditAmount    Float    @default(0)
   prizeDescription String?
+  isPaid          Boolean  @default(false)
+  paidAt          DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   brief           Brief    @relation(fields: [briefId], references: [id])
@@ -203,9 +206,11 @@ model Payment {
   winnerId        String   @unique
   amount          Float
   currency        String   @default("USD")
-  paymentMethod   String   // "bank_transfer", "paypal", "stripe", "credits"
+  paymentMethod   String   // "stripe", "credits", "prizes"
+  rewardType      String   // "cash", "credits", "prizes"
   status          String   @default("pending") // "pending", "processing", "completed", "failed"
-  transactionId   String?  // External payment processor transaction ID
+  stripePaymentIntentId String?  // Stripe payment intent ID
+  stripeTransferId String?  // Stripe transfer ID for payouts
   paidAt          DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

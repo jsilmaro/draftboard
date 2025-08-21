@@ -163,7 +163,7 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
                     } else {
                       // Find next available position
                       const usedPositions = selectedWinners.map(w => w.position);
-                      const nextPosition = Array.from({ length: brief.amountOfWinners }, (_, i) => i + 1)
+                      const nextPosition = Array.from({ length: brief.amountOfWinners || 1 }, (_, i) => i + 1)
                         .find(pos => !usedPositions.includes(pos));
                       if (nextPosition) {
                         handleWinnerSelect(submission.id, nextPosition);
@@ -211,7 +211,7 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
                   <div key={position} className="p-4 border border-gray-200 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-medium text-gray-900">
-                        {position === 1 ? '1st Place' : position === 2 ? '2nd Place' : position === 3 ? '3rd Place' : `${position}th Place`}
+                        {position === 1 ? '1st Spot' : position === 2 ? '2nd Spot' : position === 3 ? '3rd Spot' : `${position}th Spot`}
                       </h4>
                       {selectedCreator && (
                         <span className="text-sm text-green-600 font-medium">

@@ -156,6 +156,7 @@ const BrandDashboard: React.FC = () => {
   // Winner selection state
   const [showWinnerSelectionModal, setShowWinnerSelectionModal] = useState(false);
   const [selectedBriefForWinners, setSelectedBriefForWinners] = useState<Brief | null>(null);
+  // const [showSubmissionViewModal, setShowSubmissionViewModal] = useState(false);
   const [briefSubmissions, setBriefSubmissions] = useState<Array<{
     id: string;
     creatorName: string;
@@ -793,7 +794,19 @@ const BrandDashboard: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2 text-sm text-gray-600">
-              <p>Submissions: {brief.submissions}</p>
+              <p>Submissions: {(() => {
+                try {
+                  if (typeof brief.submissions === 'number') {
+                    return brief.submissions;
+                  } else if (Array.isArray(brief.submissions)) {
+                    return (brief.submissions as unknown[]).length;
+                  } else {
+                    return 0;
+                  }
+                } catch (error) {
+                  return 0;
+                }
+              })()}</p>
               <p>Winners: {brief.amountOfWinners || 1}</p>
               {(() => {
                 const rewardInfo = getBriefRewardInfo(brief.id);
@@ -925,7 +938,19 @@ const BrandDashboard: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-blue-900">Submissions:</span>
-                  <span className="text-blue-900">{selectedBrief.submissions}</span>
+                  <span className="text-blue-900">{(() => {
+                    try {
+                      if (typeof selectedBrief.submissions === 'number') {
+                        return selectedBrief.submissions;
+                      } else if (Array.isArray(selectedBrief.submissions)) {
+                        return (selectedBrief.submissions as unknown[]).length;
+                      } else {
+                        return 0;
+                      }
+                    } catch (error) {
+                      return 0;
+                    }
+                  })()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-blue-900">Amount of Winners:</span>
@@ -1359,6 +1384,7 @@ const BrandDashboard: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -1373,7 +1399,34 @@ const BrandDashboard: React.FC = () => {
                         <span className="text-sm font-medium text-gray-900">{submission.creatorName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{submission.briefTitle}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <button 
+                        onClick={() => {
+                          // Filter submissions to show only this brief
+                          const brief = briefs.find(b => b.title === submission.briefTitle);
+                          if (brief) {
+                            setSelectedBrief(brief);
+                            // You could add a state to filter submissions by brief ID
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {submission.briefTitle}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(() => {
+                        const brief = briefs.find(b => b.title === submission.briefTitle);
+                        if (brief?.rewardType) {
+                          const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
+                                                   brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
+                                                   brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
+                          return rewardTypeDisplay;
+                        } else {
+                          return 'Not set';
+                        }
+                      })()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         submission.status === 'approved' ? 'bg-green-100 text-green-800' :
@@ -1737,7 +1790,19 @@ const BrandDashboard: React.FC = () => {
                       
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Submissions:</span>
-                        <span className="text-sm font-medium text-gray-900">{brief.submissions}</span>
+                        <span className="text-sm font-medium text-gray-900">{(() => {
+                          try {
+                            if (typeof brief.submissions === 'number') {
+                              return brief.submissions;
+                            } else if (Array.isArray(brief.submissions)) {
+                              return (brief.submissions as unknown[]).length;
+                            } else {
+                              return 0;
+                            }
+                          } catch (error) {
+                            return 0;
+                          }
+                        })()}</span>
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -1783,6 +1848,16 @@ const BrandDashboard: React.FC = () => {
                         className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-50 text-sm transition-colors"
                       >
                         View
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setActiveTab('submissions');
+                          // Set filter to show submissions for this specific brief
+                          setSubmissionFilter('all');
+                        }}
+                        className="flex-1 border border-green-300 text-green-700 py-2 px-3 rounded-md hover:bg-green-50 text-sm transition-colors"
+                      >
+                        View Submissions
                       </button>
 
                     </div>
@@ -1841,7 +1916,19 @@ const BrandDashboard: React.FC = () => {
                     
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Submissions:</span>
-                      <span className="text-sm font-medium text-gray-900">{brief.submissions}</span>
+                      <span className="text-sm font-medium text-gray-900">{(() => {
+                        try {
+                          if (typeof brief.submissions === 'number') {
+                            return brief.submissions;
+                          } else if (Array.isArray(brief.submissions)) {
+                            return (brief.submissions as unknown[]).length;
+                          } else {
+                            return 0;
+                          }
+                        } catch (error) {
+                          return 0;
+                        }
+                      })()}</span>
                     </div>
                     
                     <div className="flex items-center justify-between">
@@ -2680,7 +2767,19 @@ const BrandDashboard: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-blue-900">Submissions:</span>
-                  <span className="text-blue-900">{selectedBrief.submissions}</span>
+                  <span className="text-blue-900">{(() => {
+                    try {
+                      if (typeof selectedBrief.submissions === 'number') {
+                        return selectedBrief.submissions;
+                      } else if (Array.isArray(selectedBrief.submissions)) {
+                        return (selectedBrief.submissions as unknown[]).length;
+                      } else {
+                        return 0;
+                      }
+                    } catch (error) {
+                      return 0;
+                    }
+                  })()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-blue-900">Amount of Winners:</span>

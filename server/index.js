@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -5,7 +6,16 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const { PrismaClient } = require('@prisma/client');
-require('dotenv').config();
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+
+// Debug environment variables
+console.log('🔧 Environment check:');
+console.log('TEST_VAR:', process.env.TEST_VAR || 'Not set');
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set');
+console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Set' : 'Not set');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 
 const app = express();
 
@@ -37,32 +47,8 @@ const prisma = new PrismaClient({
 });
 
 // Configure connection pool settings to prevent timeout issues
-// These settings help manage database connections more efficiently
-prisma.$use(async (params, next) => {
-  const before = Date.now();
-  
-  // Retry logic for connection pool timeouts
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      const result = await next(params);
-      const after = Date.now();
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
-      }
-      return result;
-    } catch (error) {
-      retries--;
-      if (error.code === 'P2024' && retries > 0) {
-        // Connection pool timeout - wait and retry
-        console.log(`Connection pool timeout, retrying... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-      throw error;
-    }
-  }
-});
+// Note: $use middleware is not available in current Prisma version
+// Connection pool is handled automatically by Prisma
 
 // Add connection pool event listeners for better error handling
 prisma.$on('query', (e) => {
@@ -85,9 +71,7 @@ prisma.$on('error', (e) => {
     if (process.env.NODE_ENV === 'production') {
       console.log('🔄 Attempting to reconnect...');
       setTimeout(() => {
-        prisma.$connect().catch(err => {
-          console.error('❌ Reconnection failed:', err);
-        });
+        console.log('🔄 Reconnection not needed - Prisma handles connections automatically');
       }, 5000);
     }
   }
@@ -105,27 +89,18 @@ function isValidUrl(string) {
   }
 }
 
-// Database connection test with connection pool optimization
-prisma.$connect()
-  .then(() => {
-    console.log('✅ Database connected successfully with optimized connection pool');
-    console.log('🔍 Environment Variables:');
-    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
-    console.log('  - PORT:', process.env.PORT || 'not set');
-    console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'MISSING!');
-    console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'MISSING!');
-    if (process.env.DATABASE_URL) {
-      console.log('  - DATABASE_URL preview:', process.env.DATABASE_URL.substring(0, 20) + '...');
-    }
-  })
-  .catch((error) => {
-    console.error('❌ Database connection failed:', error);
-    console.log('🔍 Environment Variables:');
-    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
-    console.log('  - PORT:', process.env.PORT || 'not set');
-    console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'MISSING!');
-    console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'MISSING!');
-  });
+// Database connection test
+// Note: $connect is deprecated in newer Prisma versions
+// Connection is established automatically on first query
+console.log('✅ Prisma client initialized');
+console.log('🔍 Environment Variables:');
+console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('  - PORT:', process.env.PORT || 'not set');
+console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'MISSING!');
+console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'MISSING!');
+if (process.env.DATABASE_URL) {
+  console.log('  - DATABASE_URL preview:', process.env.DATABASE_URL.substring(0, 20) + '...');
+}
 
 // Middleware
 app.use(cors({
@@ -138,7 +113,7 @@ app.use(cors({
         'https://draftboard-ecru.vercel.app',
         'https://draftboard-octj8189e-jsilmaros-projects.vercel.app'
       ]
-    : ['http://localhost:3000', 'http://localhost:3001', 'https://draftboard-b44q.vercel.app', ],
+    : ['http://localhost:3000', 'https://draftboard-b44q.vercel.app', ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept', 'https://draftboard-b44q-git-master-jsilmaros-projects.vercel.app', 'https://draftboard-b44q-guyh12yl8-jsilmaros-projects.vercel.app']
@@ -191,7 +166,6 @@ app.use((req, res, next) => {
 app.get('/health', async (req, res) => {
   try {
     // Test database connection
-    await prisma.$connect();
     const brandCount = await prisma.brand.count();
     
     res.status(200).json({ 
@@ -240,7 +214,7 @@ app.get('/api/debug', (req, res) => {
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     corsOrigins: process.env.NODE_ENV === 'production' 
       ? ['https://draftboard-b44q.vercel.app', 'https://draftboard-b44q-git-master-jsilmaros-projects.vercel.app', 'https://draftboard-b44q-guyh12yl8-jsilmaros-projects.vercel.app', 'https://draftboard-rf3ugm5tg-jsilmaros-projects.vercel.app', 'https://draftboard-ecru.vercel.app', 'https://draftboard-octj8189e-jsilmaros-projects.vercel.app']
-      : ['http://localhost:3000', 'http://localhost:3001'],
+      : ['http://localhost:3000'],
     timestamp: new Date().toISOString()
   });
 });
@@ -256,7 +230,6 @@ app.get('/api/test-db', async (req, res) => {
       databaseUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'NOT SET'
     });
     
-    await prisma.$connect();
     console.log('✅ Database connection successful');
     
     // Try a simple query
@@ -1299,8 +1272,8 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
       description,
       requirements,
       reward,
-      rewardType,
       amountOfWinners,
+      location,
       deadline,
       isPrivate,
       additionalFields
@@ -1316,14 +1289,24 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
         description,
         requirements,
         reward: parseFloat(reward),
-        rewardType: rewardType || null,
         amountOfWinners: parseInt(amountOfWinners) || 1,
+        location: location || '',
         deadline: new Date(deadline),
         isPrivate: isPrivate || false,
         additionalFields: additionalFields ? JSON.stringify(additionalFields) : null,
+        status: 'published', // Set status to published by default
         brandId: req.user.id
       }
     });
+
+    // Notify brand about brief creation
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Brief Published Successfully! 📢',
+      `Your brief "${title}" has been published and is now visible to creators.`,
+      'brief'
+    );
 
     res.status(201).json({
       message: 'Brief created successfully',
@@ -1348,8 +1331,8 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
       description,
       requirements,
       reward,
-      rewardType,
       amountOfWinners,
+      location,
       deadline,
       isPrivate,
       additionalFields,
@@ -1370,14 +1353,41 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
         description: description !== undefined ? description : brief.description,
         requirements: requirements !== undefined ? requirements : brief.requirements,
         reward: reward !== undefined ? parseFloat(reward) : brief.reward,
-        rewardType: rewardType !== undefined ? rewardType : brief.rewardType,
+
         amountOfWinners: amountOfWinners !== undefined ? parseInt(amountOfWinners) : brief.amountOfWinners,
+        location: location !== undefined ? location : brief.location,
         deadline: deadline !== undefined ? new Date(deadline) : brief.deadline,
         isPrivate: isPrivate !== undefined ? isPrivate : brief.isPrivate,
         additionalFields: additionalFields !== undefined ? JSON.stringify(additionalFields) : brief.additionalFields,
         status: status !== undefined ? status : brief.status
       }
     });
+
+    // Notify brand about status changes
+    if (status && status !== brief.status) {
+      let statusMessage = '';
+      switch (status) {
+        case 'active':
+          statusMessage = `Your brief "${brief.title}" is now active and accepting applications!`;
+          break;
+        case 'completed':
+          statusMessage = `Your brief "${brief.title}" has been marked as completed.`;
+          break;
+        case 'draft':
+          statusMessage = `Your brief "${brief.title}" has been saved as a draft.`;
+          break;
+        default:
+          statusMessage = `Your brief "${brief.title}" status has been updated to ${status}.`;
+      }
+
+      await createNotification(
+        req.user.id,
+        'brand',
+        'Brief Status Updated',
+        statusMessage,
+        'brief'
+      );
+    }
 
     res.json({
       message: 'Brief updated successfully',
@@ -1453,8 +1463,18 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
     const briefs = await prisma.brief.findMany({
       where: { brandId: req.user.id },
       include: {
-        _count: {
-          select: { submissions: true }
+        submissions: {
+          select: {
+            id: true,
+            creator: {
+              select: {
+                userName: true,
+                fullName: true
+              }
+            },
+            status: true,
+            submittedAt: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -1555,6 +1575,15 @@ app.get('/api/brands/submissions/:id', authenticateToken, async (req, res) => {
     if (!submission) {
       return res.status(404).json({ error: 'Submission not found or access denied' });
     }
+
+    // Notify creator that their submission was viewed by the brand
+    await createNotification(
+      submission.creatorId,
+      'creator',
+      'Your Submission Was Viewed 👀',
+      `The brand viewed your submission for "${submission.brief.title}". They're reviewing applications!`,
+      'application'
+    );
 
     // Get content submission URL
     let contentUrl = null;
@@ -2141,6 +2170,19 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
             companyName: true
           }
         },
+        submissions: {
+          select: {
+            id: true,
+            creator: {
+              select: {
+                userName: true,
+                fullName: true
+              }
+            },
+            status: true,
+            submittedAt: true
+          }
+        },
         winnerRewards: {
           orderBy: { position: 'asc' }
         }
@@ -2154,16 +2196,102 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
       title: brief.title,
       brandName: brief.brand.companyName,
       reward: brief.reward,
-      rewardType: brief.rewardType,
       amountOfWinners: brief.amountOfWinners,
       deadline: brief.deadline,
       status: brief.status,
+      submissions: brief.submissions || [],
       winnerRewards: brief.winnerRewards || []
     }));
 
     res.json(transformedBriefs);
   } catch (error) {
     console.error('Error fetching available briefs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get specific brief details for creators
+app.get('/api/briefs/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { id } = req.params;
+
+    // First try to find the brief without status restrictions to debug
+    console.log(`Fetching brief details for ID: ${id}`);
+    let brief = await prisma.brief.findFirst({
+      where: { 
+        id
+      },
+      include: {
+        brand: {
+          select: {
+            id: true,
+            companyName: true,
+            logo: true,
+            socialInstagram: true,
+            socialTwitter: true,
+            socialLinkedIn: true,
+            socialWebsite: true
+          }
+        },
+        submissions: {
+          select: {
+            id: true,
+            creator: {
+              select: {
+                userName: true,
+                fullName: true
+              }
+            },
+            status: true,
+            submittedAt: true
+          }
+        },
+        winnerRewards: {
+          orderBy: { position: 'asc' }
+        }
+      }
+    });
+
+    // If brief not found, return error
+    if (!brief) {
+      console.log(`Brief not found with ID: ${id}`);
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+    
+    console.log(`Found brief with status: ${brief.status}, isPrivate: ${brief.isPrivate}`);
+
+    // Check if brief is accessible (not private and has valid status)
+    if (brief.isPrivate || !['published', 'active', 'draft'].includes(brief.status)) {
+      console.log(`Brief ${id} has status: ${brief.status}, isPrivate: ${brief.isPrivate}`);
+      return res.status(404).json({ error: 'Brief not accessible' });
+    }
+
+    // Transform data to match frontend expectations
+    const transformedBrief = {
+      id: brief.id,
+      title: brief.title,
+      description: brief.description,
+      requirements: brief.requirements,
+      reward: brief.reward,
+      amountOfWinners: brief.amountOfWinners,
+      totalRewardsPaid: brief.totalRewardsPaid,
+      deadline: brief.deadline,
+      status: brief.status,
+      isPrivate: brief.isPrivate,
+      location: brief.location || '',
+      additionalFields: brief.additionalFields ? JSON.parse(brief.additionalFields) : {},
+      brand: brief.brand,
+      submissions: brief.submissions,
+      rewardTiers: brief.winnerRewards
+    };
+
+    res.json(transformedBrief);
+  } catch (error) {
+    console.error('Error fetching brief details:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2199,6 +2327,112 @@ app.get('/api/creators/submissions', authenticateToken, async (req, res) => {
     res.json(transformedSubmissions);
   } catch (error) {
     console.error('Error fetching creator submissions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create a new submission
+app.post('/api/creators/submissions', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Only creators can submit applications' });
+    }
+
+    const { briefId, contentUrl } = req.body;
+
+    // Validate required fields
+    if (!briefId || !contentUrl) {
+      return res.status(400).json({ error: 'Brief ID and content URL are required' });
+    }
+
+    // Check if brief exists and is active
+    console.log(`Looking for brief with ID: ${briefId}`);
+    const brief = await prisma.brief.findFirst({
+      where: {
+        id: briefId,
+        status: {
+          in: ['published', 'active'] // Allow submissions to both published and active briefs
+        },
+        deadline: {
+          gte: new Date() // Only allow submissions to active briefs
+        }
+      }
+    });
+    
+    console.log(`Found brief:`, brief ? { id: brief.id, status: brief.status, deadline: brief.deadline } : 'null');
+
+    if (!brief) {
+      // Check if brief exists but has different status or expired deadline
+      const briefExists = await prisma.brief.findUnique({
+        where: { id: briefId }
+      });
+      
+      if (!briefExists) {
+        return res.status(404).json({ error: 'Brief not found' });
+      } else if (briefExists.status !== 'published' && briefExists.status !== 'active') {
+        return res.status(400).json({ error: 'Brief is not accepting submissions at this time' });
+      } else if (new Date(briefExists.deadline) < new Date()) {
+        return res.status(400).json({ error: 'Brief deadline has passed' });
+      } else {
+        return res.status(404).json({ error: 'Brief not found or no longer accepting submissions' });
+      }
+    }
+
+    // Check if creator has already submitted to this brief
+    const existingSubmission = await prisma.submission.findFirst({
+      where: {
+        briefId: briefId,
+        creatorId: req.user.id
+      }
+    });
+
+    if (existingSubmission) {
+      return res.status(400).json({ error: 'You have already submitted to this brief' });
+    }
+
+    // Create the submission
+    const submission = await prisma.submission.create({
+      data: {
+        briefId: briefId,
+        creatorId: req.user.id,
+        content: '', // Store empty content field
+        files: contentUrl, // Store content URL in files field
+        amount: 0, // Default amount, will be set when selected as winner
+        status: 'pending'
+      }
+    });
+
+    // Get creator details for notification
+    const creator = await prisma.creator.findUnique({
+      where: { id: req.user.id },
+      select: { fullName: true, userName: true }
+    });
+
+    // Notify the brand owner about the new submission
+    await createNotification(
+      brief.brandId, // brand's user ID
+      'brand',
+      'New Application Received',
+      `${creator?.fullName || creator?.userName || 'A creator'} submitted an application to your brief "${brief.title}"`,
+      'application'
+    );
+
+    // Notify the creator about successful submission
+    await createNotification(
+      req.user.id,
+      'creator',
+      'Application Submitted Successfully! 📝',
+      `Your application for "${brief.title}" has been submitted successfully. The brand will review it soon.`,
+      'application'
+    );
+
+    res.status(201).json({
+      id: submission.id,
+      message: 'Application submitted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating submission:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2627,7 +2861,19 @@ app.put('/api/brands/submissions/:id/reject', authenticateToken, async (req, res
       }
     });
 
-    // In a real app, you would send an email notification to the creator
+    // Notify the creator about the rejection
+    const rejectionMessage = reason 
+      ? `Your application for "${submission.brief.title}" was not selected. Reason: ${reason}`
+      : `Your application for "${submission.brief.title}" was not selected at this time.`;
+
+    await createNotification(
+      submission.creatorId,
+      'creator',
+      'Application Update',
+      rejectionMessage,
+      'application'
+    );
+
     console.log(`Submission ${id} rejected by brand ${req.user.id}. Creator: ${submission.creator.fullName}, Reason: ${reason}`);
 
     res.json({
@@ -2692,7 +2938,15 @@ app.put('/api/brands/submissions/:id/approve', authenticateToken, async (req, re
       }
     });
 
-    // In a real app, you would send an email notification to the creator
+    // Notify the creator about the approval
+    await createNotification(
+      submission.creatorId,
+      'creator',
+      'Application Approved! 🎉',
+      `Your application for "${submission.brief.title}" has been approved and added to the shortlist!`,
+      'application'
+    );
+
     console.log(`Submission ${id} approved by brand ${req.user.id}. Creator: ${submission.creator.fullName}`);
 
     res.json({
@@ -2825,6 +3079,15 @@ app.post('/api/creators/wallet/withdraw', authenticateToken, async (req, res) =>
         return { wallet: updatedWallet };
       });
 
+      // Notify creator about withdrawal
+      await createNotification(
+        req.user.id,
+        'creator',
+        'Withdrawal Processed 💸',
+        `Your withdrawal of $${amount} has been processed successfully.`,
+        'wallet'
+      );
+
       res.json({ message: 'Withdrawal processed successfully', data: result });
     } catch (tableError) {
       // If tables don't exist, simulate successful withdrawal
@@ -2950,6 +3213,15 @@ app.post('/api/brands/wallet/deposit', authenticateToken, async (req, res) => {
 
         return updatedWallet;
       });
+
+      // Notify brand about deposit
+      await createNotification(
+        req.user.id,
+        'brand',
+        'Deposit Successful 💰',
+        `Your deposit of $${amount} has been added to your wallet balance.`,
+        'wallet'
+      );
 
       res.json({ message: 'Deposit processed successfully', data: result });
     } catch (tableError) {
@@ -3150,6 +3422,592 @@ app.post('/api/brands/payments/process', authenticateToken, async (req, res) => 
   }
 });
 
+// ==================== STRIPE PAYMENT ROUTES ====================
+
+// Create payment intent for brand to pay creator
+app.post('/api/payments/create-payment-intent', authenticateToken, async (req, res) => {
+  try {
+    const { winnerId, amount, rewardType } = req.body;
+    
+    // Verify the winner exists and belongs to the authenticated brand
+    const winner = await prisma.winner.findUnique({
+      where: { id: winnerId },
+      include: {
+        brief: {
+          include: { brand: true }
+        },
+        creator: true
+      }
+    });
+
+    if (!winner) {
+      return res.status(404).json({ error: 'Winner not found' });
+    }
+
+    // Verify the authenticated user is the brand owner
+    if (winner.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Check if payment already exists
+    const existingPayment = await prisma.payment.findUnique({
+      where: { winnerId }
+    });
+
+    if (existingPayment) {
+      return res.status(400).json({ error: 'Payment already exists for this winner' });
+    }
+
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(400).json({ error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' });
+    }
+
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
+      metadata: {
+        winnerId,
+        briefId: winner.briefId,
+        creatorId: winner.creatorId,
+        rewardType
+      }
+    });
+
+    // Create payment record
+    const payment = await prisma.payment.create({
+      data: {
+        winnerId,
+        amount,
+        paymentMethod: 'stripe',
+        rewardType,
+        stripePaymentIntentId: paymentIntent.id,
+        status: 'pending'
+      }
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentId: payment.id
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+});
+
+// Process payment for credits or prizes (no Stripe needed)
+app.post('/api/payments/process-reward', authenticateToken, async (req, res) => {
+  try {
+    const { winnerId, rewardType, amount } = req.body;
+    
+    // Verify the winner exists and belongs to the authenticated brand
+    const winner = await prisma.winner.findUnique({
+      where: { id: winnerId },
+      include: {
+        brief: {
+          include: { brand: true }
+        },
+        creator: true
+      }
+    });
+
+    if (!winner) {
+      return res.status(404).json({ error: 'Winner not found' });
+    }
+
+    // Verify the authenticated user is the brand owner
+    if (winner.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Check if payment already exists
+    const existingPayment = await prisma.payment.findUnique({
+      where: { winnerId }
+    });
+
+    if (existingPayment) {
+      return res.status(400).json({ error: 'Payment already exists for this winner' });
+    }
+
+    // Process the reward based on type
+    const result = await prisma.$transaction(async (tx) => {
+      // Create payment record
+      const payment = await tx.payment.create({
+        data: {
+          winnerId,
+          amount: amount || 0,
+          paymentMethod: rewardType,
+          rewardType,
+          status: 'completed',
+          paidAt: new Date()
+        }
+      });
+
+      // Handle credits
+      if (rewardType === 'credits' && amount > 0) {
+        // Get or create creator wallet
+        let creatorWallet = await tx.creatorWallet.findUnique({
+          where: { creatorId: winner.creatorId }
+        });
+
+        if (!creatorWallet) {
+          creatorWallet = await tx.creatorWallet.create({
+            data: {
+              creatorId: winner.creatorId,
+              balance: 0,
+              totalEarned: 0
+            }
+          });
+        }
+
+        // Update creator wallet
+        const updatedCreatorWallet = await tx.creatorWallet.update({
+          where: { id: creatorWallet.id },
+          data: {
+            balance: creatorWallet.balance + amount,
+            totalEarned: creatorWallet.totalEarned + amount
+          }
+        });
+
+        // Create wallet transaction
+        await tx.walletTransaction.create({
+          data: {
+            walletId: creatorWallet.id,
+            type: 'credit',
+            amount: amount,
+            description: `Credits earned for winning ${winner.brief.title}`,
+            referenceId: payment.id,
+            balanceBefore: creatorWallet.balance,
+            balanceAfter: updatedCreatorWallet.balance
+          }
+        });
+      }
+
+      // Update winner reward
+      await tx.winnerReward.update({
+        where: { id: winner.rewardId },
+        data: {
+          isPaid: true,
+          paidAt: new Date()
+        }
+      });
+
+      // Update brief total rewards paid
+      await tx.brief.update({
+        where: { id: winner.briefId },
+        data: {
+          totalRewardsPaid: {
+            increment: amount || 0
+          }
+        }
+      });
+
+      return payment;
+    });
+
+    // Notify creator about payment received
+    await createNotification(
+      winner.creatorId,
+      'creator',
+      'Payment Received! 💰',
+      `You received ${rewardType === 'credits' ? `${amount} credits` : rewardType} for winning "${winner.brief.title}"`,
+      'payment'
+    );
+
+    // Notify brand about payment sent
+    await createNotification(
+      winner.brief.brandId,
+      'brand',
+      'Payment Sent Successfully',
+      `Payment of ${rewardType === 'credits' ? `${amount} credits` : rewardType} sent to ${winner.creator.fullName} for "${winner.brief.title}"`,
+      'payment'
+    );
+
+    res.json({ 
+      message: 'Reward processed successfully', 
+      data: result 
+    });
+  } catch (error) {
+    console.error('Error processing reward:', error);
+    res.status(500).json({ error: 'Failed to process reward' });
+  }
+});
+
+// Stripe webhook handler
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    return res.status(400).json({ error: 'Stripe is not configured' });
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object;
+        
+        // Update payment status
+        await prisma.payment.update({
+          where: { stripePaymentIntentId: paymentIntent.id },
+          data: {
+            status: 'completed',
+            paidAt: new Date()
+          }
+        });
+
+        // Update winner reward
+        const payment = await prisma.payment.findUnique({
+          where: { stripePaymentIntentId: paymentIntent.id },
+          include: { winner: true }
+        });
+
+        if (payment && payment.winner.rewardId) {
+          await prisma.winnerReward.update({
+            where: { id: payment.winner.rewardId },
+            data: {
+              isPaid: true,
+              paidAt: new Date()
+            }
+          });
+
+                  // Update brief total rewards paid
+        await prisma.brief.update({
+          where: { id: payment.winner.briefId },
+          data: {
+            totalRewardsPaid: {
+              increment: payment.amount
+            }
+          }
+        });
+
+        // Notify creator about successful payment
+        await createNotification(
+          payment.winner.creatorId,
+          'creator',
+          'Payment Received! 💰',
+          `You received $${payment.amount} for winning "${payment.winner.brief.title}"`,
+          'payment'
+        );
+
+        // Notify brand about successful payment
+        await createNotification(
+          payment.winner.brief.brandId,
+          'brand',
+          'Payment Completed Successfully',
+          `Payment of $${payment.amount} sent to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
+          'payment'
+        );
+        }
+        break;
+      }
+
+      case 'payment_intent.payment_failed': {
+        const failedPaymentIntent = event.data.object;
+        
+        const payment = await prisma.payment.findUnique({
+          where: { stripePaymentIntentId: failedPaymentIntent.id },
+          include: { 
+            winner: {
+              include: {
+                brief: { include: { brand: true } },
+                creator: true
+              }
+            }
+          }
+        });
+
+        await prisma.payment.update({
+          where: { stripePaymentIntentId: failedPaymentIntent.id },
+          data: { status: 'failed' }
+        });
+
+        if (payment) {
+          // Notify brand about failed payment
+          await createNotification(
+            payment.winner.brief.brandId,
+            'brand',
+            'Payment Failed ❌',
+            `Payment of $${payment.amount} to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}" failed. Please try again.`,
+            'payment'
+          );
+
+          // Notify creator about failed payment
+          await createNotification(
+            payment.winner.creatorId,
+            'creator',
+            'Payment Processing Issue',
+            `Payment for "${payment.winner.brief.title}" encountered an issue. The brand will retry the payment.`,
+            'payment'
+          );
+        }
+        break;
+      }
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Get payment status
+app.get('/api/payments/:paymentId/status', authenticateToken, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        winner: {
+          include: {
+            brief: {
+              include: { brand: true }
+            },
+            creator: true
+          }
+        }
+      }
+    });
+
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    // Verify the authenticated user is the brand owner
+    if (payment.winner.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    res.json({ payment });
+  } catch (error) {
+    console.error('Error getting payment status:', error);
+    res.status(500).json({ error: 'Failed to get payment status' });
+  }
+});
+
+// Get winners for brand
+app.get('/api/brands/winners', authenticateToken, async (req, res) => {
+  try {
+    const winners = await prisma.winner.findMany({
+      where: {
+        brief: {
+          brandId: req.user.id
+        }
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            fullName: true,
+            userName: true,
+            email: true
+          }
+        },
+        brief: {
+          select: {
+            id: true,
+            title: true,
+            totalRewardsPaid: true
+          }
+        },
+        reward: {
+          select: {
+            id: true,
+            cashAmount: true,
+            creditAmount: true,
+            prizeDescription: true,
+            isPaid: true
+          }
+        },
+        payment: {
+          select: {
+            id: true,
+            status: true,
+            amount: true,
+            rewardType: true
+          }
+        }
+      },
+      orderBy: {
+        selectedAt: 'desc'
+      }
+    });
+
+    res.json({ winners });
+  } catch (error) {
+    console.error('Error fetching winners:', error);
+    res.status(500).json({ error: 'Failed to fetch winners' });
+  }
+});
+
+
+
+// ==================== NOTIFICATION ROUTES ====================
+
+// Get notifications for user
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    console.log(`🔔 Fetching notifications for user: ${req.user.id}, type: ${req.user.type}`);
+    
+    const notifications = await prisma.notification.findMany({
+      where: {
+        userId: req.user.id,
+        userType: req.user.type // 'brand' or 'creator'
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 20 // Limit to 20 most recent notifications
+    });
+
+    console.log(`🔔 Found ${notifications.length} notifications for user ${req.user.id}`);
+    console.log('🔔 Notifications:', notifications.map(n => ({ id: n.id, title: n.title, type: n.type, isRead: n.isRead })));
+
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// Mark notification as read
+app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const notification = await prisma.notification.update({
+      where: {
+        id: id,
+        userId: req.user.id
+      },
+      data: {
+        isRead: true
+      }
+    });
+
+    res.json({ notification });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Failed to mark notification as read' });
+  }
+});
+
+// Mark all notifications as read
+app.post('/api/notifications/mark-all-read', authenticateToken, async (req, res) => {
+  try {
+    await prisma.notification.updateMany({
+      where: {
+        userId: req.user.id,
+        userType: req.user.type,
+        isRead: false
+      },
+      data: {
+        isRead: true
+      }
+    });
+
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ error: 'Failed to mark all notifications as read' });
+  }
+});
+
+// Create notification (internal use)
+const createNotification = async (userId, userType, title, message, type) => {
+  try {
+    console.log(`🔔 Creating notification:`, { userId, userType, title, message, type });
+    
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        userType,
+        title,
+        message,
+        type
+      }
+    });
+    
+    console.log(`🔔 Notification created successfully:`, notification.id);
+    return notification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    throw error;
+  }
+};
+
+// Test endpoint to create a notification (for debugging)
+app.post('/api/test-notification', authenticateToken, async (req, res) => {
+  try {
+    const { title, message, type } = req.body;
+    
+    console.log('🔔 Test notification request received:', { userId: req.user.id, userType: req.user.type, title, message, type });
+    
+    const notification = await createNotification(
+      req.user.id,
+      req.user.type,
+      title || 'Test Notification',
+      message || 'This is a test notification',
+      type || 'application'
+    );
+    
+    console.log('🔔 Test notification created successfully:', notification.id);
+    res.json({ success: true, notification });
+  } catch (error) {
+    console.error('Error creating test notification:', error);
+    res.status(500).json({ error: 'Failed to create test notification' });
+  }
+});
+
+// Test endpoint to verify proxy is working
+app.get('/api/test-proxy', (req, res) => {
+  console.log('🔔 Proxy test endpoint hit!');
+  res.json({ 
+    message: 'Proxy is working!', 
+    timestamp: new Date().toISOString(),
+    userAgent: req.headers['user-agent']
+  });
+});
+
+// ==================== END NOTIFICATION ROUTES ====================
+
+// ==================== TEST ENDPOINTS ====================
+
+// Test endpoint to verify server is running
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Server is running!', 
+    timestamp: new Date().toISOString(),
+    stripeConfigured: !!stripe
+  });
+});
+
+// Test endpoint for Stripe configuration
+app.get('/api/stripe-status', (req, res) => {
+  res.json({ 
+    stripeConfigured: !!stripe,
+    message: stripe ? 'Stripe is ready for payments' : 'Stripe needs to be configured'
+  });
+});
+
+// ==================== END TEST ENDPOINTS ====================
+
+// ==================== END STRIPE PAYMENT ROUTES ====================
+
 // Global error handler
 app.use((error, req, res, _next) => {
   console.error('❌ Server error:', error);
@@ -3169,18 +4027,25 @@ app.use((error, req, res, _next) => {
   });
 });
 
-// Catch-all handler: send back React's index.html file for any non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
+// Serve static files from the dist directory (for production only)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../dist')));
+  
+  // Catch-all handler: send back React's index.html file for any non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  });
+}
 
 // Only start the server if this file is run directly (not imported)
 if (require.main === module) {
   const server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Health check available at: http://localhost:${PORT}/health`);
-    console.log(`🔗 API available at: http://localhost:${PORT}/api`);
+    console.log(`\n🚀 SERVER STARTED SUCCESSFULLY!`);
+    console.log(`🌐 LOCALHOST URL: http://localhost:${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 API endpoint: http://localhost:${PORT}/api`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`\n✅ Ready to use! Open http://localhost:${PORT} in your browser\n`);
   });
 
   // Graceful shutdown handling

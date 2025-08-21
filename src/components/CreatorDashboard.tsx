@@ -4,17 +4,37 @@ import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import NotificationBell from './NotificationBell';
 import CreatorWallet from './CreatorWallet';
+import BriefCard from './BriefCard';
+import BriefDetailsModal from './BriefDetailsModal';
 
 
 interface Brief {
   id: string;
   title: string;
+  description: string;
   brandName: string;
   reward: number;
   rewardType?: 'CASH' | 'CREDIT' | 'PRIZES';
-  amountOfWinners?: number;
+  amountOfWinners: number;
+  totalRewardsPaid: number;
+  location?: string;
   deadline: string;
   status: 'active' | 'draft' | 'completed';
+  brand: {
+    id: string;
+    companyName: string;
+    logo?: string;
+    socialInstagram?: string;
+    socialTwitter?: string;
+    socialLinkedIn?: string;
+    socialWebsite?: string;
+  };
+  submissions: Array<{
+    id: string;
+    creator: {
+      userName: string;
+    };
+  }>;
   winnerRewards?: Array<{
     position: number;
     cashAmount: number;
@@ -52,6 +72,9 @@ const CreatorDashboard: React.FC = () => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showSubmissionViewModal, setShowSubmissionViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
+  const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
+  const [locationFilter, setLocationFilter] = useState<string>('all');
   const [submissionDetails, setSubmissionDetails] = useState<{
     id: string;
     content: string;
@@ -153,69 +176,78 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  const handleViewBrief = (brief: Brief) => {
-    setSelectedBrief(brief);
-    setShowViewModal(true);
-  };
+  // const handleViewBrief = (brief: Brief) => {
+  //   setSelectedBrief(brief);
+  //   setShowViewModal(true);
+  // };
 
-  const handleApplyToBrief = (brief: Brief) => {
-    setSelectedBrief(brief);
+  // const handleApplyToBrief = (brief: Brief) => {
+  //   setSelectedBrief(brief);
     
-    // Check if user has already submitted to this brief
-    const existingSubmission = getExistingSubmission(brief.id);
+  //   // Check if user has already submitted to this brief
+  //   const existingSubmission = getExistingSubmission(brief.id);
     
-    if (existingSubmission) {
-      // This is an edit - load existing data
-      // We'll need to fetch the full submission details
-      fetchSubmissionDetails(existingSubmission.id);
-    } else {
-      // This is a new application - clear form
-      setApplyFormData({ contentUrl: '' });
-      setShowApplyModal(true);
-    }
-  };
+  //   if (existingSubmission) {
+  //     // This is an edit - load existing data
+  //     // We'll need to fetch the full submission details
+  //     fetchSubmissionDetails(existingSubmission.id);
+  //   } else {
+  //     // This is a new application - clear form
+  //     setApplyFormData({ contentUrl: '' });
+  //     setShowApplyModal(true);
+  //   }
+  // };
 
-  const fetchSubmissionDetails = async (submissionId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+  // const fetchSubmissionDetails = async (submissionId: string) => {
+  //   try {
+  //     const token = localStorage.getItem('token');
+  //     if (!token) return;
 
-      const response = await fetch(`/api/creators/submissions/${submissionId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+  //     const response = await fetch(`/api/creators/submissions/${submissionId}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`
+  //       }
+  //     });
 
-      if (response.ok) {
-        const submissionData = await response.json();
-        setApplyFormData({
-          contentUrl: submissionData.files || ''
-        });
+  //     if (response.ok) {
+  //       const submissionData = await response.json();
+  //       setApplyFormData({
+  //         contentUrl: submissionData.files || ''
+  //       });
         
-        // Update the selectedBrief with the complete brief information
-        if (submissionData.brief) {
-          setSelectedBrief({
-            id: submissionData.brief.id,
-            title: submissionData.brief.title,
-            brandName: submissionData.brief.brandName || '',
-            reward: submissionData.amount,
-            deadline: submissionData.brief.deadline || new Date().toISOString(),
-            status: 'active'
-          });
-        }
+  //       // Update the selectedBrief with the complete brief information
+  //       if (submissionData.brief) {
+  //         setSelectedBrief({
+  //           id: submissionData.brief.id,
+  //           title: submissionData.brief.title,
+  //           description: submissionData.brief.description || '',
+  //           brandName: submissionData.brief.brandName || '',
+  //           reward: submissionData.amount,
+  //           amountOfWinners: 1,
+  //           totalRewardsPaid: 0,
+  //           deadline: submissionData.brief.deadline || new Date().toISOString(),
+  //           status: 'active',
+  //           brand: {
+  //             id: submissionData.brief.brandId || '',
+  //             companyName: submissionData.brief.brandName || '',
+  //             logo: undefined
+  //           },
+  //           submissions: []
+  //         });
+  //       }
         
-        setShowApplyModal(true);
-      } else {
-        // Fallback to empty form
-        setApplyFormData({ contentUrl: '' });
-        setShowApplyModal(true);
-      }
-    } catch (error) {
-      // Fallback to empty form
-      setApplyFormData({ contentUrl: '' });
-      setShowApplyModal(true);
-    }
-  };
+  //       setShowApplyModal(true);
+  //     } else {
+  //       // Fallback to empty form
+  //       setApplyFormData({ contentUrl: '' });
+  //       setShowApplyModal(true);
+  //     }
+  //   } catch (error) {
+  //     // Fallback to empty form
+  //     setApplyFormData({ contentUrl: '' });
+  //     setShowApplyModal(true);
+  //   }
+  // };
 
   const handleViewSubmission = async (submission: Submission) => {
     try {
@@ -533,6 +565,16 @@ const CreatorDashboard: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Available Briefs</h2>
         <div className="flex space-x-2">
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            <option value="all">All Locations</option>
+            {Array.from(new Set(availableBriefs.map(brief => brief.location).filter(Boolean))).map(location => (
+              <option key={location} value={location}>{location}</option>
+            ))}
+          </select>
           <button 
             onClick={fetchDashboardData}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
@@ -561,22 +603,39 @@ const CreatorDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableBriefs.map((brief) => (
-            <div key={brief.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-gray-900">{brief.title}</h3>
-                <span className="text-sm text-gray-600">{brief.brandName}</span>
-              </div>
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                  <p>Reward: {brief.rewardType === 'CASH' ? 'Cash' : 
-                           brief.rewardType === 'CREDIT' ? 'Credit' :
-                           brief.rewardType === 'PRIZES' ? 'Prize' :
-                           'Cash'}</p>
-                <p>Winners: {brief.amountOfWinners !== null && brief.amountOfWinners !== undefined ? brief.amountOfWinners : 1}</p>
-                <p>Deadline: {brief.deadline ? new Date(brief.deadline).toLocaleDateString() : 'No deadline'}</p>
-                <p>Status: {brief.status ? brief.status.charAt(0).toUpperCase() + brief.status.slice(1) : 'Unknown'}</p>
+          {availableBriefs
+            .filter(brief => locationFilter === 'all' || brief.location === locationFilter)
+            .map((brief) => {
+            // Transform the brief data to match BriefCard interface
+            const briefForCard = {
+              ...brief,
+              description: brief.description || '',
+              amountOfWinners: brief.amountOfWinners || 1,
+              totalRewardsPaid: brief.totalRewardsPaid || 0,
+              location: brief.location || '',
+              brand: {
+                id: brief.brand?.id || '',
+                companyName: brief.brandName || brief.brand?.companyName || '',
+                logo: brief.brand?.logo,
+                socialInstagram: brief.brand?.socialInstagram,
+                socialTwitter: brief.brand?.socialTwitter,
+                socialLinkedIn: brief.brand?.socialLinkedIn,
+                socialWebsite: brief.brand?.socialWebsite
+              },
+              submissions: brief.submissions || []
+            };
+            
+            return (
+              <div key={brief.id} className="relative">
+                <BriefCard 
+                  brief={briefForCard} 
+                  onApplyClick={(brief) => {
+                    setSelectedBriefId(brief.id);
+                    setShowBriefDetailsModal(true);
+                  }}
+                />
                 {hasSubmittedToBrief(brief.id) && (
-                  <div className="flex items-center">
+                  <div className="absolute top-4 right-4 z-10">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 text-green-800' :
                       getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 text-red-800' :
@@ -586,50 +645,11 @@ const CreatorDashboard: React.FC = () => {
                        getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
                        'Pending Review'}
                     </span>
-                    <span className="text-xs text-gray-500 ml-2">Your submission</span>
-                    {getSubmissionStatus(brief.id) === 'rejected' && (
-                      <div className="ml-2 text-xs text-red-600">
-                        • Cannot resubmit to this brief
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => handleViewBrief(brief)}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 text-sm"
-                >
-                  View Details
-                </button>
-                {hasSubmittedToBrief(brief.id) ? (
-                  getSubmissionStatus(brief.id) === 'rejected' ? (
-                    <button 
-                      disabled
-                      className="flex-1 border border-gray-400 text-gray-400 py-2 px-4 rounded-md cursor-not-allowed text-sm"
-                      title="This submission was rejected. You cannot edit rejected submissions."
-                    >
-                      Submission Rejected
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => handleApplyToBrief(brief)}
-                      className="flex-1 border border-blue-600 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 text-sm"
-                    >
-                      Edit Submission
-                    </button>
-                  )
-                ) : (
-                  <button 
-                    onClick={() => handleApplyToBrief(brief)}
-                    className="flex-1 border border-green-600 text-green-600 py-2 px-4 rounded-md hover:bg-green-50 text-sm"
-                  >
-                    Apply
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -659,7 +679,7 @@ const CreatorDashboard: React.FC = () => {
                        'Cash'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Winners:</span>
+                <span className="font-medium">Spots:</span>
                 <span>{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
               </div>
               <div className="flex justify-between">
@@ -687,10 +707,10 @@ const CreatorDashboard: React.FC = () => {
                     <div key={index} className="bg-white bg-opacity-20 p-3 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-white">
-                          {reward.position === 1 ? '🥇 1st Place' : 
-                           reward.position === 2 ? '🥈 2nd Place' : 
-                           reward.position === 3 ? '🥉 3rd Place' : 
-                           `${reward.position}th Place`}
+                                              {reward.position === 1 ? '🥇 1st Spot' :
+                      reward.position === 2 ? '🥈 2nd Spot' :
+                      reward.position === 3 ? '🥉 3rd Spot' :
+                      `${reward.position}th Spot`}
                         </span>
                       </div>
                       <div className="space-y-1 text-sm text-white">
@@ -762,7 +782,7 @@ const CreatorDashboard: React.FC = () => {
                        selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
                        selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
                        'Cash'}</p>
-                  <p><strong>Winners:</strong> {selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</p>
+                  <p><strong>Spots:</strong> {selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</p>
                   <p><strong>Deadline:</strong> {new Date(selectedBrief.deadline).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -1139,6 +1159,16 @@ const CreatorDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Brief Details Modal */}
+      <BriefDetailsModal
+        briefId={selectedBriefId}
+        isOpen={showBriefDetailsModal}
+        onClose={() => {
+          setShowBriefDetailsModal(false);
+          setSelectedBriefId(null);
+        }}
+      />
     </div>
   );
 };
