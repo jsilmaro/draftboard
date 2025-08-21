@@ -3,8 +3,13 @@ import ThemeToggle from './ThemeToggle';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
-      {/* Header with Theme Toggle */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      {/* Header with Logo and Theme Toggle */}
+      <div className="absolute top-6 left-6 z-10">
+        <div className="flex items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DraftBoard</h1>
+        </div>
+      </div>
       <div className="absolute top-6 right-6 z-10">
         <ThemeToggle />
       </div>
@@ -24,7 +29,7 @@ const LandingPage = () => {
         {/* Cards Section */}
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           {/* Brand Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-10 hover:shadow-4xl hover:-translate-y-2 transition-all duration-300 group">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +78,7 @@ const LandingPage = () => {
           </div>
 
           {/* Creator Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-10 hover:shadow-4xl hover:-translate-y-2 transition-all duration-300 group">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
