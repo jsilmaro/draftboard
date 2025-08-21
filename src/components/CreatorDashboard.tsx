@@ -6,6 +6,7 @@ import NotificationBell from './NotificationBell';
 import CreatorWallet from './CreatorWallet';
 import BriefCard from './BriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
+import ThemeToggle from './ThemeToggle';
 
 
 interface Brief {
@@ -440,12 +441,13 @@ const CreatorDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           WELCOME, {user?.fullName?.toUpperCase() || 'CREATOR'}
         </h1>
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           <NotificationBell />
-        <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
+          <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
         </div>
       </div>
 
@@ -1023,9 +1025,9 @@ const CreatorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors duration-300">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white">
+      <div className="w-64 bg-gray-900 dark:bg-gray-800 text-white">
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">

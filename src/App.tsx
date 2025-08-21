@@ -13,6 +13,7 @@ import CreateBrief from './components/CreateBrief'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 
 function App() {
@@ -27,8 +28,9 @@ function App() {
       }}
     >
       <ToastProvider>
-        <AuthProvider>
-          <div className="min-h-screen bg-gray-50 animate-fade-in">
+        <ThemeProvider>
+          <AuthProvider>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-fade-in transition-colors duration-300">
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginForm />} />
@@ -70,9 +72,10 @@ function App() {
                 } 
               />
             </Routes>
-                      </div>
+            </div>
           </AuthProvider>
-        </ToastProvider>
+        </ThemeProvider>
+      </ToastProvider>
       </GoogleOAuthProvider>
   )
 }

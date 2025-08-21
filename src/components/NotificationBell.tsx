@@ -197,11 +197,17 @@ const NotificationBell: React.FC = () => {
                 <button
                   onClick={async () => {
                     try {
-                      const proxyResponse = await fetch('/api/test-proxy');
-                      if (proxyResponse.ok) {
-                        await proxyResponse.json(); // Test proxy connection
+                      // First check notification count
+                      const countResponse = await fetch('/api/test-notifications-count', {
+                        headers: {
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                      });
+                      if (countResponse.ok) {
+                        await countResponse.json();
                       }
                       
+                      // Then create a test notification
                       const response = await fetch('/api/test-notification', {
                         method: 'POST',
                         headers: {
@@ -215,6 +221,7 @@ const NotificationBell: React.FC = () => {
                         })
                       });
                       if (response.ok) {
+                        await response.json();
                         fetchNotifications(); // Refresh notifications
                       }
                     } catch (error) {
@@ -222,6 +229,7 @@ const NotificationBell: React.FC = () => {
                     }
                   }}
                   className="text-sm text-green-600 hover:text-green-800"
+                  title="Create test notification"
                 >
                   🧪
                 </button>

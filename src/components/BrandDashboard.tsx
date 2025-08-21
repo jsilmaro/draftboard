@@ -9,6 +9,7 @@ import BrandWallet from './BrandWallet';
 import PaymentManagement from './PaymentManagement';
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
+import ThemeToggle from './ThemeToggle';
 
 interface Brief {
   id: string;
@@ -654,10 +655,11 @@ const BrandDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="flex justify-between items-center fade-in">
-        <h1 className="text-3xl font-bold text-gray-900 slide-in-left">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white slide-in-left">
           WELCOME, {user?.companyName?.toUpperCase() || 'BRAND'}
         </h1>
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           <NotificationBell />
           <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
         </div>
@@ -665,17 +667,17 @@ const BrandDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger-children">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
-          <h3 className="text-lg font-semibold text-gray-900">Available Briefs</h3>
-          <p className="text-3xl font-bold text-blue-600">{metrics.activeBriefs}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 card-hover transition-colors duration-300">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Available Briefs</h3>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{metrics.activeBriefs}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
-          <h3 className="text-lg font-semibold text-gray-900">Submissions This Week</h3>
-          <p className="text-3xl font-bold text-green-600">{metrics.submissionsThisWeek}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 card-hover transition-colors duration-300">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Submissions This Week</h3>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{metrics.submissionsThisWeek}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 card-hover">
-          <h3 className="text-lg font-semibold text-gray-900">Winners Selected</h3>
-          <p className="text-3xl font-bold text-purple-600">{metrics.winnersSelected}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 card-hover transition-colors duration-300">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Winners Selected</h3>
+          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{metrics.winnersSelected}</p>
         </div>
       </div>
 
@@ -2434,9 +2436,9 @@ const BrandDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex fade-in">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex fade-in transition-colors duration-300">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white slide-in-left">
+      <div className="w-64 bg-gray-900 dark:bg-gray-800 text-white slide-in-left">
         <div className="p-6">
           <div className="flex items-center mb-8">
             <div className="flex items-center">

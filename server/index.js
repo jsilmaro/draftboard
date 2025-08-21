@@ -565,6 +565,19 @@ app.post('/api/login', async (req, res) => {
           tokenPreview: token.substring(0, 20) + '...'
         });
 
+        // Create a welcome notification
+        try {
+          await createNotification(
+            creator.id,
+            'creator',
+            'Welcome Back! 👋',
+            `Welcome back to your dashboard, ${creator.fullName || creator.userName}!`,
+            'brief'
+          );
+        } catch (error) {
+          console.error('Failed to create welcome notification:', error);
+        }
+
         return res.json({
           message: 'Login successful',
           token,
@@ -634,6 +647,19 @@ app.post('/api/brands/login', async (req, res) => {
       hasJwtSecret: !!process.env.JWT_SECRET,
       tokenPreview: token.substring(0, 20) + '...'
     });
+
+    // Create a welcome notification
+    try {
+      await createNotification(
+        brand.id,
+        'brand',
+        'Welcome Back! 👋',
+        `Welcome back to your dashboard, ${brand.companyName}!`,
+        'brief'
+      );
+    } catch (error) {
+      console.error('Failed to create welcome notification:', error);
+    }
 
     res.json({
       message: 'Login successful',
@@ -1312,13 +1338,18 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
     }
 
     // Notify brand about brief creation
-    await createNotification(
-      req.user.id,
-      'brand',
-      'Brief Published Successfully! 📢',
-      `Your brief "${title}" has been published and is now visible to creators.`,
-      'brief'
-    );
+    try {
+      await createNotification(
+        req.user.id,
+        'brand',
+        'Brief Published Successfully! 📢',
+        `Your brief "${title}" has been published and is now visible to creators.`,
+        'brief'
+      );
+      console.log('🔔 Brief creation notification sent successfully');
+    } catch (error) {
+      console.error('🔔 Failed to send brief creation notification:', error);
+    }
 
     res.status(201).json({
       message: 'Brief created successfully',
@@ -1840,6 +1871,15 @@ app.post('/api/brands/rewards/draft', authenticateToken, async (req, res) => {
       });
     }
 
+    // Notify brand about draft save
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Reward Draft Saved 💾',
+      `Reward draft for "${briefTitle}" has been saved successfully.`,
+      'reward'
+    );
+
     res.json({
       message: 'Awards draft saved successfully',
       draftId: draft.id,
@@ -1921,6 +1961,36 @@ app.post('/api/brands/rewards', authenticateToken, async (req, res) => {
       }
     });
 
+    // Notify brand about rewards published
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Rewards Published Successfully! 🎉',
+      `Rewards for "${briefTitle}" have been published and winners have been notified.`,
+      'reward'
+    );
+
+    // Notify winners about their rewards
+    for (const tier of rewardTiers) {
+      if (tier.winnerId) {
+        // Get submission to find creator
+        const submission = await prisma.submission.findUnique({
+          where: { id: tier.winnerId },
+          include: { creator: true }
+        });
+        
+        if (submission) {
+          await createNotification(
+            submission.creatorId,
+            'creator',
+            'Congratulations! You Won a Reward! 🏆',
+            `You received "${tier.name}" (${tier.description}) for "${briefTitle}"! Check your wallet for the reward.`,
+            'reward'
+          );
+        }
+      }
+    }
+
     res.json({
       message: 'Awards created successfully',
       rewardTiers,
@@ -1968,6 +2038,34 @@ app.put('/api/brands/briefs/:id/close', authenticateToken, async (req, res) => {
       closedAt: updatedBrief.closedAt
     });
 
+    // Notify brand about brief closure
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Brief Closed Successfully 🔒',
+      `Your brief "${brief.title}" has been closed. No new applications will be accepted.`,
+      'brief'
+    );
+
+    // Notify all applicants about brief closure
+    const submissions = await prisma.submission.findMany({
+      where: { 
+        briefId: id,
+        status: 'pending'
+      },
+      include: { creator: true }
+    });
+
+    for (const submission of submissions) {
+      await createNotification(
+        submission.creatorId,
+        'creator',
+        'Brief Application Closed 📋',
+        `The brief "${brief.title}" you applied to has been closed. The brand is reviewing applications.`,
+        'brief'
+      );
+    }
+
     res.json({
       message: 'Brief closed successfully',
       brief: updatedBrief
@@ -2014,64 +2112,7 @@ app.delete('/api/brands/rewards/draft/:id', authenticateToken, async (req, res) 
   }
 });
 
-// Get notifications for a user
-app.get('/api/notifications', authenticateToken, async (req, res) => {
-  try {
-    const notifications = await prisma.notification.findMany({
-      where: { 
-        userId: req.user.id,
-        userType: req.user.type
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
 
-    res.json(notifications);
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Mark notification as read
-app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const notification = await prisma.notification.update({
-      where: { 
-        id,
-        userId: req.user.id,
-        userType: req.user.type
-      },
-      data: { isRead: true }
-    });
-
-    res.json(notification);
-  } catch (error) {
-    console.error('Error marking notification as read:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Mark all notifications as read
-app.put('/api/notifications/read-all', authenticateToken, async (req, res) => {
-  try {
-    await prisma.notification.updateMany({
-      where: { 
-        userId: req.user.id,
-        userType: req.user.type,
-        isRead: false
-      },
-      data: { isRead: true }
-    });
-
-    res.json({ message: 'All notifications marked as read' });
-  } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Get submissions for a specific brief (for winner selection)
 app.get('/api/brands/briefs/:id/submissions', authenticateToken, async (req, res) => {
@@ -2194,6 +2235,15 @@ app.post('/api/brands/briefs/select-winners', authenticateToken, async (req, res
         data: { winnersSelected: true }
       });
     });
+
+    // Notify brand about winner selection completion
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Winners Selected Successfully! 🎯',
+      `Winners have been selected for "${brief.title}". You can now process payments to the winners.`,
+      'winner'
+    );
 
     res.json({ message: 'Winners selected successfully' });
   } catch (error) {
@@ -2460,22 +2510,32 @@ app.post('/api/creators/submissions', authenticateToken, async (req, res) => {
     });
 
     // Notify the brand owner about the new submission
-    await createNotification(
-      brief.brandId, // brand's user ID
-      'brand',
-      'New Application Received',
-      `${creator?.fullName || creator?.userName || 'A creator'} submitted an application to your brief "${brief.title}"`,
-      'application'
-    );
+    try {
+      await createNotification(
+        brief.brandId, // brand's user ID
+        'brand',
+        'New Application Received',
+        `${creator?.fullName || creator?.userName || 'A creator'} submitted an application to your brief "${brief.title}"`,
+        'application'
+      );
+      console.log('🔔 Brand notification sent for new submission');
+    } catch (error) {
+      console.error('🔔 Failed to send brand notification for submission:', error);
+    }
 
     // Notify the creator about successful submission
-    await createNotification(
-      req.user.id,
-      'creator',
-      'Application Submitted Successfully! 📝',
-      `Your application for "${brief.title}" has been submitted successfully. The brand will review it soon.`,
-      'application'
-    );
+    try {
+      await createNotification(
+        req.user.id,
+        'creator',
+        'Application Submitted Successfully! 📝',
+        `Your application for "${brief.title}" has been submitted successfully. The brand will review it soon.`,
+        'application'
+      );
+      console.log('🔔 Creator notification sent for submission');
+    } catch (error) {
+      console.error('🔔 Failed to send creator notification for submission:', error);
+    }
 
     res.status(201).json({
       id: submission.id,
@@ -2828,8 +2888,9 @@ app.post('/api/brands/invite-creator', authenticateToken, async (req, res) => {
     }
 
     // Check if brief exists (if briefId is provided)
+    let brief = null;
     if (briefId) {
-      const brief = await prisma.brief.findFirst({
+      brief = await prisma.brief.findFirst({
         where: { 
           id: briefId,
           brandId: req.user.id 
@@ -2841,8 +2902,34 @@ app.post('/api/brands/invite-creator', authenticateToken, async (req, res) => {
       }
     }
 
-    // For now, we'll just return success
-    // In a real app, you might send an email notification or create an invitation record
+    // Get brand info for notification
+    const brand = await prisma.brand.findUnique({
+      where: { id: req.user.id },
+      select: { companyName: true }
+    });
+
+    // Create notification for the creator
+    const briefMessage = briefId && brief ? 
+      ` for the brief "${brief.title}"` : 
+      ' to collaborate on future projects';
+    
+    await createNotification(
+      creatorId,
+      'creator',
+      'You Received an Invitation! 📧',
+      `${brand?.companyName} has invited you${briefMessage}. Check your opportunities!`,
+      'invitation'
+    );
+
+    // Notify brand about invitation sent
+    await createNotification(
+      req.user.id,
+      'brand',
+      'Invitation Sent Successfully ✉️',
+      `Invitation sent to ${creator.fullName} (${creator.userName})${briefMessage}.`,
+      'invitation'
+    );
+
     res.json({
       message: 'Invitation sent successfully',
       creator: {
@@ -3928,7 +4015,7 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
     console.log(`🔔 Found ${notifications.length} notifications for user ${req.user.id}`);
     console.log('🔔 Notifications:', notifications.map(n => ({ id: n.id, title: n.title, type: n.type, isRead: n.isRead })));
 
-    res.json({ notifications });
+    res.json({ notifications: notifications });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
@@ -3983,6 +4070,12 @@ const createNotification = async (userId, userType, title, message, type) => {
   try {
     console.log(`🔔 Creating notification:`, { userId, userType, title, message, type });
     
+    // Validate inputs
+    if (!userId || !userType || !title || !message || !type) {
+      console.error('🔔 Missing required fields for notification:', { userId, userType, title, message, type });
+      throw new Error('Missing required fields for notification');
+    }
+    
     const notification = await prisma.notification.create({
       data: {
         userId,
@@ -3996,7 +4089,8 @@ const createNotification = async (userId, userType, title, message, type) => {
     console.log(`🔔 Notification created successfully:`, notification.id);
     return notification;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    console.error('🔔 Error creating notification:', error);
+    console.error('🔔 Error details:', { userId, userType, title, message, type });
     throw error;
   }
 };
@@ -4020,7 +4114,25 @@ app.post('/api/test-notification', authenticateToken, async (req, res) => {
     res.json({ success: true, notification });
   } catch (error) {
     console.error('Error creating test notification:', error);
-    res.status(500).json({ error: 'Failed to create test notification' });
+    res.status(500).json({ error: 'Failed to create test notification', details: error.message });
+  }
+});
+
+// Test endpoint to check notification count
+app.get('/api/test-notifications-count', authenticateToken, async (req, res) => {
+  try {
+    const count = await prisma.notification.count({
+      where: {
+        userId: req.user.id,
+        userType: req.user.type
+      }
+    });
+    
+    console.log(`🔔 User ${req.user.id} has ${count} notifications`);
+    res.json({ count, userId: req.user.id, userType: req.user.type });
+  } catch (error) {
+    console.error('Error counting notifications:', error);
+    res.status(500).json({ error: 'Failed to count notifications', details: error.message });
   }
 });
 
