@@ -11,8 +11,7 @@ interface BrandBriefCardProps {
     status: string;
     submissions: number | Array<unknown>;
     totalRewardsPaid?: number;
-    location?: string;
-    displayLocation?: string; // Country only for display
+
     reward?: number;
     totalRewardValue?: number; // Calculated total from reward tiers
     rewardTiers?: Array<{
@@ -38,8 +37,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   brief, 
   onViewClick, 
   onEditClick: _onEditClick, 
-  onEditRewardsClick, 
-  onSelectWinnersClick,
+  onEditRewardsClick: _onEditRewardsClick, 
+  onSelectWinnersClick: _onSelectWinnersClick,
   onViewSubmissionsClick 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -62,7 +61,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const submissionsCount = getSubmissionsCount();
 
   // Calculate progress percentage for submissions vs target
-  const targetSubmissions = 10; // You can make this configurable
+  const targetSubmissions = brief.amountOfWinners || 1;
   const submissionsProgress = Math.min((submissionsCount / targetSubmissions) * 100, 100);
 
   // Calculate rewards progress using actual reward tiers
@@ -70,218 +69,151 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const rewardsPaid = brief.totalRewardsPaid || 0;
   const rewardsProgress = totalRewardValue > 0 ? (rewardsPaid / totalRewardValue) * 100 : 0;
 
-  // Calculate time remaining
-  const deadline = new Date(brief.deadline);
-  const now = new Date();
-  const timeRemaining = deadline.getTime() - now.getTime();
-  const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
 
-  const getTimeRemainingText = () => {
-    if (daysRemaining < 0) return 'Expired';
-    if (daysRemaining === 0) return 'Today';
-    if (daysRemaining === 1) return '1 day left';
-    return `${daysRemaining} days left`;
-  };
 
-  const getStatusColor = () => {
-    if (daysRemaining < 0) return 'text-red-600';
-    if (daysRemaining <= 3) return 'text-orange-600';
-    return 'text-green-600';
-  };
+
 
   const getStatusBadge = () => {
-    const baseClasses = "px-2 py-1 text-xs rounded-full font-medium";
+    const baseClasses = "px-3 py-1 text-xs rounded-full font-medium";
     switch (brief.status) {
       case 'active':
-        return `${baseClasses} bg-green-100 text-green-800`;
+        return `${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400`;
       case 'draft':
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
+        return `${baseClasses} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400`;
       case 'completed':
-        return `${baseClasses} bg-blue-100 text-blue-800`;
+        return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
+        return `${baseClasses} bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400`;
     }
+  };
+
+  const getStatusText = () => {
+    return brief.status.charAt(0).toUpperCase() + brief.status.slice(1);
   };
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${
+      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 group ${
         isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header with Brand Info */}
+      {/* Header */}
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               {brief.brand?.logo ? (
                 <img 
                   src={brief.brand.logo} 
                   alt={brief.brand.companyName}
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-lg object-cover"
                 />
               ) : (
-                <span className="text-white font-semibold text-sm">
+                <span className="text-white font-bold text-lg">
                   {brief.brand?.companyName?.charAt(0).toUpperCase() || 'B'}
                 </span>
               )}
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 text-sm">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 {brief.brand?.companyName || 'Your Brand'}
               </h3>
-              <span className={getStatusBadge()}>
-                {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-              </span>
+
+            </div>
+          </div>
+          <div className="text-right">
+            <div className={getStatusBadge()}>
+              {getStatusText()}
             </div>
           </div>
         </div>
 
-        {/* Campaign Title */}
-        <h2 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
-          {brief.title}
-        </h2>
-        
-        {/* Reward Information - Prominently Displayed */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg mb-4 border border-green-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Amount of Rewards</p>
-              <p className="text-lg font-bold text-green-600">
-                {brief.amountOfWinners || 1}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600 mb-1">Submissions</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {submissionsCount}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Campaign Details Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Deadline:</span>
-            <span className={`font-medium text-xs ${getStatusColor()}`}>
-              {getTimeRemainingText()}
-            </span>
-          </div>
-          {brief.displayLocation && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Location:</span>
-              <span className="font-medium text-gray-900 text-xs">{brief.displayLocation}</span>
-            </div>
+        {/* Brief Title and Description */}
+        <div className="mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+            {brief.title}
+          </h2>
+          {brief.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+              {brief.description}
+            </p>
           )}
         </div>
-      </div>
 
-      {/* Progress Section - Submissions Progress */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900">
-              Submissions Progress
-            </span>
-            <span className="text-sm font-bold text-blue-600">
-              {Math.round(submissionsProgress)}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-300 rounded-full h-3 border border-gray-400 overflow-hidden shadow-inner">
-            <div 
-              className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-1000 ease-out shadow-sm"
-              style={{ 
-                width: `${Math.min(submissionsProgress, 100)}%`,
-                backgroundSize: '200% 100%',
-                animation: submissionsProgress > 0 ? 'shimmer 2s ease-in-out infinite' : 'none'
-              }}
-            />
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">
-            {submissionsCount} creators applied
-          </span>
-          <span className="text-gray-600">
-            Target: {brief.amountOfWinners || 1}
-          </span>
-        </div>
-      </div>
-
-      {/* Rewards Progress Section */}
-      {brief.amountOfWinners && (
-        <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-900">
-                Rewards Progress
-              </span>
-              <span className="text-sm font-bold text-green-600">
-                {Math.round(rewardsProgress)}%
-              </span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Target</div>
+            <div className="text-lg font-bold text-gray-900 dark:text-white">
+              {brief.amountOfWinners || 1}
             </div>
-            <div className="w-full bg-gray-300 rounded-full h-3 border border-gray-400 overflow-hidden shadow-inner">
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Applied</div>
+            <div className="text-lg font-bold text-gray-900 dark:text-white">
+              {submissionsCount}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bars */}
+        <div className="space-y-3 mb-4">
+          {/* Submissions Progress */}
+          <div>
+            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+              <span>Submissions Progress</span>
+              <span>{submissionsProgress.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
-                className="bg-gradient-to-r from-green-500 via-yellow-500 to-orange-500 h-3 rounded-full transition-all duration-1000 ease-out shadow-sm"
-                style={{ 
-                  width: `${Math.min(rewardsProgress, 100)}%`,
-                  backgroundSize: '200% 100%',
-                  animation: rewardsProgress > 0 ? 'shimmer 2s ease-in-out infinite' : 'none'
-                }}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${submissionsProgress}%` }}
               />
             </div>
           </div>
-          
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">
-              ${rewardsPaid} rewards paid
-            </span>
-            <span className="text-gray-600">
-              ${totalRewardValue} total value
-            </span>
+
+          {/* Rewards Progress */}
+          <div>
+            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+              <span>Rewards Progress</span>
+              <span>{rewardsProgress.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${rewardsProgress}%` }}
+              />
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Footer with Action Buttons */}
-      <div className="px-6 py-4 bg-white border-t border-gray-100">
+        {/* Total Value */}
+        {totalRewardValue > 0 && (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 mb-4">
+            <div className="text-xs text-green-600 dark:text-green-400 mb-1">Total Value</div>
+            <div className="text-lg font-bold text-green-700 dark:text-green-300">
+              ${totalRewardValue.toLocaleString()}
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            className="bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors"
             onClick={() => onViewClick?.(brief)}
+            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             View
           </button>
           <button
-            className="bg-green-600 text-white py-2 px-3 rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors"
-            onClick={() => onEditRewardsClick?.(brief)}
+            onClick={() => onViewSubmissionsClick?.(brief)}
+            className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
           >
-            Edit Rewards
+            Submissions ({submissionsCount})
           </button>
         </div>
-        
-        {brief.status === 'active' && submissionsCount > 0 && brief.amountOfWinners && (
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button
-              className="bg-purple-600 text-white py-2 px-3 rounded-lg font-semibold text-sm hover:bg-purple-700 transition-colors"
-              onClick={() => onViewSubmissionsClick?.(brief)}
-            >
-              View Submissions
-            </button>
-            {new Date(brief.deadline) <= new Date() && (
-              <button
-                className="bg-orange-600 text-white py-2 px-3 rounded-lg font-semibold text-sm hover:bg-orange-700 transition-colors"
-                onClick={() => onSelectWinnersClick?.(brief)}
-              >
-                Select Winners
-              </button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

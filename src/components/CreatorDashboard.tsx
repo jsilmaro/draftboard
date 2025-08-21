@@ -75,7 +75,7 @@ const CreatorDashboard: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
-  const [locationFilter, setLocationFilter] = useState<string>('all');
+
   const [submissionDetails, setSubmissionDetails] = useState<{
     id: string;
     content: string;
@@ -438,12 +438,17 @@ const CreatorDashboard: React.FC = () => {
   ];
 
   const renderOverview = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Welcome Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          WELCOME, {user?.fullName?.toUpperCase() || 'CREATOR'}
-        </h1>
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome, {user?.fullName || 'Creator'}
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Discover new opportunities and track your creative journey
+          </p>
+        </div>
         <div className="flex items-center space-x-4">
           <ThemeToggle />
           <NotificationBell />
@@ -451,35 +456,74 @@ const CreatorDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-4">
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search available briefs, brands, or opportunities..."
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
+            Search
+          </button>
+        </div>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Active Submissions</h3>
-          <p className="text-3xl font-bold text-green-600">{metrics.activeBriefs}</p>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Active Submissions</h3>
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+              <span className="text-green-600 dark:text-green-400 text-lg">📄</span>
+            </div>
+          </div>
+          <p className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{metrics.activeBriefs}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Currently pending review</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Submissions This Week</h3>
-          <p className="text-3xl font-bold text-green-600">{metrics.submissionsThisWeek}</p>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Submissions This Week</h3>
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+              <span className="text-blue-600 dark:text-blue-400 text-lg">📈</span>
+            </div>
+          </div>
+          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{metrics.submissionsThisWeek}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">New submissions made</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Total Earnings</h3>
-          <p className="text-3xl font-bold text-green-600">${metrics.totalEarnings}</p>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Earnings</h3>
+            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
+              <span className="text-purple-600 dark:text-purple-400 text-lg">💰</span>
+            </div>
+          </div>
+          <p className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">${metrics.totalEarnings}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Total earnings to date</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Submissions */}
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Submissions</h3>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Submissions</h3>
             <div className="space-y-4">
               {mySubmissions.slice(0, 3).map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={submission.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center">
                     <DefaultAvatar name={user?.fullName || 'Creator'} size="md" className="mr-3" />
                     <div>
-                      <p className="font-medium text-gray-900">{submission.briefTitle}</p>
-                      <p className="text-sm text-gray-600">${submission.amount}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{submission.briefTitle}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">${submission.amount}</p>
                     </div>
                   </div>
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -499,28 +543,26 @@ const CreatorDashboard: React.FC = () => {
         <div className="space-y-4">
           <button 
             onClick={() => setActiveTab('briefs')}
-            className="w-full bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:border-green-300 cursor-pointer text-left"
+            className="w-full bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-500 cursor-pointer text-left"
           >
             <div className="flex items-center mb-3">
               <span className="text-2xl mr-3">📄</span>
-              <h4 className="font-semibold text-gray-900">Browse Briefs</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Browse Briefs</h4>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Discover new opportunities and apply to briefs that match your skills.
             </p>
           </button>
 
-
-
           <button 
             onClick={() => setActiveTab('earnings')}
-            className="w-full bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:border-green-300 cursor-pointer text-left"
+            className="w-full bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-500 cursor-pointer text-left"
           >
             <div className="flex items-center mb-3">
               <span className="text-2xl mr-3">💰</span>
-              <h4 className="font-semibold text-gray-900">Track Earnings</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Track Earnings</h4>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Monitor your income and payment status from approved submissions.
             </p>
           </button>
@@ -528,20 +570,20 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Upcoming Deadlines */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Deadlines</h3>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upcoming Deadlines</h3>
         <div className="space-y-3">
           {availableBriefs.slice(0, 2).map((brief) => (
-            <div key={brief.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div key={brief.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <span className="font-medium text-gray-900">{brief.title}</span>
-                <p className="text-sm text-gray-600">{brief.brandName}</p>
+                <span className="font-medium text-gray-900 dark:text-white">{brief.title}</span>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{brief.brandName}</p>
               </div>
               <div className="text-right">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   {Math.ceil((new Date(brief.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
                 </span>
-                                    <p className="text-sm font-medium text-green-600">${brief.reward}</p>
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">${brief.reward}</p>
               </div>
             </div>
           ))}
@@ -550,13 +592,13 @@ const CreatorDashboard: React.FC = () => {
 
       {/* Performance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Performance Overview</h3>
-          <p className="text-2xl font-bold text-green-600">{metrics.avgSubmissions} Avg. Submissions This Month</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Performance Overview</h3>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics.avgSubmissions} Avg. Submissions This Month</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Approval Rate</h3>
-          <p className="text-2xl font-bold text-green-600">{Math.round((metrics.approvedSubmissions / Math.max(metrics.submissionsThisWeek, 1)) * 100)}%</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Approval Rate</h3>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round((metrics.approvedSubmissions / Math.max(metrics.submissionsThisWeek, 1)) * 100)}%</p>
         </div>
       </div>
     </div>
@@ -567,16 +609,6 @@ const CreatorDashboard: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Available Briefs</h2>
         <div className="flex space-x-2">
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            <option value="all">All Locations</option>
-            {Array.from(new Set(availableBriefs.map(brief => brief.location).filter(Boolean))).map(location => (
-              <option key={location} value={location}>{location}</option>
-            ))}
-          </select>
           <button 
             onClick={fetchDashboardData}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
@@ -605,17 +637,14 @@ const CreatorDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableBriefs
-            .filter(brief => locationFilter === 'all' || brief.location === locationFilter)
-            .map((brief) => {
+          {availableBriefs.map((brief) => {
             // Transform the brief data to match BriefCard interface
             const briefForCard = {
               ...brief,
               description: brief.description || '',
               amountOfWinners: brief.amountOfWinners || 1,
               totalRewardsPaid: brief.totalRewardsPaid || 0,
-              location: brief.location || '',
-              displayLocation: brief.location ? brief.location.split(', ').pop() || brief.location : '', // Show only country
+
               brand: {
                 id: brief.brand?.id || '',
                 companyName: brief.brandName || brief.brand?.companyName || '',
@@ -1025,9 +1054,9 @@ const CreatorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex transition-colors duration-300">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 dark:bg-gray-800 text-white">
+      <div className="w-64 bg-gray-800 dark:bg-gray-700 text-white">
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">
@@ -1043,8 +1072,8 @@ const CreatorDashboard: React.FC = () => {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    ? 'bg-purple-500 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
                 }`}
                 title={item.label}
               >
@@ -1054,7 +1083,7 @@ const CreatorDashboard: React.FC = () => {
             ))}
           </nav>
 
-          <div className="mt-8 pt-8 border-t border-gray-700">
+          <div className="mt-8 pt-8 border-t border-gray-600">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Account</h3>
             <nav className="space-y-2">
               {accountNav.map((item) => (
@@ -1069,8 +1098,8 @@ const CreatorDashboard: React.FC = () => {
                   }}
                   className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === item.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      ? 'bg-purple-500 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
                   }`}
                   title={item.label}
                 >
@@ -1080,13 +1109,11 @@ const CreatorDashboard: React.FC = () => {
               ))}
             </nav>
           </div>
-
-
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         <div className="p-8">
           {renderContent()}
         </div>
