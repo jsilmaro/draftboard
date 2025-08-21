@@ -4148,6 +4148,108 @@ app.get('/api/test-proxy', (req, res) => {
 
 // ==================== END NOTIFICATION ROUTES ====================
 
+// ==================== PUBLIC ROUTES ====================
+
+// Get public brand briefs (no authentication required)
+app.get('/api/public/brands/:brandId/briefs', async (req, res) => {
+  try {
+    const { brandId } = req.params;
+
+    // Find the brand first to get company name
+    const brand = await prisma.brand.findUnique({
+      where: { id: brandId },
+      select: {
+        id: true,
+        companyName: true,
+        logo: true,
+        socialInstagram: true,
+        socialTwitter: true,
+        socialLinkedIn: true,
+        socialWebsite: true
+      }
+    });
+
+    if (!brand) {
+      return res.status(404).json({ error: 'Brand not found' });
+    }
+
+    // Get active briefs for this brand
+    const briefs = await prisma.brief.findMany({
+      where: { 
+        brandId: brandId,
+        status: 'active',
+        isPrivate: false
+      },
+      include: {
+        submissions: {
+          select: {
+            id: true,
+            status: true,
+            submittedAt: true
+          }
+        },
+        publishedAwards: {
+          select: {
+            rewardTiers: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Transform briefs to include calculated values
+    const transformedBriefs = briefs.map(brief => {
+      // Parse reward tiers and calculate total value
+      let totalRewardValue = 0;
+      let rewardTiers = [];
+      
+      if (brief.publishedAwards && brief.publishedAwards.length > 0) {
+        try {
+          rewardTiers = JSON.parse(brief.publishedAwards[0].rewardTiers);
+          totalRewardValue = rewardTiers.reduce((total, tier) => {
+            return total + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+          }, 0);
+        } catch (error) {
+          console.error('Error parsing reward tiers:', error);
+        }
+      }
+
+      return {
+        id: brief.id,
+        title: brief.title,
+        description: brief.description,
+        requirements: brief.requirements,
+        reward: brief.reward,
+        amountOfWinners: brief.amountOfWinners,
+        deadline: brief.deadline,
+        status: brief.status,
+        totalRewardValue,
+        rewardTiers,
+        submissionsCount: brief.submissions.length,
+        createdAt: brief.createdAt
+      };
+    });
+
+    res.json({
+      brand: {
+        id: brand.id,
+        companyName: brand.companyName,
+        logo: brand.logo,
+        socialInstagram: brand.socialInstagram,
+        socialTwitter: brand.socialTwitter,
+        socialLinkedIn: brand.socialLinkedIn,
+        socialWebsite: brand.socialWebsite
+      },
+      briefs: transformedBriefs
+    });
+  } catch (error) {
+    console.error('Error fetching public brand briefs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ==================== END PUBLIC ROUTES ====================
+
 // ==================== TEST ENDPOINTS ====================
 
 // Test endpoint to verify server is running

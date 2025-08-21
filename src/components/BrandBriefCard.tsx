@@ -200,7 +200,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => onViewClick?.(brief)}
             className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -212,6 +212,16 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
             className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
           >
             Submissions ({submissionsCount})
+          </button>
+          <button
+            onClick={() => {
+              const shareUrl = `${window.location.origin}/brand/${brief.brand?.id || 'unknown'}/briefs`;
+              window.open(shareUrl, '_blank');
+            }}
+            className="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors"
+            title="Open shareable link"
+          >
+            📤 Share
           </button>
         </div>
       </div>

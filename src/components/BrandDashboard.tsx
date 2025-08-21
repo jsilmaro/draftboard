@@ -880,7 +880,7 @@ const BrandDashboard: React.FC = () => {
               description: brief.description || '',
               amountOfWinners: brief.amountOfWinners || 1,
               brand: {
-                id: brief.id,
+                id: user?.id || '',
                 companyName: 'Your Brand',
                 logo: undefined
               }
@@ -1146,6 +1146,15 @@ const BrandDashboard: React.FC = () => {
                   Edit Rewards
                 </button>
               )}
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/brand/${user?.id || 'unknown'}/briefs`;
+                  window.open(shareUrl, '_blank');
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              >
+                📤 Share Link
+              </button>
               <button
                 onClick={() => {
                   setShowViewModal(false);
