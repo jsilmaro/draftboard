@@ -1276,7 +1276,8 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
       location,
       deadline,
       isPrivate,
-      additionalFields
+      additionalFields,
+      rewardTiers
     } = req.body;
 
     if (req.user.type !== 'brand') {
@@ -1298,6 +1299,17 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
         brandId: req.user.id
       }
     });
+
+    // Save reward tiers if provided
+    if (rewardTiers && Array.isArray(rewardTiers) && rewardTiers.length > 0) {
+      await prisma.publishedAward.create({
+        data: {
+          briefId: brief.id,
+          brandId: req.user.id,
+          rewardTiers: JSON.stringify(rewardTiers)
+        }
+      });
+    }
 
     // Notify brand about brief creation
     await createNotification(
@@ -1475,12 +1487,50 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
             status: true,
             submittedAt: true
           }
+        },
+        publishedAwards: {
+          select: {
+            rewardTiers: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json(briefs);
+    // Transform briefs to include calculated values
+    const transformedBriefs = briefs.map(brief => {
+      // Parse reward tiers and calculate total value
+      let totalRewardValue = 0;
+      let rewardTiers = [];
+      
+      if (brief.publishedAwards && brief.publishedAwards.length > 0) {
+        try {
+          rewardTiers = JSON.parse(brief.publishedAwards[0].rewardTiers);
+          totalRewardValue = rewardTiers.reduce((total, tier) => {
+            return total + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+          }, 0);
+        } catch (error) {
+          console.error('Error parsing reward tiers:', error);
+        }
+      }
+
+      // Extract country from location
+      let country = '';
+      if (brief.location) {
+        const locationParts = brief.location.split(', ');
+        country = locationParts[locationParts.length - 1] || brief.location;
+      }
+
+      return {
+        ...brief,
+        totalRewardValue,
+        rewardTiers,
+        displayLocation: country, // Show only country on cards
+        submissions: brief.submissions || []
+      };
+    });
+
+    res.json(transformedBriefs);
   } catch (error) {
     console.error('Error fetching brand briefs:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -2197,6 +2247,7 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
       brandName: brief.brand.companyName,
       reward: brief.reward,
       amountOfWinners: brief.amountOfWinners,
+      location: brief.location,
       deadline: brief.deadline,
       status: brief.status,
       submissions: brief.submissions || [],

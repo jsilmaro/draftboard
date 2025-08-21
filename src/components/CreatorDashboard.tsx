@@ -613,6 +613,7 @@ const CreatorDashboard: React.FC = () => {
               amountOfWinners: brief.amountOfWinners || 1,
               totalRewardsPaid: brief.totalRewardsPaid || 0,
               location: brief.location || '',
+              displayLocation: brief.location ? brief.location.split(', ').pop() || brief.location : '', // Show only country
               brand: {
                 id: brief.brand?.id || '',
                 companyName: brief.brandName || brief.brand?.companyName || '',

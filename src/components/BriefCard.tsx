@@ -11,6 +11,7 @@ interface BriefCardProps {
     deadline: string;
     status: string;
     location?: string;
+    displayLocation?: string; // Country only for display
     brand: {
       id: string;
       companyName: string;
@@ -188,10 +189,10 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
               {getTimeRemainingText()}
             </span>
           </div>
-          {brief.location && (
+          {brief.displayLocation && (
             <div className="flex items-center justify-between col-span-2">
               <span className="text-sm text-gray-600">Location:</span>
-              <span className="font-medium text-gray-900 text-xs">{brief.location}</span>
+              <span className="font-medium text-gray-900 text-xs">{brief.displayLocation}</span>
             </div>
           )}
         </div>

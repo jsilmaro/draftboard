@@ -12,7 +12,15 @@ interface BrandBriefCardProps {
     submissions: number | Array<unknown>;
     totalRewardsPaid?: number;
     location?: string;
+    displayLocation?: string; // Country only for display
     reward?: number;
+    totalRewardValue?: number; // Calculated total from reward tiers
+    rewardTiers?: Array<{
+      position: number;
+      cashAmount: number;
+      creditAmount: number;
+      prizeDescription: string;
+    }>;
     brand?: {
       id: string;
       companyName: string;
@@ -57,8 +65,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const targetSubmissions = 10; // You can make this configurable
   const submissionsProgress = Math.min((submissionsCount / targetSubmissions) * 100, 100);
 
-  // Calculate rewards progress
-  const totalRewardValue = (brief.amountOfWinners || 1) * 100; // Placeholder value
+  // Calculate rewards progress using actual reward tiers
+  const totalRewardValue = brief.totalRewardValue || 0;
   const rewardsPaid = brief.totalRewardsPaid || 0;
   const rewardsProgress = totalRewardValue > 0 ? (rewardsPaid / totalRewardValue) * 100 : 0;
 
@@ -79,16 +87,6 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
     if (daysRemaining < 0) return 'text-red-600';
     if (daysRemaining <= 3) return 'text-orange-600';
     return 'text-green-600';
-  };
-
-  const getRewardTypeDisplay = () => {
-    if (!brief.rewardType) return 'Not set';
-    switch (brief.rewardType) {
-      case 'CASH': return '💰 Cash';
-      case 'CREDIT': return '🎫 Credit';
-      case 'PRIZES': return '🎁 Prizes';
-      default: return brief.rewardType;
-    }
   };
 
   const getStatusBadge = () => {
@@ -150,36 +148,32 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg mb-4 border border-green-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Reward Type</p>
+              <p className="text-sm text-gray-600 mb-1">Amount of Rewards</p>
               <p className="text-lg font-bold text-green-600">
-                {getRewardTypeDisplay()}
+                {brief.amountOfWinners || 1}
               </p>
             </div>
-                          <div className="text-right">
-                <p className="text-sm text-gray-600 mb-1">Winners</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {brief.amountOfWinners || 1}
-                </p>
-              </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600 mb-1">Submissions</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {submissionsCount}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Campaign Details Grid */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Submissions:</span>
-            <span className="font-medium text-gray-900">{submissionsCount}</span>
-          </div>
-          <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Deadline:</span>
             <span className={`font-medium text-xs ${getStatusColor()}`}>
               {getTimeRemainingText()}
             </span>
           </div>
-          {brief.location && (
-            <div className="flex items-center justify-between col-span-2">
+          {brief.displayLocation && (
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Location:</span>
-              <span className="font-medium text-gray-900 text-xs">{brief.location}</span>
+              <span className="font-medium text-gray-900 text-xs">{brief.displayLocation}</span>
             </div>
           )}
         </div>
@@ -213,13 +207,13 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
             {submissionsCount} creators applied
           </span>
           <span className="text-gray-600">
-            Target: {targetSubmissions}
+            Target: {brief.amountOfWinners || 1}
           </span>
         </div>
       </div>
 
       {/* Rewards Progress Section */}
-      {brief.rewardType && brief.amountOfWinners && (
+      {brief.amountOfWinners && (
         <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">

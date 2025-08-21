@@ -31,9 +31,38 @@ interface FormData {
   reward: number;
   deadline: string;
   amountOfWinners: number;
-  location: string;
+  location: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   rewardTiers: RewardTier[];
   additionalFields: Record<string, string | string[]>;
+}
+
+interface NominatimAddress {
+  city?: string;
+  town?: string;
+  village?: string;
+  county?: string;
+  state?: string;
+  province?: string;
+  country?: string;
+}
+
+interface NominatimSearchResult {
+  address?: {
+    country?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    province?: string;
+    road?: string;
+    street?: string;
+  };
 }
 
 const CreateBrief: React.FC = () => {
@@ -48,7 +77,13 @@ const CreateBrief: React.FC = () => {
     reward: 0,
     deadline: '',
     amountOfWinners: 1,
-    location: '',
+    location: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    },
     rewardTiers: [],
     additionalFields: {} as Record<string, string | string[]>
   });
@@ -163,7 +198,13 @@ const CreateBrief: React.FC = () => {
           ...template.fields,
           reward: 0, // Initialize with empty reward type
           amountOfWinners: 1,
-          location: '',
+          location: {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: ''
+          },
           rewardTiers: []
         });
       }
@@ -175,7 +216,13 @@ const CreateBrief: React.FC = () => {
         reward: 0, // Default value for reward field
         deadline: '',
         amountOfWinners: 1,
-        location: '',
+        location: {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        },
         rewardTiers: [],
         additionalFields: {}
       });
@@ -236,19 +283,278 @@ const CreateBrief: React.FC = () => {
     }, 0);
   };
 
+    const [isValidatingLocation, setIsValidatingLocation] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<{
+    countries: string[];
+    cities: string[];
+    states: string[];
+    streets: string[];
+  }>({
+    countries: [],
+    cities: [],
+    states: [],
+    streets: []
+  });
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState<{
+    countries: boolean;
+    cities: boolean;
+    states: boolean;
+    streets: boolean;
+  }>({
+    countries: false,
+    cities: false,
+    states: false,
+    streets: false
+  });
+
+  const handleLocationFieldChange = (field: keyof FormData['location'], value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [field]: value
+      }
+    }));
+  };
+
+  const searchCountries = async (query: string) => {
+    if (query.trim().length < 2) return [];
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=&limit=10&addressdetails=1`
+      );
+      
+      if (response.ok) {
+        const data = await response.json() as NominatimSearchResult[];
+        const countries = [...new Set(data.map((item: NominatimSearchResult) => item.address?.country).filter(Boolean))] as string[];
+        return countries.slice(0, 5);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+    return [];
+  };
+
+  const searchCities = async (query: string, country?: string) => {
+    if (query.trim().length < 2) return [];
+    
+    try {
+      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&featuretype=city&limit=10&addressdetails=1`;
+      if (country) {
+        url += `&countrycodes=${country}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json() as NominatimSearchResult[];
+        const cities = [...new Set(data.map((item: NominatimSearchResult) => 
+          item.address?.city || item.address?.town || item.address?.village
+        ).filter(Boolean))] as string[];
+        return cities.slice(0, 5);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+    return [];
+  };
+
+  const searchStates = async (query: string, country?: string) => {
+    if (query.trim().length < 2) return [];
+    
+    try {
+      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&featuretype=state&limit=10&addressdetails=1`;
+      if (country) {
+        url += `&countrycodes=${country}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json() as NominatimSearchResult[];
+        const states = [...new Set(data.map((item: NominatimSearchResult) => 
+          item.address?.state || item.address?.province
+        ).filter(Boolean))] as string[];
+        return states.slice(0, 5);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+    return [];
+  };
+
+  const searchStreets = async (query: string, city?: string) => {
+    if (query.trim().length < 2) return [];
+    
+    try {
+      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&featuretype=street&limit=10&addressdetails=1`;
+      if (city) {
+        url += `&city=${encodeURIComponent(city)}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json() as NominatimSearchResult[];
+        const streets = [...new Set(data.map((item: NominatimSearchResult) => 
+          item.address?.road || item.address?.street
+        ).filter(Boolean))] as string[];
+        return streets.slice(0, 5);
+      }
+    } catch (error) {
+      // Silent fail
+    }
+    return [];
+  };
+
+  const handleLocationFieldInput = async (field: keyof FormData['location'], value: string) => {
+    handleLocationFieldChange(field, value);
+    
+    if (value.trim().length >= 2) {
+      setIsValidatingLocation(true);
+      
+      try {
+        let suggestions: string[] = [];
+        
+        switch (field) {
+          case 'country':
+            suggestions = await searchCountries(value);
+            setLocationSuggestions(prev => ({ ...prev, countries: suggestions }));
+            setShowLocationSuggestions(prev => ({ ...prev, countries: true }));
+            break;
+          case 'city':
+            suggestions = await searchCities(value, formData.location.country);
+            setLocationSuggestions(prev => ({ ...prev, cities: suggestions }));
+            setShowLocationSuggestions(prev => ({ ...prev, cities: true }));
+            break;
+          case 'state':
+            suggestions = await searchStates(value, formData.location.country);
+            setLocationSuggestions(prev => ({ ...prev, states: suggestions }));
+            setShowLocationSuggestions(prev => ({ ...prev, states: true }));
+            break;
+          case 'street':
+            suggestions = await searchStreets(value, formData.location.city);
+            setLocationSuggestions(prev => ({ ...prev, streets: suggestions }));
+            setShowLocationSuggestions(prev => ({ ...prev, streets: true }));
+            break;
+        }
+      } catch (error) {
+        // Silent fail
+      } finally {
+        setIsValidatingLocation(false);
+      }
+    } else {
+      setShowLocationSuggestions(prev => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleLocationSuggestionSelect = (field: keyof FormData['location'], suggestion: string) => {
+    handleLocationFieldChange(field, suggestion);
+    setShowLocationSuggestions(prev => ({ ...prev, [field]: false }));
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Use reverse geocoding to get standardized location
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.address) {
+              const address = data.address as NominatimAddress;
+              const city = address.city || address.town || address.village || address.county || '';
+              const state = address.state || address.province || '';
+              const country = address.country || '';
+              
+              // Update location fields with detected values
+              setFormData(prev => ({
+                ...prev,
+                location: {
+                  ...prev.location,
+                  city: city,
+                  state: state,
+                  country: country
+                }
+              }));
+            }
+          }
+        } catch (error) {
+          alert('Could not detect location. Please enter location manually.');
+        }
+      },
+      (error) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            alert('Location access denied. Please enable location services or search for a location.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert('Location information unavailable. Please search for a location.');
+            break;
+          case error.TIMEOUT:
+            alert('Location request timed out. Please search for a location.');
+            break;
+          default:
+            alert('An unknown error occurred while getting location. Please search for a location.');
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
 
 
       const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       
+      // Validate location before submission
+      const { country, city } = formData.location;
+      if (!country.trim()) {
+        alert('Country is required. Please enter a valid country.');
+        return;
+      }
+      if (!city.trim()) {
+        alert('City is required. Please enter a valid city.');
+        return;
+      }
+      
       try {
-      const briefData = {
-        ...formData,
-        brandId: user?.id,
-        status: 'draft',
-        isPrivate,
-        createdAt: new Date().toISOString()
-              };
+        // Create a formatted location string for the API
+        const locationParts = [
+          formData.location.street,
+          formData.location.city,
+          formData.location.state,
+          formData.location.zipCode,
+          formData.location.country
+        ].filter(Boolean);
+        
+        const formattedLocation = locationParts.join(', ');
+        
+        const briefData = {
+          ...formData,
+          location: formattedLocation, // Convert back to string for API compatibility
+          rewardTiers: formData.rewardTiers, // Include reward tiers
+          brandId: user?.id,
+          status: 'draft',
+          isPrivate,
+          createdAt: new Date().toISOString()
+        };
       
         const response = await fetch('/api/briefs', {
         method: 'POST',
@@ -414,19 +720,158 @@ const CreateBrief: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., New York, NY or London, UK"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Specify the location for this brief (required)</p>
+                <div className="space-y-4">
+                  <h4 className="text-md font-medium text-gray-700">Location Details *</h4>
+                  
+                  {/* Country */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location.country}
+                      onChange={(e) => handleLocationFieldInput('country', e.target.value)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(prev => ({ ...prev, countries: false })), 200)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Search for a country..."
+                      required
+                    />
+                    {showLocationSuggestions.countries && locationSuggestions.countries.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.countries.map((suggestion: string, index: number) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleLocationSuggestionSelect('country', suggestion)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* City */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location.city}
+                      onChange={(e) => handleLocationFieldInput('city', e.target.value)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(prev => ({ ...prev, cities: false })), 200)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Search for a city..."
+                      required
+                    />
+                    {showLocationSuggestions.cities && locationSuggestions.cities.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.cities.map((suggestion: string, index: number) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleLocationSuggestionSelect('city', suggestion)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* State/Province */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State/Province
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location.state}
+                      onChange={(e) => handleLocationFieldInput('state', e.target.value)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(prev => ({ ...prev, states: false })), 200)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Search for a state or province..."
+                    />
+                    {showLocationSuggestions.states && locationSuggestions.states.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.states.map((suggestion: string, index: number) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleLocationSuggestionSelect('state', suggestion)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Street Address */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location.street}
+                      onChange={(e) => handleLocationFieldInput('street', e.target.value)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(prev => ({ ...prev, streets: false })), 200)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Search for a street address..."
+                    />
+                    {showLocationSuggestions.streets && locationSuggestions.streets.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.streets.map((suggestion: string, index: number) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleLocationSuggestionSelect('street', suggestion)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ZIP/Postal Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ZIP/Postal Code
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location.zipCode}
+                      onChange={(e) => handleLocationFieldChange('zipCode', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter ZIP or postal code..."
+                    />
+                  </div>
+
+                  {/* Auto-detect location button */}
+                  <div className="flex justify-center mt-4">
+                    <button
+                      type="button"
+                      onClick={handleGetCurrentLocation}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
+                    >
+                      📍 Auto-detect Location
+                    </button>
+                  </div>
+
+                  {/* Loading indicator */}
+                  {isValidatingLocation && (
+                    <div className="absolute right-2 top-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

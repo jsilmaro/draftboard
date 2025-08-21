@@ -144,7 +144,7 @@ const BrandDashboard: React.FC = () => {
   });
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
-  const [editSelectedRewardType, setEditSelectedRewardType] = useState('');
+
   const [editIsLoading, setEditIsLoading] = useState(false);
   const [editAmountOfWinners, setEditAmountOfWinners] = useState(1);
   const [editWinnerRewards, setEditWinnerRewards] = useState<Array<{
@@ -794,7 +794,6 @@ const BrandDashboard: React.FC = () => {
                 rewardData: null,
                 type: 'edit'
               });
-              setEditSelectedRewardType(brief.rewardType || '');
               setEditAmountOfWinners(brief.amountOfWinners || 1);
               // Initialize winner rewards based on current amount of winners
               const initialRewards = [];
@@ -880,23 +879,17 @@ const BrandDashboard: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
               
-              {selectedBrief.rewardType ? (
+              {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                     <div>
-                      <span className="font-medium text-green-900">Primary Reward Type:</span>
+                      <span className="font-medium text-green-900">Amount of Rewards:</span>
                       <div className="text-sm text-green-700 mt-1">
-                        {selectedBrief.rewardType === 'CASH' ? '💰 Cash - Monetary rewards' : 
-                         selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit - Platform credits/points' : 
-                         selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes - Physical items & experiences' : selectedBrief.rewardType}
+                        {selectedBrief.amountOfWinners || 1} rewards available
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl">
-                        {selectedBrief.rewardType === 'CASH' ? '💰' : 
-                         selectedBrief.rewardType === 'CREDIT' ? '🎫' : 
-                         selectedBrief.rewardType === 'PRIZES' ? '🎁' : '🎯'}
-                      </span>
+                      <span className="text-2xl">🎯</span>
                     </div>
                   </div>
                   
@@ -924,7 +917,7 @@ const BrandDashboard: React.FC = () => {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                                <span className="text-blue-700">Primary type set</span>
+                                <span className="text-blue-700">Rewards configured</span>
                               </div>
                             );
                           }
@@ -933,18 +926,17 @@ const BrandDashboard: React.FC = () => {
                     </div>
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-2">Winner Configuration</h5>
+                      <h5 className="font-medium text-gray-900 mb-2">Reward Configuration</h5>
                       <div className="text-sm text-gray-600">
                         <div className="flex items-center justify-between">
-                          <span>Total Winners:</span>
+                          <span>Total Rewards:</span>
                           <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <span>Reward Type:</span>
+                          <span>Status:</span>
                           <span className="font-medium">
-                            {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
-                             selectedBrief.rewardType === 'CREDIT' ? 'Credit' : 
-                             selectedBrief.rewardType === 'PRIZES' ? 'Prizes' : 'Mixed'}
+                            {selectedBrief.status === 'active' ? 'Active' : 
+                             selectedBrief.status === 'draft' ? 'Draft' : 'Completed'}
                           </span>
                         </div>
                       </div>
@@ -955,7 +947,7 @@ const BrandDashboard: React.FC = () => {
                 <div className="text-center py-8 bg-orange-50 rounded-lg border border-orange-200">
                   <div className="text-4xl mb-4">⚠️</div>
                   <h5 className="text-lg font-semibold text-orange-900 mb-2">No Rewards Configured</h5>
-                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any reward type set up yet.</p>
+                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any rewards set up yet.</p>
                   <button
                     onClick={() => {
                       setShowViewModal(false);
@@ -964,7 +956,6 @@ const BrandDashboard: React.FC = () => {
                         rewardData: null,
                         type: 'edit'
                       });
-                      setEditSelectedRewardType('');
                       setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
                       const initialRewards = [];
                       for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
@@ -980,7 +971,7 @@ const BrandDashboard: React.FC = () => {
                     }}
                     className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                   >
-                    Set Up Rewards
+                    Configure Rewards
                   </button>
                 </div>
               )}
@@ -1038,7 +1029,6 @@ const BrandDashboard: React.FC = () => {
                       rewardData: null,
                       type: 'edit'
                     });
-                    setEditSelectedRewardType(selectedBrief.rewardType || '');
                     setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
                     const initialRewards = [];
                     for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
@@ -1095,7 +1085,6 @@ const BrandDashboard: React.FC = () => {
                 title: formData.get('title') as string,
                 description: formData.get('description') as string,
                 requirements: formData.get('requirements') as string,
-                rewardType: formData.get('rewardType') as string,
                 amountOfWinners: parseInt(formData.get('amountOfWinners') as string) || 1,
                 deadline: formData.get('deadline') as string,
                 status: formData.get('status') as 'draft' | 'active'
@@ -1162,34 +1151,19 @@ const BrandDashboard: React.FC = () => {
               {/* Reward Configuration */}
               <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
                 <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Reward Type *</label>
-                    <select
-                      name="rewardType"
-                      defaultValue={selectedBrief.rewardType || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select a reward type</option>
-                      <option value="CASH">💰 CASH - Primary monetary rewards</option>
-                      <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
-                      <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
-                    <select
-                      name="amountOfWinners"
-                      defaultValue={selectedBrief.amountOfWinners || 1}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Rewards *</label>
+                  <input
+                    type="number"
+                    name="amountOfWinners"
+                    min="1"
+                    max="50"
+                    defaultValue={selectedBrief.amountOfWinners || 1}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter number of rewards (1-50)"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
                 </div>
               </div>
 
@@ -1697,7 +1671,6 @@ const BrandDashboard: React.FC = () => {
                       rewardData: null,
                       type: 'edit'
                     });
-                    setEditSelectedRewardType(brief.rewardType || '');
                     setEditAmountOfWinners(brief.amountOfWinners || 1);
                     // Initialize winner rewards
                     const initialRewards = [];
@@ -1769,7 +1742,6 @@ const BrandDashboard: React.FC = () => {
                       rewardData: null,
                       type: 'edit'
                     });
-                    setEditSelectedRewardType('');
                     setEditAmountOfWinners(brief.amountOfWinners || 1);
                     // Initialize winner rewards
                     const initialRewards = [];
@@ -2203,7 +2175,7 @@ const BrandDashboard: React.FC = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        // Update the brief with new reward type and amount of winners
+        // Update the brief with new amount of winners
         const briefResponse = await fetch(`/api/briefs/${brief.id}`, {
           method: 'PUT',
           headers: {
@@ -2211,7 +2183,6 @@ const BrandDashboard: React.FC = () => {
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            rewardType: editSelectedRewardType,
             amountOfWinners: editAmountOfWinners
           })
         });
@@ -2220,7 +2191,7 @@ const BrandDashboard: React.FC = () => {
           setShowSuccessNotification(true);
           setSuccessNotification({
             title: 'Rewards Updated',
-            message: 'Primary reward type and winner rewards have been updated successfully!',
+            message: 'Amount of rewards and winner rewards have been updated successfully!',
             icon: '✅'
           });
           setShowEditRewardsModal(false);
@@ -2312,36 +2283,27 @@ const BrandDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Primary Reward Type Selection */}
+          {/* Amount of Rewards Selection */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Primary Reward Type</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reward Type *</label>
-              <select
-                value={editSelectedRewardType}
-                onChange={(e) => setEditSelectedRewardType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select a reward type</option>
-                <option value="CASH">💰 CASH - Primary monetary rewards</option>
-                <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
-                <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
-              </select>
-            </div>
-
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Amount of Rewards</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
-              <select
+              <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Rewards *</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
                 value={editAmountOfWinners}
-                onChange={(e) => handleAmountOfWinnersChange(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1 && value <= 50) {
+                    handleAmountOfWinnersChange(value);
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter number of rewards (1-50)"
                 required
-              >
-                {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                  <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
-                ))}
-              </select>
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
             </div>
           </div>
 
@@ -2358,10 +2320,7 @@ const BrandDashboard: React.FC = () => {
                   <div key={reward.position} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-lg font-medium text-gray-900">
-                        {reward.position === 1 ? '🥇 1st Place' : 
-                         reward.position === 2 ? '🥈 2nd Place' : 
-                         reward.position === 3 ? '🥉 3rd Place' : 
-                         `${reward.position}th Place`}
+                        Reward {reward.position}
                       </h4>
                     </div>
                     
@@ -2440,7 +2399,7 @@ const BrandDashboard: React.FC = () => {
             </button>
             <button
               onClick={handleSave}
-              disabled={editIsLoading || !editSelectedRewardType}
+              disabled={editIsLoading}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {editIsLoading ? 'Saving...' : 'Save Changes'}
@@ -2604,23 +2563,17 @@ const BrandDashboard: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Reward Information</h4>
               
-              {selectedBrief.rewardType ? (
+              {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                     <div>
-                      <span className="font-medium text-green-900">Primary Reward Type:</span>
+                      <span className="font-medium text-green-900">Amount of Rewards:</span>
                       <div className="text-sm text-green-700 mt-1">
-                        {selectedBrief.rewardType === 'CASH' ? '💰 Cash - Monetary rewards' : 
-                         selectedBrief.rewardType === 'CREDIT' ? '🎫 Credit - Platform credits/points' : 
-                         selectedBrief.rewardType === 'PRIZES' ? '🎁 Prizes - Physical items & experiences' : selectedBrief.rewardType}
+                        {selectedBrief.amountOfWinners || 1} rewards available
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl">
-                        {selectedBrief.rewardType === 'CASH' ? '💰' : 
-                         selectedBrief.rewardType === 'CREDIT' ? '🎫' : 
-                         selectedBrief.rewardType === 'PRIZES' ? '🎁' : '🎯'}
-                      </span>
+                      <span className="text-2xl">🎯</span>
                     </div>
                   </div>
                   
@@ -2648,7 +2601,7 @@ const BrandDashboard: React.FC = () => {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                                <span className="text-blue-700">Primary type set</span>
+                                <span className="text-blue-700">Rewards configured</span>
                               </div>
                             );
                           }
@@ -2657,18 +2610,17 @@ const BrandDashboard: React.FC = () => {
                     </div>
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-2">Winner Configuration</h5>
+                      <h5 className="font-medium text-gray-900 mb-2">Reward Configuration</h5>
                       <div className="text-sm text-gray-600">
                         <div className="flex items-center justify-between">
-                          <span>Total Winners:</span>
+                          <span>Total Rewards:</span>
                           <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <span>Reward Type:</span>
+                          <span>Status:</span>
                           <span className="font-medium">
-                            {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
-                             selectedBrief.rewardType === 'CREDIT' ? 'Credit' : 
-                             selectedBrief.rewardType === 'PRIZES' ? 'Prizes' : 'Mixed'}
+                            {selectedBrief.status === 'active' ? 'Active' : 
+                             selectedBrief.status === 'draft' ? 'Draft' : 'Completed'}
                           </span>
                         </div>
                       </div>
@@ -2679,7 +2631,7 @@ const BrandDashboard: React.FC = () => {
                 <div className="text-center py-8 bg-orange-50 rounded-lg border border-orange-200">
                   <div className="text-4xl mb-4">⚠️</div>
                   <h5 className="text-lg font-semibold text-orange-900 mb-2">No Rewards Configured</h5>
-                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any reward type set up yet.</p>
+                  <p className="text-orange-700 mb-4">This brief doesn&apos;t have any rewards set up yet.</p>
                   <button
                     onClick={() => {
                       setShowViewModal(false);
@@ -2688,7 +2640,6 @@ const BrandDashboard: React.FC = () => {
                         rewardData: null,
                         type: 'edit'
                       });
-                      setEditSelectedRewardType('');
                       setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
                       const initialRewards = [];
                       for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
@@ -2704,7 +2655,7 @@ const BrandDashboard: React.FC = () => {
                     }}
                     className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                   >
-                    Set Up Rewards
+                    Configure Rewards
                   </button>
                 </div>
               )}
@@ -2762,7 +2713,6 @@ const BrandDashboard: React.FC = () => {
                       rewardData: null,
                       type: 'edit'
                     });
-                    setEditSelectedRewardType(selectedBrief.rewardType || '');
                     setEditAmountOfWinners(selectedBrief.amountOfWinners || 1);
                     const initialRewards = [];
                     for (let i = 1; i <= (selectedBrief.amountOfWinners || 1); i++) {
@@ -2889,34 +2839,19 @@ const BrandDashboard: React.FC = () => {
               {/* Reward Configuration */}
               <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
                 <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Reward Type *</label>
-                    <select
-                      name="rewardType"
-                      defaultValue={selectedBrief.rewardType || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select a reward type</option>
-                      <option value="CASH">💰 CASH - Primary monetary rewards</option>
-                      <option value="CREDIT">🎫 CREDIT - Primary platform credits/points</option>
-                      <option value="PRIZES">🎁 PRIZES - Primary physical items & experiences</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Winners *</label>
-                    <select
-                      name="amountOfWinners"
-                      defaultValue={selectedBrief.amountOfWinners || 1}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Winner' : 'Winners'}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount of Rewards *</label>
+                  <input
+                    type="number"
+                    name="amountOfWinners"
+                    min="1"
+                    max="50"
+                    defaultValue={selectedBrief.amountOfWinners || 1}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter number of rewards (1-50)"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
                 </div>
               </div>
 
