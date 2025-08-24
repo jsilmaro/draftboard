@@ -2,6 +2,13 @@ import React from 'react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 
+// Extend Window interface for Google OAuth loading
+declare global {
+  interface Window {
+    loadGoogleOAuth?: () => void;
+  }
+}
+
 interface GoogleSignInLoginProps {
   onError: (error: string) => void;
   className?: string;
@@ -14,6 +21,13 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
   className = '' 
 }) => {
   const { googleLogin } = useAuth();
+  
+  // Load Google OAuth script when component mounts
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.loadGoogleOAuth) {
+      window.loadGoogleOAuth();
+    }
+  }, []);
 
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {

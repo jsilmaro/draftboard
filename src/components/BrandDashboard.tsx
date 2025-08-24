@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import WinnerSelectionModal from './WinnerSelectionModal';
-import BrandWallet from './BrandWallet';
-import PaymentManagement from './PaymentManagement';
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
 import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
+import LoadingSpinner from './LoadingSpinner';
+
+// Lazy load Stripe-dependent components to prevent loading during login
+const BrandWallet = lazy(() => import('./BrandWallet'));
+const PaymentManagement = lazy(() => import('./PaymentManagement'));
 
 interface Brief {
   id: string;
@@ -2529,9 +2532,17 @@ const BrandDashboard: React.FC = () => {
       case 'creators':
         return renderCreators();
       case 'wallet':
-        return <BrandWallet />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading wallet..." /></div>}>
+            <BrandWallet />
+          </Suspense>
+        );
       case 'payments':
-        return <PaymentManagement />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading payments..." /></div>}>
+            <PaymentManagement />
+          </Suspense>
+        );
       case 'awards':
         return renderRewards();
       case 'settings':

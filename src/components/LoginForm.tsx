@@ -19,7 +19,7 @@ const LoginForm: React.FC = () => {
     setError('');
 
     try {
-      // Use unified login endpoint
+      // Use unified login endpoint without timeout
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {

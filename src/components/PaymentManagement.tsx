@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, useStripe } from '@stripe/react-stripe-js';
 
 // Load Stripe (you'll need to add your publishable key to .env)
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
@@ -41,7 +41,6 @@ interface PaymentFormProps {
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) => {
   const stripe = useStripe();
-  const elements = useElements();
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'credits' | 'prizes'>('stripe');
   const [amount, setAmount] = useState(winner.reward.cashAmount);
   const [loading, setLoading] = useState(false);
@@ -54,12 +53,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
 
     try {
       if (paymentMethod === 'stripe') {
-        if (!stripe || !elements) {
-          throw new Error('Stripe not loaded');
-        }
-
-        // Create payment intent
-        const response = await fetch('/api/payments/create-payment-intent', {
+        // Use wallet balance for payment
+        const response = await fetch('/api/payments/process-wallet-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -72,19 +67,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
           })
         });
 
-        const { clientSecret } = await response.json();
-
-        // Confirm payment
-        const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement)!,
-          }
-        });
-
-        if (stripeError) {
-          throw new Error(stripeError.message);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to process payment');
         }
 
+        await response.json(); // Response is not used, just await to handle the promise
+        
+        // Show success message
+        alert(`Payment of $${amount} sent successfully to ${winner.creator.fullName}!`);
         onPaymentComplete();
       } else {
         // Process credits or prizes
@@ -103,9 +94,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
         });
 
         if (!response.ok) {
-          throw new Error('Failed to process reward');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to process reward');
         }
 
+        await response.json(); // Response is not used, just await to handle the promise
+        alert(`${paymentMethod === 'credits' ? 'Credits' : 'Prize'} processed successfully for ${winner.creator.fullName}!`);
         onPaymentComplete();
       }
     } catch (err: unknown) {
@@ -141,7 +135,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
                 onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
                 className="mr-2"
               />
-              <span className="text-sm">💳 Credit Card (Stripe)</span>
+              <span className="text-sm">💰 Wallet Balance (Real Money)</span>
             </label>
             <label className="flex items-center">
               <input
@@ -184,29 +178,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
           </div>
         )}
 
-        {/* Stripe Card Element */}
+        {/* Wallet Balance Info */}
         {paymentMethod === 'stripe' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Card Details
-            </label>
-            <div className="border border-gray-300 rounded-md p-3">
-              <CardElement
-                options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#424770',
-                      '::placeholder': {
-                        color: '#aab7c4',
-                      },
-                    },
-                    invalid: {
-                      color: '#9e2146',
-                    },
-                  },
-                }}
-              />
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div className="flex items-center">
+              <span className="text-blue-600 mr-2">💰</span>
+              <div>
+                <p className="text-sm font-medium text-blue-900">Payment from Wallet Balance</p>
+                <p className="text-xs text-blue-700">This payment will be deducted from your wallet balance</p>
+              </div>
             </div>
           </div>
         )}

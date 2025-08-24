@@ -79,7 +79,7 @@ This document summarizes all the features, improvements, and fixes we implemente
 
 ### 1. **Database Connection Issues**
 - **Fixed Environment Variables**: Proper DATABASE_URL configuration
-- **Admin User Creation**: Successfully created admin user (admin@gmail.com / admin123)
+- **Admin User Creation**: Successfully created admin user ------
 - **Schema Synchronization**: Resolved migration conflicts
 - **Connection Pool**: Optimized database connection settings
 
@@ -121,7 +121,7 @@ This document summarizes all the features, improvements, and fixes we implemente
 
 ### 1. **Current Database State**
 - **Connected to NEON PostgreSQL**: `ep-orange-flower-a1m9dei5-pooler.ap-southeast-1.aws.neon.tech`
-- **Admin User**: Created successfully (admin@gmail.com / admin123)
+- **Admin User**: Created successfully ----------
 - **Schema**: All tables properly migrated
 - **Data**: 1 admin, 0 brands, 0 creators, 0 briefs (fresh start after reset)
 
@@ -135,7 +135,7 @@ This document summarizes all the features, improvements, and fixes we implemente
 
 ### 1. **Admin Authentication**
 - **Admin Login**: `/admin/login` route working
-- **Credentials**: admin@gmail.com / admin123
+- **Credentials**:----
 - **JWT Token**: Proper token generation and validation
 - **Protected Routes**: Admin dashboard properly protected
 
@@ -232,7 +232,7 @@ This document summarizes all the features, improvements, and fixes we implemente
 ## 🔗 **Important Links**
 
 - **Admin Login**: `http://localhost:3001/admin/login`
-- **Admin Credentials**: admin@gmail.com / admin123
+- **Admin Credentials**: ------------
 - **Database**: NEON PostgreSQL (connected)
 - **API Health**: `http://localhost:3001/health`
 

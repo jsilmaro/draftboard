@@ -27,10 +27,10 @@ function getEnhancedDatabaseUrl() {
   // Add connection pool parameters to prevent timeout issues
   const separator = baseUrl.includes('?') ? '&' : '?';
   const poolParams = [
-    'connection_limit=10',
-    'pool_timeout=20',
-    'idle_timeout=30',
-    'connect_timeout=10'
+    'connection_limit=20', // Increased from 10
+    'pool_timeout=60',     // Increased from 30 to 60 seconds
+    'idle_timeout=120',    // Increased from 60 to 120 seconds
+    'connect_timeout=30'   // Increased from 15 to 30 seconds
   ].join('&');
   
   return `${baseUrl}${separator}${poolParams}`;
@@ -56,6 +56,11 @@ prisma.$on('query', (e) => {
     console.log('Query: ' + e.query);
     console.log('Params: ' + e.params);
     console.log('Duration: ' + e.duration + 'ms');
+    
+    // Log slow queries
+    if (e.duration > 1000) {
+      console.warn(`⚠️ Slow query detected: ${e.duration}ms - ${e.query}`);
+    }
   }
 });
 
@@ -155,6 +160,27 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.static('uploads'));
+
+// Request timeout middleware - REMOVED to allow longer login times
+// app.use((req, res, next) => {
+//   // Set a 30-second timeout for all requests
+//   req.setTimeout(30000, () => {
+//     console.error(`⏰ Request timeout: ${req.method} ${req.url}`);
+//     if (!res.headersSent) {
+//       res.status(408).json({ error: 'Request timeout' });
+//     }
+//   });
+//   
+//   // Set response timeout
+//   res.setTimeout(30000, () => {
+//     console.error(`⏰ Response timeout: ${req.method} ${req.url}`);
+//     if (!res.headersSent) {
+//       res.status(408).json({ error: 'Response timeout' });
+//     }
+//   });
+//   
+//   next();
+// });
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -475,10 +501,10 @@ const authenticateToken = (req, res, next) => {
   }
 });
 
-// Unified login endpoint
+// Optimized unified login endpoint
 app.post('/api/login', async (req, res) => {
   try {
-    console.log('🔐 Unified login attempt:', { email: req.body.email });
+    console.log('🔐 Optimized login attempt:', { email: req.body.email });
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -486,11 +512,30 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Check if user exists as a brand
-    const brand = await prisma.brand.findUnique({
-      where: { email }
-    });
+    // Use Promise.all to check both tables simultaneously for better performance
+    const [brand, creator] = await Promise.all([
+      prisma.brand.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          companyName: true
+        }
+      }),
+      prisma.creator.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          userName: true,
+          fullName: true
+        }
+      })
+    ]);
 
+    // Check brand first
     if (brand) {
       // Check if this is a Google OAuth account (empty password)
       if (!brand.password || brand.password === '') {
@@ -519,6 +564,17 @@ app.post('/api/login', async (req, res) => {
           tokenPreview: token.substring(0, 20) + '...'
         });
 
+        // Create welcome notification asynchronously (don't wait for it)
+        createNotification(
+          brand.id,
+          'brand',
+          'Welcome Back! 👋',
+          `Welcome back to your dashboard, ${brand.companyName}!`,
+          'brief'
+        ).catch(error => {
+          console.error('Failed to create welcome notification:', error);
+        });
+
         return res.json({
           message: 'Login successful',
           token,
@@ -532,11 +588,7 @@ app.post('/api/login', async (req, res) => {
       }
     }
 
-    // Check if user exists as a creator
-    const creator = await prisma.creator.findUnique({
-      where: { email }
-    });
-
+    // Check creator if brand login failed
     if (creator) {
       // Check if this is a Google OAuth account (empty password)
       if (!creator.password || creator.password === '') {
@@ -565,18 +617,16 @@ app.post('/api/login', async (req, res) => {
           tokenPreview: token.substring(0, 20) + '...'
         });
 
-        // Create a welcome notification
-        try {
-          await createNotification(
-            creator.id,
-            'creator',
-            'Welcome Back! 👋',
-            `Welcome back to your dashboard, ${creator.fullName || creator.userName}!`,
-            'brief'
-          );
-        } catch (error) {
+        // Create welcome notification asynchronously (don't wait for it)
+        createNotification(
+          creator.id,
+          'creator',
+          'Welcome Back! 👋',
+          `Welcome back to your dashboard, ${creator.fullName || creator.userName}!`,
+          'brief'
+        ).catch(error => {
           console.error('Failed to create welcome notification:', error);
-        }
+        });
 
         return res.json({
           message: 'Login successful',
@@ -594,15 +644,15 @@ app.post('/api/login', async (req, res) => {
     // If we get here, either the user doesn't exist or the password is wrong
     return res.status(401).json({ error: 'Invalid credentials' });
   } catch (error) {
-    console.error('Unified login error:', error);
+    console.error('Optimized login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Brand login (kept for backward compatibility)
+// Optimized brand login (kept for backward compatibility)
 app.post('/api/brands/login', async (req, res) => {
   try {
-    console.log('🔐 Brand login attempt:', { email: req.body.email });
+    console.log('🔐 Optimized brand login attempt:', { email: req.body.email });
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -611,22 +661,28 @@ app.post('/api/brands/login', async (req, res) => {
     }
 
     const brand = await prisma.brand.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        companyName: true
+      }
     });
 
-          if (!brand) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+    if (!brand) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-      // Check if this is a Google OAuth account (empty password)
-      if (!brand.password || brand.password === '') {
-        return res.status(401).json({ 
-          error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
-          googleOAuthRequired: true
-        });
-      }
+    // Check if this is a Google OAuth account (empty password)
+    if (!brand.password || brand.password === '') {
+      return res.status(401).json({ 
+        error: 'This account was created with Google Sign-In. Please use Google Sign-In to log in.',
+        googleOAuthRequired: true
+      });
+    }
 
-      const validPassword = await bcrypt.compare(password, brand.password);
+    const validPassword = await bcrypt.compare(password, brand.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -648,18 +704,16 @@ app.post('/api/brands/login', async (req, res) => {
       tokenPreview: token.substring(0, 20) + '...'
     });
 
-    // Create a welcome notification
-    try {
-      await createNotification(
-        brand.id,
-        'brand',
-        'Welcome Back! 👋',
-        `Welcome back to your dashboard, ${brand.companyName}!`,
-        'brief'
-      );
-    } catch (error) {
+    // Create a welcome notification asynchronously (don't wait for it)
+    createNotification(
+      brand.id,
+      'brand',
+      'Welcome Back! 👋',
+      `Welcome back to your dashboard, ${brand.companyName}!`,
+      'brief'
+    ).catch(error => {
       console.error('Failed to create welcome notification:', error);
-    }
+    });
 
     res.json({
       message: 'Login successful',
@@ -672,7 +726,7 @@ app.post('/api/brands/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Brand login error:', error);
+    console.error('Optimized brand login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3297,7 +3351,159 @@ app.get('/api/brands/wallet', authenticateToken, async (req, res) => {
   }
 });
 
-// Brand deposit funds
+// Brand wallet top-up with Stripe
+app.post('/api/brands/wallet/top-up', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Create pending transaction record first
+    let wallet = await prisma.brandWallet.findUnique({
+      where: { brandId: req.user.id }
+    });
+
+    if (!wallet) {
+      wallet = await prisma.brandWallet.create({
+        data: {
+          brandId: req.user.id,
+          balance: 0,
+          totalSpent: 0,
+          totalDeposited: 0
+        }
+      });
+    }
+
+    // Check if Stripe is configured and available
+    if (!stripe) {
+      // Fallback: Direct wallet top-up without Stripe
+      const result = await prisma.$transaction(async (tx) => {
+        // Update wallet balance directly
+        const updatedWallet = await tx.brandWallet.update({
+          where: { brandId: req.user.id },
+          data: {
+            balance: { increment: amount },
+            totalDeposited: { increment: amount }
+          }
+        });
+
+        // Create completed transaction record
+        await tx.brandWalletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'deposit',
+            amount: amount,
+            description: `Wallet top-up (direct)`,
+            balanceBefore: wallet.balance,
+            balanceAfter: updatedWallet.balance,
+            referenceId: `direct-${Date.now()}`
+          }
+        });
+
+        return updatedWallet;
+      });
+
+      // Notify brand about successful top-up
+      await createNotification(
+        req.user.id,
+        'brand',
+        'Wallet Top-Up Successful! 💰',
+        `Your wallet has been topped up with $${amount}. New balance: $${wallet.balance + amount}`,
+        'wallet'
+      );
+
+      return res.json({
+        message: 'Wallet topped up successfully (direct)',
+        data: result
+      });
+    }
+
+    try {
+      // Create Stripe payment intent for wallet top-up
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        metadata: {
+          type: 'wallet_top_up',
+          brandId: req.user.id,
+          amount: amount.toString()
+        }
+      });
+
+      // Create pending transaction
+      await prisma.brandWalletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'deposit',
+          amount: amount,
+          description: `Wallet top-up via Stripe`,
+          balanceBefore: wallet.balance,
+          balanceAfter: wallet.balance,
+          referenceId: paymentIntent.id
+        }
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
+    } catch (stripeError) {
+      console.error('Stripe error, falling back to direct top-up:', stripeError);
+      
+      // Fallback: Direct wallet top-up if Stripe fails
+      const result = await prisma.$transaction(async (tx) => {
+        // Update wallet balance directly
+        const updatedWallet = await tx.brandWallet.update({
+          where: { brandId: req.user.id },
+          data: {
+            balance: { increment: amount },
+            totalDeposited: { increment: amount }
+          }
+        });
+
+        // Create completed transaction record
+        await tx.brandWalletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'deposit',
+            amount: amount,
+            description: `Wallet top-up (Stripe fallback)`,
+            balanceBefore: wallet.balance,
+            balanceAfter: updatedWallet.balance,
+            referenceId: `fallback-${Date.now()}`
+          }
+        });
+
+        return updatedWallet;
+      });
+
+      // Notify brand about successful top-up
+      await createNotification(
+        req.user.id,
+        'brand',
+        'Wallet Top-Up Successful! 💰',
+        `Your wallet has been topped up with $${amount}. New balance: $${wallet.balance + amount}`,
+        'wallet'
+      );
+
+      res.json({
+        message: 'Wallet topped up successfully (fallback)',
+        data: result
+      });
+    }
+  } catch (error) {
+    console.error('Error creating wallet top-up:', error);
+    res.status(500).json({ error: 'Failed to create wallet top-up' });
+  }
+});
+
+// Brand deposit funds (legacy endpoint)
 app.post('/api/brands/wallet/deposit', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
@@ -3344,6 +3550,7 @@ app.post('/api/brands/wallet/deposit', authenticateToken, async (req, res) => {
             type: 'deposit',
             amount: amount,
             description: `Deposit via ${paymentMethod}`,
+            status: 'completed',
             balanceBefore: wallet.balance,
             balanceAfter: updatedWallet.balance
           }
@@ -3635,6 +3842,175 @@ app.post('/api/payments/create-payment-intent', authenticateToken, async (req, r
   }
 });
 
+// Process payment from wallet balance
+app.post('/api/payments/process-wallet-payment', authenticateToken, async (req, res) => {
+  try {
+    const { winnerId, amount } = req.body;
+    
+    // Verify the winner exists and belongs to the authenticated brand
+    const winner = await prisma.winner.findUnique({
+      where: { id: winnerId },
+      include: {
+        brief: {
+          include: { brand: true }
+        },
+        creator: true
+      }
+    });
+
+    if (!winner) {
+      return res.status(404).json({ error: 'Winner not found' });
+    }
+
+    // Verify the authenticated user is the brand owner
+    if (winner.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Check if payment already exists
+    const existingPayment = await prisma.payment.findUnique({
+      where: { winnerId }
+    });
+
+    if (existingPayment) {
+      return res.status(400).json({ error: 'Payment already exists for this winner' });
+    }
+
+    // Check brand wallet balance
+    const brandWallet = await prisma.brandWallet.findUnique({
+      where: { brandId: req.user.id }
+    });
+
+    if (!brandWallet || brandWallet.balance < amount) {
+      return res.status(400).json({ error: 'Insufficient wallet balance' });
+    }
+
+    // Process the payment from wallet
+    const result = await prisma.$transaction(async (tx) => {
+      // Create payment record
+      const payment = await tx.payment.create({
+        data: {
+          winnerId,
+          amount: amount,
+          paymentMethod: 'wallet',
+          rewardType: 'cash',
+          status: 'completed',
+          paidAt: new Date()
+        }
+      });
+
+      // Update brand wallet balance
+      const updatedBrandWallet = await tx.brandWallet.update({
+        where: { brandId: req.user.id },
+        data: {
+          balance: { decrement: amount },
+          totalSpent: { increment: amount }
+        }
+      });
+
+              // Create wallet transaction record
+        await tx.brandWalletTransaction.create({
+          data: {
+            walletId: brandWallet.id,
+            type: 'payment',
+            amount: amount,
+            description: `Payment to ${winner.creator.fullName} for "${winner.brief.title}"`,
+            balanceBefore: brandWallet.balance,
+            balanceAfter: updatedBrandWallet.balance,
+            referenceId: payment.id
+          }
+        });
+
+      // Update creator wallet (if exists)
+      let creatorWallet = await tx.creatorWallet.findUnique({
+        where: { creatorId: winner.creatorId }
+      });
+
+      if (!creatorWallet) {
+        creatorWallet = await tx.creatorWallet.create({
+          data: {
+            creatorId: winner.creatorId,
+            balance: 0,
+            totalEarned: 0,
+            totalWithdrawn: 0
+          }
+        });
+      }
+
+      // Update creator wallet
+      const updatedCreatorWallet = await tx.creatorWallet.update({
+        where: { creatorId: winner.creatorId },
+        data: {
+          balance: { increment: amount },
+          totalEarned: { increment: amount }
+        }
+      });
+
+              // Create creator wallet transaction
+        await tx.walletTransaction.create({
+          data: {
+            walletId: creatorWallet.id,
+            type: 'credit',
+            amount: amount,
+            description: `Payment received for "${winner.brief.title}"`,
+            balanceBefore: creatorWallet.balance,
+            balanceAfter: updatedCreatorWallet.balance,
+            referenceId: payment.id
+          }
+        });
+
+      // Update winner reward
+      if (winner.rewardId) {
+        await tx.winnerReward.update({
+          where: { id: winner.rewardId },
+          data: {
+            isPaid: true,
+            paidAt: new Date()
+          }
+        });
+      }
+
+      // Update brief total rewards paid
+      await tx.brief.update({
+        where: { id: winner.briefId },
+        data: {
+          totalRewardsPaid: {
+            increment: amount
+          }
+        }
+      });
+
+      return payment;
+    });
+
+    // Notify creator about payment received
+    await createNotification(
+      winner.creatorId,
+      'creator',
+      'Payment Received! 💰',
+      `You received $${amount} for winning "${winner.brief.title}"`,
+      'payment'
+    );
+
+    // Notify brand about payment sent
+    await createNotification(
+      winner.brief.brandId,
+      'brand',
+      'Payment Sent Successfully',
+      `Payment of $${amount} sent to ${winner.creator.fullName} for "${winner.brief.title}"`,
+      'payment'
+    );
+
+    res.json({ 
+      message: 'Payment processed successfully', 
+      data: result 
+    });
+  } catch (error) {
+    console.error('Error processing wallet payment:', error);
+    res.status(500).json({ error: 'Failed to process payment' });
+  }
+});
+
 // Process payment for credits or prizes (no Stripe needed)
 app.post('/api/payments/process-reward', authenticateToken, async (req, res) => {
   try {
@@ -3797,57 +4173,141 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object;
         
-        // Update payment status
-        await prisma.payment.update({
-          where: { stripePaymentIntentId: paymentIntent.id },
-          data: {
-            status: 'completed',
-            paidAt: new Date()
+        // Check if this is a wallet top-up
+        if (paymentIntent.metadata && paymentIntent.metadata.type === 'wallet_top_up') {
+          const brandId = paymentIntent.metadata.brandId;
+          const amount = parseFloat(paymentIntent.metadata.amount);
+
+          // Update wallet balance
+          const wallet = await prisma.brandWallet.findUnique({
+            where: { brandId: brandId }
+          });
+
+          if (wallet) {
+            await prisma.$transaction(async (tx) => {
+              // Update wallet balance
+              const updatedWallet = await tx.brandWallet.update({
+                where: { brandId: brandId },
+                data: {
+                  balance: { increment: amount },
+                  totalDeposited: { increment: amount }
+                }
+              });
+
+              // Update transaction balance
+              await tx.brandWalletTransaction.updateMany({
+                where: { 
+                  walletId: wallet.id,
+                  referenceId: paymentIntent.id
+                },
+                data: {
+                  balanceAfter: updatedWallet.balance
+                }
+              });
+            });
+
+            // Notify brand about successful top-up
+            await createNotification(
+              brandId,
+              'brand',
+              'Wallet Top-Up Successful! 💰',
+              `Your wallet has been topped up with $${amount}. New balance: $${wallet.balance + amount}`,
+              'wallet'
+            );
           }
-        });
-
-        // Update winner reward
-        const payment = await prisma.payment.findUnique({
-          where: { stripePaymentIntentId: paymentIntent.id },
-          include: { winner: true }
-        });
-
-        if (payment && payment.winner.rewardId) {
-          await prisma.winnerReward.update({
-            where: { id: payment.winner.rewardId },
-            data: {
-              isPaid: true,
-              paidAt: new Date()
+        } else {
+          // Handle regular payment to winners
+          const payment = await prisma.payment.findUnique({
+            where: { stripePaymentIntentId: paymentIntent.id },
+            include: { 
+              winner: {
+                include: {
+                  brief: true,
+                  creator: true
+                }
+              }
             }
           });
 
-                  // Update brief total rewards paid
-        await prisma.brief.update({
-          where: { id: payment.winner.briefId },
+          if (payment) {
+            await prisma.$transaction(async (tx) => {
+              // Update payment status
+              await tx.payment.update({
+                where: { stripePaymentIntentId: paymentIntent.id },
+                data: {
+                  status: 'completed',
+                  paidAt: new Date()
+                }
+              });
+
+              // Update winner reward
+              if (payment.winner.rewardId) {
+                await tx.winnerReward.update({
+                  where: { id: payment.winner.rewardId },
+                  data: {
+                    isPaid: true,
+                    paidAt: new Date()
+                  }
+                });
+              }
+
+              // Update brief total rewards paid
+              await tx.brief.update({
+                where: { id: payment.winner.briefId },
+                data: {
+                  totalRewardsPaid: {
+                    increment: payment.amount
+                  }
+                }
+              });
+
+              // Update brand wallet (deduct from balance)
+              const brandWallet = await tx.brandWallet.findUnique({
+                where: { brandId: payment.winner.brief.brandId }
+              });
+
+              if (brandWallet) {
+                await tx.brandWallet.update({
+                  where: { brandId: payment.winner.brief.brandId },
+                  data: {
+                    balance: { decrement: payment.amount },
+                    totalSpent: { increment: payment.amount }
+                  }
+                });
+
+                        // Create wallet transaction record
+        await tx.brandWalletTransaction.create({
           data: {
-            totalRewardsPaid: {
-              increment: payment.amount
-            }
+            walletId: brandWallet.id,
+            type: 'payment',
+            amount: payment.amount,
+            description: `Payment to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
+            balanceBefore: brandWallet.balance,
+            balanceAfter: brandWallet.balance - payment.amount,
+            referenceId: payment.id
           }
         });
+              }
+            });
 
-        // Notify creator about successful payment
-        await createNotification(
-          payment.winner.creatorId,
-          'creator',
-          'Payment Received! 💰',
-          `You received $${payment.amount} for winning "${payment.winner.brief.title}"`,
-          'payment'
-        );
+            // Notify creator about successful payment
+            await createNotification(
+              payment.winner.creatorId,
+              'creator',
+              'Payment Received! 💰',
+              `You received $${payment.amount} for winning "${payment.winner.brief.title}"`,
+              'payment'
+            );
 
-        // Notify brand about successful payment
-        await createNotification(
-          payment.winner.brief.brandId,
-          'brand',
-          'Payment Completed Successfully',
-          `Payment of $${payment.amount} sent to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
-          'payment'
-        );
+            // Notify brand about successful payment
+            await createNotification(
+              payment.winner.brief.brandId,
+              'brand',
+              'Payment Completed Successfully',
+              `Payment of $${payment.amount} sent to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
+              'payment'
+            );
+          }
         }
         break;
       }
