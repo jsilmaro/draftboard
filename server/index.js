@@ -142,7 +142,7 @@ app.use((req, res, next) => {
   
   // Security headers that don't interfere with OAuth
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from ALLOWALL for better security
+  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Set to ALLOWALL to enable iframe embedding
   res.setHeader('X-XSS-Protection', '1; mode=block');
   
   // Additional headers for Google OAuth compatibility
