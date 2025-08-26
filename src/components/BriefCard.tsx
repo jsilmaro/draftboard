@@ -67,7 +67,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer group ${
+      className={`bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer group ${
         isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -75,30 +75,29 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
       onClick={handleCardClick}
     >
       {/* Header with Brand Info */}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               {brief.brand.logo ? (
                 <img 
                   src={brief.brand.logo} 
                   alt={brief.brand.companyName}
-                  className="w-8 h-8 rounded-lg object-cover"
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg object-cover"
                 />
               ) : (
-                <span className="text-white font-bold text-lg">
+                <span className="text-white font-bold text-sm sm:text-lg">
                   {brief.brand.companyName.charAt(0).toUpperCase()}
                 </span>
               )}
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm truncate">
                 {brief.brand.companyName}
               </h3>
-
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0">
             <div className={`text-xs font-medium px-2 py-1 rounded-full ${
               daysRemaining < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
               daysRemaining <= 3 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' :
@@ -110,31 +109,31 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
         </div>
 
         {/* Brief Title and Description */}
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
             {brief.title}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
             {brief.description}
           </p>
         </div>
 
         {/* Reward Information */}
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Reward</span>
-            <span className="text-lg font-bold text-green-600 dark:text-green-400">
+            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Reward</span>
+            <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
               ${brief.reward.toLocaleString()}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             <span>Target: {brief.amountOfWinners} creators</span>
             <span>{brief.submissions.length} applied</span>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
             <span>Rewards Progress</span>
             <span>{progressPercentage.toFixed(1)}%</span>
@@ -150,7 +149,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
         {/* Apply Button */}
         <button
           onClick={handleApplyClick}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           disabled={daysRemaining < 0}
         >
           {daysRemaining < 0 ? 'Expired' : 'Apply Now'}

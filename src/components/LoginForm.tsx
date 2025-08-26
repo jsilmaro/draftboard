@@ -60,13 +60,13 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md fade-in">
         <div className="text-center">
           <div className="mb-4 bounce-in">
             <DefaultAvatar name="User" size="xl" className="mx-auto" />
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 slide-in-up">Sign in to your account</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 slide-in-up">Sign in to your account</h2>
           <p className="mt-2 text-sm text-gray-600 fade-in-delay-1">
             Or{' '}
             <Link to="/" className="font-medium text-indigo-600 hover:text-indigo-500 nav-item">
@@ -76,8 +76,8 @@ const LoginForm: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 scale-in">
+      <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white dark:bg-gray-800 py-6 sm:py-8 px-4 shadow sm:rounded-lg sm:px-10 scale-in">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
@@ -152,7 +152,7 @@ const LoginForm: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Link
                 to="/brand/register"
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"

@@ -687,9 +687,9 @@ const BrandForm: React.FC = () => {
   };
 
   return (
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-gray-800 py-6 sm:py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {renderStepIndicator()}
           
           {error && (
@@ -701,12 +701,12 @@ const BrandForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {renderCurrentStep()}
 
-            <div className="flex justify-between pt-6">
+            <div className="flex flex-col sm:flex-row justify-between pt-6 space-y-3 sm:space-y-0">
               {currentStep > 1 && (
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full sm:w-auto px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Previous
                 </button>
@@ -718,7 +718,7 @@ const BrandForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary"
+                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary"
                 >
                   Next
                 </button>
@@ -726,7 +726,7 @@ const BrandForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary disabled:opacity-50"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Brand Account'}
                 </button>

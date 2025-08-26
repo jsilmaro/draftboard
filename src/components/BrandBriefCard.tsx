@@ -93,37 +93,36 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 group ${
+      className={`bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 group ${
         isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               {brief.brand?.logo ? (
                 <img 
                   src={brief.brand.logo} 
                   alt={brief.brand.companyName}
-                  className="w-8 h-8 rounded-lg object-cover"
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg object-cover"
                 />
               ) : (
-                <span className="text-white font-bold text-lg">
+                <span className="text-white font-bold text-sm sm:text-lg">
                   {brief.brand?.companyName?.charAt(0).toUpperCase() || 'B'}
                 </span>
               )}
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm truncate">
                 {brief.brand?.companyName || 'Your Brand'}
               </h3>
-
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0">
             <div className={getStatusBadge()}>
               {getStatusText()}
             </div>
@@ -131,35 +130,35 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         </div>
 
         {/* Brief Title and Description */}
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
             {brief.title}
           </h2>
           {brief.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
               {brief.description}
             </p>
           )}
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Target</div>
-            <div className="text-lg font-bold text-gray-900 dark:text-white">
+            <div className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
               {brief.amountOfWinners || 1}
             </div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Applied</div>
-            <div className="text-lg font-bold text-gray-900 dark:text-white">
+            <div className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
               {submissionsCount}
             </div>
           </div>
         </div>
 
         {/* Progress Bars */}
-        <div className="space-y-3 mb-4">
+        <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
           {/* Submissions Progress */}
           <div>
             <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
@@ -191,25 +190,25 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Total Value */}
         {totalRewardValue > 0 && (
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 mb-4">
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4">
             <div className="text-xs text-green-600 dark:text-green-400 mb-1">Total Value</div>
-            <div className="text-lg font-bold text-green-700 dark:text-green-300">
+            <div className="text-sm sm:text-lg font-bold text-green-700 dark:text-green-300">
               ${totalRewardValue.toLocaleString()}
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             onClick={() => onViewClick?.(brief)}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             View
           </button>
           <button
             onClick={() => onViewSubmissionsClick?.(brief)}
-            className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+            className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
           >
             Submissions ({submissionsCount})
           </button>
@@ -218,7 +217,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               const shareUrl = `${window.location.origin}/brand/${brief.brand?.id || 'unknown'}/briefs`;
               window.open(shareUrl, '_blank');
             }}
-            className="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors"
+            className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"
             title="Open shareable link"
           >
             📤 Share

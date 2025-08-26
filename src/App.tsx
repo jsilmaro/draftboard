@@ -31,7 +31,7 @@ function App() {
       <ToastProvider>
         <ThemeProvider>
           <AuthProvider>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-fade-in transition-colors duration-300">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-fade-in transition-colors duration-300 overflow-x-hidden">
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginForm />} />
