@@ -142,8 +142,9 @@ app.use((req, res, next) => {
   
   // Security headers that don't interfere with OAuth
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Set to ALLOWALL to enable iframe embedding
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow same-origin iframe embedding
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *"); // Allow iframe embedding from any origin
   
   // Additional headers for Google OAuth compatibility
   res.setHeader('Permissions-Policy', 'interest-cohort=(), camera=(), microphone=(), geolocation=()');

@@ -24,7 +24,7 @@ export default defineConfig({
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept, X-Client-Version, X-Client-Name',
-      'X-Frame-Options': 'ALLOWALL',
+      'X-Frame-Options': 'SAMEORIGIN',
       'Permissions-Policy': 'interest-cohort=(), camera=(), microphone=(), geolocation=()',
     },
   },
