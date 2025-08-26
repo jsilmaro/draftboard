@@ -31,6 +31,7 @@ interface BrandBriefCardProps {
   onEditRewardsClick?: (brief: BrandBriefCardProps['brief']) => void;
   onSelectWinnersClick?: (brief: BrandBriefCardProps['brief']) => void;
   onViewSubmissionsClick?: (brief: BrandBriefCardProps['brief']) => void;
+
 }
 
 const BrandBriefCard: React.FC<BrandBriefCardProps> = ({ 
@@ -39,7 +40,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   onEditClick: _onEditClick, 
   onEditRewardsClick: _onEditRewardsClick, 
   onSelectWinnersClick: _onSelectWinnersClick,
-  onViewSubmissionsClick 
+  onViewSubmissionsClick
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -199,7 +200,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={() => onViewClick?.(brief)}
             className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -212,6 +213,10 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
           >
             Submissions ({submissionsCount})
           </button>
+        </div>
+        
+        {/* Additional Action Buttons */}
+        <div className="grid grid-cols-1 gap-2 mt-2">
           <button
             onClick={() => {
               const shareUrl = `${window.location.origin}/brand/${brief.brand?.id || 'unknown'}/briefs`;

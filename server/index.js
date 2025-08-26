@@ -1640,7 +1640,8 @@ app.get('/api/brands/submissions', authenticateToken, async (req, res) => {
         creator: {
           select: {
             fullName: true,
-            userName: true
+            userName: true,
+            email: true
           }
         },
         brief: {
@@ -1659,6 +1660,13 @@ app.get('/api/brands/submissions', authenticateToken, async (req, res) => {
       briefTitle: sub.brief.title,
       status: sub.status,
       submittedAt: sub.submittedAt,
+      content: sub.content || 'No content provided',
+      briefId: sub.briefId,
+      creator: {
+        fullName: sub.creator.fullName,
+        userName: sub.creator.userName,
+        email: sub.creator.email || 'No email provided'
+      },
       thumbnail: null // Placeholder for future image support
     }));
 
@@ -4009,6 +4017,165 @@ app.post('/api/payments/process-wallet-payment', authenticateToken, async (req, 
   } catch (error) {
     console.error('Error processing wallet payment:', error);
     res.status(500).json({ error: 'Failed to process payment' });
+  }
+});
+
+// Get payment methods for a brand
+app.get('/api/brands/payment-methods', authenticateToken, async (req, res) => {
+  try {
+    // For now, return default payment methods
+    // In a real application, you would fetch from a payment_methods table
+    const paymentMethods = [
+      {
+        id: 'wallet',
+        type: 'wallet',
+        name: 'Wallet Balance',
+        isDefault: true
+      },
+      {
+        id: 'stripe_card',
+        type: 'card',
+        name: 'Credit/Debit Card',
+        brand: 'stripe',
+        isDefault: false
+      }
+    ];
+
+    res.json(paymentMethods);
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({ error: 'Failed to fetch payment methods' });
+  }
+});
+
+// Bulk payment endpoint for processing multiple winners at once
+app.post('/api/brands/bulk-payment', authenticateToken, async (req, res) => {
+  try {
+    const { winnerIds, paymentMethod } = req.body;
+    
+    if (!winnerIds || !Array.isArray(winnerIds) || winnerIds.length === 0) {
+      return res.status(400).json({ error: 'Winner IDs are required' });
+    }
+
+    // Verify all winners exist and belong to the authenticated brand
+    const winners = await prisma.winner.findMany({
+      where: {
+        id: { in: winnerIds },
+        brief: {
+          brandId: req.user.id
+        }
+      },
+      include: {
+        brief: true,
+        creator: true,
+        reward: true
+      }
+    });
+
+    if (winners.length !== winnerIds.length) {
+      return res.status(404).json({ error: 'Some winners not found or unauthorized' });
+    }
+
+    // Check if any winners are already paid
+    const alreadyPaid = winners.filter(w => w.status === 'paid');
+    if (alreadyPaid.length > 0) {
+      return res.status(400).json({ 
+        error: 'Some winners are already paid', 
+        alreadyPaid: alreadyPaid.map(w => w.id) 
+      });
+    }
+
+    // Process bulk payment
+    const result = await prisma.$transaction(async (tx) => {
+      const payments = [];
+      const transactionId = `BULK_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      for (const winner of winners) {
+        // Create payment record
+        const payment = await tx.payment.create({
+          data: {
+            winnerId: winner.id,
+            amount: winner.reward?.cashAmount || 0,
+            paymentMethod: paymentMethod || 'wallet',
+            rewardType: 'winner_payment',
+            status: 'completed',
+            paidAt: new Date(),
+            transactionId: transactionId
+          }
+        });
+
+        // Update winner status
+        await tx.winner.update({
+          where: { id: winner.id },
+          data: {
+            status: 'paid',
+            paymentDetails: {
+              transactionId: transactionId,
+              paymentMethod: paymentMethod || 'wallet',
+              paidAt: new Date().toISOString()
+            }
+          }
+        });
+
+        // Update creator wallet if payment method is wallet
+        if (paymentMethod === 'wallet' && winner.reward?.cashAmount > 0) {
+          let creatorWallet = await tx.creatorWallet.findUnique({
+            where: { creatorId: winner.creatorId }
+          });
+
+          if (!creatorWallet) {
+            creatorWallet = await tx.creatorWallet.create({
+              data: {
+                creatorId: winner.creatorId,
+                balance: 0,
+                totalEarned: 0
+              }
+            });
+          }
+
+          const updatedCreatorWallet = await tx.creatorWallet.update({
+            where: { id: creatorWallet.id },
+            data: {
+              balance: creatorWallet.balance + (winner.reward?.cashAmount || 0),
+              totalEarned: creatorWallet.totalEarned + (winner.reward?.cashAmount || 0)
+            }
+          });
+
+          // Create wallet transaction
+          await tx.walletTransaction.create({
+            data: {
+              walletId: creatorWallet.id,
+              type: 'credit',
+              amount: winner.reward?.cashAmount || 0,
+              description: `Payment for winning ${winner.brief.title}`,
+              referenceId: payment.id,
+              balanceBefore: creatorWallet.balance,
+              balanceAfter: updatedCreatorWallet.balance
+            }
+          });
+        }
+
+        payments.push(payment);
+      }
+
+      return {
+        transactionId,
+        payments,
+        totalProcessed: payments.length,
+        totalAmount: payments.reduce((sum, p) => sum + p.amount, 0)
+      };
+    });
+
+    res.json({
+      success: true,
+      message: `Successfully processed ${result.totalProcessed} payments`,
+      transactionId: result.transactionId,
+      totalAmount: result.totalAmount
+    });
+
+  } catch (error) {
+    console.error('Bulk payment error:', error);
+    res.status(500).json({ error: 'Failed to process bulk payment' });
   }
 });
 

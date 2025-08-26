@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import WinnerSelectionModal from './WinnerSelectionModal';
+
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
 import ThemeToggle from './ThemeToggle';
@@ -117,6 +118,7 @@ const BrandDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { showSuccessToast, showErrorToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -199,6 +201,8 @@ const BrandDashboard: React.FC = () => {
       showErrorToast('Failed to load submissions');
     }
   };
+
+
 
   const handleWinnersSelected = async (_winners: { submissionId: string; position: number }[]) => {
     try {
@@ -633,6 +637,8 @@ const BrandDashboard: React.FC = () => {
   const handleTabClick = (tabId: string) => {
     if (tabId === 'create') {
       navigate('/brand/create-brief');
+    } else if (tabId === 'rewards-payments') {
+      navigate('/rewards-payments');
     } else {
       setActiveTab(tabId);
     }
@@ -644,6 +650,7 @@ const BrandDashboard: React.FC = () => {
     { id: 'submissions', label: 'Submissions', icon: '📚' },
     { id: 'create', label: 'Create a Brief', icon: '📄➕' },
     { id: 'creators', label: 'Creators', icon: '👥' },
+    { id: 'rewards-payments', label: 'Rewards & Payments', icon: '🎯' },
     { id: 'wallet', label: 'Wallet', icon: '💳' },
     { id: 'payments', label: 'Payments', icon: '💰' },
   ];
@@ -3081,6 +3088,8 @@ const BrandDashboard: React.FC = () => {
         onClose={() => setShowWinnerSelectionModal(false)}
         onWinnersSelected={handleWinnersSelected}
       />
+
+
 
       {/* Animated Notifications */}
       {showSuccessNotification && (

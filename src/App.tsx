@@ -11,6 +11,7 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import PublicBrandBriefs from './components/PublicBrandBriefs'
+import RewardsPaymentPage from './components/RewardsPaymentPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
@@ -37,6 +38,15 @@ function App() {
               <Route path="/login" element={<LoginForm />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
+
+              <Route 
+                path="/rewards-payments" 
+                element={
+                  <ProtectedRoute requiredUserType="brand">
+                    <RewardsPaymentPage />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/admin" 
                 element={
