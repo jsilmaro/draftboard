@@ -7,7 +7,7 @@ import WinnerSelectionModal from './WinnerSelectionModal';
 
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
-import ThemeToggle from './ThemeToggle';
+
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -2561,20 +2561,54 @@ const BrandDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col lg:flex-row transition-colors duration-300">
+    <div className="min-h-screen bg-black flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
+      {/* Sophisticated Background with Glass-morphism */}
+      <div className="absolute inset-0">
+        {/* Primary dark gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        
+        {/* Subtle neon green lighting effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-400/15 via-transparent to-green-600/8 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-600/4 via-transparent to-green-500/10 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Floating glass panels with mirror-like effects */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-gray-900/30 to-gray-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-gray-900/25 to-gray-800/30 backdrop-blur-xl border border-purple-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-gray-900/28 to-gray-800/18 backdrop-blur-xl border border-pink-500/15 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Subtle moving elements */}
+        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-30 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
+        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-purple-400 rounded-full opacity-25 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-pink-400 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
+        
+        {/* CSS Animations */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes float {
+              0%, 100% { transform: translateY(0px) translateX(0px); }
+              25% { transform: translateY(-10px) translateX(5px); }
+              50% { transform: translateY(-20px) translateX(-3px); }
+              75% { transform: translateY(-10px) translateX(-5px); }
+            }
+          `
+        }} />
+      </div>
+      
+      {/* Content Container */}
+      <div className="relative z-10 flex flex-col lg:flex-row w-full">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+      <div className="lg:hidden bg-gray-900/50 backdrop-blur-xl border-b border-green-500/20 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <DefaultAvatar name={user?.companyName || 'Brand'} size="sm" className="mr-3" />
-            <span className="font-bold text-lg text-gray-900 dark:text-white">{user?.companyName || 'Brand'}</span>
+            <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 6px rgba(34,197,94,0.4))'}} />
+            <span className="font-bold text-lg text-white">{user?.companyName || 'Brand'}</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <NotificationBell />
-            <ThemeToggle />
-            <button
+                      <div className="flex items-center space-x-3">
+              <NotificationBell />
+              <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-400 hover:text-gray-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -2585,11 +2619,11 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Sidebar */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white lg:min-h-screen`}>
+      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-gray-900/70 backdrop-blur-xl border-r border-green-500/20 text-white lg:min-h-screen`}>
         <div className="p-4 lg:p-6">
           
           <div className="flex items-center justify-center mb-6 lg:mb-8">
-            <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
+            <img src="/logo-light2.svg" alt="DraftBoard" className="h-12 w-auto" style={{filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.4))'}} />
           </div>
 
           <nav className="space-y-2">
@@ -2597,21 +2631,21 @@ const BrandDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleTabClick(item.id)}
-                className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                   activeTab === item.id
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-gray-700'
+                    ? 'bg-green-500/15 text-green-400 shadow-lg shadow-green-500/20 border border-green-500/25'
+                    : 'text-gray-300 hover:text-green-400 hover:bg-green-500/8 border border-transparent hover:border-green-500/15'
                 }`}
                 title={item.label}
               >
                 <span className="mr-3 text-lg">{item.icon}</span>
-                <span className="text-sm">{item.label}</span>
+                <span className="text-sm font-medium">{item.label}</span>
               </button>
             ))}
           </nav>
 
-          <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-gray-200 dark:border-gray-600">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Account</h3>
+          <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-green-500/20">
+            <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-4">Account</h3>
             <nav className="space-y-2">
               {accountNav.map((item) => (
                 <button
@@ -2623,15 +2657,15 @@ const BrandDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                     activeTab === item.id
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-gray-700'
+                      ? 'bg-green-500/15 text-green-400 shadow-lg shadow-green-500/20 border border-green-500/25'
+                      : 'text-gray-300 hover:text-green-400 hover:bg-green-500/8 border border-transparent hover:border-green-500/15'
                   }`}
                   title={item.label}
                 >
                   <span className="mr-3 text-lg">{item.icon}</span>
-                  <span className="text-sm">{item.label}</span>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </button>
               ))}
             </nav>
@@ -2640,12 +2674,12 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm">
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-4">
+        <div className="hidden lg:block bg-gray-900/50 backdrop-blur-xl border-b border-green-500/20 px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-white">
                 {activeTab === 'overview' ? 'Dashboard' : 
                  activeTab === 'briefs' ? 'My Briefs' :
                  activeTab === 'submissions' ? 'Submissions' :
@@ -2658,7 +2692,6 @@ const BrandDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationBell />
-              <ThemeToggle />
               <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
             </div>
           </div>
@@ -3098,6 +3131,7 @@ const BrandDashboard: React.FC = () => {
           onClose={() => setShowSuccessNotification(false)}
         />
       )}
+      </div>
     </div>
   );
 };
