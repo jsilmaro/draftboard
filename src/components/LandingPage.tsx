@@ -34,10 +34,123 @@ const LandingPage = () => {
           }}
         ></div>
         
-        {/* Floating glass panels with mirror-like effects */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-gray-900/40 to-gray-800/30 backdrop-blur-xl border border-green-500/20 rounded-2xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-gray-900/30 to-gray-800/40 backdrop-blur-xl border border-purple-500/20 rounded-2xl opacity-15 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-gray-900/35 to-gray-800/25 backdrop-blur-xl border border-pink-500/20 rounded-2xl opacity-18 animate-pulse" style={{animationDelay: '2s'}}></div>
+                 {/* Stripe Payment Cards in Background */}
+         <div className="absolute top-1/4 left-1/4 w-96 h-64 transform -rotate-6 opacity-20 animate-pulse">
+           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-6 relative overflow-hidden h-full">
+             <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
+             <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/5 rounded-full -ml-6 -mb-6"></div>
+             
+             <div className="flex justify-between items-start mb-6">
+               <div className="text-white">
+                 <div className="text-xs opacity-80 mb-1">Secure Payment</div>
+                 <div className="text-sm font-semibold">Stripe Verified</div>
+               </div>
+               <div className="flex items-center space-x-1">
+                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                   <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                     <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+                   </svg>
+                 </div>
+               </div>
+             </div>
+             
+             <div className="flex justify-between items-end">
+               <div className="text-white/80">
+                 <div className="text-xs mb-1">Powered by</div>
+                 <div className="text-white font-bold text-lg tracking-wider">STRIPE</div>
+               </div>
+               <div className="text-white/60 text-xs">
+                 <div>Secure</div>
+                 <div>PCI DSS</div>
+               </div>
+             </div>
+             
+             {/* Stripe Logo Overlay */}
+             <div className="absolute top-4 right-4">
+               <svg className="w-12 h-12 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+               </svg>
+             </div>
+           </div>
+         </div>
+         
+         <div className="absolute top-1/3 right-1/4 w-80 h-48 transform rotate-6 opacity-15 animate-pulse" style={{animationDelay: '1s'}}>
+           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-6 relative overflow-hidden h-full">
+             <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
+             <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/5 rounded-full -ml-6 -mb-6"></div>
+             
+             <div className="flex justify-between items-start mb-6">
+               <div className="text-white">
+                 <div className="text-xs opacity-80 mb-1">Secure Payment</div>
+                 <div className="text-sm font-semibold">Stripe Verified</div>
+               </div>
+               <div className="flex items-center space-x-1">
+                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                   <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                     <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+                   </svg>
+                 </div>
+               </div>
+             </div>
+             
+             <div className="flex justify-between items-end">
+               <div className="text-white/80">
+                 <div className="text-xs mb-1">Powered by</div>
+                 <div className="text-white font-bold text-lg tracking-wider">STRIPE</div>
+               </div>
+               <div className="text-white/60 text-xs">
+                 <div>Secure</div>
+                 <div>PCI DSS</div>
+               </div>
+             </div>
+             
+             {/* Stripe Logo Overlay */}
+             <div className="absolute top-4 right-4">
+               <svg className="w-12 h-12 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+               </svg>
+             </div>
+           </div>
+         </div>
+         
+         <div className="absolute bottom-1/4 left-1/3 w-72 h-56 transform -rotate-6 opacity-18 animate-pulse" style={{animationDelay: '2s'}}>
+           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-6 relative overflow-hidden h-full">
+             <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
+             <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/5 rounded-full -ml-6 -mb-6"></div>
+             
+             <div className="flex justify-between items-start mb-6">
+               <div className="text-white">
+                 <div className="text-xs opacity-80 mb-1">Secure Payment</div>
+                 <div className="text-sm font-semibold">Stripe Verified</div>
+               </div>
+               <div className="flex items-center space-x-1">
+                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                   <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                     <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+                   </svg>
+                 </div>
+               </div>
+             </div>
+             
+             <div className="flex justify-between items-end">
+               <div className="text-white/80">
+                 <div className="text-xs mb-1">Powered by</div>
+                 <div className="text-white font-bold text-lg tracking-wider">STRIPE</div>
+               </div>
+               <div className="text-white/60 text-xs">
+                 <div>Secure</div>
+                 <div>PCI DSS</div>
+               </div>
+             </div>
+             
+             {/* Stripe Logo Overlay */}
+             <div className="absolute top-4 right-4">
+               <svg className="w-12 h-12 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.831 3.47 1.426 3.47 2.338 0 .914-.796 1.431-2.126 1.431-1.72 0-4.516-.924-6.378-2.168l-.889 5.52c2.172 1.281 5.274 2.206 8.876 2.206 2.669 0 4.843-.624 6.328-1.813 1.664-1.305 2.467-3.236 2.467-5.732 0-4.128-2.524-5.851-6.594-7.305h-.007z"/>
+               </svg>
+             </div>
+           </div>
+         </div>
         
         {/* Subtle moving elements */}
         <div className="absolute top-1/6 right-1/6 w-4 h-4 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>

@@ -403,16 +403,16 @@ const CreatorDashboard: React.FC = () => {
     { id: 'logout', label: 'Logout', icon: '🚪', action: logout },
   ];
 
-    const renderOverview = () => (
+  const renderOverview = () => (
     <div className="space-y-6">
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Connect with Amazing Brands 🚀
-        </h1>
+            Connect with Amazing Brands 🚀
+          </h1>
         <p className="text-lg text-gray-300">
-          Showcase your creativity and discover exciting opportunities with top brands worldwide.
-        </p>
+            Showcase your creativity and discover exciting opportunities with top brands worldwide.
+          </p>
       </div>
 
       {/* Stats Cards */}
@@ -505,13 +505,13 @@ const CreatorDashboard: React.FC = () => {
             </div>
             {availableBriefs.length > 4 && (
               <div className="mt-6 text-center">
-                <button
+              <button
                   onClick={() => setActiveTab('briefs')}
                   className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                >
+              >
                   View All Briefs →
-                </button>
-              </div>
+              </button>
+            </div>
             )}
           </div>
         </div>
@@ -532,38 +532,38 @@ const CreatorDashboard: React.FC = () => {
             
             <div className="space-y-3">
               {getRecentActivities().slice(0, 5).map((activity, index) => (
-                <div 
-                  key={activity.id}
+                  <div 
+                    key={activity.id}
                   className={`p-3 rounded-lg border border-gray-700 transition-all duration-300 ${
-                    index === currentActivityIndex 
+                      index === currentActivityIndex 
                       ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/50' 
                       : 'bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                      index === currentActivityIndex 
-                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
+                        index === currentActivityIndex 
+                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
                         : 'bg-gray-700 text-gray-300'
-                    }`}>
-                      {activity.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
+                      }`}>
+                        {activity.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">
-                        {activity.title}
-                      </p>
+                          {activity.title}
+                        </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        New brief from {activity.brand}
-                      </p>
-                    </div>
-                    <div className="text-right">
+                          New brief from {activity.brand}
+                        </p>
+                      </div>
+                      <div className="text-right">
                       <span className="text-xs text-gray-500 font-medium">
-                        {activity.time}
-                      </span>
+                          {activity.time}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>
@@ -1066,9 +1066,9 @@ const CreatorDashboard: React.FC = () => {
             <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.3))'}} />
             <span className="font-bold text-lg text-white">{user?.userName || 'Creator'}</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <NotificationBell />
-            <button
+                      <div className="flex items-center space-x-3">
+              <NotificationBell />
+              <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
             >

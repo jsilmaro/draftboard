@@ -667,12 +667,12 @@ const BrandDashboard: React.FC = () => {
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Grow Your Brand with Amazing Creators 🚀
+            Grow Your Brand with Amazing Creators 🚀
         </h1>
         <p className="text-lg text-gray-300">
-          Connect with talented creators and bring your brand vision to life with compelling content.
-        </p>
-      </div>
+            Connect with talented creators and bring your brand vision to life with compelling content.
+          </p>
+        </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -681,34 +681,34 @@ const BrandDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
               <span className="text-2xl">📄</span>
-            </div>
-          </div>
+              </div>
+              </div>
           <div className="text-white">
             <p className="text-3xl font-bold mb-2">{metrics.activeBriefs}</p>
             <p className="text-sm opacity-90">Active Briefs</p>
-          </div>
-        </div>
+            </div>
+      </div>
 
         {/* Submissions This Week Card */}
         <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
               <span className="text-2xl">📈</span>
-            </div>
-          </div>
+        </div>
+        </div>
           <div className="text-white">
             <p className="text-3xl font-bold mb-2">{metrics.submissionsThisWeek}</p>
             <p className="text-sm opacity-90">Submissions This Week</p>
-          </div>
         </div>
+      </div>
 
         {/* Winners Selected Card */}
         <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
               <span className="text-2xl">🏆</span>
-            </div>
           </div>
+        </div>
           <div className="text-white">
             <p className="text-3xl font-bold mb-2">{metrics.winnersSelected}</p>
             <p className="text-sm opacity-90">Winners Selected</p>
@@ -724,18 +724,18 @@ const BrandDashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Recent Submissions</h2>
               <span className="text-sm text-gray-400">{submissions.length} total</span>
-            </div>
+                  </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {submissions.slice(0, 4).map((submission) => (
                 <div key={submission.id} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
                       <span className="text-white">👤</span>
-                    </div>
+                </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-white">{submission.creatorName}</p>
                       <p className="text-xs text-gray-400">Applied to {submission.briefTitle}</p>
-                    </div>
+            </div>
                     <div className="text-right">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
@@ -744,8 +744,8 @@ const BrandDashboard: React.FC = () => {
                       }`}>
                         {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                       </span>
-                    </div>
-                  </div>
+          </div>
+        </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400">
                       {new Date(submission.submittedAt).toLocaleDateString()}
@@ -756,8 +756,8 @@ const BrandDashboard: React.FC = () => {
                     >
                       Review →
                     </button>
-                  </div>
-                </div>
+            </div>
+          </div>
               ))}
             </div>
             {submissions.length > 4 && (
@@ -768,10 +768,10 @@ const BrandDashboard: React.FC = () => {
                 >
                   View All Submissions →
                 </button>
-              </div>
-            )}
           </div>
-        </div>
+            )}
+            </div>
+          </div>
 
         {/* Live Activity Feed */}
         <div className="lg:col-span-1">
@@ -784,10 +784,10 @@ const BrandDashboard: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-xs text-green-400 font-semibold">LIVE</span>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
+        </div>
+      </div>
+
+        <div className="space-y-3">
               {submissions.slice(0, 5).map((submission, index) => (
                 <div 
                   key={submission.id}
@@ -816,12 +816,12 @@ const BrandDashboard: React.FC = () => {
                     <div className="text-right">
                       <span className="text-xs text-gray-500 font-medium">
                         {Math.floor(Math.random() * 10) + 1}m ago
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              </span>
             </div>
+        </div>
+      </div>
+              ))}
+        </div>
           </div>
         </div>
       </div>
@@ -2562,9 +2562,9 @@ const BrandDashboard: React.FC = () => {
             <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.3))'}} />
             <span className="font-bold text-lg text-white">{user?.companyName || 'Brand'}</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <NotificationBell />
-            <button
+                      <div className="flex items-center space-x-3">
+              <NotificationBell />
+              <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
             >
