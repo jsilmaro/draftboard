@@ -249,50 +249,50 @@ const AdminDashboard: React.FC = () => {
 
   const renderOverview = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-blue-100 rounded-full">
             <span className="text-2xl">🏢</span>
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Brands</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.totalBrands}</p>
+            <p className="text-sm font-medium text-gray-300">Total Brands</p>
+            <p className="text-2xl font-bold text-white">{analytics.totalBrands}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-green-100 rounded-full">
             <span className="text-2xl">👤</span>
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Creators</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.totalCreators}</p>
+            <p className="text-sm font-medium text-gray-300">Total Creators</p>
+            <p className="text-2xl font-bold text-white">{analytics.totalCreators}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-purple-100 rounded-full">
             <span className="text-2xl">📋</span>
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Available Briefs</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{briefs.filter(b => b.status === 'active').length}</p>
+            <p className="text-sm font-medium text-gray-300">Available Briefs</p>
+            <p className="text-2xl font-bold text-white">{briefs.filter(b => b.status === 'active').length}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-yellow-100 rounded-full">
             <span className="text-2xl">💰</span>
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Monthly Revenue</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">${analytics.monthlyRevenue.toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-300">Monthly Revenue</p>
+            <p className="text-2xl font-bold text-white">${analytics.monthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -300,10 +300,10 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBrands = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Brand Management</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Overview of registered brands with contact information</p>
+    <div className="bg-gray-900 rounded-lg shadow-md">
+      <div className="p-6 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white">Brand Management</h3>
+        <p className="text-sm text-gray-300 mt-1">Overview of registered brands with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -316,20 +316,20 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {brands.map((brand) => (
               <tr key={brand.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">{brand.companyName?.charAt(0)}</span>
+                      <span className="text-sm font-medium text-gray-300">{brand.companyName?.charAt(0)}</span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{brand.companyName}</div>
+                      <div className="text-sm font-medium text-white">{brand.companyName}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {brand.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -339,7 +339,7 @@ const AdminDashboard: React.FC = () => {
                     {brand.isVerified ? 'Verified' : 'Pending'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {new Date(brand.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -355,10 +355,10 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderCreators = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Creator Management</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Overview of registered creators with contact information</p>
+    <div className="bg-gray-900 rounded-lg shadow-md">
+      <div className="p-6 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white">Creator Management</h3>
+        <p className="text-sm text-gray-300 mt-1">Overview of registered creators with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -371,21 +371,21 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {creators.map((creator) => (
               <tr key={creator.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">{creator.userName?.charAt(0)}</span>
+                      <span className="text-sm font-medium text-gray-300">{creator.userName?.charAt(0)}</span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{creator.fullName}</div>
+                      <div className="text-sm font-medium text-white">{creator.fullName}</div>
                       <div className="text-sm text-gray-500 dark:text-gray-300">@{creator.userName}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {creator.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -395,7 +395,7 @@ const AdminDashboard: React.FC = () => {
                     {creator.isVerified ? 'Verified' : 'Pending'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {new Date(creator.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -411,10 +411,10 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBriefs = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Brief Management</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Manage all campaign briefs</p>
+    <div className="bg-gray-900 rounded-lg shadow-md">
+      <div className="p-6 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white">Brief Management</h3>
+        <p className="text-sm text-gray-300 mt-1">Manage all campaign briefs</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -428,25 +428,25 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {briefs.map((brief) => (
               <tr key={brief.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{brief.title}</div>
+                  <div className="text-sm font-medium text-white">{brief.title}</div>
                   <div className="text-sm text-gray-500 dark:text-gray-300">Created {new Date(brief.createdAt).toLocaleDateString()}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{brief.brandName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${brief.reward.toLocaleString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.brandName}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${brief.reward.toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     brief.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
                     brief.status === 'completed' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400' :
-                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                    'bg-gray-800 text-gray-800 dark:text-gray-300'
                   }`}>
                     {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{brief.submissions}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.submissions}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">View</button>
                   <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
@@ -460,10 +460,10 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderSubmissions = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Submission Monitoring</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Track all creator submissions</p>
+    <div className="bg-gray-900 rounded-lg shadow-md">
+      <div className="p-6 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white">Submission Monitoring</h3>
+        <p className="text-sm text-gray-300 mt-1">Track all creator submissions</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -477,14 +477,14 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {submissions.map((submission) => (
               <tr key={submission.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{submission.creatorName}</div>
+                  <div className="text-sm font-medium text-white">{submission.creatorName}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{submission.briefTitle}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${submission.amount}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{submission.briefTitle}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
@@ -494,7 +494,7 @@ const AdminDashboard: React.FC = () => {
                     {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {new Date(submission.submittedAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -511,10 +511,10 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderPayouts = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Payout Management</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Track and manage creator payouts</p>
+    <div className="bg-gray-900 rounded-lg shadow-md">
+      <div className="p-6 border-b border-gray-700">
+        <h3 className="text-lg font-semibold text-white">Payout Management</h3>
+        <p className="text-sm text-gray-300 mt-1">Track and manage creator payouts</p>
       </div>
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -543,17 +543,17 @@ const AdminDashboard: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {submissions.filter(s => s.status === 'approved').map((submission) => (
                 <tr key={submission.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{submission.creatorName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${submission.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{submission.creatorName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400">
                       Paid
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -571,57 +571,57 @@ const AdminDashboard: React.FC = () => {
   const renderAnalytics = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Brief Performance</h3>
+        <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-white mb-4">Brief Performance</h3>
           <div className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Available Briefs</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{briefs.filter(b => b.status === 'active').length}</span>
+              <span className="text-sm text-gray-300">Available Briefs</span>
+              <span className="text-sm font-medium text-white">{briefs.filter(b => b.status === 'active').length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Completed Briefs</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{briefs.filter(b => b.status === 'completed').length}</span>
+              <span className="text-sm text-gray-300">Completed Briefs</span>
+              <span className="text-sm font-medium text-white">{briefs.filter(b => b.status === 'completed').length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Total Submissions</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{submissions.length}</span>
+              <span className="text-sm text-gray-300">Total Submissions</span>
+              <span className="text-sm font-medium text-white">{submissions.length}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Analytics</h3>
+        <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-white mb-4">Revenue Analytics</h3>
           <div className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Monthly Revenue</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">${analytics.monthlyRevenue.toLocaleString()}</span>
+              <span className="text-sm text-gray-300">Monthly Revenue</span>
+              <span className="text-sm font-medium text-white">${analytics.monthlyRevenue.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Total Payouts</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">${analytics.totalPayouts.toLocaleString()}</span>
+              <span className="text-sm text-gray-300">Total Payouts</span>
+              <span className="text-sm font-medium text-white">${analytics.totalPayouts.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Platform Fee</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">${(analytics.monthlyRevenue * 0.1).toLocaleString()}</span>
+              <span className="text-sm text-gray-300">Platform Fee</span>
+              <span className="text-sm font-medium text-white">${(analytics.monthlyRevenue * 0.1).toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Growth</h3>
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold text-white mb-4">User Growth</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{analytics.totalBrands}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Total Brands</div>
+            <div className="text-sm text-gray-300">Total Brands</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">{analytics.totalCreators}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Total Creators</div>
+            <div className="text-sm text-gray-300">Total Creators</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{analytics.totalBriefs}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Total Briefs</div>
+            <div className="text-sm text-gray-300">Total Briefs</div>
           </div>
         </div>
       </div>
@@ -650,16 +650,16 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-gray-900 shadow-sm border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
             </div>
                          <div className="flex items-center space-x-4">
-               <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+               <Link to="/" className="text-gray-300 hover:text-white dark:hover:text-white">
                  ← Back to Home
                </Link>
                <button
@@ -684,7 +684,7 @@ const AdminDashboard: React.FC = () => {
                 className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-300 dark:hover:text-gray-300 hover:border-gray-600'
                 }`}
               >
                 <span>{tab.icon}</span>

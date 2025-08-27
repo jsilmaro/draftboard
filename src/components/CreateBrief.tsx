@@ -307,13 +307,13 @@ const CreateBrief: React.FC = () => {
 
   if (currentStep === 1) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="min-h-screen bg-black py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl font-bold text-white mb-4">
               Create a New Brief
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-gray-300">
               Choose a template or start from scratch to create your campaign brief
             </p>
           </div>
@@ -324,16 +324,16 @@ const CreateBrief: React.FC = () => {
               className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                 selectedTemplate === 'scratch'
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600'
+                  : 'border-gray-700 bg-gray-900 hover:border-blue-300 dark:hover:border-blue-600'
               }`}
               onClick={() => handleTemplateSelect('scratch')}
             >
               <div className="text-center">
                 <div className="text-4xl mb-4">✨</div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   Start from Scratch
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-gray-300">
                   Create a custom brief with your own specifications
                 </p>
               </div>
@@ -346,16 +346,16 @@ const CreateBrief: React.FC = () => {
                 className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                   selectedTemplate === template.id
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600'
+                    : 'border-gray-700 bg-gray-900 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
                 onClick={() => handleTemplateSelect(template.id)}
               >
                 <div className="text-center">
                   <div className="text-4xl mb-4">{template.icon}</div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-white mb-2">
                     {template.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="text-sm text-gray-300">
                     {template.description}
                   </p>
                 </div>
@@ -379,16 +379,16 @@ const CreateBrief: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-black py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-gray-900 rounded-lg shadow-sm border border-gray-700 p-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-white">
               Create Brief
             </h1>
             <button
               onClick={() => setCurrentStep(1)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-500 hover:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
             >
               ← Back to Templates
             </button>
@@ -397,62 +397,62 @@ const CreateBrief: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 Basic Information
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Brief Title *
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Enter brief title"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Deadline *
                   </label>
                   <input
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => handleInputChange('deadline', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     required
                   />
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Description *
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Describe your brief"
                   required
                 />
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Requirements *
                 </label>
                 <textarea
                   value={formData.requirements}
                   onChange={(e) => handleInputChange('requirements', e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="What do you want creators to do?"
                   required
                 />
@@ -461,12 +461,12 @@ const CreateBrief: React.FC = () => {
 
             {/* Reward Configuration */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 Reward Configuration
               </h3>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount of Rewards *
                 </label>
                 <input
@@ -475,22 +475,22 @@ const CreateBrief: React.FC = () => {
                   max="10"
                   value={formData.amountOfWinners}
                   onChange={(e) => handleAmountOfWinnersChange(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="How many creators can win?"
                 />
               </div>
 
               {formData.rewardTiers.length > 0 && (
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">Reward Tiers</h4>
+                  <h4 className="text-md font-medium text-gray-300">Reward Tiers</h4>
                   {formData.rewardTiers.map((tier, _index) => (
-                    <div key={tier.position} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                      <h5 className="font-medium text-gray-900 dark:text-white mb-3">
+                    <div key={tier.position} className="border border-gray-700 dark:border-gray-600 rounded-lg p-4">
+                      <h5 className="font-medium text-white mb-3">
                         Reward {tier.position}
                       </h5>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          <label className="block text-sm text-gray-300 dark:text-gray-400 mb-1">
                             Cash Amount ($)
                           </label>
                           <input
@@ -498,11 +498,11 @@ const CreateBrief: React.FC = () => {
                             min="0"
                             value={tier.cashAmount}
                             onChange={(e) => handleRewardTierChange(tier.position, 'cashAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          <label className="block text-sm text-gray-300 dark:text-gray-400 mb-1">
                             Credit Amount ($)
                           </label>
                           <input
@@ -510,18 +510,18 @@ const CreateBrief: React.FC = () => {
                             min="0"
                             value={tier.creditAmount}
                             onChange={(e) => handleRewardTierChange(tier.position, 'creditAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          <label className="block text-sm text-gray-300 dark:text-gray-400 mb-1">
                             Prize Description
                           </label>
                           <input
                             type="text"
                             value={tier.prizeDescription}
                             onChange={(e) => handleRewardTierChange(tier.position, 'prizeDescription', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                             placeholder="e.g., Product, Gift Card, etc."
                           />
                         </div>
@@ -541,7 +541,7 @@ const CreateBrief: React.FC = () => {
             {/* Additional Fields from Template */}
             {Object.keys(formData.additionalFields).length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   Additional Information
                 </h3>
                 <div className="space-y-4">
@@ -551,13 +551,13 @@ const CreateBrief: React.FC = () => {
                     if (Array.isArray(value)) {
                       return (
                         <div key={key}>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
                             {fieldName}
                           </label>
                           <select
                             value={Array.isArray(formData.additionalFields[key]) ? (formData.additionalFields[key] as string[])[0] || '' : ''}
                             onChange={(e) => handleAdditionalFieldChange(key, [e.target.value])}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                           >
                             <option value="">Select {fieldName}</option>
                                         {value.map((option, _index) => (
@@ -572,14 +572,14 @@ const CreateBrief: React.FC = () => {
                     
                     return (
                       <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                           {fieldName}
                         </label>
                         <input
                           type="text"
                           value={formData.additionalFields[key] as string}
                           onChange={(e) => handleAdditionalFieldChange(key, e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                           placeholder={`Enter ${fieldName.toLowerCase()}`}
                         />
                       </div>
@@ -591,7 +591,7 @@ const CreateBrief: React.FC = () => {
 
             {/* Privacy Settings */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 Privacy Settings
               </h3>
               <div className="flex items-center">
@@ -600,9 +600,9 @@ const CreateBrief: React.FC = () => {
                   id="isPrivate"
                   checked={isPrivate}
                   onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
                 />
-                <label htmlFor="isPrivate" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="isPrivate" className="ml-2 block text-sm text-gray-300">
                   Make this brief private (only invited creators can see it)
                 </label>
               </div>
@@ -613,7 +613,7 @@ const CreateBrief: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-6 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
@@ -631,11 +631,11 @@ const CreateBrief: React.FC = () => {
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Brief Created Successfully! 🎉
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="text-gray-300 mb-4">
               Share this link with creators to invite them to your brief:
             </p>
             <div className="flex items-center space-x-2 mb-4">
@@ -643,7 +643,7 @@ const CreateBrief: React.FC = () => {
                 type="text"
                 value={shareableLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-white"
               />
               <button
                 onClick={copyToClipboard}
@@ -655,7 +655,7 @@ const CreateBrief: React.FC = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowShareModal(false)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
+                className="px-4 py-2 text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
               >
                 Close
               </button>

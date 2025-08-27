@@ -79,8 +79,6 @@ const CreatorDashboard: React.FC = () => {
   
   // Search functionality
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Brief[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   
   // Recent activity carousel
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
@@ -186,75 +184,12 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  // const handleViewBrief = (brief: Brief) => {
-  //   setSelectedBrief(brief);
-  //   setShowViewModal(true);
-  // };
 
-  // const handleApplyToBrief = (brief: Brief) => {
-  //   setSelectedBrief(brief);
-    
-  //   // Check if user has already submitted to this brief
-  //   const existingSubmission = getExistingSubmission(brief.id);
-    
-  //   if (existingSubmission) {
-  //     // This is an edit - load existing data
-  //     // We'll need to fetch the full submission details
-  //     fetchSubmissionDetails(existingSubmission.id);
-  //   } else {
-  //     // This is a new application - clear form
-  //     setApplyFormData({ contentUrl: '' });
-  //     setShowApplyModal(true);
-  //   }
-  // };
 
-  // Search functionality
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    setIsSearching(true);
-    
-    if (!query.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch(`/api/briefs/search?q=${encodeURIComponent(query)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const results = await response.json();
-        setSearchResults(results);
-      } else {
-        // Fallback to client-side search
-        const filtered = availableBriefs.filter(brief => 
-          brief.title.toLowerCase().includes(query.toLowerCase()) ||
-          brief.description.toLowerCase().includes(query.toLowerCase()) ||
-          brief.brandName.toLowerCase().includes(query.toLowerCase())
-        );
-        setSearchResults(filtered);
-      }
-    } catch (error) {
-      // Fallback to client-side search
-      const filtered = availableBriefs.filter(brief => 
-        brief.title.toLowerCase().includes(query.toLowerCase()) ||
-        brief.description.toLowerCase().includes(query.toLowerCase()) ||
-        brief.brandName.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
-    
-    setIsSearching(false);
-  };
-
+  // Search functionality placeholder
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearch(searchQuery);
+    // Search functionality can be implemented here if needed
   };
 
   // Recent activity carousel
@@ -279,56 +214,7 @@ const CreatorDashboard: React.FC = () => {
     }));
   };
 
-  // const fetchSubmissionDetails = async (submissionId: string) => {
-  //   try {
-  //     const token = localStorage.getItem('token');
-  //     if (!token) return;
 
-  //     const response = await fetch(`/api/creators/submissions/${submissionId}`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`
-  //       }
-  //     });
-
-  //     if (response.ok) {
-  //       const submissionData = await response.json();
-  //       setApplyFormData({
-  //         contentUrl: submissionData.files || ''
-  //       });
-        
-  //       // Update the selectedBrief with the complete brief information
-  //       if (submissionData.brief) {
-  //         setSelectedBrief({
-  //           id: submissionData.brief.id,
-  //           title: submissionData.brief.title,
-  //           description: submissionData.brief.description || '',
-  //           brandName: submissionData.brief.brandName || '',
-  //           reward: submissionData.amount,
-  //           amountOfWinners: 1,
-  //           totalRewardsPaid: 0,
-  //           deadline: submissionData.brief.deadline || new Date().toISOString(),
-  //           status: 'active',
-  //           brand: {
-  //             id: submissionData.brief.brandId || '',
-  //             companyName: submissionData.brief.brandName || '',
-  //             logo: undefined
-  //           },
-  //           submissions: []
-  //         });
-  //       }
-        
-  //       setShowApplyModal(true);
-  //     } else {
-  //       // Fallback to empty form
-  //       setApplyFormData({ contentUrl: '' });
-  //       setShowApplyModal(true);
-  //     }
-  //   } catch (error) {
-  //     // Fallback to empty form
-  //     setApplyFormData({ contentUrl: '' });
-  //     setShowApplyModal(true);
-  //   }
-  // };
 
   const handleViewSubmission = async (submission: Submission) => {
     try {
@@ -517,232 +403,184 @@ const CreatorDashboard: React.FC = () => {
     { id: 'logout', label: 'Logout', icon: '🚪', action: logout },
   ];
 
-  const renderOverview = () => (
-    <div className="space-y-8">
-      {/* Hero Section with Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-        <div className="flex-1">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Connect with Amazing Brands 🚀
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Showcase your creativity and discover exciting opportunities with top brands worldwide.
-          </p>
-          
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="max-w-2xl">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search anything..."
-                className="w-full pl-4 pr-12 py-4 text-lg border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
+    const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          Connect with Amazing Brands 🚀
+        </h1>
+        <p className="text-lg text-gray-300">
+          Showcase your creativity and discover exciting opportunities with top brands worldwide.
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Total Earnings Card */}
+        <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-400 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">💰</span>
             </div>
-          </form>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">$0</p>
+            <p className="text-sm opacity-90">Total Earnings</p>
+          </div>
+        </div>
+
+        {/* Submissions This Week Card */}
+        <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">📝</span>
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{mySubmissions.filter(s => new Date(s.submittedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</p>
+            <p className="text-sm opacity-90">Submissions This Week</p>
+          </div>
+        </div>
+
+        {/* Active Briefs Card */}
+        <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">🎯</span>
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{availableBriefs.length}</p>
+            <p className="text-sm opacity-90">Active Briefs</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Briefs Section */}
+        <div className="lg:col-span-2">
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Available Briefs</h2>
+              <span className="text-sm text-gray-400">{availableBriefs.length} available</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {availableBriefs.slice(0, 4).map((brief, _index) => {
+                const briefForCard = {
+                  ...brief,
+                  brand: {
+                    id: brief.id,
+                    companyName: brief.brandName || 'Brand',
+                    logo: undefined
+                  }
+                };
+                
+                return (
+                  <div key={brief.id} className="relative">
+                    <BriefCard 
+                      brief={briefForCard} 
+                      onApplyClick={(brief) => {
+                        setSelectedBriefId(brief.id);
+                        setShowBriefDetailsModal(true);
+                      }}
+                    />
+                    {hasSubmittedToBrief(brief.id) && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                          getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                          'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                        }`}>
+                          {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
+                           getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
+                           'Pending Review'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {availableBriefs.length > 4 && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setActiveTab('briefs')}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                >
+                  View All Briefs →
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Live Activity Feed */}
-        <div className="lg:w-96">
-          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+        <div className="lg:col-span-1">
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 h-fit">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Live Activity</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Real-time brief updates</p>
+                <h3 className="text-lg font-bold text-white">Live Activity</h3>
+                <p className="text-xs text-gray-400">Real-time brief updates</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-green-600 dark:text-green-400 font-semibold">LIVE</span>
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-400 font-semibold">LIVE</span>
               </div>
             </div>
             
-            <div className="relative overflow-hidden">
-              <div className="space-y-4">
-                {getRecentActivities().map((activity, index) => (
-                  <div 
-                    key={activity.id}
-                    className={`relative p-4 rounded-2xl border-2 transition-all duration-700 transform ${
+            <div className="space-y-3">
+              {getRecentActivities().slice(0, 5).map((activity, index) => (
+                <div 
+                  key={activity.id}
+                  className={`p-3 rounded-lg border border-gray-700 transition-all duration-300 ${
+                    index === currentActivityIndex 
+                      ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/50' 
+                      : 'bg-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
                       index === currentActivityIndex 
-                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-blue-300 dark:border-blue-600 scale-105 shadow-lg' 
-                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 scale-100 shadow-sm'
-                    } ${index === currentActivityIndex ? 'animate-slide-in' : ''}`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 ${
-                        index === currentActivityIndex 
-                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
-                          : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {activity.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                          {activity.title}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          New brief from {activity.brand}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                          {activity.time}
-                        </span>
-                        {index === currentActivityIndex && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-1 animate-bounce"></div>
-                        )}
-                      </div>
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
+                        : 'bg-gray-700 text-gray-300'
+                    }`}>
+                      {activity.icon}
                     </div>
-                    {index === currentActivityIndex && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/20 dark:via-blue-900/20 to-transparent animate-pulse"></div>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {activity.title}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        New brief from {activity.brand}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-gray-500 font-medium">
+                        {activity.time}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-              
-              {/* Flowing animation overlay */}
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-blue-50/10 dark:via-blue-900/10 to-transparent animate-flow-down pointer-events-none"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Creator Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl p-8 border border-blue-200 dark:border-blue-700">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl text-white">💰</span>
-          </div>
-          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            ${metrics.totalEarnings.toLocaleString()}
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">Total Earnings</p>
-        </div>
-        <div className="text-center bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-3xl p-8 border border-green-200 dark:border-green-700">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl text-white">📝</span>
-          </div>
-          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            {metrics.submissionsThisWeek.toLocaleString()}
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">This Week</p>
-        </div>
-        <div className="text-center bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-3xl p-8 border border-orange-200 dark:border-orange-700">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl text-white">🎯</span>
-          </div>
-          <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            {metrics.activeBriefs.toLocaleString()}
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">Active Briefs</p>
-        </div>
-      </div>
-
-      {/* Search Results */}
-      {searchQuery && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Search Results for &quot;{searchQuery}&quot;
-          </h3>
-          {isSearching ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Searching...</p>
-            </div>
-          ) : searchResults.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResults.map((brief) => (
-                <div key={brief.id} className="p-4 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{brief.title}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{brief.brandName}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">${brief.reward}</p>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-600 dark:text-gray-400">No results found.</p>
-          )}
-        </div>
-      )}
-
-      {/* Featured Opportunities */}
-      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">Featured Opportunities</h3>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Handpicked briefs perfect for your skills</p>
           </div>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-            View All &rarr;
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableBriefs.slice(0, 6).map((brief, index) => (
-            <div key={brief.id} className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
-                {/* Gradient overlay */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    #{index + 1}
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${brief.reward}
-                    </span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Reward</p>
-                  </div>
-                </div>
-                
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 text-lg">
-                  {brief.title}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-medium">
-                  by {brief.brandName}
-                </p>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                      {brief.submissions.length} creators applied
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-yellow-400 text-sm">★★★★★</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">5.0</span>
-                  </div>
-                </div>
-                
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
+
+
     </div>
   );
 
   const renderBriefs = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Available Briefs</h2>
+        <h2 className="text-2xl font-bold text-white">Available Briefs</h2>
         <div className="flex space-x-2">
           <button 
             onClick={fetchDashboardData}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50"
           >
             Refresh
           </button>
@@ -755,8 +593,8 @@ const CreatorDashboard: React.FC = () => {
       {availableBriefs.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📄</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No available briefs</h3>
-          <p className="text-gray-600 mb-6">
+          <h3 className="text-xl font-semibold text-white mb-2">No available briefs</h3>
+          <p className="text-gray-300 mb-6">
             There are currently no active briefs available. Check back later for new opportunities!
           </p>
           <button 
@@ -821,36 +659,36 @@ const CreatorDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedBrief.title}</h3>
+              <h3 className="text-xl font-bold text-white">{selectedBrief.title}</h3>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-300 dark:hover:text-gray-300"
               >
                 ✕
               </button>
             </div>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">Brand:</span>
-                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.brandName}</span>
+                <span className="font-medium text-white">Brand:</span>
+                <span className="text-gray-300">{selectedBrief.brandName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">Reward Type:</span>
-                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
+                <span className="font-medium text-white">Reward Type:</span>
+                <span className="text-gray-300">{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
                        selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
                        selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
                        'Cash'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">Spots:</span>
-                <span className="text-gray-700 dark:text-gray-300">{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
+                <span className="font-medium text-white">Spots:</span>
+                <span className="text-gray-300">{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">Deadline:</span>
-                <span className="text-gray-700 dark:text-gray-300">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                <span className="font-medium text-white">Deadline:</span>
+                <span className="text-gray-300">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-900 dark:text-white">Status:</span>
+                <span className="font-medium text-white">Status:</span>
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   selectedBrief.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
                   selectedBrief.status === 'draft' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400' :
@@ -895,7 +733,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>
@@ -909,26 +747,26 @@ const CreatorDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-white">
                 {hasSubmittedToBrief(selectedBrief.id) ? 'Edit Submission' : 'Apply to'} {selectedBrief.title}
               </h3>
               <button
                 onClick={() => setShowApplyModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-300"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleSubmitApplication} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Content Submission link:
                 </label>
                 <input
                   type="url"
                   value={applyFormData.contentUrl}
                   onChange={(e) => setApplyFormData(prev => ({ ...prev, contentUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
                   required
                 />
@@ -938,8 +776,8 @@ const CreatorDashboard: React.FC = () => {
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Brief Summary</h4>
-                <div className="space-y-2 text-sm text-gray-600">
+                <h4 className="font-medium text-white mb-2">Brief Summary</h4>
+                <div className="space-y-2 text-sm text-gray-300">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
                   <p><strong>Reward:</strong> {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
                        selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
@@ -954,7 +792,7 @@ const CreatorDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -974,8 +812,8 @@ const CreatorDashboard: React.FC = () => {
 
   const renderSubmissions = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Submissions</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <h2 className="text-2xl font-bold text-white">My Submissions</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
@@ -993,10 +831,10 @@ const CreatorDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" className="mr-3" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{submission.briefTitle}</span>
+                      <span className="text-sm font-medium text-white">{submission.briefTitle}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${submission.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
@@ -1006,7 +844,7 @@ const CreatorDashboard: React.FC = () => {
                       {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1046,26 +884,26 @@ const CreatorDashboard: React.FC = () => {
 
   const renderEarnings = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Earnings</h2>
+      <h2 className="text-2xl font-bold text-white">Earnings</h2>
       
       {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Earnings</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <h3 className="text-lg font-semibold text-white">Total Earnings</h3>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">${metrics.totalEarnings}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">This Month</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <h3 className="text-lg font-semibold text-white">This Month</h3>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <h3 className="text-lg font-semibold text-white">Pending</h3>
           <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
       </div>
 
       {/* Earnings Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50">
@@ -1079,10 +917,10 @@ const CreatorDashboard: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {earnings.map((earning) => (
                 <tr key={earning.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                     {earning.briefTitle}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${earning.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${earning.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       earning.status === 'paid' ? 'bg-green-100 text-green-800' :
@@ -1092,7 +930,7 @@ const CreatorDashboard: React.FC = () => {
                       {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                     {earning.paidAt ? new Date(earning.paidAt).toLocaleDateString() : '-'}
                   </td>
                 </tr>
@@ -1106,50 +944,50 @@ const CreatorDashboard: React.FC = () => {
 
   const renderProfile = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Profile</h2>
+      <h2 className="text-2xl font-bold text-white">Profile</h2>
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-700 p-6">
         <div className="flex items-center mb-6">
           <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="xl" className="mr-4" />
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">{user?.fullName || 'Creator Name'}</h3>
-            <p className="text-gray-600">@{user?.userName || 'username'}</p>
+            <h3 className="text-xl font-semibold text-white">{user?.fullName || 'Creator Name'}</h3>
+            <p className="text-gray-300">@{user?.userName || 'username'}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Personal Information</h4>
+            <h4 className="font-semibold text-white mb-3">Personal Information</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">Full Name</label>
+                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">Username</label>
+                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">Email</label>
+                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Social Media</h4>
+            <h4 className="font-semibold text-white mb-3">Social Media</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Instagram</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">Instagram</label>
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">TikTok</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">TikTok</label>
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">YouTube</label>
-                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" />
+                <label className="block text-sm font-medium text-gray-300">YouTube</label>
+                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
               </div>
             </div>
           </div>
@@ -1222,17 +1060,17 @@ const CreatorDashboard: React.FC = () => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-gray-900/50 backdrop-blur-xl border-b border-green-500/20 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-            <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 6px rgba(34,197,94,0.4))'}} />
+            <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.3))'}} />
             <span className="font-bold text-lg text-white">{user?.userName || 'Creator'}</span>
           </div>
-                      <div className="flex items-center space-x-3">
-              <NotificationBell />
-              <button
+          <div className="flex items-center space-x-3">
+            <NotificationBell />
+            <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
-              className="text-gray-400 hover:text-gray-200"
+              className="text-gray-400 hover:text-white"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -1240,36 +1078,68 @@ const CreatorDashboard: React.FC = () => {
             </button>
           </div>
         </div>
+        
+        {/* Mobile Search Bar */}
+        {activeTab === 'overview' && (
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search briefs, brands, or topics..."
+              className="w-full pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={handleSearchSubmit}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Sidebar */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-gray-900/70 backdrop-blur-xl border-r border-green-500/20 text-white lg:min-h-screen`}>
+      {/* Enhanced Sidebar */}
+      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 bg-black backdrop-blur-xl border-r border-gray-800 text-white lg:min-h-screen shadow-2xl`}>
         <div className="p-4 lg:p-6">
           
+          {/* Logo Section */}
           <div className="flex items-center justify-center mb-6 lg:mb-8">
-            <img src="/logo-light2.svg" alt="DraftBoard" className="h-12 w-auto" style={{filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.4))'}} />
+            <div className="relative">
+              <img src="/logo-light2.svg" alt="DraftBoard" className="h-10 w-auto" style={{filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.4))'}} />
+            </div>
           </div>
 
-          <nav className="space-y-2">
-            {navigation.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  activeTab === item.id
-                    ? 'bg-green-500/15 text-green-400 shadow-lg shadow-green-500/20 border border-green-500/25'
-                    : 'text-gray-300 hover:text-green-400 hover:bg-green-500/8 border border-transparent hover:border-green-500/15'
-                }`}
-                title={item.label}
-              >
-                <span className="mr-3 text-lg">{item.icon}</span>
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            ))}
-          </nav>
+          {/* Main Navigation */}
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Discover</h3>
+            <nav className="space-y-2">
+              {navigation.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
+                    activeTab === item.id
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title={item.label}
+                >
+                  <span className={`mr-3 text-base transition-all duration-200 ${
+                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                  }`}>{item.icon}</span>
+                  <span className="text-sm font-normal">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
 
-          <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-green-500/20">
-            <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-4">Account</h3>
+          {/* Manage Section */}
+          <div className="pt-6 border-t border-gray-800">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Manage</h3>
             <nav className="space-y-2">
               {accountNav.map((item) => (
                 <button
@@ -1281,18 +1151,39 @@ const CreatorDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
                     activeTab === item.id
-                      ? 'bg-green-500/15 text-green-400 shadow-lg shadow-green-500/20 border border-green-500/25'
-                      : 'text-gray-300 hover:text-green-400 hover:bg-green-500/8 border border-transparent hover:border-green-500/15'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                   title={item.label}
                 >
-                  <span className="mr-3 text-lg">{item.icon}</span>
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className={`mr-3 text-base transition-all duration-200 ${
+                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                  }`}>{item.icon}</span>
+                  <span className="text-sm font-normal">{item.label}</span>
                 </button>
               ))}
             </nav>
+          </div>
+
+          {/* User Info Section */}
+          <div className="mt-8 pt-6 border-t border-gray-800">
+            <div className="flex items-center px-3 py-3 rounded-lg bg-gray-800">
+              <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-3">
+                <span className="text-white font-medium text-sm">
+                  {user?.fullName?.charAt(0) || user?.userName?.charAt(0) || 'C'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.fullName || user?.userName || 'Creator Account'}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {user?.email || 'creator@example.com'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1300,9 +1191,9 @@ const CreatorDashboard: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm">
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-gray-900/50 backdrop-blur-xl border-b border-green-500/20 px-8 py-4">
+        <div className="hidden lg:block bg-black border-b border-gray-800 px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <h1 className="text-2xl font-bold text-white">
                 {activeTab === 'overview' ? 'Dashboard' : 
                  activeTab === 'briefs' ? 'Available Briefs' :
@@ -1311,6 +1202,28 @@ const CreatorDashboard: React.FC = () => {
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'profile' ? 'Profile' : 'Dashboard'}
               </h1>
+              
+              {/* Search Bar */}
+              {activeTab === 'overview' && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search briefs, brands, or topics..."
+                    className="w-80 pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchSubmit}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               <NotificationBell />
@@ -1338,10 +1251,10 @@ const CreatorDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Submission Details</h3>
+            <h3 className="text-xl font-bold text-white">Submission Details</h3>
             <button
               onClick={() => setShowSubmissionViewModal(false)}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-300 dark:hover:text-gray-300"
             >
               ✕
             </button>
@@ -1349,8 +1262,8 @@ const CreatorDashboard: React.FC = () => {
           
           <div className="space-y-4">
             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Brief Information</h4>
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+              <h4 className="font-medium text-white mb-2">Brief Information</h4>
+              <div className="space-y-2 text-sm text-gray-300">
                 <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
                 <p><strong>Amount:</strong> ${selectedSubmission.amount}</p>
                 <p><strong>Status:</strong> 
@@ -1368,8 +1281,8 @@ const CreatorDashboard: React.FC = () => {
 
             {submissionDetails.files && (
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Content Submission Link</h4>
-                <div className="bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600">
+                <h4 className="font-medium text-white mb-2">Content Submission Link</h4>
+                <div className="bg-white dark:bg-gray-700 p-3 rounded border border-gray-700 dark:border-gray-600">
                   <a 
                     href={submissionDetails.files} 
                     target="_blank" 
@@ -1385,7 +1298,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowSubmissionViewModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>

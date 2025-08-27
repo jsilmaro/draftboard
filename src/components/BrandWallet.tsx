@@ -94,11 +94,11 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Funds to Wallet</h3>
+      <h3 className="text-lg font-semibold text-white mb-4">Add Funds to Wallet</h3>
       
       <form onSubmit={handleTopUp} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Amount ($)
           </label>
           <input
@@ -107,16 +107,16 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
             onChange={(e) => setAmount(Number(e.target.value))}
             min="1"
             step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Card Details
           </label>
-          <div className="border border-gray-300 rounded-md p-3">
+          <div className="border border-gray-600 rounded-md p-3">
             <CardElement
               options={{
                 style: {
@@ -195,7 +195,7 @@ const BrandWallet: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading wallet...</p>
+          <p className="mt-4 text-gray-300">Loading wallet...</p>
         </div>
       </div>
     );
@@ -223,8 +223,8 @@ const BrandWallet: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Brand Wallet</h1>
-          <p className="text-gray-600">Manage your wallet balance and transactions</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Brand Wallet</h1>
+          <p className="text-gray-300">Manage your wallet balance and transactions</p>
         </div>
 
         {error && (
@@ -243,12 +243,12 @@ const BrandWallet: React.FC = () => {
               </div>
               
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Deposited</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Total Deposited</h3>
                 <p className="text-3xl font-bold text-blue-600">${wallet.totalDeposited.toFixed(2)}</p>
               </div>
               
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Spent</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Total Spent</h3>
                 <p className="text-3xl font-bold text-red-600">${wallet.totalSpent.toFixed(2)}</p>
               </div>
             </div>
@@ -274,8 +274,8 @@ const BrandWallet: React.FC = () => {
 
             {/* Transaction History */}
             <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Transaction History</h2>
+              <div className="p-6 border-b border-gray-700">
+                <h2 className="text-xl font-semibold text-white">Transaction History</h2>
               </div>
               
               <div className="divide-y divide-gray-200">
@@ -293,7 +293,7 @@ const BrandWallet: React.FC = () => {
                         </div>
                         
                         <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-white">
                             {transaction.description}
                           </p>
                           <p className="text-sm text-gray-500">

@@ -92,7 +92,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm truncate">
+              <h3 className="font-semibold text-white text-xs sm:text-sm truncate">
                 {brief.brand.companyName}
               </h3>
             </div>
@@ -110,10 +110,10 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
         {/* Brief Title and Description */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-2 line-clamp-2">
             {brief.title}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+          <p className="text-xs sm:text-sm text-gray-300 line-clamp-3">
             {brief.description}
           </p>
         </div>
@@ -121,12 +121,12 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
         {/* Reward Information */}
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Reward</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-300">Reward</span>
             <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
               ${brief.reward.toLocaleString()}
             </span>
           </div>
-          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-300 dark:text-gray-400">
             <span>Target: {brief.amountOfWinners} creators</span>
             <span>{brief.submissions.length} applied</span>
           </div>
@@ -134,7 +134,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
         {/* Progress Bar */}
         <div className="mb-3 sm:mb-4">
-          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-gray-300 dark:text-gray-400 mb-1">
             <span>Rewards Progress</span>
             <span>{progressPercentage.toFixed(1)}%</span>
           </div>
