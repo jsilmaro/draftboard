@@ -66,7 +66,7 @@ const LoginForm: React.FC = () => {
           <div className="mb-4 bounce-in">
             <DefaultAvatar name="User" size="xl" className="mx-auto" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 slide-in-up">Sign in to your account</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white slide-in-up">Sign in to your account</h2>
           <p className="mt-2 text-sm text-gray-600 fade-in-delay-1">
             Or{' '}
             <Link to="/" className="font-medium text-indigo-600 hover:text-indigo-500 nav-item">

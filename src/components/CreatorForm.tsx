@@ -193,8 +193,8 @@ const CreatorForm: React.FC = () => {
         <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl font-bold text-teal-600">C</span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
-        <p className="text-gray-600">Let&apos;s start with your personal details</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Basic Information</h2>
+        <p className="text-gray-600 dark:text-gray-400">Let&apos;s start with your personal details</p>
       </div>
 
       {/* Google Sign-In Option */}

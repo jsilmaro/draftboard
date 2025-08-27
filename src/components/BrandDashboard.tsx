@@ -11,6 +11,7 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 
+
 // Lazy load Stripe-dependent components to prevent loading during login
 const BrandWallet = lazy(() => import('./BrandWallet'));
 const PaymentManagement = lazy(() => import('./PaymentManagement'));
@@ -2586,11 +2587,9 @@ const BrandDashboard: React.FC = () => {
       {/* Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white lg:min-h-screen`}>
         <div className="p-4 lg:p-6">
-          <div className="flex items-center mb-6 lg:mb-8">
-            <div className="flex items-center">
-              <DefaultAvatar name={user?.companyName || 'Brand'} size="md" className="mr-3" />
-              <span className="font-bold text-lg">{user?.companyName || 'Brand'}</span>
-            </div>
+          
+          <div className="flex items-center justify-center mb-6 lg:mb-8">
+            <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
           </div>
 
           <nav className="space-y-2">

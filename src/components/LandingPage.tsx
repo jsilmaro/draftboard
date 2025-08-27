@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ThemeToggle from './ThemeToggle';
+import Logo from './Logo';
 
 const LandingPage = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -68,9 +69,9 @@ const LandingPage = () => {
       </div>
 
       {/* Header with Logo and Theme Toggle */}
-      <div className="absolute top-4 left-4 z-10 sm:top-6 sm:left-6">
-        <div className="flex items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl animate-fade-in">DraftBoard</h1>
+      <div className="absolute top-4 left-6 z-10 sm:top-6 sm:left-8">
+        <div className="flex items-center p-2">
+          <Logo size="lg" />
         </div>
       </div>
       <div className="absolute top-4 right-4 z-10 sm:top-6 sm:right-6">

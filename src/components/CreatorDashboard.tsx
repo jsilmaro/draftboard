@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 
 
+
 interface Brief {
   id: string;
   title: string;
@@ -1210,11 +1211,9 @@ const CreatorDashboard: React.FC = () => {
       {/* Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white lg:min-h-screen`}>
         <div className="p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-6 lg:mb-8">
-            <div className="flex items-center">
-              <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" className="mr-3" />
-              <span className="font-bold text-lg">{user?.userName || 'Creator'}</span>
-            </div>
+          
+          <div className="flex items-center justify-center mb-6 lg:mb-8">
+            <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
           </div>
 
           <nav className="space-y-2">
