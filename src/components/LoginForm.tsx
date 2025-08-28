@@ -58,28 +58,79 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 to-green-900 relative overflow-hidden">
-      {/* Glowing Wave Pattern Background */}
+    <div className="min-h-screen bg-gradient-to-br from-green-950 via-black to-purple-950 relative overflow-hidden">
+      {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute bottom-0 right-0 w-full h-full">
+        {/* Moving Green Wave */}
+        <div className="absolute inset-0 animate-pulse">
           <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#01D924" stopOpacity="0.8"/>
+              <radialGradient id="greenGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#01D924" stopOpacity="0.6"/>
                 <stop offset="100%" stopColor="#01D924" stopOpacity="0"/>
               </radialGradient>
+              <radialGradient id="violetGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.4"/>
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0"/>
+              </radialGradient>
             </defs>
+            
+            {/* Animated Green Wave */}
             <path
               d="M1200 800 Q900 600 600 700 Q300 800 0 600 L0 800 Z"
-              fill="url(#glow)"
-              opacity="0.6"
+              fill="url(#greenGlow)"
+              className="animate-pulse"
             />
+            
+            {/* Animated Violet Wave */}
             <path
-              d="M1200 800 Q1000 500 700 600 Q400 700 0 500 L0 800 Z"
-              fill="url(#glow)"
-              opacity="0.3"
+              d="M1200 800 Q1000 400 700 500 Q400 600 0 400 L0 800 Z"
+              fill="url(#violetGlow)"
+              className="animate-pulse"
             />
+            
+            {/* Floating Green Particles */}
+            <circle cx="200" cy="200" r="3" fill="#01D924" opacity="0.6" className="animate-bounce">
+              <animate attributeName="cy" values="200;150;200" dur="4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="800" cy="300" r="2" fill="#01D924" opacity="0.4" className="animate-bounce">
+              <animate attributeName="cy" values="300;250;300" dur="5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0.1;0.4" dur="5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="400" cy="500" r="4" fill="#01D924" opacity="0.5" className="animate-bounce">
+              <animate attributeName="cy" values="500;450;500" dur="6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0.2;0.5" dur="6s" repeatCount="indefinite"/>
+            </circle>
+            
+            {/* Floating Violet Particles */}
+            <circle cx="600" cy="150" r="2" fill="#8B5CF6" opacity="0.5" className="animate-bounce">
+              <animate attributeName="cy" values="150;100;150" dur="7s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0.2;0.5" dur="7s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="1000" cy="400" r="3" fill="#8B5CF6" opacity="0.3" className="animate-bounce">
+              <animate attributeName="cy" values="400;350;400" dur="8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="8s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="300" cy="600" r="2" fill="#8B5CF6" opacity="0.4" className="animate-bounce">
+              <animate attributeName="cy" values="600;550;600" dur="9s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0.1;0.4" dur="9s" repeatCount="indefinite"/>
+            </circle>
           </svg>
+        </div>
+        
+        {/* Moving Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900/20 via-transparent to-purple-900/20 animate-pulse" />
+        
+        {/* Floating Shapes */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-green-500/10 rounded-full blur-xl animate-pulse">
+          <div className="w-full h-full bg-green-400/20 rounded-full animate-ping"></div>
+        </div>
+        <div className="absolute bottom-40 right-20 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse">
+          <div className="w-full h-full bg-purple-400/20 rounded-full animate-ping"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-green-500/10 rounded-full blur-xl animate-pulse">
+          <div className="w-full h-full bg-green-400/20 rounded-full animate-ping"></div>
         </div>
       </div>
 
@@ -105,7 +156,7 @@ const LoginForm: React.FC = () => {
         </div>
 
         <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-gray-800 py-6 sm:py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 scale-in border border-gray-700">
+          <div className="bg-gray-800/80 backdrop-blur-sm py-6 sm:py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 scale-in border border-gray-700/50">
             <form className="space-y-6" onSubmit={handleSubmit}>
               {error && (
                 <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded">
@@ -126,7 +177,7 @@ const LoginForm: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all bg-gray-700 text-white"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all bg-gray-700/80 backdrop-blur-sm text-white"
                     placeholder="admin@gmail.com"
                   />
                 </div>
@@ -145,21 +196,24 @@ const LoginForm: React.FC = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all bg-gray-700 text-white"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all bg-gray-700/80 backdrop-blur-sm text-white"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed btn-primary"
-                >
-                  {isLoading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </div>
+                                            <div>
+                 <button
+                   type="submit"
+                   disabled={isLoading}
+                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed btn-primary transition-all duration-300"
+                   style={{
+                     boxShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)'
+                   }}
+                 >
+                   {isLoading ? 'Signing in...' : 'Sign in'}
+                 </button>
+               </div>
             </form>
 
             {/* Google Sign-In Option */}
@@ -176,20 +230,20 @@ const LoginForm: React.FC = () => {
                   <div className="w-full border-t border-gray-600" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-800 text-gray-400">New to the platform?</span>
+                  <span className="px-2 bg-gray-800/80 backdrop-blur-sm text-gray-400">New to the platform?</span>
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                   to="/brand/register"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-white hover:bg-gray-600"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700/80 backdrop-blur-sm text-sm font-medium text-white hover:bg-gray-600/80 transition-all duration-300"
                 >
                   Register as Brand
                 </Link>
                 <Link
                   to="/creator/register"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-white hover:bg-gray-600"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700/80 backdrop-blur-sm text-sm font-medium text-white hover:bg-gray-600/80 transition-all duration-300"
                 >
                   Register as Creator
                 </Link>
