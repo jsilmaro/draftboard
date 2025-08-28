@@ -10,6 +10,7 @@ import NotificationBell from './NotificationBell';
 
 
 
+
 interface Brief {
   id: string;
   title: string;
@@ -389,18 +390,18 @@ const CreatorDashboard: React.FC = () => {
   };
 
   const navigation = [
-    { id: 'overview', label: 'Overview', icon: '❤️' },
-    { id: 'briefs', label: 'Available Briefs', icon: '📄' },
-    { id: 'submissions', label: 'My Submissions', icon: '📚' },
-    { id: 'earnings', label: 'Earnings', icon: '💰' },
-    { id: 'wallet', label: 'Wallet', icon: '💳' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
+    { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
+    { id: 'earnings', label: 'Earnings', icon: 'payments' },
+    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+    { id: 'profile', label: 'Profile', icon: 'profile' },
   ];
 
   const accountNav = [
-    { id: 'earnings', label: 'Earnings', icon: '💰' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'logout', label: 'Logout', icon: '🚪', action: logout },
+    { id: 'earnings', label: 'Earnings', icon: 'payments' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
 
   const renderOverview = () => (
@@ -1128,9 +1129,15 @@ const CreatorDashboard: React.FC = () => {
                   }`}
                   title={item.label}
                 >
-                  <span className={`mr-3 text-base transition-all duration-200 ${
+                  <span className={`mr-3 transition-all duration-200 ${
                     activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>{item.icon}</span>
+                  }`}>
+                    <img 
+                      src={`/icons/${item.icon}.png`} 
+                      alt={item.label}
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="text-sm font-normal">{item.label}</span>
                 </button>
               ))}
@@ -1158,9 +1165,15 @@ const CreatorDashboard: React.FC = () => {
                   }`}
                   title={item.label}
                 >
-                  <span className={`mr-3 text-base transition-all duration-200 ${
+                  <span className={`mr-3 transition-all duration-200 ${
                     activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>{item.icon}</span>
+                  }`}>
+                    <img 
+                      src={`/icons/${item.icon}.png`} 
+                      alt={item.label}
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="text-sm font-normal">{item.label}</span>
                 </button>
               ))}

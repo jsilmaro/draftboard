@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import DefaultAvatar from './DefaultAvatar';
@@ -10,6 +10,7 @@ import BrandBriefCard from './BrandBriefCard';
 
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
+
 
 
 // Lazy load Stripe-dependent components to prevent loading during login
@@ -182,6 +183,43 @@ const BrandDashboard: React.FC = () => {
     totalSubmissions: 0
   });
 
+  // Statistics state
+  const [statistics, setStatistics] = useState<{
+    briefStats: Array<{
+      briefId: string;
+      briefTitle: string;
+      totalSubmissions: number;
+      pendingSubmissions: number;
+      approvedSubmissions: number;
+      rejectedSubmissions: number;
+      submissionRate: number;
+      avgSubmissionsPerDay: number;
+      createdAt: string;
+      status: string;
+    }>;
+    overallStats: {
+      totalBriefs: number;
+      activeBriefs: number;
+      totalSubmissions: number;
+      avgSubmissionsPerBrief: number;
+      topPerformingBrief: string;
+      recentActivity: Array<{
+        date: string;
+        submissions: number;
+      }>;
+    };
+  }>({
+    briefStats: [],
+    overallStats: {
+      totalBriefs: 0,
+      activeBriefs: 0,
+      totalSubmissions: 0,
+      avgSubmissionsPerBrief: 0,
+      topPerformingBrief: '',
+      recentActivity: []
+    }
+  });
+
   // Winner selection functions
   const handleSelectWinners = async (brief: Brief) => {
     try {
@@ -244,12 +282,7 @@ const BrandDashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // Fetch data from API
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -320,9 +353,87 @@ const BrandDashboard: React.FC = () => {
         avgSubmissions: submissionsData.length,
         totalSubmissions: submissionsData.length
       });
+
+      // Calculate statistics
+      calculateStatistics(briefsData, submissionsData);
     } catch (error) {
       // Error fetching dashboard data
     }
+  }, []);
+
+  useEffect(() => {
+    // Fetch data from API
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Calculate detailed statistics for briefs and overall performance
+  const calculateStatistics = (briefsData: Brief[], submissionsData: Submission[]) => {
+    const briefStats = briefsData.map(brief => {
+      const briefSubmissions = submissionsData.filter(sub => sub.briefTitle === brief.title);
+      const totalSubmissions = briefSubmissions.length;
+      const pendingSubmissions = briefSubmissions.filter(sub => sub.status === 'pending').length;
+      const approvedSubmissions = briefSubmissions.filter(sub => sub.status === 'approved').length;
+      const rejectedSubmissions = briefSubmissions.filter(sub => sub.status === 'rejected').length;
+      
+      // Calculate submission rate (submissions per day since creation)
+      const createdAt = new Date(brief.createdAt || Date.now());
+      const daysSinceCreation = Math.max(1, Math.ceil((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)));
+      const submissionRate = totalSubmissions / daysSinceCreation;
+      const avgSubmissionsPerDay = totalSubmissions / daysSinceCreation;
+
+      return {
+        briefId: brief.id,
+        briefTitle: brief.title,
+        totalSubmissions,
+        pendingSubmissions,
+        approvedSubmissions,
+        rejectedSubmissions,
+        submissionRate,
+        avgSubmissionsPerDay,
+        createdAt: brief.createdAt || new Date().toISOString(),
+        status: brief.status
+      };
+    });
+
+    // Calculate overall statistics
+    const totalBriefs = briefsData.length;
+    const activeBriefs = briefsData.filter(brief => brief.status === 'active').length;
+    const totalSubmissions = submissionsData.length;
+    const avgSubmissionsPerBrief = totalBriefs > 0 ? totalSubmissions / totalBriefs : 0;
+    
+    // Find top performing brief
+    const topPerformingBrief = briefStats.length > 0 
+      ? briefStats.reduce((max, current) => 
+          current.totalSubmissions > max.totalSubmissions ? current : max
+        ).briefTitle
+      : '';
+
+    // Calculate recent activity (last 7 days)
+    const recentActivity = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const submissionsOnDate = submissionsData.filter(sub => 
+        sub.submittedAt.startsWith(dateStr)
+      ).length;
+      recentActivity.push({
+        date: dateStr,
+        submissions: submissionsOnDate
+      });
+    }
+
+    setStatistics({
+      briefStats,
+      overallStats: {
+        totalBriefs,
+        activeBriefs,
+        totalSubmissions,
+        avgSubmissionsPerBrief,
+        topPerformingBrief,
+        recentActivity
+      }
+    });
   };
 
   const handleViewBrief = (brief: Brief) => {
@@ -646,20 +757,21 @@ const BrandDashboard: React.FC = () => {
   };
 
   const navigation = [
-    { id: 'overview', label: 'Overview', icon: '❤️' },
-    { id: 'briefs', label: 'My Briefs', icon: '📄' },
-    { id: 'submissions', label: 'Submissions', icon: '📚' },
-    { id: 'create', label: 'Create a Brief', icon: '📄➕' },
-    { id: 'creators', label: 'Creators', icon: '👥' },
-    { id: 'rewards-payments', label: 'Rewards & Payments', icon: '🎯' },
-    { id: 'wallet', label: 'Wallet', icon: '💳' },
-    { id: 'payments', label: 'Payments', icon: '💰' },
+    { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
+    { id: 'submissions', label: 'Submissions', icon: 'submissions' },
+    { id: 'create', label: 'Create a Brief', icon: 'create' },
+    { id: 'creators', label: 'Creators', icon: 'creators' },
+    { id: 'statistics', label: 'Statistics', icon: 'statistics' },
+    { id: 'rewards-payments', label: 'Rewards & Payments', icon: 'rewards-payments' },
+    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+    { id: 'payments', label: 'Payments', icon: 'payments' },
   ];
 
   const accountNav = [
-    { id: 'awards', label: 'Rewards', icon: '💰' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'logout', label: 'Logout', icon: '🚪', action: logout },
+    { id: 'awards', label: 'Rewards', icon: 'awards' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
 
   const renderOverview = () => (
@@ -1951,6 +2063,156 @@ const BrandDashboard: React.FC = () => {
     </div>
   );
 
+  // Statistics Page
+  const renderStatistics = () => (
+    <div className="space-y-6">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          Statistics & Analytics 📊
+        </h1>
+        <p className="text-lg text-gray-300">
+          Track your brief performance and submission analytics to optimize your creator campaigns.
+        </p>
+      </div>
+
+      {/* Overall Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
+              <img 
+                src="/icons/briefs.png" 
+                alt="Briefs"
+                className="w-6 h-6"
+              />
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{statistics.overallStats.totalBriefs}</p>
+            <p className="text-sm opacity-90">Total Briefs</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
+              <img 
+                src="/icons/submissions.png" 
+                alt="Submissions"
+                className="w-6 h-6"
+              />
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{statistics.overallStats.totalSubmissions}</p>
+            <p className="text-sm opacity-90">Total Submissions</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
+              <img 
+                src="/icons/overview.png" 
+                alt="Overview"
+                className="w-6 h-6"
+              />
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{statistics.overallStats.avgSubmissionsPerBrief.toFixed(1)}</p>
+            <p className="text-sm opacity-90">Avg per Brief</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-xl flex items-center justify-center">
+              <img 
+                src="/icons/rewards-payments.png" 
+                alt="Rewards & Payments"
+                className="w-6 h-6"
+              />
+            </div>
+          </div>
+          <div className="text-white">
+            <p className="text-3xl font-bold mb-2">{statistics.overallStats.activeBriefs}</p>
+            <p className="text-sm opacity-90">Active Briefs</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Brief Statistics Table */}
+      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+        <h2 className="text-xl font-bold text-white mb-6">Brief Performance Statistics</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-700">
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Brief Title</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Total Submissions</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Pending</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Approved</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Rejected</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Avg/Day</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {statistics.briefStats.map((brief) => (
+                <tr key={brief.briefId} className="border-b border-gray-800 hover:bg-gray-800/50">
+                  <td className="py-3 px-4 text-white font-medium">{brief.briefTitle}</td>
+                  <td className="py-3 px-4 text-white">{brief.totalSubmissions}</td>
+                  <td className="py-3 px-4 text-yellow-400">{brief.pendingSubmissions}</td>
+                  <td className="py-3 px-4 text-green-400">{brief.approvedSubmissions}</td>
+                  <td className="py-3 px-4 text-red-400">{brief.rejectedSubmissions}</td>
+                  <td className="py-3 px-4 text-blue-400">{brief.avgSubmissionsPerDay.toFixed(1)}</td>
+                  <td className="py-3 px-4">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      brief.status === 'active' ? 'bg-green-100 text-green-800' :
+                      brief.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recent Activity Chart */}
+      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+        <h2 className="text-xl font-bold text-white mb-6">Recent Activity (Last 7 Days)</h2>
+        <div className="grid grid-cols-7 gap-2">
+          {statistics.overallStats.recentActivity.map((day, index) => (
+            <div key={index} className="text-center">
+              <div className="bg-gray-800 rounded-lg p-3 mb-2">
+                <div className="text-2xl font-bold text-white mb-1">{day.submissions}</div>
+                <div className="text-xs text-gray-400">
+                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Top Performing Brief */}
+      {statistics.overallStats.topPerformingBrief && (
+        <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 border border-gray-700">
+          <h2 className="text-xl font-bold text-white mb-4">Top Performing Brief</h2>
+          <p className="text-lg text-white opacity-90">{statistics.overallStats.topPerformingBrief}</p>
+          <p className="text-sm text-white opacity-75 mt-2">
+            This brief has received the most submissions among all your active briefs.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   // Review Submission Modal
   const renderReviewModal = () => (
     showReviewModal && selectedSubmission && (
@@ -2497,6 +2759,8 @@ const BrandDashboard: React.FC = () => {
         return renderSubmissions();
       case 'creators':
         return renderCreators();
+      case 'statistics':
+        return renderStatistics();
       case 'wallet':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading wallet..." /></div>}>
@@ -2621,9 +2885,15 @@ const BrandDashboard: React.FC = () => {
                   }`}
                   title={item.label}
                 >
-                  <span className={`mr-3 text-base transition-all duration-200 ${
+                  <span className={`mr-3 transition-all duration-200 ${
                     activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>{item.icon}</span>
+                  }`}>
+                    <img 
+                      src={`/icons/${item.icon}.png`} 
+                      alt={item.label}
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="text-sm font-normal">{item.label}</span>
                 </button>
               ))}
@@ -2651,9 +2921,15 @@ const BrandDashboard: React.FC = () => {
                   }`}
                   title={item.label}
                 >
-                  <span className={`mr-3 text-base transition-all duration-200 ${
+                  <span className={`mr-3 transition-all duration-200 ${
                     activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>{item.icon}</span>
+                  }`}>
+                    <img 
+                      src={`/icons/${item.icon}.png`} 
+                      alt={item.label}
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="text-sm font-normal">{item.label}</span>
                 </button>
               ))}
@@ -2692,6 +2968,7 @@ const BrandDashboard: React.FC = () => {
                  activeTab === 'briefs' ? 'My Briefs' :
                  activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
+                 activeTab === 'statistics' ? 'Statistics' :
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'payments' ? 'Payments' :
                  activeTab === 'awards' ? 'Rewards' :
