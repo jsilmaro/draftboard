@@ -643,7 +643,7 @@ const CreateBrief: React.FC = () => {
                 type="text"
                 value={shareableLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-white"
+                className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-200"
               />
               <button
                 onClick={copyToClipboard}
