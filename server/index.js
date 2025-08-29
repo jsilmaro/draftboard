@@ -162,6 +162,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static('uploads'));
 
+// Import route modules
+const paymentRoutes = require('./routes/payments');
+const rewardRoutes = require('./routes/rewards');
+
+// Use route modules
+app.use('/api/payments', paymentRoutes);
+app.use('/api/rewards', rewardRoutes);
+
 // Request timeout middleware - REMOVED to allow longer login times
 // app.use((req, res, next) => {
 //   // Set a 30-second timeout for all requests

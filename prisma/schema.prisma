@@ -108,6 +108,7 @@ model Brief {
   submissions      Submission[]
   winners          Winner[]
   winnerRewards    WinnerReward[]
+  rewardPool       RewardPool?
 }
 
 model Submission {
@@ -274,4 +275,18 @@ model BrandWalletTransaction {
   balanceAfter  Float
   createdAt     DateTime    @default(now())
   wallet        BrandWallet @relation(fields: [walletId], references: [id])
+}
+
+model RewardPool {
+  id              String   @id @default(cuid())
+  briefId         String   @unique
+  totalAmount     Float
+  remainingAmount Float
+  status          String   @default("active") // active, distributed, cancelled
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  brief           Brief    @relation(fields: [briefId], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
 }
