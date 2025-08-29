@@ -9,6 +9,10 @@ const { PrismaClient } = require('@prisma/client');
 // Initialize Stripe only if API key is provided
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
+// Import new routes
+const paymentRoutes = require('./routes/payments');
+const rewardRoutes = require('./routes/rewards');
+
 // Debug environment variables
 console.log('🔧 Environment check:');
 console.log('TEST_VAR:', process.env.TEST_VAR || 'Not set');
@@ -232,6 +236,10 @@ app.get('/api', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// New Payment and Reward Routes
+app.use('/api/payments', paymentRoutes);
+app.use('/api/rewards', rewardRoutes);
 
 // Test endpoint for debugging
 app.get('/api/debug', (req, res) => {

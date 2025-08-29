@@ -1,380 +1,423 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe } from '@stripe/react-stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 
-// Load Stripe (you'll need to add your publishable key to .env)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
+// Load Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-interface Winner {
+interface WalletData {
+  balance: number;
+  totalEarned: number;
+  totalWithdrawn: number;
+  totalDeposited?: number;
+  totalSpent?: number;
+  transactions: Transaction[];
+}
+
+interface Transaction {
   id: string;
-  position: number;
-  creator: {
-    id: string;
-    fullName: string;
-    userName: string;
-    email: string;
-  };
-  brief: {
-    id: string;
-    title: string;
-    totalRewardsPaid: number;
-  };
-  reward: {
-    id: string;
-    cashAmount: number;
-    creditAmount: number;
-    prizeDescription: string;
-    isPaid: boolean;
-  };
-  payment?: {
-    id: string;
-    status: string;
-    amount: number;
-    rewardType: string;
-  };
+  type: string;
+  amount: number;
+  description: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
 }
 
-interface PaymentFormProps {
-  winner: Winner;
-  onPaymentComplete: () => void;
+interface PaymentManagementProps {
+  userType: 'brand' | 'creator';
+  userId: string;
+  token: string;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) => {
-  const stripe = useStripe();
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'credits' | 'prizes'>('stripe');
-  const [amount, setAmount] = useState(winner.reward.cashAmount);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handlePayment = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      if (paymentMethod === 'stripe') {
-        // Use wallet balance for payment
-        const response = await fetch('/api/payments/process-wallet-payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            winnerId: winner.id,
-            amount: amount,
-            rewardType: 'cash'
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to process payment');
-        }
-
-        await response.json(); // Response is not used, just await to handle the promise
-        
-        // Show success message
-        alert(`Payment of $${amount} sent successfully to ${winner.creator.fullName}!`);
-        onPaymentComplete();
-      } else {
-        // Process credits or prizes
-        const response = await fetch('/api/payments/process-reward', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            winnerId: winner.id,
-            rewardType: paymentMethod,
-            amount: paymentMethod === 'credits' ? amount : 0,
-            prizeDescription: paymentMethod === 'prizes' ? winner.reward.prizeDescription : ''
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to process reward');
-        }
-
-        await response.json(); // Response is not used, just await to handle the promise
-        alert(`${paymentMethod === 'credits' ? 'Credits' : 'Prize'} processed successfully for ${winner.creator.fullName}!`);
-        onPaymentComplete();
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Pay {winner.creator.fullName}
-        </h3>
-        <p className="text-sm text-gray-600">
-          Position: {winner.position} Spot • {winner.brief.title}
-        </p>
-      </div>
-
-      <form onSubmit={handlePayment} className="space-y-4">
-        {/* Payment Method Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Payment Method
-          </label>
-          <div className="space-y-2">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="stripe"
-                checked={paymentMethod === 'stripe'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
-                className="mr-2"
-              />
-              <span className="text-sm">💰 Wallet Balance (Real Money)</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="credits"
-                checked={paymentMethod === 'credits'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
-                className="mr-2"
-              />
-              <span className="text-sm">🎫 Platform Credits</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="prizes"
-                checked={paymentMethod === 'prizes'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
-                className="mr-2"
-              />
-              <span className="text-sm">🎁 Prizes</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Amount Input */}
-        {(paymentMethod === 'stripe' || paymentMethod === 'credits') && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Amount ($)
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-        )}
-
-        {/* Wallet Balance Info */}
-        {paymentMethod === 'stripe' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <div className="flex items-center">
-              <span className="text-blue-600 mr-2">💰</span>
-              <div>
-                <p className="text-sm font-medium text-blue-900">Payment from Wallet Balance</p>
-                <p className="text-xs text-blue-700">This payment will be deducted from your wallet balance</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Prize Description Display */}
-        {paymentMethod === 'prizes' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Prize Description
-            </label>
-            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-              {winner.reward.prizeDescription || 'No prize description available'}
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-            {error}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading || !stripe}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Processing...' : `Pay ${paymentMethod === 'stripe' || paymentMethod === 'credits' ? `$${amount}` : 'Prize'}`}
-        </button>
-      </form>
-    </div>
-  );
-};
-
-const PaymentManagement: React.FC = () => {
-  // const { user } = useAuth(); // Currently unused
-  const [winners, setWinners] = useState<Winner[]>([]);
+const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId: _userId, token }) => {
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedWinner, setSelectedWinner] = useState<Winner | null>(null);
+  const [showFundWallet, setShowFundWallet] = useState(false);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutAccountId, setPayoutAccountId] = useState('');
 
-  useEffect(() => {
-    fetchWinners();
-  }, []);
-
-  const fetchWinners = async () => {
+  const fetchWalletData = useCallback(async () => {
     try {
-      const response = await fetch('/api/brands/winners', {
+      const response = await fetch('/api/payments/wallet/balance', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setWinners(data.winners || []);
+        setWalletData(data);
       } else {
-        // Failed to fetch winners
-        setWinners([]);
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch wallet data');
       }
     } catch (error) {
-      // Error fetching winners
-      setWinners([]);
+      // eslint-disable-next-line no-console
+      console.error('Error fetching wallet data:', error);
     } finally {
       setLoading(false);
     }
+  }, [token]);
+
+  useEffect(() => {
+    fetchWalletData();
+  }, [fetchWalletData]);
+
+  const handleFundWallet = () => {
+    setShowFundWallet(true);
   };
 
-  const handlePaymentComplete = () => {
-    setSelectedWinner(null);
-    fetchWinners(); // Refresh the list
+  const handlePayoutRequest = () => {
+    setShowPayoutForm(true);
+  };
+
+  const submitPayoutRequest = async () => {
+    try {
+      const response = await fetch('/api/payments/payout/request', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: parseFloat(payoutAmount),
+          accountId: payoutAccountId
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Payout request submitted successfully! Transfer ID: ${result.transferId}`);
+        setShowPayoutForm(false);
+        setPayoutAmount('');
+        setPayoutAccountId('');
+        fetchWalletData(); // Refresh wallet data
+      } else {
+        const error = await response.json();
+        alert(`Payout request failed: ${error.error}`);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error submitting payout request:', error);
+      alert('Failed to submit payout request');
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading winners...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Management</h1>
-          <p className="text-gray-600">Manage payments for your brief winners</p>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          {userType === 'brand' ? 'Brand Wallet' : 'Creator Wallet'}
+        </h2>
+
+        {/* Wallet Balance Card */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+            <h3 className="text-sm font-medium opacity-90">Current Balance</h3>
+            <p className="text-2xl font-bold">${walletData?.balance?.toFixed(2) || '0.00'}</p>
+          </div>
+
+          {userType === 'creator' ? (
+            <>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+                <h3 className="text-sm font-medium opacity-90">Total Earned</h3>
+                <p className="text-2xl font-bold">${walletData?.totalEarned?.toFixed(2) || '0.00'}</p>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+                <h3 className="text-sm font-medium opacity-90">Total Withdrawn</h3>
+                <p className="text-2xl font-bold">${walletData?.totalWithdrawn?.toFixed(2) || '0.00'}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+                <h3 className="text-sm font-medium opacity-90">Total Deposited</h3>
+                <p className="text-2xl font-bold">${walletData?.totalDeposited?.toFixed(2) || '0.00'}</p>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+                <h3 className="text-sm font-medium opacity-90">Total Spent</h3>
+                <p className="text-2xl font-bold">${walletData?.totalSpent?.toFixed(2) || '0.00'}</p>
+              </div>
+            </>
+          )}
         </div>
 
-        {selectedWinner ? (
-          <div>
+        <div className="flex gap-4 mb-6">
+          {userType === 'brand' && (
             <button
-              onClick={() => setSelectedWinner(null)}
-              className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
+              onClick={handleFundWallet}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
             >
-              ← Back to winners
+              Fund Wallet
             </button>
-            <Elements stripe={stripePromise}>
-              <PaymentForm
-                winner={selectedWinner}
-                onPaymentComplete={handlePaymentComplete}
-              />
-            </Elements>
+          )}
+
+          {userType === 'creator' && walletData && walletData.balance > 0 && (
+            <button
+              onClick={handlePayoutRequest}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              Request Payout
+            </button>
+          )}
+        </div>
+
+        {/* Fund Wallet Modal */}
+        {showFundWallet && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Fund Your Wallet</h3>
+              <Elements stripe={stripePromise}>
+                <FundWalletForm
+                  token={token}
+                  onSuccess={() => {
+                    setShowFundWallet(false);
+                    fetchWalletData();
+                  }}
+                  onCancel={() => setShowFundWallet(false)}
+                />
+              </Elements>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {winners.map((winner) => (
-              <div
-                key={winner.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {winner.creator.fullName}
-                    </h3>
-                    <p className="text-sm text-gray-600">@{winner.creator.userName}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                      {winner.position} Spot
-                    </span>
-                  </div>
-                </div>
+        )}
 
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">{winner.brief.title}</p>
-                  <div className="space-y-1">
-                    {winner.reward.cashAmount > 0 && (
-                      <p className="text-sm">
-                        <span className="font-medium">Cash:</span> ${winner.reward.cashAmount}
-                      </p>
-                    )}
-                    {winner.reward.creditAmount > 0 && (
-                      <p className="text-sm">
-                        <span className="font-medium">Credits:</span> {winner.reward.creditAmount}
-                      </p>
-                    )}
-                    {winner.reward.prizeDescription && (
-                      <p className="text-sm">
-                        <span className="font-medium">Prize:</span> {winner.reward.prizeDescription}
-                      </p>
-                    )}
-                  </div>
+        {/* Payout Request Modal */}
+        {showPayoutForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Request Payout</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Amount (USD)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    max={walletData?.balance || 0}
+                    step="0.01"
+                    value={payoutAmount}
+                    onChange={(e) => setPayoutAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter amount"
+                    required
+                  />
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    {winner.payment ? (
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        winner.payment.status === 'completed' 
-                          ? 'bg-green-100 text-green-800'
-                          : winner.payment.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {winner.payment.status.charAt(0).toUpperCase() + winner.payment.status.slice(1)}
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">Not paid</span>
-                    )}
-                  </div>
-                  
-                  {!winner.payment && (
-                    <button
-                      onClick={() => setSelectedWinner(winner)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
-                    >
-                      Pay Now
-                    </button>
-                  )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stripe Account ID
+                  </label>
+                  <input
+                    type="text"
+                    value={payoutAccountId}
+                    onChange={(e) => setPayoutAccountId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="acct_..."
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={submitPayoutRequest}
+                    disabled={!payoutAmount || !payoutAccountId}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                  >
+                    Submit Request
+                  </button>
+                  <button
+                    onClick={() => setShowPayoutForm(false)}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         )}
 
-        {winners.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🎉</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No winners to pay</h3>
-            <p className="text-gray-600">All your winners have been paid or you haven&apos;t selected any winners yet.</p>
+        {/* Transaction History */}
+        <div className="mt-8">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Transaction History</h3>
+          <div className="bg-gray-50 rounded-lg p-4">
+            {walletData?.transactions && walletData.transactions.length > 0 ? (
+              <div className="space-y-3">
+                {walletData.transactions.map((transaction) => (
+                  <div key={transaction.id} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                    <div>
+                      <p className="font-medium text-gray-800">{transaction.description}</p>
+                      <p className="text-sm text-gray-500">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
+                        {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500">Balance: ${transaction.balanceAfter.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No transactions yet</p>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
+  );
+};
+
+// Fund Wallet Form Component
+interface FundWalletFormProps {
+  token: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCancel }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!stripe || !elements) return;
+
+    setLoading(true);
+
+    try {
+      // Create payment intent
+      const response = await fetch('/api/payments/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: parseFloat(amount)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const { clientSecret } = await response.json();
+
+      // Confirm payment
+      const { error } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+        }
+      });
+
+      if (error) {
+        alert(`Payment failed: ${error.message}`);
+      } else {
+        // Confirm payment on backend
+        const confirmResponse = await fetch('/api/payments/confirm-payment', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            paymentIntentId: clientSecret.split('_secret_')[0]
+          })
+        });
+
+        if (confirmResponse.ok) {
+          alert('Wallet funded successfully!');
+          onSuccess();
+        } else {
+          alert('Failed to confirm payment');
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Payment error:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Amount (USD)
+        </label>
+        <input
+          type="number"
+          min="1"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter amount"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Card Details
+        </label>
+        <div className="border border-gray-300 rounded-md p-3">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#424770',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#9e2146',
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={!stripe || loading || !amount}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md font-medium transition-colors"
+        >
+          {loading ? 'Processing...' : 'Fund Wallet'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 };
 
