@@ -124,8 +124,8 @@ graph TD
 ### **1. Environment Variables**
 ```env
 # Stripe Configuration
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51S1KZKLXqqzWGCaAbMEH93D9x8TH0aWf7qvm96tNWp7DA55tn1tuoTCQR0o7sIcA7xxJHYlj79HkRFYMWP4TsNxA00vDwCTtx1
-STRIPE_SECRET_KEY=sk_test_51S1KZKLXqqzWGCaADBCEjqFA5p2Xo5P96HClo68cjcYcpi8ePOemZnfBaU7XD42SFmBVSFaEU33oAnwntmzyrjtT006udhsJxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 # Payment Settings
