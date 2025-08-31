@@ -14,8 +14,8 @@ import LoadingSpinner from './LoadingSpinner';
 
 
 // Lazy load Stripe-dependent components to prevent loading during login
-const BrandWallet = lazy(() => import('./BrandWallet'));
 const PaymentManagement = lazy(() => import('./PaymentManagement'));
+const RewardManagement = lazy(() => import('./RewardManagement'));
 
 interface Brief {
   id: string;
@@ -749,8 +749,6 @@ const BrandDashboard: React.FC = () => {
   const handleTabClick = (tabId: string) => {
     if (tabId === 'create') {
       navigate('/brand/create-brief');
-    } else if (tabId === 'rewards-payments') {
-      navigate('/rewards-payments');
     } else {
       setActiveTab(tabId);
     }
@@ -763,9 +761,8 @@ const BrandDashboard: React.FC = () => {
     { id: 'create', label: 'Create a Brief', icon: 'create' },
     { id: 'creators', label: 'Creators', icon: 'creators' },
     { id: 'statistics', label: 'Statistics', icon: 'statistics' },
-    { id: 'rewards-payments', label: 'Rewards & Payments', icon: 'rewards-payments' },
-    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
-    { id: 'payments', label: 'Payments', icon: 'payments' },
+    { id: 'rewards-payments', label: 'Rewards', icon: 'rewards-payments' },
+    { id: 'payments', label: 'Wallet & Payments', icon: 'payments' },
   ];
 
   const accountNav = [
@@ -864,7 +861,7 @@ const BrandDashboard: React.FC = () => {
                     </span>
                     <button
                       onClick={() => handleReviewSubmission(submission)}
-                      className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                      className="text-gray-200 hover:text-white text-sm font-medium"
                     >
                       Review →
                     </button>
@@ -876,7 +873,7 @@ const BrandDashboard: React.FC = () => {
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setActiveTab('submissions')}
-                  className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                  className="text-gray-200 hover:text-white text-sm font-medium"
                 >
                   View All Submissions →
                 </button>
@@ -1000,7 +997,7 @@ const BrandDashboard: React.FC = () => {
       {/* View Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-600/30">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">{selectedBrief.title}</h3>
@@ -1015,26 +1012,26 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Overview */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-              <h4 className="text-lg font-semibold text-blue-900 mb-3">Brief Overview</h4>
+            <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+              <h4 className="text-lg font-semibold text-white mb-3">Brief Overview</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Status:</span>
+                  <span className="font-medium text-white">Status:</span>
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
-                    selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                    selectedBrief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
+                    selectedBrief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
+                    'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                   }`}>
                     {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Deadline:</span>
-                  <span className="text-blue-900">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                  <span className="font-medium text-white">Deadline:</span>
+                  <span className="text-gray-200">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Submissions:</span>
-                  <span className="text-blue-900">{(() => {
+                  <span className="font-medium text-white">Submissions:</span>
+                  <span className="text-gray-200">{(() => {
                     try {
                       if (typeof selectedBrief.submissions === 'number') {
                         return selectedBrief.submissions;
@@ -1049,22 +1046,22 @@ const BrandDashboard: React.FC = () => {
                   })()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Amount of Winners:</span>
-                  <span className="text-blue-900">{selectedBrief.amountOfWinners || 1}</span>
+                  <span className="font-medium text-white">Amount of Winners:</span>
+                  <span className="text-gray-200">{selectedBrief.amountOfWinners || 1}</span>
                 </div>
               </div>
             </div>
 
             {/* Reward Information */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
               <h4 className="text-lg font-semibold text-white mb-4">Reward Information</h4>
               
               {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                     <div>
-                      <span className="font-medium text-green-900">Amount of Rewards:</span>
-                      <div className="text-sm text-green-700 mt-1">
+                      <span className="font-medium text-white">Amount of Rewards:</span>
+                      <div className="text-sm text-gray-200 mt-1">
                         {selectedBrief.amountOfWinners || 1} rewards available
                       </div>
                     </div>
@@ -1074,30 +1071,30 @@ const BrandDashboard: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                       <h5 className="font-medium text-white mb-2">Reward Status</h5>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-gray-200">
                         {(() => {
                           const rewardInfo = getBriefRewardInfo(selectedBrief.id);
                           if (rewardInfo.type === 'published') {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                                <span className="text-green-700">Published</span>
+                                <span className="text-green-300">Published</span>
                               </div>
                             );
                           } else if (rewardInfo.type === 'draft') {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                                <span className="text-yellow-700">Draft</span>
+                                <span className="text-yellow-300">Draft</span>
                               </div>
                             );
                           } else {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                                <span className="text-blue-700">Rewards configured</span>
+                                <span className="text-gray-200">Rewards configured</span>
                               </div>
                             );
                           }
@@ -1105,15 +1102,15 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                       <h5 className="font-medium text-white mb-2">Reward Configuration</h5>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-gray-200">
                         <div className="flex items-center justify-between">
-                          <span>Total Rewards:</span>
+                          <span className="text-gray-300">Total Rewards:</span>
                           <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <span>Status:</span>
+                          <span className="text-gray-300">Status:</span>
                           <span className="font-medium">
                             {selectedBrief.status === 'active' ? 'Active' : 
                              selectedBrief.status === 'draft' ? 'Draft' : 'Completed'}
@@ -1158,7 +1155,7 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Details */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
               <h4 className="text-lg font-semibold text-white mb-4">Brief Details</h4>
               <div className="space-y-4">
                 <div>
@@ -1253,7 +1250,7 @@ const BrandDashboard: React.FC = () => {
       {/* Edit Modal */}
       {showEditModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700">
+          <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-2xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/10 dark:border-gray-600/20 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">Edit Brief</h3>
@@ -1281,25 +1278,25 @@ const BrandDashboard: React.FC = () => {
             }}>
               
               {/* Basic Information */}
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
-                <h4 className="text-lg font-semibold text-blue-900 mb-4">Basic Information</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Basic Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Brief Title *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brief Title *</label>
                     <input
                       type="text"
                       name="title"
                       defaultValue={selectedBrief.title}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                     <select
                       name="status"
                       defaultValue={selectedBrief.status}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     >
                       <option value="draft">📝 Draft</option>
                       <option value="active">🚀 Active</option>
@@ -1309,27 +1306,27 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Content */}
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+              <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
                 <h4 className="text-lg font-semibold text-white mb-4">Brief Content</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Description *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
                     <textarea
                       name="description"
                       defaultValue={selectedBrief.description || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-white"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       placeholder="Describe what you're looking for from creators..."
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Requirements *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requirements *</label>
                     <textarea
                       name="requirements"
                       defaultValue={selectedBrief.requirements || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-white"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       placeholder="List specific requirements, deliverables, and guidelines..."
                       required
                     />
@@ -1338,34 +1335,34 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Reward Configuration */}
-              <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700 mb-6">
-                <h4 className="text-lg font-semibold text-green-900 dark:text-green-400 mb-4">Reward Configuration</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Reward Configuration</h4>
                   <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Amount of Rewards *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount of Rewards *</label>
                   <input
                     type="number"
                       name="amountOfWinners"
                     min="1"
                     max="50"
                       defaultValue={selectedBrief.amountOfWinners || 1}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-white"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     placeholder="Enter number of rewards (1-50)"
                       required
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter a number between 1 and 50</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">Enter a number between 1 and 50</p>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700 mb-6">
-                <h4 className="text-lg font-semibold text-purple-900 dark:text-purple-400 mb-4">Timeline</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Timeline</h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Deadline *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deadline *</label>
                   <input
                     type="date"
                     name="deadline"
                     defaultValue={new Date(selectedBrief.deadline).toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-white"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     required
                   />
                 </div>
@@ -1419,7 +1416,7 @@ const BrandDashboard: React.FC = () => {
               className={`px-3 py-1 rounded-md text-sm font-medium ${
                 submissionFilter === 'all' 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-300 hover:bg-gray-300'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               All ({submissions.length})
@@ -1429,7 +1426,7 @@ const BrandDashboard: React.FC = () => {
               className={`px-3 py-1 rounded-md text-sm font-medium ${
                 submissionFilter === 'pending' 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-300 hover:bg-gray-300'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               Pending ({submissions.filter(s => s.status === 'pending').length})
@@ -1439,7 +1436,7 @@ const BrandDashboard: React.FC = () => {
               className={`px-3 py-1 rounded-md text-sm font-medium ${
                 submissionFilter === 'approved' 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-300 hover:bg-gray-300'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               Shortlist ({submissions.filter(s => s.status === 'approved').length})
@@ -1449,7 +1446,7 @@ const BrandDashboard: React.FC = () => {
               className={`px-3 py-1 rounded-md text-sm font-medium ${
                 submissionFilter === 'rejected' 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-300 hover:bg-gray-300'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               Rejected ({submissions.filter(s => s.status === 'rejected').length})
@@ -1457,20 +1454,20 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white/5 dark:bg-gray-800/10 divide-y divide-white/10 dark:divide-gray-700/30">
                 {filteredSubmissions.map((submission) => (
                   <tr key={submission.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1489,7 +1486,7 @@ const BrandDashboard: React.FC = () => {
                             // You could add a state to filter submissions by brief ID
                           }
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-gray-200 hover:text-white font-medium"
                       >
                         {submission.briefTitle}
                       </button>
@@ -1509,9 +1506,9 @@ const BrandDashboard: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        submission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
+                        submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                        submission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                       }`}>
                         {submission.status === 'approved' ? 'Shortlisted' :
                          submission.status === 'rejected' ? 'Rejected' :
@@ -1524,7 +1521,7 @@ const BrandDashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
                         onClick={() => handleReviewSubmission(submission)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-gray-200 hover:text-white mr-3"
                       >
                         Review
                       </button>
@@ -1532,13 +1529,13 @@ const BrandDashboard: React.FC = () => {
                         <>
                           <button 
                             onClick={() => handleApproveSubmission(submission)}
-                            className="text-green-600 hover:text-green-900 mr-3"
+                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3"
                           >
                             Approve
                           </button>
                           <button 
                             onClick={() => handleRejectSubmission(submission)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                           >
                             Reject
                           </button>
@@ -1569,7 +1566,7 @@ const BrandDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {creators.map((creator) => (
-          <div key={creator.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <div key={creator.id} className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20">
             <div className="flex items-center mb-4">
               <DefaultAvatar name={creator.fullName} size="md" className="mr-3" />
               <div>
@@ -1603,7 +1600,7 @@ const BrandDashboard: React.FC = () => {
       {/* Creator Profile Modal */}
       {showCreatorProfileModal && selectedCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-2xl w-full mx-4 border border-white/20 dark:border-gray-600/30">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Creator Profile</h3>
               <button
@@ -1677,7 +1674,7 @@ const BrandDashboard: React.FC = () => {
       {/* Invite Creator Modal */}
       {showInviteModal && selectedCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-2xl w-full mx-4 border border-white/20 dark:border-gray-600/30">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Invite {selectedCreator.fullName}</h3>
               <button
@@ -1689,7 +1686,7 @@ const BrandDashboard: React.FC = () => {
             </div>
             <form onSubmit={handleSubmitInvite} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Message to Creator
                 </label>
                 <textarea
@@ -1703,7 +1700,7 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Select Brief (Optional)
                 </label>
                 <select
@@ -1741,7 +1738,7 @@ const BrandDashboard: React.FC = () => {
       {/* General Invite Creator Modal */}
       {showInviteCreatorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-2xl w-full mx-4 border border-white/20 dark:border-gray-600/30">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">Invite Creator</h3>
               <button
@@ -1761,8 +1758,8 @@ const BrandDashboard: React.FC = () => {
                 <li>Use the &quot;View Profile&quot; button to see more details about creators</li>
                 <li>Contact creators directly if you have their contact information</li>
               </ul>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20">
+                <p className="text-sm text-gray-200">
                   <strong>Tip:</strong> The best way to attract creators is to create compelling briefs with clear requirements and fair compensation.
                 </p>
               </div>
@@ -1796,18 +1793,18 @@ const BrandDashboard: React.FC = () => {
 
         {/* Overview Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">📋</div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Total Briefs</h3>
-                <p className="text-3xl font-bold text-blue-600">{briefs.length}</p>
+                <p className="text-3xl font-bold text-gray-200">{briefs.length}</p>
               </div>
             </div>
             <p className="text-sm text-gray-300">Active and draft briefs</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">💰</div>
               <div>
@@ -1820,7 +1817,7 @@ const BrandDashboard: React.FC = () => {
             <p className="text-sm text-gray-300">Briefs with reward types set</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
             <div className="flex items-center mb-4">
               <div className="text-3xl mr-3">🎯</div>
               <div>
@@ -1957,8 +1954,8 @@ const BrandDashboard: React.FC = () => {
         )}
 
         {/* Quick Actions */}
-        <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Actions</h3>
+        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20">
+          <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
               onClick={() => navigate('/brand/create-brief')}
@@ -1996,7 +1993,7 @@ const BrandDashboard: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Settings</h2>
       
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
+      <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 p-6">
         <div className="flex items-center mb-6">
           <DefaultAvatar name={user?.companyName || 'Brand'} size="xl" className="mr-4" />
           <div>
@@ -2010,16 +2007,16 @@ const BrandDashboard: React.FC = () => {
             <h4 className="font-semibold text-white mb-3">Company Information</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Company Name</label>
-                <input type="text" defaultValue={user?.companyName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company Name</label>
+                <input type="text" defaultValue={user?.companyName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Contact Name</label>
-                <input type="text" placeholder="Contact person name" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label>
+                <input type="text" placeholder="Contact person name" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200" />
               </div>
             </div>
           </div>
@@ -2028,23 +2025,23 @@ const BrandDashboard: React.FC = () => {
             <h4 className="font-semibold text-white mb-3">Preferences</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Notification Settings</label>
-                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notification Settings</label>
+                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200">
                   <option>All notifications</option>
                   <option>Important only</option>
                   <option>None</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Privacy Level</label>
-                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Privacy Level</label>
+                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200">
                   <option>Public</option>
                   <option>Private</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Language</label>
-                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-white">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
+                <select className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-gray-200">
                   <option>English</option>
                   <option>Spanish</option>
                   <option>French</option>
@@ -2130,7 +2127,7 @@ const BrandDashboard: React.FC = () => {
             <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-xl flex items-center justify-center">
               <img 
                 src="/icons/rewards-payments.png" 
-                alt="Rewards & Payments"
+                alt="Rewards"
                 className="w-6 h-6"
               />
             </div>
@@ -2166,12 +2163,12 @@ const BrandDashboard: React.FC = () => {
                   <td className="py-3 px-4 text-yellow-400">{brief.pendingSubmissions}</td>
                   <td className="py-3 px-4 text-green-400">{brief.approvedSubmissions}</td>
                   <td className="py-3 px-4 text-red-400">{brief.rejectedSubmissions}</td>
-                  <td className="py-3 px-4 text-blue-400">{brief.avgSubmissionsPerDay.toFixed(1)}</td>
+                  <td className="py-3 px-4 text-gray-200">{brief.avgSubmissionsPerDay.toFixed(1)}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                      brief.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
+                      brief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
+                      brief.status === 'completed' ? 'bg-blue-100/20 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 backdrop-blur-sm border border-blue-200/30 dark:border-blue-600/30' :
+                      'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                     }`}>
                       {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
                     </span>
@@ -2217,7 +2214,7 @@ const BrandDashboard: React.FC = () => {
   const renderReviewModal = () => (
     showReviewModal && selectedSubmission && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-600/30">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-white">Review Submission</h3>
             <button
@@ -2233,7 +2230,7 @@ const BrandDashboard: React.FC = () => {
           
           <div className="space-y-6">
             {/* Creator Information */}
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20">
               <h4 className="font-semibold text-white mb-3">Creator Information</h4>
               <div className="flex items-center mb-3">
                 <DefaultAvatar name={detailedSubmission?.creator?.fullName || selectedSubmission.creatorName} size="md" className="mr-3" />
@@ -2244,19 +2241,19 @@ const BrandDashboard: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">Brief:</span>
-                  <p className="text-gray-300">{detailedSubmission?.brief?.title || selectedSubmission.briefTitle}</p>
+                  <span className="font-medium text-white">Brief:</span>
+                  <p className="text-gray-200">{detailedSubmission?.brief?.title || selectedSubmission.briefTitle}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Submitted:</span>
-                  <p className="text-gray-300">{new Date(selectedSubmission.submittedAt).toLocaleDateString()}</p>
+                  <span className="font-medium text-white">Submitted:</span>
+                  <p className="text-gray-200">{new Date(selectedSubmission.submittedAt).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Status:</span>
+                  <span className="font-medium text-white">Status:</span>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ml-2 ${
-                    selectedSubmission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    selectedSubmission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
+                    selectedSubmission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                    selectedSubmission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                   }`}>
                     {selectedSubmission.status === 'approved' ? 'Shortlisted' :
                      selectedSubmission.status === 'rejected' ? 'Rejected' :
@@ -2265,8 +2262,8 @@ const BrandDashboard: React.FC = () => {
                 </div>
                 {detailedSubmission?.creator?.email && (
                   <div>
-                    <span className="font-medium">Email:</span>
-                    <p className="text-gray-300">{detailedSubmission.creator.email}</p>
+                    <span className="font-medium text-white">Email:</span>
+                    <p className="text-gray-200">{detailedSubmission.creator.email}</p>
                   </div>
                 )}
                 {(detailedSubmission?.creator?.socialInstagram || 
@@ -2275,8 +2272,8 @@ const BrandDashboard: React.FC = () => {
                   detailedSubmission?.creator?.socialTikTok || 
                   detailedSubmission?.creator?.socialYouTube) && (
                   <div>
-                    <span className="font-medium">Social:</span>
-                    <p className="text-gray-300">
+                    <span className="font-medium text-white">Social:</span>
+                    <p className="text-gray-200">
                       {[
                         detailedSubmission.creator.socialInstagram && `Instagram: ${detailedSubmission.creator.socialInstagram}`,
                         detailedSubmission.creator.socialTwitter && `Twitter: ${detailedSubmission.creator.socialTwitter}`,
@@ -2293,17 +2290,17 @@ const BrandDashboard: React.FC = () => {
             {/* Content Submission Link */}
             <div>
               <h4 className="font-semibold text-white mb-3">Content Submission Link</h4>
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20">
                 {detailedSubmission ? (
                   <>
                     {detailedSubmission.files ? (
                       <div className="mb-4">
-                        <div className="bg-white p-3 rounded border">
+                        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm p-3 rounded border border-white/20 dark:border-gray-600/30">
                           <a 
                             href={detailedSubmission.files} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                            className="text-gray-200 hover:text-white text-sm break-all"
                           >
                             {detailedSubmission.files}
                           </a>
@@ -2311,16 +2308,16 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     ) : (
                       <div className="mb-4">
-                        <div className="bg-white p-3 rounded border text-sm text-gray-500">
+                        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm p-3 rounded border border-white/20 dark:border-gray-600/30 text-sm text-gray-400 dark:text-gray-300">
                           No content submission link provided
                         </div>
                       </div>
                     )}
 
                     {/* Submission Details */}
-                    <div className="text-sm text-gray-500 border-t pt-3">
-                      <p><strong>Amount:</strong> ${detailedSubmission.amount}</p>
-                      <p><strong>Submitted:</strong> {new Date(detailedSubmission.submittedAt).toLocaleString()}</p>
+                    <div className="text-sm text-gray-300 dark:text-gray-200 border-t border-white/10 dark:border-gray-600/20 pt-3">
+                      <p><strong className="text-white">Amount:</strong> ${detailedSubmission.amount}</p>
+                      <p><strong className="text-white">Submitted:</strong> {new Date(detailedSubmission.submittedAt).toLocaleString()}</p>
                     </div>
                   </>
                 ) : (
@@ -2341,7 +2338,7 @@ const BrandDashboard: React.FC = () => {
                 setShowReviewModal(false);
                 setDetailedSubmission(null);
               }}
-              className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-600/50 rounded-md text-gray-300 dark:text-gray-200 hover:bg-gray-50/10 dark:hover:bg-gray-700/30"
             >
               Close
             </button>
@@ -2377,7 +2374,7 @@ const BrandDashboard: React.FC = () => {
   const renderRejectModal = () => (
     showRejectModal && selectedSubmission && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+        <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-2xl w-full mx-4 border border-white/10 dark:border-gray-600/20">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-white">Reject Submission</h3>
             <button
@@ -2389,9 +2386,9 @@ const BrandDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-800 mb-2">About this submission</h4>
-              <p className="text-sm text-yellow-700">
+            <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm border border-white/10 dark:border-gray-600/20 rounded-lg p-4">
+              <h4 className="font-semibold text-white mb-2">About this submission</h4>
+              <p className="text-sm text-gray-200">
                 <strong>Creator:</strong> {selectedSubmission.creatorName}<br />
                 <strong>Brief:</strong> {selectedSubmission.briefTitle}<br />
                 <strong>Submitted:</strong> {new Date(selectedSubmission.submittedAt).toLocaleDateString()}
@@ -2400,7 +2397,7 @@ const BrandDashboard: React.FC = () => {
 
             <form onSubmit={handleSubmitRejection}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Reason for Rejection *
                 </label>
                 <textarea
@@ -2449,7 +2446,7 @@ const BrandDashboard: React.FC = () => {
   const renderApproveModal = () => (
     showApproveModal && selectedSubmission && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+        <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-2xl w-full mx-4 border border-white/10 dark:border-gray-600/20">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-white">Approve & Shortlist</h3>
             <button
@@ -2461,9 +2458,9 @@ const BrandDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-semibold text-green-800 mb-2">About this submission</h4>
-              <p className="text-sm text-green-700">
+            <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm border border-white/10 dark:border-gray-600/20 rounded-lg p-4">
+              <h4 className="font-semibold text-white mb-2">About this submission</h4>
+              <p className="text-sm text-gray-200">
                 <strong>Creator:</strong> {selectedSubmission.creatorName}<br />
                 <strong>Brief:</strong> {selectedSubmission.briefTitle}<br />
                 <strong>Submitted:</strong> {new Date(selectedSubmission.submittedAt).toLocaleDateString()}
@@ -2471,9 +2468,9 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmitApproval}>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20">
+                <h4 className="font-semibold text-white mb-2">What happens next?</h4>
+                <ul className="text-sm text-gray-200 space-y-1">
                   <li>• The creator will be notified that their work has been shortlisted</li>
                   <li>• The submission will be moved to the &quot;Shortlist&quot; tab</li>
                   <li>• You can review all shortlisted submissions before making final decisions</li>
@@ -2597,14 +2594,14 @@ const BrandDashboard: React.FC = () => {
           </div>
 
           {/* Brief Info */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+          <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-blue-900">Status:</span>
+                <span className="font-medium text-white">Status:</span>
                 <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                  brief.status === 'active' ? 'bg-green-100 text-green-800' :
-                  brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
+                  brief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
+                  brief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
+                  'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                 }`}>
                   {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
                 </span>
@@ -2626,7 +2623,7 @@ const BrandDashboard: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
             <h3 className="text-lg font-semibold text-white mb-4">Amount of Rewards</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Amount of Rewards *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount of Rewards *</label>
               <input
                 type="number"
                 min="1"
@@ -2665,7 +2662,7 @@ const BrandDashboard: React.FC = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Cash Amount ($)
                         </label>
                         <input
@@ -2674,13 +2671,13 @@ const BrandDashboard: React.FC = () => {
                           step="0.01"
                           value={reward.cashAmount || ''}
                           onChange={(e) => handleWinnerRewardChange(reward.position, 'cashAmount', Number(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                           placeholder="0.00"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Credit Amount
                         </label>
                         <input
@@ -2688,20 +2685,20 @@ const BrandDashboard: React.FC = () => {
                           min="0"
                           value={reward.creditAmount || ''}
                           onChange={(e) => handleWinnerRewardChange(reward.position, 'creditAmount', Number(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                           placeholder="0"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Prize Description
                         </label>
                         <input
                           type="text"
                           value={reward.prizeDescription || ''}
                           onChange={(e) => handleWinnerRewardChange(reward.position, 'prizeDescription', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                           placeholder="e.g., Product bundle, Gift card, Experience"
                         />
                       </div>
@@ -2710,14 +2707,14 @@ const BrandDashboard: React.FC = () => {
                 ))}
                 
                 {/* Total Calculator */}
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-blue-900">Campaign Total:</span>
-                    <span className="text-2xl font-bold text-blue-900">
+                    <span className="text-lg font-semibold text-white">Campaign Total:</span>
+                    <span className="text-2xl font-bold text-white">
                       ${calculateTotalReward().toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-sm text-blue-700 mt-2">
+                  <p className="text-sm text-gray-200 mt-2">
                     Total cash value of all rewards (excluding prizes)
                   </p>
                 </div>
@@ -2761,16 +2758,24 @@ const BrandDashboard: React.FC = () => {
         return renderCreators();
       case 'statistics':
         return renderStatistics();
-      case 'wallet':
+      case 'rewards-payments':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading wallet..." /></div>}>
-            <BrandWallet />
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading rewards system..." /></div>}>
+            <RewardManagement 
+              userType="brand" 
+              userId={user?.id || ''} 
+              token={localStorage.getItem('token') || ''} 
+            />
           </Suspense>
         );
       case 'payments':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" color="blue" text="Loading payments..." /></div>}>
-            <PaymentManagement />
+            <PaymentManagement 
+              userType="brand" 
+              userId={user?.id || ''} 
+              token={localStorage.getItem('token') || ''} 
+            />
           </Suspense>
         );
       case 'awards':
@@ -2969,6 +2974,7 @@ const BrandDashboard: React.FC = () => {
                  activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
                  activeTab === 'statistics' ? 'Statistics' :
+                 activeTab === 'rewards-payments' ? 'Rewards & Payments' :
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'payments' ? 'Payments' :
                  activeTab === 'awards' ? 'Rewards' :
@@ -3009,7 +3015,7 @@ const BrandDashboard: React.FC = () => {
       {/* Modals */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-600/30">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">{selectedBrief.title}</h3>
@@ -3024,26 +3030,26 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Overview */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-              <h4 className="text-lg font-semibold text-blue-900 mb-3">Brief Overview</h4>
+            <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+              <h4 className="text-lg font-semibold text-white mb-3">Brief Overview</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Status:</span>
+                  <span className="font-medium text-white">Status:</span>
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    selectedBrief.status === 'active' ? 'bg-green-100 text-green-800' :
-                    selectedBrief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                    selectedBrief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
+                    selectedBrief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
+                    'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                   }`}>
                     {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Deadline:</span>
-                  <span className="text-blue-900">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
+                  <span className="font-medium text-white">Deadline:</span>
+                  <span className="text-gray-200">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Submissions:</span>
-                  <span className="text-blue-900">{(() => {
+                  <span className="font-medium text-white">Submissions:</span>
+                  <span className="text-gray-200">{(() => {
                     try {
                       if (typeof selectedBrief.submissions === 'number') {
                         return selectedBrief.submissions;
@@ -3058,22 +3064,22 @@ const BrandDashboard: React.FC = () => {
                   })()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-blue-900">Amount of Winners:</span>
-                  <span className="text-blue-900">{selectedBrief.amountOfWinners || 1}</span>
+                  <span className="font-medium text-white">Amount of Winners:</span>
+                  <span className="text-gray-200">{selectedBrief.amountOfWinners || 1}</span>
                 </div>
               </div>
             </div>
 
             {/* Reward Information */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
               <h4 className="text-lg font-semibold text-white mb-4">Reward Information</h4>
               
               {selectedBrief.amountOfWinners ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                     <div>
-                      <span className="font-medium text-green-900">Amount of Rewards:</span>
-                      <div className="text-sm text-green-700 mt-1">
+                      <span className="font-medium text-white">Amount of Rewards:</span>
+                      <div className="text-sm text-gray-200 mt-1">
                         {selectedBrief.amountOfWinners || 1} rewards available
                       </div>
                     </div>
@@ -3083,30 +3089,30 @@ const BrandDashboard: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                       <h5 className="font-medium text-white mb-2">Reward Status</h5>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-gray-200">
                         {(() => {
                           const rewardInfo = getBriefRewardInfo(selectedBrief.id);
                           if (rewardInfo.type === 'published') {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                                <span className="text-green-700">Published</span>
+                                <span className="text-green-300">Published</span>
                               </div>
                             );
                           } else if (rewardInfo.type === 'draft') {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                                <span className="text-yellow-700">Draft</span>
+                                <span className="text-yellow-300">Draft</span>
                               </div>
                             );
                           } else {
                             return (
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                                <span className="text-blue-700">Rewards configured</span>
+                                <span className="text-gray-200">Rewards configured</span>
                               </div>
                             );
                           }
@@ -3114,15 +3120,15 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20">
                       <h5 className="font-medium text-white mb-2">Reward Configuration</h5>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-gray-200">
                         <div className="flex items-center justify-between">
-                          <span>Total Rewards:</span>
+                          <span className="text-gray-300">Total Rewards:</span>
                           <span className="font-medium">{selectedBrief.amountOfWinners || 1}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <span>Status:</span>
+                          <span className="text-gray-300">Status:</span>
                           <span className="font-medium">
                             {selectedBrief.status === 'active' ? 'Active' : 
                              selectedBrief.status === 'draft' ? 'Draft' : 'Completed'}
@@ -3167,7 +3173,7 @@ const BrandDashboard: React.FC = () => {
             </div>
 
             {/* Brief Details */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
               <h4 className="text-lg font-semibold text-white mb-4">Brief Details</h4>
               <div className="space-y-4">
                 <div>
@@ -3256,7 +3262,7 @@ const BrandDashboard: React.FC = () => {
       {renderEditRewardsModal()}
       {showEditModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                  <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-2xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/10 dark:border-gray-600/20 shadow-2xl">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-2xl font-bold text-white">Edit Brief</h3>
@@ -3285,25 +3291,25 @@ const BrandDashboard: React.FC = () => {
             }}>
               
               {/* Basic Information */}
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
-                <h4 className="text-lg font-semibold text-blue-900 mb-4">Basic Information</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Basic Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Brief Title *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brief Title *</label>
                     <input
                       type="text"
                       name="title"
                       defaultValue={selectedBrief.title}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                     <select
                       name="status"
                       defaultValue={selectedBrief.status}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     >
                       <option value="draft">📝 Draft</option>
                       <option value="active">🚀 Active</option>
@@ -3313,27 +3319,27 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Content */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-700 mb-6">
+              <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm p-6 rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20 mb-6">
                 <h4 className="text-lg font-semibold text-white mb-4">Brief Content</h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Description *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
                     <textarea
                       name="description"
                       defaultValue={selectedBrief.description || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       placeholder="Describe what you're looking for from creators..."
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Requirements *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requirements *</label>
                     <textarea
                       name="requirements"
                       defaultValue={selectedBrief.requirements || ''}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                       placeholder="List specific requirements, deliverables, and guidelines..."
                       required
                     />
@@ -3342,34 +3348,34 @@ const BrandDashboard: React.FC = () => {
               </div>
 
               {/* Reward Configuration */}
-              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
-                <h4 className="text-lg font-semibold text-green-900 mb-4">Reward Configuration</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Reward Configuration</h4>
                   <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Amount of Rewards *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount of Rewards *</label>
                   <input
                     type="number"
                       name="amountOfWinners"
                     min="1"
                     max="50"
                       defaultValue={selectedBrief.amountOfWinners || 1}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     placeholder="Enter number of rewards (1-50)"
                       required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Enter a number between 1 and 50</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">Enter a number between 1 and 50</p>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mb-6">
-                <h4 className="text-lg font-semibold text-purple-900 mb-4">Timeline</h4>
+              <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Timeline</h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Deadline *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deadline *</label>
                   <input
                     type="date"
                     name="deadline"
                     defaultValue={new Date(selectedBrief.deadline).toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     required
                   />
                 </div>

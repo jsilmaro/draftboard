@@ -300,14 +300,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBrands = () => (
-    <div className="bg-gray-900 rounded-lg shadow-md">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
       <div className="p-6 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Brand Management</h3>
         <p className="text-sm text-gray-300 mt-1">Overview of registered brands with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brand</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
@@ -316,7 +316,7 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
             {brands.map((brand) => (
               <tr key={brand.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -355,14 +355,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderCreators = () => (
-    <div className="bg-gray-900 rounded-lg shadow-md">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
       <div className="p-6 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Creator Management</h3>
         <p className="text-sm text-gray-300 mt-1">Overview of registered creators with contact information</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
@@ -371,7 +371,7 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
             {creators.map((creator) => (
               <tr key={creator.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -411,14 +411,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBriefs = () => (
-    <div className="bg-gray-900 rounded-lg shadow-md">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
       <div className="p-6 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Brief Management</h3>
         <p className="text-sm text-gray-300 mt-1">Manage all campaign briefs</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brand</th>
@@ -428,7 +428,7 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
             {briefs.map((brief) => (
               <tr key={brief.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -460,14 +460,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderSubmissions = () => (
-    <div className="bg-gray-900 rounded-lg shadow-md">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
       <div className="p-6 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Submission Monitoring</h3>
         <p className="text-sm text-gray-300 mt-1">Track all creator submissions</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
@@ -477,7 +477,7 @@ const AdminDashboard: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
             {submissions.map((submission) => (
               <tr key={submission.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -511,7 +511,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderPayouts = () => (
-    <div className="bg-gray-900 rounded-lg shadow-md">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
       <div className="p-6 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Payout Management</h3>
         <p className="text-sm text-gray-300 mt-1">Track and manage creator payouts</p>
@@ -534,7 +534,7 @@ const AdminDashboard: React.FC = () => {
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
@@ -543,7 +543,7 @@ const AdminDashboard: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
               {submissions.filter(s => s.status === 'approved').map((submission) => (
                 <tr key={submission.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{submission.creatorName}</td>

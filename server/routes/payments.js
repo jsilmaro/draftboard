@@ -124,11 +124,17 @@ router.get('/wallet/balance', auth, async (req, res) => {
     const balance = wallet ? wallet.balance : 0;
 
     // Get additional stats
-    const transactions = await prisma.transaction.findMany({
-      where: { userId: userId },
-      orderBy: { createdAt: 'desc' },
-      take: 10
-    });
+    let transactions = [];
+    try {
+      transactions = await prisma.transaction.findMany({
+        where: { userId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      });
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      transactions = [];
+    }
 
     let totalEarned = 0;
     let totalWithdrawn = 0;
@@ -136,49 +142,69 @@ router.get('/wallet/balance', auth, async (req, res) => {
     let totalSpent = 0;
 
     if (userType === 'creator') {
-      totalEarned = await prisma.transaction.aggregate({
-        where: { 
-          userId: userId, 
-          type: 'reward',
-          status: 'completed'
-        },
-        _sum: { amount: true }
-      });
+      try {
+        totalEarned = await prisma.transaction.aggregate({
+          where: { 
+            userId: userId, 
+            type: 'reward',
+            status: 'completed'
+          },
+          _sum: { amount: true }
+        });
+      } catch (error) {
+        console.error('Error fetching total earned:', error);
+        totalEarned = { _sum: { amount: 0 } };
+      }
       
-      totalWithdrawn = await prisma.transaction.aggregate({
-        where: { 
-          userId: userId, 
-          type: 'withdrawal',
-          status: 'completed'
-        },
-        _sum: { amount: true }
-      });
+      try {
+        totalWithdrawn = await prisma.transaction.aggregate({
+          where: { 
+            userId: userId, 
+            type: 'withdrawal',
+            status: 'completed'
+          },
+          _sum: { amount: true }
+        });
+      } catch (error) {
+        console.error('Error fetching total withdrawn:', error);
+        totalWithdrawn = { _sum: { amount: 0 } };
+      }
     } else {
-      totalDeposited = await prisma.transaction.aggregate({
-        where: { 
-          userId: userId, 
-          type: 'deposit',
-          status: 'completed'
-        },
-        _sum: { amount: true }
-      });
+      try {
+        totalDeposited = await prisma.transaction.aggregate({
+          where: { 
+            userId: userId, 
+            type: 'deposit',
+            status: 'completed'
+          },
+          _sum: { amount: true }
+        });
+      } catch (error) {
+        console.error('Error fetching total deposited:', error);
+        totalDeposited = { _sum: { amount: 0 } };
+      }
       
-      totalSpent = await prisma.transaction.aggregate({
-        where: { 
-          userId: userId, 
-          type: 'reward_creation',
-          status: 'completed'
-        },
-        _sum: { amount: true }
-      });
+      try {
+        totalSpent = await prisma.transaction.aggregate({
+          where: { 
+            userId: userId, 
+            type: 'reward_creation',
+            status: 'completed'
+          },
+          _sum: { amount: true }
+        });
+      } catch (error) {
+        console.error('Error fetching total spent:', error);
+        totalSpent = { _sum: { amount: 0 } };
+      }
     }
 
     res.json({
       balance: balance,
-      totalEarned: totalEarned._sum.amount || 0,
-      totalWithdrawn: totalWithdrawn._sum.amount || 0,
-      totalDeposited: totalDeposited._sum.amount || 0,
-      totalSpent: totalSpent._sum.amount || 0,
+      totalEarned: (totalEarned && totalEarned._sum && totalEarned._sum.amount) || 0,
+      totalWithdrawn: (totalWithdrawn && totalWithdrawn._sum && totalWithdrawn._sum.amount) || 0,
+      totalDeposited: (totalDeposited && totalDeposited._sum && totalDeposited._sum.amount) || 0,
+      totalSpent: (totalSpent && totalSpent._sum && totalSpent._sum.amount) || 0,
       transactions: transactions
     });
   } catch (error) {

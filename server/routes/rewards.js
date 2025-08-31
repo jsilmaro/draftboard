@@ -362,4 +362,141 @@ router.get('/analytics/brand', auth, async (req, res) => {
   }
 });
 
+// Distribute rewards to winners
+router.post('/distribute', auth, async (req, res) => {
+  try {
+    console.log('🎯 Distribute rewards request:', {
+      body: req.body,
+      userId: req.user?.id,
+      userType: req.user?.type
+    });
+    
+    const { poolId, winners } = req.body;
+    const userId = req.user.id;
+    const userType = req.user.type;
+
+    if (userType !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can distribute rewards' });
+    }
+
+    if (!poolId || !winners || !Array.isArray(winners)) {
+      return res.status(400).json({ error: 'Invalid pool ID or winners data' });
+    }
+
+    // Get the reward pool
+    const pool = await prisma.rewardPool.findFirst({
+      where: {
+        id: poolId,
+        brief: {
+          brandId: userId
+        }
+      },
+      include: {
+        brief: true
+      }
+    });
+
+    if (!pool) {
+      return res.status(404).json({ error: 'Reward pool not found' });
+    }
+
+    if (pool.status !== 'active') {
+      return res.status(400).json({ error: 'Reward pool is not active' });
+    }
+
+    // Calculate total reward amount
+    const totalRewardAmount = winners.reduce((sum, winner) => sum + winner.amount, 0);
+
+    if (totalRewardAmount > pool.remainingAmount) {
+      return res.status(400).json({ error: 'Total reward amount exceeds remaining pool amount' });
+    }
+
+    // Start a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create reward transactions for each winner
+      const rewardTransactions = [];
+      for (const winner of winners) {
+        // Get the submission to find the creator
+        const submission = await tx.submission.findUnique({
+          where: { id: winner.submissionId },
+          include: { creator: true }
+        });
+
+        if (!submission) {
+          throw new Error(`Submission ${winner.submissionId} not found`);
+        }
+
+        // Create reward transaction
+        const transaction = await tx.transaction.create({
+          data: {
+            userId: submission.creatorId,
+            userType: 'creator',
+            type: 'reward',
+            amount: winner.amount,
+            status: 'completed'
+          }
+        });
+
+        rewardTransactions.push(transaction);
+
+        // Update creator wallet
+        await tx.creatorWallet.upsert({
+          where: { creatorId: submission.creatorId },
+          update: {
+            balance: { increment: winner.amount },
+            totalEarned: { increment: winner.amount }
+          },
+          create: {
+            creatorId: submission.creatorId,
+            balance: winner.amount,
+            totalEarned: winner.amount
+          }
+        });
+      }
+
+      // Update reward pool
+      const updatedPool = await tx.rewardPool.update({
+        where: { id: poolId },
+        data: {
+          remainingAmount: { decrement: totalRewardAmount },
+          status: pool.remainingAmount - totalRewardAmount <= 0 ? 'distributed' : 'active'
+        }
+      });
+
+      // Update brand wallet (deduct from balance)
+      await tx.brandWallet.upsert({
+        where: { brandId: userId },
+        update: {
+          balance: { decrement: totalRewardAmount },
+          totalSpent: { increment: totalRewardAmount }
+        },
+        create: {
+          brandId: userId,
+          balance: -totalRewardAmount,
+          totalSpent: totalRewardAmount
+        }
+      });
+
+      return { rewardTransactions, updatedPool };
+    });
+
+    res.json({
+      success: true,
+      message: 'Rewards distributed successfully',
+      distributedAmount: totalRewardAmount,
+      winnersCount: winners.length,
+      poolStatus: result.updatedPool.status
+    });
+
+  } catch (error) {
+    console.error('❌ Distribute rewards error:', {
+      message: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?.id
+    });
+    res.status(500).json({ error: 'Failed to distribute rewards' });
+  }
+});
+
 module.exports = router;

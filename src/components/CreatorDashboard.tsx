@@ -814,10 +814,10 @@ const CreatorDashboard: React.FC = () => {
   const renderSubmissions = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">My Submissions</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+      <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
@@ -826,7 +826,7 @@ const CreatorDashboard: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-white/5 dark:bg-gray-800/10 divide-y divide-white/10 dark:divide-gray-700/30">
               {mySubmissions.map((submission) => (
                 <tr key={submission.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -889,22 +889,22 @@ const CreatorDashboard: React.FC = () => {
       
       {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">Total Earnings</h3>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">${metrics.totalEarnings}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">This Month</h3>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
+        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">Pending</h3>
           <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
       </div>
 
       {/* Earnings Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+      <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50">

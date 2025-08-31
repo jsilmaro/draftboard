@@ -309,6 +309,19 @@ const CreateBrief: React.FC = () => {
     return (
       <div className="min-h-screen bg-black py-8">
         <div className="max-w-4xl mx-auto px-4">
+          {/* Back Button */}
+          <div className="mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-300 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
+          </div>
+          
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-4">
               Create a New Brief
@@ -324,7 +337,7 @@ const CreateBrief: React.FC = () => {
               className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                 selectedTemplate === 'scratch'
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-700 bg-gray-900 hover:border-blue-300 dark:hover:border-blue-600'
+                                     : 'border-gray-700/50 bg-gray-900/20 backdrop-blur-sm hover:border-blue-300/50 dark:hover:border-blue-600/50'
               }`}
               onClick={() => handleTemplateSelect('scratch')}
             >
@@ -346,7 +359,7 @@ const CreateBrief: React.FC = () => {
                 className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                   selectedTemplate === template.id
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-700 bg-gray-900 hover:border-blue-300 dark:hover:border-blue-600'
+                    : 'border-gray-700/50 bg-gray-900/20 backdrop-blur-sm hover:border-blue-300/50 dark:hover:border-blue-600/50'
                 }`}
                 onClick={() => handleTemplateSelect(template.id)}
               >
@@ -381,7 +394,7 @@ const CreateBrief: React.FC = () => {
   return (
     <div className="min-h-screen bg-black py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-gray-900 rounded-lg shadow-sm border border-gray-700 p-8">
+                 <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-white">
               Create Brief
@@ -631,7 +644,7 @@ const CreateBrief: React.FC = () => {
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
+                     <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg p-6 max-w-md w-full mx-4 border border-white/20 dark:border-gray-600/30">
             <h3 className="text-lg font-semibold text-white mb-4">
               Brief Created Successfully! 🎉
             </h3>

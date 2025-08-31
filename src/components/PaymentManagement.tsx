@@ -8,7 +8,7 @@ import {
 } from '@stripe/react-stripe-js';
 
 // Load Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51S1KZKLXqqzWGCaAbMEH93D9x8TH0aWf7qvm96tNWp7DA55tn1tuoTCQR0o7sIcA7xxJHYlj79HkRFYMWP4TsNxA00vDwCTtx1');
 
 interface WalletData {
   balance: number;
@@ -121,8 +121,8 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+      <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg shadow-lg p-6 mb-6 border border-white/10 dark:border-gray-600/20">
+        <h2 className="text-2xl font-bold text-gray-200 mb-4">
           {userType === 'brand' ? 'Brand Wallet' : 'Creator Wallet'}
         </h2>
 
@@ -181,8 +181,8 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
         {/* Fund Wallet Modal */}
         {showFundWallet && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-bold mb-4">Fund Your Wallet</h3>
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-md w-full mx-4 border border-white/10 dark:border-gray-600/20">
+              <h3 className="text-xl font-bold text-gray-200 mb-4">Fund Your Wallet</h3>
               <Elements stripe={stripePromise}>
                 <FundWalletForm
                   token={token}
@@ -200,11 +200,11 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
         {/* Payout Request Modal */}
         {showPayoutForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-bold mb-4">Request Payout</h3>
+            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-md w-full mx-4 border border-white/10 dark:border-gray-600/20">
+              <h3 className="text-xl font-bold text-gray-200 mb-4">Request Payout</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Amount (USD)
                   </label>
                   <input
@@ -214,20 +214,20 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
                     step="0.01"
                     value={payoutAmount}
                     onChange={(e) => setPayoutAmount(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     placeholder="Enter amount"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Stripe Account ID
                   </label>
                   <input
                     type="text"
                     value={payoutAccountId}
                     onChange={(e) => setPayoutAccountId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     placeholder="acct_..."
                     required
                   />
@@ -242,7 +242,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
                   </button>
                   <button
                     onClick={() => setShowPayoutForm(false)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-md font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -254,27 +254,27 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
 
         {/* Transaction History */}
         <div className="mt-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Transaction History</h3>
-          <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-xl font-bold text-gray-200 mb-4">Transaction History</h3>
+          <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-4 border border-white/10 dark:border-gray-600/20">
             {walletData?.transactions && walletData.transactions.length > 0 ? (
               <div className="space-y-3">
                 {walletData.transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                  <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20">
                     <div>
-                      <p className="font-medium text-gray-800">{transaction.description}</p>
-                      <p className="text-sm text-gray-500">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium text-gray-200">{transaction.description}</p>
+                      <p className="text-sm text-gray-400">{new Date(transaction.createdAt).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className={`font-bold ${transaction.type === 'credit' ? 'text-green-400' : 'text-red-400'}`}>
                         {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
                       </p>
-                      <p className="text-sm text-gray-500">Balance: ${transaction.balanceAfter.toFixed(2)}</p>
+                      <p className="text-sm text-gray-400">Balance: ${transaction.balanceAfter.toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No transactions yet</p>
+              <p className="text-gray-300 text-center py-4">No transactions yet</p>
             )}
           </div>
         </div>
@@ -362,7 +362,7 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCan
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-300 mb-1">
           Amount (USD)
         </label>
         <input
@@ -371,31 +371,32 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCan
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
           placeholder="Enter amount"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-300 mb-1">
           Card Details
         </label>
-        <div className="border border-gray-300 rounded-md p-3">
+        <div className="border border-gray-600 rounded-md p-3 bg-gray-700">
           <CardElement
             options={{
               style: {
                 base: {
                   fontSize: '16px',
-                  color: '#424770',
+                  color: '#e5e7eb',
                   '::placeholder': {
-                    color: '#aab7c4',
+                    color: '#9ca3af',
                   },
                 },
                 invalid: {
-                  color: '#9e2146',
+                  color: '#ef4444',
                 },
               },
+              hidePostalCode: false,
             }}
           />
         </div>
@@ -412,7 +413,7 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCan
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+          className="flex-1 bg-gray-600 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-md font-medium transition-colors"
         >
           Cancel
         </button>
