@@ -101,7 +101,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow same-origin iframe embedding
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *"); // Allow iframe embedding from any origin
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.com https://checkout.stripe.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://m.stripe.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com *; frame-ancestors 'self' *; object-src 'none'; base-uri 'self';"); // Allow Stripe and iframe embedding
   
   // Additional headers for Google OAuth compatibility
   res.setHeader('Permissions-Policy', 'interest-cohort=(), camera=(), microphone=(), geolocation=()');

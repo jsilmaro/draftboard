@@ -46,13 +46,13 @@ const PublicBriefDetails = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (briefId) {
-      fetchBriefDetails();
-    }
-  }, [briefId, fetchBriefDetails]);
-
   const fetchBriefDetails = useCallback(async () => {
+    if (!briefId) {
+      setError('Brief ID is required');
+      setLoading(false);
+      return;
+    }
+    
     try {
       const response = await fetch(`/api/briefs/${briefId}/public`);
       if (response.ok) {
@@ -67,6 +67,15 @@ const PublicBriefDetails = () => {
       setLoading(false);
     }
   }, [briefId]);
+
+  useEffect(() => {
+    if (briefId && briefId.trim() !== '') {
+      fetchBriefDetails();
+    } else {
+      setError('Invalid brief ID');
+      setLoading(false);
+    }
+  }, [briefId, fetchBriefDetails]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -234,38 +243,44 @@ const PublicBriefDetails = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Brief Details */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Description</h2>
-              <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {brief.description}
-              </div>
-            </div>
+                 {/* Main Content */}
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           {/* Left Column - Brief Details */}
+           <div className="lg:col-span-2 space-y-8 overflow-hidden">
+                         {/* Description */}
+             <div className="bg-gray-900 rounded-lg p-6 w-full">
+               <h2 className="text-xl font-semibold text-white mb-4">Description</h2>
+               <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                 <div className="whitespace-pre-wrap max-w-full text-wrap">
+                   {brief.description}
+                 </div>
+               </div>
+             </div>
 
-            {/* Requirements */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Requirements</h2>
-              <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {brief.requirements}
-              </div>
-            </div>
+                         {/* Requirements */}
+             <div className="bg-gray-900 rounded-lg p-6 w-full">
+               <h2 className="text-xl font-semibold text-white mb-4">Requirements</h2>
+                                <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                   <div className="whitespace-pre-wrap max-w-full text-wrap">
+                     {brief.requirements}
+                   </div>
+                 </div>
+             </div>
 
-            {/* Additional Fields */}
-            {brief.additionalFields && (
-              <div className="bg-gray-900 rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
-                <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                  {brief.additionalFields}
-                </div>
-              </div>
-            )}
+                         {/* Additional Fields */}
+             {brief.additionalFields && (
+               <div className="bg-gray-900 rounded-lg p-6 w-full">
+                 <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
+                                    <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                     <div className="whitespace-pre-wrap max-w-full text-wrap">
+                       {brief.additionalFields}
+                     </div>
+                   </div>
+               </div>
+             )}
 
-            {/* Stats */}
-            <div className="bg-gray-900 rounded-lg p-6">
+                         {/* Stats */}
+             <div className="bg-gray-900 rounded-lg p-6 w-full">
               <h2 className="text-xl font-semibold text-white mb-4">Brief Statistics</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">

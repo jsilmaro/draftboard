@@ -12,7 +12,7 @@ import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import PublicBrandBriefs from './components/PublicBrandBriefs'
 import RewardsPaymentPage from './components/RewardsPaymentPage'
-import StripeDemo from './components/StripeDemo'
+
 import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
 import Marketplace from './components/Marketplace'
@@ -105,7 +105,7 @@ function App() {
               />
 
               {/* Demo Routes */}
-              <Route path="/stripe-demo" element={<StripeDemo />} />
+
             </Routes>
             </div>
           </AuthProvider>

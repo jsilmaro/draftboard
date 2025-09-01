@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from './LoadingSpinner';
-import StripePaymentIntegration from './StripePaymentIntegration';
+import LazyStripePaymentIntegration from './LazyStripePaymentIntegration';
 
 interface Brief {
   id: string;
@@ -897,7 +897,7 @@ const RewardsPaymentPage: React.FC = () => {
 
       {/* Stripe Payment Modal */}
       {showStripePayment && selectedPaymentWinner && (
-        <StripePaymentIntegration
+                        <LazyStripePaymentIntegration
           amount={selectedPaymentWinner.reward?.cashAmount || 0}
           recipientName={selectedPaymentWinner.creator.fullName || selectedPaymentWinner.creator.userName}
           winnerId={selectedPaymentWinner.id}
