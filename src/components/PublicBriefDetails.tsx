@@ -298,16 +298,62 @@ const PublicBriefDetails = () => {
              </div>
 
                                       {/* Additional Fields */}
-             {hasMeaningfulAdditionalFields(brief.additionalFields) && (
-               <div className="bg-gray-900 rounded-lg p-6 w-full">
-                 <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
-                 <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
-                   <div className="whitespace-pre-wrap max-w-full text-wrap">
-                     {brief.additionalFields}
-                   </div>
-                 </div>
-               </div>
-             )}
+                           {hasMeaningfulAdditionalFields(brief.additionalFields) && (
+                <div className="bg-gray-900 rounded-lg p-6 w-full">
+                  <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
+                  <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                    <div className="whitespace-pre-wrap max-w-full text-wrap">
+                      {(() => {
+                        try {
+                          const parsed = JSON.parse(brief.additionalFields || '{}');
+                          if (typeof parsed === 'object' && parsed !== null) {
+                            return (
+                              <div className="space-y-3">
+                                {Object.entries(parsed).map(([key, value]) => {
+                                  if (value === '' || value === null || value === undefined) return null;
+                                  
+                                  const formattedKey = key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .replace(/^./, str => str.toUpperCase())
+                                    .replace(/([a-z])([A-Z])/g, '$1 $2');
+                                  
+                                  if (Array.isArray(value)) {
+                                    return (
+                                      <div key={key} className="mb-3">
+                                        <h4 className="font-medium text-white mb-2">{formattedKey}:</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                          {value.map((item, index) => (
+                                            <span 
+                                              key={index}
+                                              className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm"
+                                            >
+                                              {item}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <div key={key} className="mb-3">
+                                      <h4 className="font-medium text-white mb-1">{formattedKey}:</h4>
+                                      <p className="text-gray-300">{String(value)}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          }
+                          return brief.additionalFields;
+                        } catch {
+                          return brief.additionalFields;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
 
                          {/* Stats */}
              <div className="bg-gray-900 rounded-lg p-6 w-full">
