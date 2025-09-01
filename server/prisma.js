@@ -5,16 +5,17 @@ function getEnhancedDatabaseUrl() {
   const baseUrl = process.env.DATABASE_URL;
   if (!baseUrl) return baseUrl;
   
-  // Add connection pool parameters to prevent timeout issues
+  // Add Neon-specific connection parameters
   const separator = baseUrl.includes('?') ? '&' : '?';
-  const poolParams = [
+  const neonParams = [
+    'sslmode=require',
     'connection_limit=20',
     'pool_timeout=60',
     'idle_timeout=120',
     'connect_timeout=30'
   ].join('&');
   
-  return `${baseUrl}${separator}${poolParams}`;
+  return `${baseUrl}${separator}${neonParams}`;
 }
 
 // Create a single Prisma client instance

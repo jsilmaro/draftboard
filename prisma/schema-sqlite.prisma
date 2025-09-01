@@ -1,0 +1,309 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Brand {
+  id              String           @id @default(cuid())
+  companyName     String
+  contactName     String
+  email           String           @unique
+  password        String
+  phoneCountry    String?
+  phoneNumber     String?
+  addressStreet   String?
+  addressCity     String?
+  addressState    String?
+  addressZip      String?
+  addressCountry  String?
+  socialInstagram String?
+  socialTwitter   String?
+  socialLinkedIn  String?
+  socialWebsite   String?
+  paymentMethod   String?
+  cardNumber      String?
+  cardType        String?
+  bankName        String?
+  bankAccountType String?
+  bankRouting     String?
+  bankAccount     String?
+  logo            String?
+  isVerified      Boolean          @default(false)
+  termsAccepted   Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  awardDrafts     AwardDraft[]
+  wallet          BrandWallet?
+  briefs          Brief[]
+  publishedAwards PublishedAward[]
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Creator {
+  id              String         @id @default(cuid())
+  userName        String         @unique
+  email           String         @unique
+  password        String
+  fullName        String
+  phoneCountry    String?
+  phoneNumber     String?
+  addressStreet   String?
+  addressCity     String?
+  addressState    String?
+  addressZip      String?
+  addressCountry  String?
+  socialInstagram String?
+  socialTwitter   String?
+  socialLinkedIn  String?
+  socialTikTok    String?
+  socialYouTube   String?
+  paymentMethod   String?
+  cardNumber      String?
+  cardType        String?
+  bankName        String?
+  bankAccountType String?
+  bankRouting     String?
+  bankAccount     String?
+  paypalEmail     String?
+  isVerified      Boolean        @default(false)
+  termsAccepted   Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  wallet          CreatorWallet?
+  submissions     Submission[]
+  winners         Winner[]
+
+  @@index([email])
+  @@index([userName])
+  @@index([createdAt])
+}
+
+model Brief {
+  id               String           @id @default(cuid())
+  title            String
+  description      String
+  requirements     String
+  reward           Float
+  deadline         DateTime
+  status           String           @default("draft")
+  isPrivate        Boolean          @default(false)
+  additionalFields String?
+  brandId          String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  closedAt         DateTime?
+  amountOfWinners  Int              @default(1)
+  winnersSelected  Boolean          @default(false)
+  location         String?
+  totalRewardsPaid Float            @default(0)
+  awardDrafts      AwardDraft[]
+  brand            Brand            @relation(fields: [brandId], references: [id])
+  publishedAwards  PublishedAward[]
+  rewardPool       RewardPool?
+  submissions      Submission[]
+  winners          Winner[]
+  winnerRewards    WinnerReward[]
+}
+
+model Submission {
+  id          String    @id @default(cuid())
+  briefId     String
+  creatorId   String
+  content     String
+  files       String?
+  amount      Float
+  status      String    @default("pending")
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  brief       Brief     @relation(fields: [briefId], references: [id])
+  creator     Creator   @relation(fields: [creatorId], references: [id])
+  winner      Winner?
+}
+
+model AwardDraft {
+  id          String   @id @default(cuid())
+  briefId     String
+  brandId     String
+  rewardTiers String
+  savedAt     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  brief       Brief    @relation(fields: [briefId], references: [id])
+}
+
+model PublishedAward {
+  id          String   @id @default(cuid())
+  briefId     String
+  brandId     String
+  rewardTiers String
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  brief       Brief    @relation(fields: [briefId], references: [id])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      String   @default("admin")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Winner {
+  id           String        @id @default(cuid())
+  briefId      String
+  submissionId String        @unique
+  creatorId    String
+  position     Int
+  selectedAt   DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  rewardId     String?       @unique
+  payment      Payment?
+  brief        Brief         @relation(fields: [briefId], references: [id])
+  creator      Creator       @relation(fields: [creatorId], references: [id])
+  reward       WinnerReward? @relation(fields: [rewardId], references: [id])
+  submission   Submission    @relation(fields: [submissionId], references: [id])
+}
+
+model WinnerReward {
+  id               String    @id @default(cuid())
+  briefId          String
+  position         Int
+  cashAmount       Float     @default(0)
+  creditAmount     Float     @default(0)
+  prizeDescription String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  isPaid           Boolean   @default(false)
+  paidAt           DateTime?
+  winner           Winner?
+  brief            Brief     @relation(fields: [briefId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  userType  String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, userType])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                    String    @id @default(cuid())
+  winnerId              String    @unique
+  amount                Float
+  currency              String    @default("USD")
+  paymentMethod         String
+  rewardType            String
+  status                String    @default("pending")
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  paidAt                DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  winner                Winner    @relation(fields: [winnerId], references: [id])
+}
+
+model CreatorWallet {
+  id             String              @id @default(cuid())
+  creatorId      String              @unique
+  balance        Float               @default(0)
+  totalEarned    Float               @default(0)
+  totalWithdrawn Float               @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  creator        Creator             @relation(fields: [creatorId], references: [id])
+  transactions   WalletTransaction[]
+}
+
+model WalletTransaction {
+  id            String        @id @default(cuid())
+  walletId      String
+  type          String
+  amount        Float
+  description   String
+  referenceId   String?
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime      @default(now())
+  wallet        CreatorWallet @relation(fields: [walletId], references: [id])
+}
+
+model BrandWallet {
+  id             String                   @id @default(cuid())
+  brandId        String                   @unique
+  balance        Float                    @default(0)
+  totalSpent     Float                    @default(0)
+  totalDeposited Float                    @default(0)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  brand          Brand                    @relation(fields: [brandId], references: [id])
+  transactions   BrandWalletTransaction[]
+}
+
+model BrandWalletTransaction {
+  id            String      @id @default(cuid())
+  walletId      String
+  type          String
+  amount        Float
+  description   String
+  referenceId   String?
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime    @default(now())
+  wallet        BrandWallet @relation(fields: [walletId], references: [id])
+}
+
+model RewardPool {
+  id              String   @id @default(cuid())
+  briefId         String   @unique
+  totalAmount     Float
+  remainingAmount Float
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  brief           Brief    @relation(fields: [briefId], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id                    String   @id @default(cuid())
+  userId                String
+  userType              String
+  type                  String
+  amount                Float
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  status                String   @default("pending")
+  createdAt             DateTime
+
+  @@index([userId, userType])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}

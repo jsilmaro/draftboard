@@ -15,6 +15,8 @@ import RewardsPaymentPage from './components/RewardsPaymentPage'
 import StripeDemo from './components/StripeDemo'
 import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
+import Marketplace from './components/Marketplace'
+import PublicBriefDetails from './components/PublicBriefDetails'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -36,31 +38,19 @@ function App() {
           <AuthProvider>
             <div className="min-h-screen bg-black animate-fade-in transition-colors duration-300 overflow-x-hidden">
             <Routes>
+              {/* Public Marketplace Routes */}
               <Route path="/" element={<LandingPage />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/brief/:briefId" element={<PublicBriefDetails />} />
+              <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
+              
+              {/* Authentication Routes */}
               <Route path="/login" element={<LoginForm />} />
               <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
-
-              <Route 
-                path="/rewards-payments" 
-                element={
-                  <ProtectedRoute requiredUserType="brand">
-                    <RewardsPaymentPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/stripe-demo" element={<StripeDemo />} />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute requiredUserType="admin">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
               <Route path="/brand/register" element={<BrandForm />} />
               <Route path="/creator/register" element={<CreatorForm />} />
 
+              {/* Protected Brand Routes */}
               <Route 
                 path="/brand/dashboard" 
                 element={
@@ -69,6 +59,24 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/brand/create-brief" 
+                element={
+                  <ProtectedRoute requiredUserType="brand">
+                    <CreateBrief />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/rewards-payments" 
+                element={
+                  <ProtectedRoute requiredUserType="brand">
+                    <RewardsPaymentPage />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Protected Creator Routes */}
               <Route 
                 path="/creator/dashboard" 
                 element={
@@ -86,14 +94,18 @@ function App() {
                 } 
               />
 
+              {/* Admin Routes */}
               <Route 
-                path="/brand/create-brief" 
+                path="/admin" 
                 element={
-                  <ProtectedRoute requiredUserType="brand">
-                    <CreateBrief />
+                  <ProtectedRoute requiredUserType="admin">
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } 
               />
+
+              {/* Demo Routes */}
+              <Route path="/stripe-demo" element={<StripeDemo />} />
             </Routes>
             </div>
           </AuthProvider>

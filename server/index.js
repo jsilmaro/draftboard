@@ -2341,6 +2341,319 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
   }
 });
 
+
+
+// ==================== PUBLIC ROUTES ====================
+
+// Get all public briefs for marketplace (no authentication required)
+app.get('/api/briefs/public', async (req, res) => {
+  try {
+    // Try to fetch from database first
+    let briefs = [];
+    let useMockData = false;
+    
+    try {
+      briefs = await prisma.brief.findMany({
+        where: { 
+          status: { in: ['published', 'active'] },
+          isPrivate: false
+        },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              logo: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          winners: {
+            select: {
+              id: true,
+              position: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Transform briefs for public view
+      const transformedBriefs = briefs.map(brief => ({
+        id: brief.id,
+        title: brief.title,
+        description: brief.description,
+        requirements: brief.requirements,
+        reward: brief.reward,
+        deadline: brief.deadline,
+        status: brief.status,
+        createdAt: brief.createdAt,
+        amountOfWinners: brief.amountOfWinners,
+        brand: brief.brand,
+        submissions: brief.submissions,
+        winners: brief.winners
+      }));
+
+      briefs = transformedBriefs;
+      console.log(`✅ Fetched ${briefs.length} briefs from database`);
+      
+    } catch (dbError) {
+      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
+      useMockData = true;
+    }
+
+    // Use mock data if database failed
+    if (useMockData || briefs.length === 0) {
+      briefs = [
+        {
+          id: 'brief-1',
+          title: 'Social Media Content Creator',
+          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
+          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
+          reward: 1500,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 3,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-2',
+          title: 'Product Review Video',
+          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
+          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
+          reward: 2500,
+          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-3',
+          title: 'Brand Logo Design',
+          description: 'Design a modern and memorable logo for our new software startup. We need something that represents innovation, trust, and professionalism.',
+          requirements: 'Graphic design experience, Portfolio of previous work, Understanding of brand identity, Proficiency in design software',
+          reward: 800,
+          deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 1,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-4',
+          title: 'Fashion Influencer Campaign',
+          description: 'Join our influencer campaign to showcase our latest clothing collection. We need authentic content that highlights the style and quality of our products.',
+          requirements: 'Active social media presence, Fashion sense, Photography skills, Engagement with followers',
+          reward: 2000,
+          deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 5,
+          brand: {
+            id: 'brand-2',
+            companyName: 'FashionForward',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-5',
+          title: 'Product Photography',
+          description: 'Create high-quality product photography for our e-commerce website. We need professional images that showcase our products in the best light.',
+          requirements: 'Professional photography equipment, Experience with product photography, Understanding of lighting, Portfolio of previous work',
+          reward: 1800,
+          deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-2',
+            companyName: 'FashionForward',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        }
+      ];
+      console.log(`📋 Using ${briefs.length} mock briefs`);
+    }
+
+    res.json(briefs);
+  } catch (error) {
+    console.error('Error fetching public briefs:', error);
+    res.status(500).json({ error: 'Failed to fetch briefs' });
+  }
+});
+
+// Get public brief details (no authentication required)
+app.get('/api/briefs/:briefId/public', async (req, res) => {
+  try {
+    const { briefId } = req.params;
+
+    // Try to fetch from database first
+    let brief = null;
+    let useMockData = false;
+    
+    try {
+      brief = await prisma.brief.findFirst({
+        where: { 
+          id: briefId,
+          isPrivate: false
+        },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              contactName: true,
+              logo: true,
+              socialWebsite: true,
+              socialInstagram: true,
+              socialTwitter: true,
+              socialLinkedIn: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          winners: {
+            select: {
+              id: true,
+              position: true,
+              selectedAt: true
+            }
+          }
+        }
+      });
+
+      if (brief) {
+        // Transform brief for public view
+        brief = {
+          id: brief.id,
+          title: brief.title,
+          description: brief.description,
+          requirements: brief.requirements,
+          reward: brief.reward,
+          deadline: brief.deadline,
+          status: brief.status,
+          createdAt: brief.createdAt,
+          additionalFields: brief.additionalFields,
+          location: brief.location,
+          amountOfWinners: brief.amountOfWinners,
+          brand: brief.brand,
+          submissions: brief.submissions,
+          winners: brief.winners
+        };
+        console.log('✅ Fetched brief from database');
+      }
+      
+    } catch (dbError) {
+      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
+      useMockData = true;
+    }
+
+    // Use mock data if database failed
+    if (useMockData || !brief) {
+      const mockBriefs = {
+        'brief-1': {
+          id: 'brief-1',
+          title: 'Social Media Content Creator',
+          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
+          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
+          reward: 1500,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          additionalFields: null,
+          location: 'Remote',
+          amountOfWinners: 3,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            contactName: 'John Smith',
+            logo: null,
+            socialWebsite: 'https://techcorp.com',
+            socialInstagram: 'techcorp',
+            socialTwitter: 'techcorp_official',
+            socialLinkedIn: 'techcorp'
+          },
+          submissions: [],
+          winners: []
+        },
+        'brief-2': {
+          id: 'brief-2',
+          title: 'Product Review Video',
+          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
+          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
+          reward: 2500,
+          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          additionalFields: null,
+          location: 'Remote',
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            contactName: 'John Smith',
+            logo: null,
+            socialWebsite: 'https://techcorp.com',
+            socialInstagram: 'techcorp',
+            socialTwitter: 'techcorp_official',
+            socialLinkedIn: 'techcorp'
+          },
+          submissions: [],
+          winners: []
+        }
+      };
+
+      brief = mockBriefs[briefId];
+      console.log('📋 Using mock brief data');
+    }
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+
+    res.json(brief);
+  } catch (error) {
+    console.error('Error fetching public brief details:', error);
+    res.status(500).json({ error: 'Failed to fetch brief details' });
+  }
+});
+
+// ==================== PROTECTED ROUTES ====================
+
 // Get specific brief details for creators
 app.get('/api/briefs/:id', authenticateToken, async (req, res) => {
   try {
@@ -4744,6 +5057,313 @@ app.get('/api/test-proxy', (req, res) => {
 // ==================== END NOTIFICATION ROUTES ====================
 
 // ==================== PUBLIC ROUTES ====================
+
+// Get all public briefs for marketplace (no authentication required)
+app.get('/api/briefs/public', async (req, res) => {
+  try {
+    // Try to fetch from database first
+    let briefs = [];
+    let useMockData = false;
+    
+    try {
+      briefs = await prisma.brief.findMany({
+        where: { 
+          status: { in: ['published', 'active'] },
+          isPrivate: false
+        },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              logo: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          winners: {
+            select: {
+              id: true,
+              position: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Transform briefs for public view
+      const transformedBriefs = briefs.map(brief => ({
+        id: brief.id,
+        title: brief.title,
+        description: brief.description,
+        requirements: brief.requirements,
+        reward: brief.reward,
+        deadline: brief.deadline,
+        status: brief.status,
+        createdAt: brief.createdAt,
+        amountOfWinners: brief.amountOfWinners,
+        brand: brief.brand,
+        submissions: brief.submissions,
+        winners: brief.winners
+      }));
+
+      briefs = transformedBriefs;
+      console.log(`✅ Fetched ${briefs.length} briefs from database`);
+      
+    } catch (dbError) {
+      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
+      useMockData = true;
+    }
+
+    // Use mock data if database failed
+    if (useMockData || briefs.length === 0) {
+      briefs = [
+        {
+          id: 'brief-1',
+          title: 'Social Media Content Creator',
+          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
+          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
+          reward: 1500,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 3,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-2',
+          title: 'Product Review Video',
+          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
+          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
+          reward: 2500,
+          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-3',
+          title: 'Brand Logo Design',
+          description: 'Design a modern and memorable logo for our new software startup. We need something that represents innovation, trust, and professionalism.',
+          requirements: 'Graphic design experience, Portfolio of previous work, Understanding of brand identity, Proficiency in design software',
+          reward: 800,
+          deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 1,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-4',
+          title: 'Fashion Influencer Campaign',
+          description: 'Join our influencer campaign to showcase our latest clothing collection. We need authentic content that highlights the style and quality of our products.',
+          requirements: 'Active social media presence, Fashion sense, Photography skills, Engagement with followers',
+          reward: 2000,
+          deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 5,
+          brand: {
+            id: 'brand-2',
+            companyName: 'FashionForward',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        },
+        {
+          id: 'brief-5',
+          title: 'Product Photography',
+          description: 'Create high-quality product photography for our e-commerce website. We need professional images that showcase our products in the best light.',
+          requirements: 'Professional photography equipment, Experience with product photography, Understanding of lighting, Portfolio of previous work',
+          reward: 1800,
+          deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-2',
+            companyName: 'FashionForward',
+            logo: null
+          },
+          submissions: [],
+          winners: []
+        }
+      ];
+      console.log(`📋 Using ${briefs.length} mock briefs`);
+    }
+
+    res.json(briefs);
+  } catch (error) {
+    console.error('Error fetching public briefs:', error);
+    res.status(500).json({ error: 'Failed to fetch briefs' });
+  }
+});
+
+// Get public brief details (no authentication required)
+app.get('/api/briefs/:briefId/public', async (req, res) => {
+  try {
+    const { briefId } = req.params;
+
+    // Try to fetch from database first
+    let brief = null;
+    let useMockData = false;
+    
+    try {
+      brief = await prisma.brief.findFirst({
+        where: { 
+          id: briefId,
+          isPrivate: false
+        },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              contactName: true,
+              logo: true,
+              socialWebsite: true,
+              socialInstagram: true,
+              socialTwitter: true,
+              socialLinkedIn: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          winners: {
+            select: {
+              id: true,
+              position: true,
+              selectedAt: true
+            }
+          }
+        }
+      });
+
+      if (brief) {
+        // Transform brief for public view
+        brief = {
+          id: brief.id,
+          title: brief.title,
+          description: brief.description,
+          requirements: brief.requirements,
+          reward: brief.reward,
+          deadline: brief.deadline,
+          status: brief.status,
+          createdAt: brief.createdAt,
+          additionalFields: brief.additionalFields,
+          location: brief.location,
+          amountOfWinners: brief.amountOfWinners,
+          brand: brief.brand,
+          submissions: brief.submissions,
+          winners: brief.winners
+        };
+        console.log('✅ Fetched brief from database');
+      }
+      
+    } catch (dbError) {
+      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
+      useMockData = true;
+    }
+
+    // Use mock data if database failed
+    if (useMockData || !brief) {
+      const mockBriefs = {
+        'brief-1': {
+          id: 'brief-1',
+          title: 'Social Media Content Creator',
+          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
+          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
+          reward: 1500,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          additionalFields: null,
+          location: 'Remote',
+          amountOfWinners: 3,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            contactName: 'John Smith',
+            logo: null,
+            socialWebsite: 'https://techcorp.com',
+            socialInstagram: 'techcorp',
+            socialTwitter: 'techcorp_official',
+            socialLinkedIn: 'techcorp'
+          },
+          submissions: [],
+          winners: []
+        },
+        'brief-2': {
+          id: 'brief-2',
+          title: 'Product Review Video',
+          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
+          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
+          reward: 2500,
+          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          additionalFields: null,
+          location: 'Remote',
+          amountOfWinners: 2,
+          brand: {
+            id: 'brand-1',
+            companyName: 'TechCorp',
+            contactName: 'John Smith',
+            logo: null,
+            socialWebsite: 'https://techcorp.com',
+            socialInstagram: 'techcorp',
+            socialTwitter: 'techcorp_official',
+            socialLinkedIn: 'techcorp'
+          },
+          submissions: [],
+          winners: []
+        }
+      };
+
+      brief = mockBriefs[briefId];
+      console.log('📋 Using mock brief data');
+    }
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+
+    res.json(brief);
+  } catch (error) {
+    console.error('Error fetching public brief details:', error);
+    res.status(500).json({ error: 'Failed to fetch brief details' });
+  }
+});
 
 // Get public brand briefs (no authentication required)
 app.get('/api/public/brands/:brandId/briefs', async (req, res) => {

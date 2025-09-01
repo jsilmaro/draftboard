@@ -363,26 +363,43 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* Sign In Section */}
-        <div className="text-center max-w-2xl mx-auto">
-          <div className="bg-gradient-to-br from-gray-900/70 via-gray-800/80 to-gray-900/70 backdrop-blur-sm border border-green-500/20 rounded-xl p-8 shadow-xl shadow-green-500/5">
-            <h3 className="text-xl font-bold text-white mb-4">Already have an account?</h3>
-            <p className="text-gray-300 mb-6 text-sm">
-              Sign in to access your dashboard and continue your journey
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+        {/* Marketplace & Sign In Section */}
+        <div className="text-center max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Marketplace Section */}
+            <div className="bg-gradient-to-br from-gray-900/70 via-gray-800/80 to-gray-900/70 backdrop-blur-sm border border-blue-500/20 rounded-xl p-8 shadow-xl shadow-blue-500/5">
+              <h3 className="text-xl font-bold text-white mb-4">Explore Opportunities</h3>
+              <p className="text-gray-300 mb-6 text-sm">
+                Browse all available briefs and discover creative opportunities from top brands
+              </p>
               <Link
-                to="/login"
-                className="bg-gradient-to-r from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 hover:scale-105 border border-green-500/30 hover:border-green-400/40"
+                to="/marketplace"
+                className="bg-gradient-to-r from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 hover:scale-105 border border-blue-500/30 hover:border-blue-400/40"
               >
-                Sign In
+                Browse Marketplace
               </Link>
-              <Link 
-                to="/admin/login" 
-                className="text-gray-400 hover:text-green-400 transition-colors text-xs font-mono"
-              >
-                Admin Access
-              </Link>
+            </div>
+
+            {/* Sign In Section */}
+            <div className="bg-gradient-to-br from-gray-900/70 via-gray-800/80 to-gray-900/70 backdrop-blur-sm border border-green-500/20 rounded-xl p-8 shadow-xl shadow-green-500/5">
+              <h3 className="text-xl font-bold text-white mb-4">Already have an account?</h3>
+              <p className="text-gray-300 mb-6 text-sm">
+                Sign in to access your dashboard and continue your journey
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <Link
+                  to="/login"
+                  className="bg-gradient-to-r from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 hover:scale-105 border border-green-500/30 hover:border-green-400/40"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/admin/login" 
+                  className="text-gray-400 hover:text-green-400 transition-colors text-xs font-mono"
+                >
+                  Admin Access
+                </Link>
+              </div>
             </div>
           </div>
         </div>
