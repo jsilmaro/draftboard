@@ -18,6 +18,7 @@ const rewardRoutes = require('./routes/rewards');
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
 const rewardsRoutes = require('./rewards');
+const mockStripeRoutes = require('./mockStripe');
 
 // Debug environment variables
 console.log('🔧 Environment check:');
@@ -196,6 +197,7 @@ app.use('/api/rewards', rewardRoutes);
 
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/mock-stripe', mockStripeRoutes);
 app.use('/api/rewards-system', rewardsRoutes);
 
 // Test endpoint for debugging

@@ -1,217 +1,315 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import LoadingSpinner from './LoadingSpinner';
 
 interface CreatorStripeOnboardingProps {
-  creatorId: string;
-  creatorEmail: string;
-  creatorName: string;
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-}
-
-interface AccountStatus {
-  id: string;
-  charges_enabled: boolean;
-  payouts_enabled: boolean;
-  details_submitted: boolean;
-  requirements?: Record<string, unknown>;
+  onComplete?: () => void;
+  onCancel?: () => void;
 }
 
 const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
-  creatorId,
-  creatorEmail,
-  creatorName,
-  onSuccess,
-  onError
+  onComplete,
+  onCancel
 }) => {
+  const { user } = useAuth();
+  const { showSuccessToast, showErrorToast } = useToast();
+  
+  const [step, setStep] = useState<'initial' | 'creating' | 'onboarding' | 'complete'>('initial');
+  const [accountId, setAccountId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
-  const [onboardingUrl, setOnboardingUrl] = useState<string | null>(null);
-  const [accountStatus, setAccountStatus] = useState<AccountStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [accountStatus, setAccountStatus] = useState<{
+    id: string;
+    charges_enabled: boolean;
+    payouts_enabled: boolean;
+    details_submitted: boolean;
+    requirements?: Record<string, unknown>;
+  } | null>(null);
 
-  const createStripeAccount = async () => {
+  const createConnectAccount = async () => {
+    if (!user) {
+      showErrorToast('User not authenticated');
+      return;
+    }
+
+    setLoading(true);
+    setStep('creating');
+
     try {
-      setLoading(true);
-      setError(null);
-
-      // eslint-disable-next-line no-console
-      console.log('Creating Stripe account with data:', {
-        creatorId,
-        email: creatorEmail,
-        name: creatorName
-      });
-
-      const response = await fetch('/api/stripe/create-connect-account', {
+      const response = await fetch('/api/mock-stripe/create-connect-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          creatorId,
-          email: creatorEmail,
-          name: creatorName
-        }),
+          creatorId: user.id,
+          email: user.email,
+          name: user.fullName || user.userName
+        })
       });
 
-      // eslint-disable-next-line no-console
-      console.log('Response status:', response.status);
-      // eslint-disable-next-line no-console
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-        // eslint-disable-next-line no-console
-        console.error('Server error response:', errorData);
-        
-        let errorMessage = 'Failed to create Stripe account';
-        if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-        if (errorData.details) {
-          errorMessage += `: ${errorData.details}`;
-        }
-        
-        throw new Error(errorMessage);
+        throw new Error('Failed to create connect account');
       }
 
       const data = await response.json();
-      // eslint-disable-next-line no-console
-      console.log('Success response:', data);
-      
-      setOnboardingUrl(data.onboardingUrl);
-      setAccountStatus(data.account);
+      setAccountId(data.accountId);
+      setStep('onboarding');
 
-    } catch (err) {
+      showSuccessToast('Stripe account created successfully!');
+    } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Stripe onboarding error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create Stripe account';
-      setError(errorMessage);
-      onError?.(errorMessage);
+      console.error('Error creating connect account:', error);
+      showErrorToast('Failed to create Stripe account');
+      setStep('initial');
     } finally {
       setLoading(false);
     }
   };
 
-  const checkAccountStatus = async (accountId: string) => {
+  const checkAccountStatus = useCallback(async () => {
+    if (!accountId) return;
+
     try {
-      const response = await fetch(`/api/stripe/connect-account/${accountId}`);
-      
+      const response = await fetch(`/api/mock-stripe/connect-account/${accountId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
       if (response.ok) {
         const status = await response.json();
         setAccountStatus(status);
-        
+
         if (status.charges_enabled && status.payouts_enabled) {
-          onSuccess?.();
+          setStep('complete');
+          showSuccessToast('Account setup completed!');
+          onComplete?.();
         }
-      } else {
-        // eslint-disable-next-line no-console
-        console.error('Failed to check account status:', response.status);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error checking account status:', error);
     }
-  };
+  }, [accountId, onComplete, showSuccessToast]);
 
-  const handleOnboardingComplete = () => {
-    if (accountStatus?.id) {
-      checkAccountStatus(accountStatus.id);
+  const simulateOnboardingComplete = async () => {
+    if (!accountId) return;
+
+    setLoading(true);
+
+    try {
+      // Simulate completing onboarding requirements
+      const response = await fetch('/api/mock-stripe/update-account-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          accountId: accountId,
+          charges_enabled: true,
+          payouts_enabled: true,
+          details_submitted: true
+        })
+      });
+
+      if (response.ok) {
+        await checkAccountStatus();
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating account status:', error);
+      showErrorToast('Failed to complete onboarding');
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Connect Your Payment Account
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          Set up your Stripe account to receive cash rewards directly to your bank account
-        </p>
-      </div>
+  useEffect(() => {
+    if (step === 'onboarding') {
+      // Check account status periodically
+      const interval = setInterval(checkAccountStatus, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [step, accountId, checkAccountStatus]);
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-md">
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-          <p className="text-xs text-red-600 dark:text-red-500 mt-1">
-            Please check your environment variables and ensure STRIPE_SECRET_KEY is properly configured.
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Stripe Connect Onboarding
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Set up your payment account to receive rewards from brands.
           </p>
         </div>
-      )}
 
-      {accountStatus && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Account Status</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex items-center">
-              <span className={`w-2 h-2 rounded-full mr-2 ${accountStatus.charges_enabled ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-              <span className="text-blue-800 dark:text-blue-200">
-                Payments: {accountStatus.charges_enabled ? 'Enabled' : 'Pending'}
-              </span>
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className={`flex items-center ${step === 'initial' ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'initial' ? 'bg-green-100' : 'bg-gray-100'}`}>
+                1
+              </div>
+              <span className="ml-2 text-sm font-medium">Create Account</span>
             </div>
-            <div className="flex items-center">
-              <span className={`w-2 h-2 rounded-full mr-2 ${accountStatus.payouts_enabled ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-              <span className="text-blue-800 dark:text-blue-200">
-                Payouts: {accountStatus.payouts_enabled ? 'Enabled' : 'Pending'}
-              </span>
+            <div className={`flex items-center ${step === 'onboarding' ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'onboarding' ? 'bg-green-100' : 'bg-gray-100'}`}>
+                2
+              </div>
+              <span className="ml-2 text-sm font-medium">Complete Setup</span>
+            </div>
+            <div className={`flex items-center ${step === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'complete' ? 'bg-green-100' : 'bg-gray-100'}`}>
+                3
+              </div>
+              <span className="ml-2 text-sm font-medium">Ready</span>
             </div>
           </div>
         </div>
-      )}
 
-      {!onboardingUrl ? (
-        <button
-          onClick={createStripeAccount}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Setting up...
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              Connect Stripe Account
-            </>
-          )}
-        </button>
-      ) : (
-        <div className="space-y-4">
-          <a
-            href={onboardingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            Complete Onboarding
-          </a>
-          
-          <button
-            onClick={handleOnboardingComplete}
-            className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-          >
-            Check Status
-          </button>
-        </div>
-      )}
+        {/* Step Content */}
+        {step === 'initial' && (
+          <div className="text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Create Your Payment Account
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                                 We&apos;ll create a secure Stripe Connect account for you to receive payments from brands.
+              </p>
+            </div>
+            <button
+              onClick={createConnectAccount}
+              className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+            >
+              Create Account
+            </button>
+          </div>
+        )}
 
-      <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
-        <p>By connecting your Stripe account, you can receive cash rewards directly to your bank account.</p>
-        <p className="mt-1">This process is secure and handled by Stripe.</p>
+        {step === 'creating' && (
+          <div className="text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-gray-600 dark:text-gray-400">
+              Creating your Stripe Connect account...
+            </p>
+          </div>
+        )}
+
+        {step === 'onboarding' && (
+          <div>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Complete Your Account Setup
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Your account has been created! Now you need to complete the setup process.
+              </p>
+            </div>
+
+            {/* Account Status */}
+            {accountStatus && (
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Account Status</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Account ID:</span>
+                    <span className="text-sm font-mono text-gray-900 dark:text-white">{accountId}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Charges Enabled:</span>
+                    <span className={`text-sm ${accountStatus.charges_enabled ? 'text-green-600' : 'text-red-600'}`}>
+                      {accountStatus.charges_enabled ? '✅ Yes' : '❌ No'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Payouts Enabled:</span>
+                    <span className={`text-sm ${accountStatus.payouts_enabled ? 'text-green-600' : 'text-red-600'}`}>
+                      {accountStatus.payouts_enabled ? '✅ Yes' : '❌ No'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Details Submitted:</span>
+                    <span className={`text-sm ${accountStatus.details_submitted ? 'text-green-600' : 'text-red-600'}`}>
+                      {accountStatus.details_submitted ? '✅ Yes' : '❌ No'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex space-x-4">
+              <button
+                onClick={simulateOnboardingComplete}
+                className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+              >
+                Complete Setup (Mock)
+              </button>
+              {onCancel && (
+                <button
+                  onClick={onCancel}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+
+            {/* Requirements Info */}
+            <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">What&apos;s Required:</h4>
+              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <li>• Business information (name, address)</li>
+                <li>• Bank account details for payouts</li>
+                <li>• Identity verification</li>
+                <li>• Tax information</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {step === 'complete' && (
+          <div className="text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Account Setup Complete!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Your Stripe Connect account is ready to receive payments from brands.
+              </p>
+            </div>
+            <button
+              onClick={onComplete}
+              className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+            >
+              Continue
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
