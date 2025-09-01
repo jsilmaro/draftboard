@@ -345,12 +345,12 @@ const PublicBrandBriefs: React.FC = () => {
             Join DraftBoard as a brand to create engaging briefs and connect with talented creators.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              to="/register"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Register as Brand
-            </Link>
+                         <Link 
+               to="/brand/register"
+               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+             >
+               Register as Brand
+             </Link>
             <Link 
               to="/creator/register"
               className="px-6 py-3 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
