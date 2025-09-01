@@ -100,6 +100,36 @@ const PublicBriefDetails = () => {
     return diffDays;
   };
 
+  const hasMeaningfulAdditionalFields = (additionalFields: string | undefined): boolean => {
+    if (!additionalFields || additionalFields.trim() === '') {
+      return false;
+    }
+    
+    // Check if it's an empty JSON object
+    if (additionalFields === '{}' || additionalFields === 'null') {
+      return false;
+    }
+    
+    // Try to parse as JSON and check if it has meaningful content
+    try {
+      const parsed = JSON.parse(additionalFields);
+      if (typeof parsed === 'object' && parsed !== null) {
+        // Check if the object has any non-empty values
+        return Object.values(parsed).some(value => {
+          if (Array.isArray(value)) {
+            return value.length > 0;
+          }
+          return value !== '' && value !== null && value !== undefined;
+        });
+      }
+    } catch {
+      // If it's not valid JSON, check if it has meaningful text content
+      return additionalFields.trim().length > 0;
+    }
+    
+    return false;
+  };
+
   const handleApplyClick = () => {
     if (!user) {
       // Redirect to login with return URL
@@ -267,15 +297,15 @@ const PublicBriefDetails = () => {
                  </div>
              </div>
 
-                         {/* Additional Fields */}
-             {brief.additionalFields && (
+                                      {/* Additional Fields */}
+             {hasMeaningfulAdditionalFields(brief.additionalFields) && (
                <div className="bg-gray-900 rounded-lg p-6 w-full">
                  <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
-                                    <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
-                     <div className="whitespace-pre-wrap max-w-full text-wrap">
-                       {brief.additionalFields}
-                     </div>
+                 <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                   <div className="whitespace-pre-wrap max-w-full text-wrap">
+                     {brief.additionalFields}
                    </div>
+                 </div>
                </div>
              )}
 
