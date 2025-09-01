@@ -11,6 +11,7 @@ import BrandBriefCard from './BrandBriefCard';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 import SettingsButton from './SettingsButton';
+import SettingsModal from './SettingsModal';
 
 
 
@@ -153,6 +154,7 @@ const BrandDashboard: React.FC = () => {
   });
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [editIsLoading, setEditIsLoading] = useState(false);
   const [editAmountOfWinners, setEditAmountOfWinners] = useState(1);
@@ -770,7 +772,7 @@ const BrandDashboard: React.FC = () => {
 
   const accountNav = [
     { id: 'awards', label: 'Rewards', icon: 'awards' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettingsModal(true) },
     { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
 
@@ -3434,6 +3436,12 @@ const BrandDashboard: React.FC = () => {
         isOpen={showWinnerSelectionModal}
         onClose={() => setShowWinnerSelectionModal(false)}
         onSuccess={handleWinnersSelected}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
 
 
