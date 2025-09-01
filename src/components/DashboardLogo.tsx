@@ -19,7 +19,7 @@ const DashboardLogo: React.FC<DashboardLogoProps> = ({ size = 'md', className = 
   // Dashboard logos - you can add different logo files for dashboards
   const logoSrc = theme === 'dark' 
     ? `/logo.svg?t=${Date.now()}` 
-    : `/logo-light2.svg?t=${Date.now()}`;
+    : `/logo.svg?t=${Date.now()}`;
 
   return (
     <div className={`${className} flex items-center justify-center`}>
