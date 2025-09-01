@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface Brand {
   id: string;
@@ -39,7 +38,6 @@ interface PublicBrandData {
 
 const PublicBrandBriefs: React.FC = () => {
   const { brandId } = useParams<{ brandId: string }>();
-  const { theme } = useTheme();
   const [data, setData] = useState<PublicBrandData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +112,7 @@ const PublicBrandBriefs: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-white'}`}>
+      <div className="min-h-screen bg-black text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -126,11 +124,11 @@ const PublicBrandBriefs: React.FC = () => {
 
   if (error) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-white'}`}>
+      <div className="min-h-screen bg-black text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Error</h1>
-            <p className="text-gray-300 dark:text-gray-400 mb-6">{error}</p>
+            <p className="text-gray-300 mb-6">{error}</p>
             <Link 
               to="/"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -145,7 +143,7 @@ const PublicBrandBriefs: React.FC = () => {
 
   if (!data) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-white'}`}>
+      <div className="min-h-screen bg-black text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No Data Found</h1>
@@ -162,9 +160,9 @@ const PublicBrandBriefs: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-white'}`}>
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-700'} border-b`}>
+      <header className="bg-gray-900 border-gray-700 border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -175,11 +173,7 @@ const PublicBrandBriefs: React.FC = () => {
             <div className="flex items-center space-x-4">
               <Link 
                 to="/login"
-                className={`px-4 py-2 rounded-lg border ${
-                  theme === 'dark' 
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                    : 'border-gray-600 text-gray-300 hover:bg-gray-50'
-                } transition-colors`}
+                className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors"
               >
                 Log In
               </Link>
@@ -196,7 +190,7 @@ const PublicBrandBriefs: React.FC = () => {
 
       {/* Brand Info */}
       <div className="container mx-auto px-4 py-8">
-        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6 mb-8`}>
+        <div className="bg-gray-900 rounded-lg shadow-lg p-6 mb-8">
           <div className="flex items-center space-x-4 mb-4">
             {data.brand.logo && (
               <img 
@@ -207,7 +201,7 @@ const PublicBrandBriefs: React.FC = () => {
             )}
             <div>
               <h1 className="text-3xl font-bold">{data.brand.companyName}</h1>
-              <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-300'}`}>
+              <p className="text-gray-400">
                 Active Briefs: {data.briefs.length}
               </p>
             </div>
@@ -221,7 +215,7 @@ const PublicBrandBriefs: React.FC = () => {
                   href={data.brand.socialWebsite} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-300 hover:text-white'} transition-colors`}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   🌐 Website
                 </a>
@@ -231,7 +225,7 @@ const PublicBrandBriefs: React.FC = () => {
                   href={`https://instagram.com/${data.brand.socialInstagram}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-300 hover:text-white'} transition-colors`}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   📷 Instagram
                 </a>
@@ -241,7 +235,7 @@ const PublicBrandBriefs: React.FC = () => {
                   href={`https://twitter.com/${data.brand.socialTwitter}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-300 hover:text-white'} transition-colors`}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   🐦 Twitter
                 </a>
@@ -251,7 +245,7 @@ const PublicBrandBriefs: React.FC = () => {
                   href={`https://linkedin.com/company/${data.brand.socialLinkedIn}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-300 hover:text-white'} transition-colors`}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   💼 LinkedIn
                 </a>
@@ -262,11 +256,11 @@ const PublicBrandBriefs: React.FC = () => {
 
         {/* Briefs */}
         {data.briefs.length === 0 ? (
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-8 text-center`}>
-            <h2 className="text-xl font-semibold mb-2">No Active Briefs</h2>
-                          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-300'} mb-6`}>
-                This brand doesn&apos;t have any active briefs at the moment.
-              </p>
+          <div className="bg-gray-900 rounded-lg shadow-lg p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2 text-white">No Active Briefs</h2>
+            <p className="text-gray-400 mb-6">
+              This brand doesn&apos;t have any active briefs at the moment.
+            </p>
             <Link 
               to="/creator/register"
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -279,43 +273,43 @@ const PublicBrandBriefs: React.FC = () => {
             {data.briefs.map((brief) => (
               <div 
                 key={brief.id} 
-                className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-700'} rounded-lg shadow-lg border p-6 hover:shadow-xl transition-shadow`}
+                className="bg-gray-900 border-gray-700 rounded-lg shadow-lg border p-6 hover:shadow-xl transition-shadow"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-lg font-semibold line-clamp-2">{brief.title}</h3>
+                  <h3 className="text-lg font-semibold line-clamp-2 text-white">{brief.title}</h3>
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     brief.status === 'active' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      ? 'bg-green-900/20 text-green-400'
+                      : 'bg-gray-700 text-gray-300'
                   }`}>
                     {brief.status}
                   </span>
                 </div>
 
-                <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-300'} text-sm mb-4 line-clamp-3`}>
+                <p className="text-gray-300 text-sm mb-4 line-clamp-3">
                   {brief.description}
                 </p>
 
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between items-center">
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Reward:</span>
-                    <span className="font-semibold text-green-600">
+                    <span className="text-gray-400 text-sm">Reward:</span>
+                    <span className="font-semibold text-green-400">
                       ${brief.totalRewardValue > 0 ? brief.totalRewardValue : brief.reward}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Winners:</span>
-                    <span className="font-semibold">{brief.amountOfWinners}</span>
+                    <span className="text-gray-400 text-sm">Winners:</span>
+                    <span className="font-semibold text-white">{brief.amountOfWinners}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Submissions:</span>
-                    <span className="font-semibold">{brief.submissionsCount}</span>
+                    <span className="text-gray-400 text-sm">Submissions:</span>
+                    <span className="font-semibold text-white">{brief.submissionsCount}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Deadline:</span>
+                    <span className="text-gray-400 text-sm">Deadline:</span>
                     <span className={`font-semibold ${getDeadlineColor(brief.deadline)}`}>
                       {formatDeadline(brief.deadline)}
                     </span>
@@ -330,11 +324,7 @@ const PublicBrandBriefs: React.FC = () => {
                     Apply Now
                   </Link>
                   <button 
-                    className={`px-4 py-2 border rounded-lg text-sm transition-colors ${
-                      theme === 'dark' 
-                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                        : 'border-gray-600 text-gray-300 hover:bg-gray-50'
-                    }`}
+                    className="px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded-lg text-sm transition-colors"
                     onClick={() => {
                       setSelectedBrief(brief);
                       setShowModal(true);
@@ -349,9 +339,9 @@ const PublicBrandBriefs: React.FC = () => {
         )}
 
         {/* Call to Action */}
-        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-8 mt-8 text-center`}>
-          <h2 className="text-2xl font-bold mb-4">Want to Create Your Own Briefs?</h2>
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-300'} mb-6`}>
+        <div className="bg-gray-900 rounded-lg shadow-lg p-8 mt-8 text-center">
+          <h2 className="text-2xl font-bold mb-4 text-white">Want to Create Your Own Briefs?</h2>
+          <p className="text-gray-400 mb-6">
             Join DraftBoard as a brand to create engaging briefs and connect with talented creators.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -363,11 +353,7 @@ const PublicBrandBriefs: React.FC = () => {
             </Link>
             <Link 
               to="/creator/register"
-              className={`px-6 py-3 border rounded-lg transition-colors ${
-                theme === 'dark' 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                  : 'border-gray-600 text-gray-300 hover:bg-gray-50'
-              }`}
+              className="px-6 py-3 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
             >
               Register as Creator
             </Link>
@@ -378,17 +364,13 @@ const PublicBrandBriefs: React.FC = () => {
       {/* Brief Details Modal */}
       {showModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className="bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold">{selectedBrief.title}</h2>
+                <h2 className="text-2xl font-bold text-white">{selectedBrief.title}</h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    theme === 'dark' 
-                      ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-gray-100'
-                  }`}
+                  className="p-2 rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-gray-700"
                 >
                   ✕
                 </button>
@@ -396,40 +378,40 @@ const PublicBrandBriefs: React.FC = () => {
 
               <div className="space-y-6">
                 <div>
-                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-200">
                     Description
                   </h3>
-                  <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-300'}`}>
+                  <p className="text-gray-300">
                     {selectedBrief.description}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-200">
                     Requirements
                   </h3>
-                  <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-300'}`}>
+                  <p className="text-gray-300">
                     {selectedBrief.requirements}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Reward:</span>
-                    <p className="font-semibold text-green-600">
+                    <span className="text-gray-400 text-sm">Reward:</span>
+                    <p className="font-semibold text-green-400">
                       ${selectedBrief.totalRewardValue > 0 ? selectedBrief.totalRewardValue : selectedBrief.reward}
                     </p>
                   </div>
                   <div>
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Winners:</span>
-                    <p className="font-semibold">{selectedBrief.amountOfWinners}</p>
+                    <span className="text-gray-400 text-sm">Winners:</span>
+                    <p className="font-semibold text-white">{selectedBrief.amountOfWinners}</p>
                   </div>
                   <div>
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Submissions:</span>
-                    <p className="font-semibold">{selectedBrief.submissionsCount}</p>
+                    <span className="text-gray-400 text-sm">Submissions:</span>
+                    <p className="font-semibold text-white">{selectedBrief.submissionsCount}</p>
                   </div>
                   <div>
-                    <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Deadline:</span>
+                    <span className="text-gray-400 text-sm">Deadline:</span>
                     <p className={`font-semibold ${getDeadlineColor(selectedBrief.deadline)}`}>
                       {formatDeadline(selectedBrief.deadline)}
                     </p>
@@ -438,17 +420,15 @@ const PublicBrandBriefs: React.FC = () => {
 
                 {selectedBrief.rewardTiers && selectedBrief.rewardTiers.length > 0 && (
                   <div>
-                    <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-200">
                       Reward Tiers
                     </h3>
                     <div className="space-y-2">
                       {selectedBrief.rewardTiers.map((tier, index) => (
-                        <div key={index} className={`p-3 rounded-lg ${
-                          theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
-                        }`}>
+                        <div key={index} className="p-3 rounded-lg bg-gray-700">
                           <div className="flex justify-between items-center">
-                            <span className="font-medium">{tier.name}</span>
-                            <span className="text-green-600 font-semibold">
+                            <span className="font-medium text-white">{tier.name}</span>
+                            <span className="text-green-400 font-semibold">
                               ${tier.cashAmount + tier.creditAmount}
                             </span>
                           </div>
@@ -467,11 +447,7 @@ const PublicBrandBriefs: React.FC = () => {
                   </Link>
                   <button
                     onClick={() => setShowModal(false)}
-                    className={`px-4 py-2 border rounded-lg transition-colors ${
-                      theme === 'dark' 
-                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                        : 'border-gray-600 text-gray-300 hover:bg-gray-50'
-                    }`}
+                    className="px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     Close
                   </button>
