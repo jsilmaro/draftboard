@@ -1,290 +1,213 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import CreatorStripeOnboarding from './CreatorStripeOnboarding';
 
-interface WalletTransaction {
+interface WalletData {
+  balance: number;
+  totalEarnings: number;
+  recentTransactions: Transaction[];
+}
+
+interface Transaction {
   id: string;
-  type: 'credit' | 'debit' | 'withdrawal';
+  type: string;
   amount: number;
-  description: string;
-  balanceBefore: number;
-  balanceAfter: number;
+  status: string;
   createdAt: string;
 }
 
-interface CreatorWallet {
-  id: string;
-  balance: number;
-  totalEarned: number;
-  totalWithdrawn: number;
-  transactions: WalletTransaction[];
-}
-
 const CreatorWallet: React.FC = () => {
-  const [wallet, setWallet] = useState<CreatorWallet | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState('bank_transfer');
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const { user } = useAuth();
+  const token = localStorage.getItem('token') || '';
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showStripeOnboarding, setShowStripeOnboarding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchWalletData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [walletResponse, earningsResponse] = await Promise.all([
+        fetch('/api/creators/wallet', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/rewards/creator/earnings', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      const walletData = walletResponse.ok ? await walletResponse.json() : { balance: 0 };
+      const earningsData = earningsResponse.ok ? await earningsResponse.json() : { totalEarnings: 0, recentRewards: [] };
+
+      setWalletData({
+        balance: walletData.balance || 0,
+        totalEarnings: earningsData.totalEarnings || 0,
+        recentTransactions: earningsData.recentRewards || []
+      });
+
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching wallet data:', err);
+      setError('Failed to load wallet data');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
+    if (user && token) {
+      fetchWalletData();
+    }
+  }, [user, token, fetchWalletData]);
+
+  const handleStripeOnboardingSuccess = () => {
+    setShowStripeOnboarding(false);
     fetchWalletData();
-  }, []);
-
-  const fetchWalletData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/creators/wallet', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setWallet(data);
-      }
-    } catch (error) {
-      // Error fetching wallet data
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const handleWithdraw = async () => {
-    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
-    if (parseFloat(withdrawAmount) > (wallet?.balance || 0)) {
-      alert('Insufficient balance');
-      return;
-    }
-
-    setIsWithdrawing(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/creators/wallet/withdraw', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount: parseFloat(withdrawAmount),
-          paymentMethod: withdrawMethod
-        })
-      });
-
-      if (response.ok) {
-        setShowWithdrawModal(false);
-        setWithdrawAmount('');
-        fetchWalletData(); // Refresh wallet data
-        alert('Withdrawal request submitted successfully!');
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to submit withdrawal request');
-      }
-    } catch (error) {
-      alert('Failed to submit withdrawal request');
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'credit':
-        return '💰';
-      case 'debit':
-        return '💸';
-      case 'withdrawal':
-        return '🏦';
-      default:
-        return '📊';
-    }
-  };
-
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case 'credit':
-        return 'text-green-600';
-      case 'debit':
-        return 'text-red-600';
-      case 'withdrawal':
-        return 'text-blue-600';
-      default:
-        return 'text-gray-300';
-    }
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="flex items-center justify-center min-h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-700 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Wallet Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-r from-[#00FF85] to-[#00C853] p-6 rounded-lg text-white">
-          <h3 className="text-lg font-semibold mb-2">Current Balance</h3>
-          <p className="text-3xl font-bold">{formatCurrency(wallet?.balance || 0)}</p>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-2">Total Earned</h3>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(wallet?.totalEarned || 0)}</p>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-2">Total Withdrawn</h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(wallet?.totalWithdrawn || 0)}</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm border border-white/10 dark:border-gray-700/30 rounded-lg shadow-xl p-6">
+        <h2 className="text-2xl font-bold text-gray-200 mb-6">Creator Wallet</h2>
 
-      {/* Action Buttons */}
-      <div className="flex space-x-4">
-        <button
-          onClick={() => setShowWithdrawModal(true)}
-          disabled={!wallet || wallet.balance <= 0}
-          className="px-6 py-3 bg-gradient-to-r from-[#00FF85] to-[#00C853] text-white rounded-lg hover:from-[#00E676] hover:to-[#00BFA5] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          💰 Withdraw Funds
-        </button>
-        
-        <button
-          onClick={fetchWalletData}
-          className="px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-        >
-          🔄 Refresh
-        </button>
-      </div>
-
-      {/* Transaction History */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-700">
-        <div className="p-6 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white">Transaction History</h3>
+        {/* Wallet Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+            <h3 className="text-sm font-medium opacity-90">Current Balance</h3>
+            <p className="text-2xl font-bold">${walletData?.balance.toFixed(2) || '0.00'}</p>
+          </div>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+            <h3 className="text-sm font-medium opacity-90">Total Earnings</h3>
+            <p className="text-2xl font-bold">${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
+          </div>
         </div>
-        
-        <div className="overflow-hidden">
-          {wallet?.transactions && wallet.transactions.length > 0 ? (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {wallet.transactions.map((transaction) => (
-                <div key={transaction.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-2xl">
-                        {getTransactionIcon(transaction.type)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{transaction.description}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(transaction.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(transaction.createdAt).toLocaleTimeString()}
-                        </p>
-                      </div>
+
+        {/* Stripe Integration Section */}
+        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Payment Account</h3>
+            <button
+              onClick={() => setShowStripeOnboarding(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+            >
+              Connect Stripe
+            </button>
+          </div>
+          
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <p className="text-gray-400 mb-4">Connect your Stripe account to receive cash rewards</p>
+            <button
+              onClick={() => setShowStripeOnboarding(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              Connect Now
+            </button>
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20">
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Transactions</h3>
+          
+          {walletData?.recentTransactions.length ? (
+            <div className="space-y-3">
+              {walletData.recentTransactions.map((transaction: Transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-3 bg-white/5 dark:bg-gray-600/20 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
                     </div>
-                    
-                    <div className="text-right">
-                      <p className={`font-semibold ${getTransactionColor(transaction.type)}`}>
-                        {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: {formatCurrency(transaction.balanceAfter)}
+                    <div>
+                      <p className="text-white font-medium capitalize">{transaction.type}</p>
+                      <p className="text-gray-400 text-sm">
+                        {new Date(transaction.createdAt).toLocaleDateString()}
                       </p>
                     </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-400">
+                      +${transaction.amount.toFixed(2)}
+                    </p>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                      {transaction.status}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center">
-              <div className="text-4xl mb-4">💳</div>
-              <p className="text-gray-500 dark:text-gray-400">No transactions yet</p>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-gray-400">No transactions yet</p>
+              <p className="text-gray-500 text-sm">Start submitting to briefs to earn rewards!</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Withdraw Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Withdraw Funds</h3>
-              <button
-                onClick={() => setShowWithdrawModal(false)}
-                className="text-gray-500 hover:text-gray-300"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Available Balance
-                </label>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(wallet?.balance || 0)}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Withdrawal Amount *
-                </label>
-                <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="0.00"
-                  min="0"
-                  max={wallet?.balance || 0}
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Method *
-                </label>
-                <select
-                  value={withdrawMethod}
-                  onChange={(e) => setWithdrawMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+      {/* Stripe Onboarding Modal */}
+      {showStripeOnboarding && user && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Connect Payment Account
+                </h3>
+                <button
+                  onClick={() => setShowStripeOnboarding(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="paypal">PayPal</option>
-                  <option value="stripe">Stripe</option>
-                </select>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowWithdrawModal(false)}
-                className="px-4 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleWithdraw}
-                disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
-                className="px-4 py-2 bg-gradient-to-r from-[#00FF85] to-[#00C853] text-white rounded-md hover:from-[#00E676] hover:to-[#00BFA5] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isWithdrawing ? 'Processing...' : 'Withdraw'}
-              </button>
+              <CreatorStripeOnboarding
+                creatorId={user.id}
+                creatorEmail={user.email}
+                creatorName={user.fullName || user.userName || ''}
+                onSuccess={handleStripeOnboardingSuccess}
+                onError={(error) => {
+                  // eslint-disable-next-line no-console
+                  console.error('Stripe onboarding error:', error);
+                }}
+              />
             </div>
           </div>
         </div>

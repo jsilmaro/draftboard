@@ -23,10 +23,10 @@ interface Transaction {
   id: string;
   type: string;
   amount: number;
-  description: string;
-  balanceBefore: number;
-  balanceAfter: number;
+  status: string;
   createdAt: string;
+  stripePaymentIntentId?: string;
+  stripeTransferId?: string;
 }
 
 interface PaymentManagementProps {
@@ -58,10 +58,28 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
       } else {
         // eslint-disable-next-line no-console
         console.error('Failed to fetch wallet data');
+        // Set default data structure to prevent errors
+        setWalletData({
+          balance: 0,
+          totalEarned: 0,
+          totalWithdrawn: 0,
+          totalDeposited: 0,
+          totalSpent: 0,
+          transactions: []
+        });
       }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error fetching wallet data:', error);
+      // Set default data structure to prevent errors
+      setWalletData({
+        balance: 0,
+        totalEarned: 0,
+        totalWithdrawn: 0,
+        totalDeposited: 0,
+        totalSpent: 0,
+        transactions: []
+      });
     } finally {
       setLoading(false);
     }
@@ -108,6 +126,39 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
       // eslint-disable-next-line no-console
       console.error('Error submitting payout request:', error);
       alert('Failed to submit payout request');
+    }
+  };
+
+  // Helper function to get transaction description
+  const getTransactionDescription = (transaction: Transaction) => {
+    switch (transaction.type) {
+      case 'deposit':
+        return 'Wallet Funding';
+      case 'withdrawal':
+        return 'Payout Request';
+      case 'reward':
+        return 'Reward Payment';
+      case 'reward_creation':
+        return 'Reward Creation';
+      case 'payout':
+        return 'Payout';
+      default:
+        return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
+    }
+  };
+
+  // Helper function to get transaction type display
+  const getTransactionTypeDisplay = (transaction: Transaction) => {
+    switch (transaction.type) {
+      case 'deposit':
+      case 'reward':
+        return 'credit';
+      case 'withdrawal':
+      case 'reward_creation':
+      case 'payout':
+        return 'debit';
+      default:
+        return 'neutral';
     }
   };
 
@@ -258,20 +309,26 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
           <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-4 border border-white/10 dark:border-gray-600/20">
             {walletData?.transactions && walletData.transactions.length > 0 ? (
               <div className="space-y-3">
-                {walletData.transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20">
-                    <div>
-                      <p className="font-medium text-gray-200">{transaction.description}</p>
-                      <p className="text-sm text-gray-400">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                {walletData.transactions.map((transaction) => {
+                  const transactionType = getTransactionTypeDisplay(transaction);
+                  const description = getTransactionDescription(transaction);
+                  const amount = transaction.amount || 0;
+                  
+                  return (
+                    <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20">
+                      <div>
+                        <p className="font-medium text-gray-200">{description}</p>
+                        <p className="text-sm text-gray-400">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-500 capitalize">{transaction.status}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${transactionType === 'credit' ? 'text-green-400' : transactionType === 'debit' ? 'text-red-400' : 'text-gray-400'}`}>
+                          {transactionType === 'credit' ? '+' : transactionType === 'debit' ? '-' : ''}${amount.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-bold ${transaction.type === 'credit' ? 'text-green-400' : 'text-red-400'}`}>
-                        {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-400">Balance: ${transaction.balanceAfter.toFixed(2)}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-300 text-center py-4">No transactions yet</p>

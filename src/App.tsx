@@ -12,7 +12,9 @@ import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import PublicBrandBriefs from './components/PublicBrandBriefs'
 import RewardsPaymentPage from './components/RewardsPaymentPage'
+import StripeDemo from './components/StripeDemo'
 import ProtectedRoute from './components/ProtectedRoute'
+import CreatorWallet from './components/CreatorWallet'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -47,6 +49,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route path="/stripe-demo" element={<StripeDemo />} />
               <Route 
                 path="/admin" 
                 element={
@@ -71,6 +74,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredUserType="creator">
                     <CreatorDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/creator/wallet" 
+                element={
+                  <ProtectedRoute requiredUserType="creator">
+                    <CreatorWallet />
                   </ProtectedRoute>
                 } 
               />

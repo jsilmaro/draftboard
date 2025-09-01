@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const auth = require('../middleware/auth');
 
-const prisma = new PrismaClient();
+// Use shared Prisma client
+const prisma = require('../prisma');
 
 // Create Payment Intent for funding wallet
 router.post('/create-payment-intent', auth, async (req, res) => {

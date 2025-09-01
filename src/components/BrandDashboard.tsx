@@ -168,7 +168,9 @@ const BrandDashboard: React.FC = () => {
   // const [showSubmissionViewModal, setShowSubmissionViewModal] = useState(false);
   const [briefSubmissions, setBriefSubmissions] = useState<Array<{
     id: string;
+    creatorId: string;
     creatorName: string;
+    creatorEmail: string;
     content: string;
     files?: string;
     submittedAt: string;
@@ -243,11 +245,11 @@ const BrandDashboard: React.FC = () => {
 
 
 
-  const handleWinnersSelected = async (_winners: { submissionId: string; position: number }[]) => {
+  const handleWinnersSelected = async (results: { successful: number; failed: number; details: string[] }) => {
     try {
       // Refresh briefs data to show updated winner selection status
       await fetchDashboardData();
-      showSuccessToast('Winners selected successfully!');
+      showSuccessToast(`Winners selected successfully! ${results.successful} rewards distributed, ${results.failed} failed.`);
     } catch (error) {
       // Error refreshing data
     }
@@ -3424,11 +3426,11 @@ const BrandDashboard: React.FC = () => {
 
       {/* Winner Selection Modal */}
       <WinnerSelectionModal
-        brief={selectedBriefForWinners}
+        briefId={selectedBriefForWinners?.id || ''}
         submissions={briefSubmissions}
         isOpen={showWinnerSelectionModal}
         onClose={() => setShowWinnerSelectionModal(false)}
-        onWinnersSelected={handleWinnersSelected}
+        onSuccess={handleWinnersSelected}
       />
 
 

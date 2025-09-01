@@ -105,10 +105,10 @@ model Brief {
   awardDrafts      AwardDraft[]
   brand            Brand            @relation(fields: [brandId], references: [id])
   publishedAwards  PublishedAward[]
+  rewardPool       RewardPool?
   submissions      Submission[]
   winners          Winner[]
   winnerRewards    WinnerReward[]
-  rewardPool       RewardPool?
 }
 
 model Submission {
@@ -277,13 +277,12 @@ model BrandWalletTransaction {
   wallet        BrandWallet @relation(fields: [walletId], references: [id])
 }
 
-// New models for Reward and Payment System
 model RewardPool {
   id              String   @id @default(cuid())
   briefId         String   @unique
   totalAmount     Float
   remainingAmount Float
-  status          String   @default("active") // active, distributed, cancelled
+  status          String   @default("active")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   brief           Brief    @relation(fields: [briefId], references: [id])
@@ -295,12 +294,12 @@ model RewardPool {
 model Transaction {
   id                    String   @id @default(cuid())
   userId                String
-  userType              String   // 'brand' or 'creator'
-  type                  String   // 'deposit', 'withdrawal', 'reward', 'payout', 'reward_creation'
+  userType              String
+  type                  String
   amount                Float
   stripePaymentIntentId String?
   stripeTransferId      String?
-  status                String   @default("pending") // 'pending', 'completed', 'failed'
+  status                String   @default("pending")
   createdAt             DateTime @default(now())
 
   @@index([userId, userType])

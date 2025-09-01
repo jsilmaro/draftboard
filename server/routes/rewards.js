@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
 const auth = require('../middleware/auth');
 
-const prisma = new PrismaClient();
+// Use shared Prisma client
+const prisma = require('../prisma');
 
 // Create reward pool
 router.post('/create-pool', auth, async (req, res) => {
@@ -223,13 +223,19 @@ router.get('/pool/:briefId', auth, async (req, res) => {
 // Get brand's reward pools
 router.get('/brand/pools', auth, async (req, res) => {
   try {
+    console.log('🔍 GET /api/rewards/brand/pools - Request received');
     const userId = req.user.id;
     const userType = req.user.type;
+    
+    console.log('🔍 User info:', { userId, userType });
 
     if (userType !== 'brand') {
+      console.log('❌ Access denied: User is not a brand');
       return res.status(403).json({ error: 'Only brands can access this endpoint' });
     }
 
+    console.log('🔍 Querying reward pools for brand:', userId);
+    
     const rewardPools = await prisma.rewardPool.findMany({
       where: {
         brief: {
@@ -247,10 +253,17 @@ router.get('/brand/pools', auth, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
+    console.log('✅ Found reward pools:', rewardPools.length);
     res.json(rewardPools);
   } catch (error) {
-    console.error('Get brand pools error:', error);
-    res.status(500).json({ error: 'Failed to get reward pools' });
+    console.error('❌ Get brand pools error:', error);
+    console.error('🔍 Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n')
+    });
+    res.status(500).json({ error: 'Failed to get reward pools', details: error.message });
   }
 });
 
@@ -495,6 +508,271 @@ router.post('/distribute', auth, async (req, res) => {
       body: req.body,
       userId: req.user?.id
     });
+    res.status(500).json({ error: 'Failed to distribute rewards' });
+  }
+});
+
+// Enhanced reward distribution with Stripe integration
+router.post('/distribute-with-stripe', auth, async (req, res) => {
+  try {
+    const { briefId, winners } = req.body;
+    const userId = req.user.id;
+    const userType = req.user.type;
+
+    if (userType !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can distribute rewards' });
+    }
+
+    // Verify brief belongs to the brand
+    const brief = await prisma.brief.findFirst({
+      where: {
+        id: briefId,
+        brandId: userId
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+
+    // Get reward pool for this brief
+    const rewardPool = await prisma.rewardPool.findUnique({
+      where: { briefId: briefId }
+    });
+
+    if (!rewardPool) {
+      return res.status(404).json({ error: 'Reward pool not found for this brief' });
+    }
+
+    if (rewardPool.status !== 'active') {
+      return res.status(400).json({ error: 'Reward pool is not active' });
+    }
+
+    // Calculate total reward amount
+    const totalRewardAmount = winners.reduce((sum, winner) => sum + winner.amount, 0);
+
+    if (totalRewardAmount > rewardPool.remainingAmount) {
+      return res.status(400).json({ error: 'Total reward amount exceeds remaining pool amount' });
+    }
+
+    const distributionResults = [];
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Process each winner
+    for (const winner of winners) {
+      try {
+        // Get submission and creator details
+        const submission = await prisma.submission.findUnique({
+          where: { id: winner.submissionId },
+          include: { creator: true }
+        });
+
+        if (!submission) {
+          distributionResults.push({
+            submissionId: winner.submissionId,
+            success: false,
+            error: 'Submission not found'
+          });
+          continue;
+        }
+
+        const creator = submission.creator;
+
+        // Handle different reward types
+        if (winner.rewardType === 'cash') {
+          // Check if creator has Stripe Connect account
+          if (!creator.stripeAccountId) {
+            distributionResults.push({
+              submissionId: winner.submissionId,
+              creatorId: creator.id,
+              success: false,
+              error: 'Creator does not have Stripe account connected'
+            });
+            continue;
+          }
+
+          // Distribute cash via Stripe Connect
+          try {
+            const transfer = await stripe.transfers.create({
+              amount: Math.round(winner.amount * 100), // Convert to cents
+              currency: 'usd',
+              destination: creator.stripeAccountId,
+              description: `Reward for brief: ${brief.title}`,
+              metadata: {
+                briefId: briefId,
+                creatorId: creator.id,
+                submissionId: winner.submissionId,
+                type: 'cash_reward'
+              }
+            });
+
+            // Update creator wallet
+            await prisma.creatorWallet.upsert({
+              where: { creatorId: creator.id },
+              update: {
+                balance: { increment: winner.amount },
+                updatedAt: new Date()
+              },
+              create: {
+                creatorId: creator.id,
+                balance: winner.amount
+              }
+            });
+
+            // Record transaction
+            await prisma.transaction.create({
+              data: {
+                userId: creator.id,
+                userType: 'creator',
+                type: 'reward',
+                amount: winner.amount,
+                status: 'completed',
+                stripeTransferId: transfer.id,
+                metadata: {
+                  briefId: briefId,
+                  submissionId: winner.submissionId,
+                  rewardType: 'cash'
+                }
+              }
+            });
+
+            distributionResults.push({
+              submissionId: winner.submissionId,
+              creatorId: creator.id,
+              amount: winner.amount,
+              rewardType: 'cash',
+              stripeTransferId: transfer.id,
+              success: true
+            });
+
+          } catch (stripeError) {
+            console.error('Stripe transfer failed:', stripeError);
+            distributionResults.push({
+              submissionId: winner.submissionId,
+              creatorId: creator.id,
+              success: false,
+              error: 'Stripe transfer failed: ' + stripeError.message
+            });
+          }
+
+        } else if (winner.rewardType === 'credit') {
+          // Handle credit rewards (internal wallet)
+          await prisma.creatorWallet.upsert({
+            where: { creatorId: creator.id },
+            update: {
+              balance: { increment: winner.amount },
+              updatedAt: new Date()
+            },
+            create: {
+              creatorId: creator.id,
+              balance: winner.amount
+            }
+          });
+
+          // Record transaction
+          await prisma.transaction.create({
+            data: {
+              userId: creator.id,
+              userType: 'creator',
+              type: 'reward',
+              amount: winner.amount,
+              status: 'completed',
+              metadata: {
+                briefId: briefId,
+                submissionId: winner.submissionId,
+                rewardType: 'credit'
+              }
+            }
+          });
+
+          distributionResults.push({
+            submissionId: winner.submissionId,
+            creatorId: creator.id,
+            amount: winner.amount,
+            rewardType: 'credit',
+            success: true
+          });
+
+        } else if (winner.rewardType === 'prize') {
+          // Handle prize rewards
+          await prisma.transaction.create({
+            data: {
+              userId: creator.id,
+              userType: 'creator',
+              type: 'reward',
+              amount: 0, // Prizes don't have monetary value in wallet
+              status: 'completed',
+              metadata: {
+                briefId: briefId,
+                submissionId: winner.submissionId,
+                rewardType: 'prize',
+                prizeDetails: winner.prizeDetails
+              }
+            }
+          });
+
+          distributionResults.push({
+            submissionId: winner.submissionId,
+            creatorId: creator.id,
+            rewardType: 'prize',
+            prizeDetails: winner.prizeDetails,
+            success: true
+          });
+        }
+
+      } catch (error) {
+        console.error('Error processing winner:', error);
+        distributionResults.push({
+          submissionId: winner.submissionId,
+          success: false,
+          error: 'Processing failed: ' + error.message
+        });
+      }
+    }
+
+    // Update reward pool
+    const successfulAmount = distributionResults
+      .filter(result => result.success && result.amount)
+      .reduce((sum, result) => sum + result.amount, 0);
+
+    await prisma.rewardPool.update({
+      where: { id: rewardPool.id },
+      data: {
+        remainingAmount: { decrement: successfulAmount },
+        status: rewardPool.remainingAmount - successfulAmount === 0 ? 'distributed' : 'active'
+      }
+    });
+
+    // Create winner records
+    for (const winner of winners) {
+      const submission = await prisma.submission.findUnique({
+        where: { id: winner.submissionId }
+      });
+
+      if (submission) {
+        await prisma.winner.create({
+          data: {
+            briefId: briefId,
+            submissionId: winner.submissionId,
+            creatorId: submission.creatorId,
+            position: winner.position || 1,
+            rewardType: winner.rewardType,
+            amount: winner.amount || 0,
+            status: 'awarded'
+          }
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Rewards distributed successfully',
+      results: distributionResults,
+      totalDistributed: successfulAmount
+    });
+
+  } catch (error) {
+    console.error('Enhanced reward distribution error:', error);
     res.status(500).json({ error: 'Failed to distribute rewards' });
   }
 });

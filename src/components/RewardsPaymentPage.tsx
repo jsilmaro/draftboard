@@ -499,7 +499,7 @@ const RewardsPaymentPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-bold">🎯 Rewards & Payments</h1>
+              <h1 className="text-xl font-bold">🎯 Rewards</h1>
             </div>
             <div className="flex items-center space-x-6">
               <div className="text-right">
@@ -526,7 +526,7 @@ const RewardsPaymentPage: React.FC = () => {
             <nav className="-mb-px flex space-x-8">
               {[
                 { id: 'submissions', label: '📋 Submissions', count: filteredSubmissions.length },
-                { id: 'rewards', label: '🏆 Rewards & Payments', count: filteredWinners.length }
+                { id: 'rewards', label: '🏆 Rewards', count: filteredWinners.length }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -702,7 +702,7 @@ const RewardsPaymentPage: React.FC = () => {
         {activeTab === 'rewards' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">🏆 Rewards & Payments</h2>
+              <h2 className="text-2xl font-bold">🏆 Rewards</h2>
               <div className="flex items-center space-x-4">
                 {pendingWinners.length > 0 && (
                   <>

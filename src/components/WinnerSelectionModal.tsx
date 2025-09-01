@@ -1,342 +1,378 @@
 import React, { useState, useEffect } from 'react';
-import DefaultAvatar from './DefaultAvatar';
 
 interface Submission {
   id: string;
+  creatorId: string;
   creatorName: string;
-  content: string;
-  files?: string;
+  creatorEmail: string;
   submittedAt: string;
+  content: string;
+  hasStripeAccount?: boolean;
+}
+
+interface Winner {
+  submissionId: string;
+  creatorId: string;
+  rewardType: 'cash' | 'credit' | 'prize';
   amount: number;
+  description: string;
+  prizeDetails?: {
+    name?: string;
+    description?: string;
+    value?: number;
+  };
 }
 
-interface WinnerReward {
-  position: number;
-  cashAmount: number;
-  creditAmount: number;
-  prizeDescription: string;
-}
-
-interface Brief {
-  id: string;
-  title: string;
-  amountOfWinners?: number;
-  rewardType?: string;
+interface RewardDistributionResults {
+  successful: number;
+  failed: number;
+  details: string[];
 }
 
 interface WinnerSelectionModalProps {
-  brief: Brief | null;
+  briefId: string;
   submissions: Submission[];
   isOpen: boolean;
   onClose: () => void;
-  onWinnersSelected: (winners: { submissionId: string; position: number }[]) => void;
+  onSuccess: (results: RewardDistributionResults) => void;
 }
 
+/**
+ * Winner Selection Modal
+ * Allows brands to select winners and assign different types of rewards
+ */
 const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
-  brief,
+  briefId,
   submissions,
   isOpen,
   onClose,
-  onWinnersSelected
+  onSuccess
 }) => {
-  const [selectedWinners, setSelectedWinners] = useState<{ submissionId: string; position: number }[]>([]);
-  const [winnerRewards, setWinnerRewards] = useState<WinnerReward[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedWinners, setSelectedWinners] = useState<Winner[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (brief && isOpen) {
-      // Initialize winner rewards based on amount of winners
-      const initialRewards: WinnerReward[] = [];
-      for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-        initialRewards.push({
-          position: i,
-          cashAmount: 0,
-          creditAmount: 0,
-          prizeDescription: ''
-        });
-      }
-      setWinnerRewards(initialRewards);
+    if (isOpen) {
       setSelectedWinners([]);
+      setError(null);
     }
-  }, [brief, isOpen]);
+  }, [isOpen]);
 
-  const handleWinnerSelect = (submissionId: string, position: number) => {
-    // Remove any existing selection for this position
-    const updatedWinners = selectedWinners.filter(w => w.position !== position);
+  const handleWinnerToggle = (submission: Submission) => {
+    const existingWinner = selectedWinners.find(w => w.submissionId === submission.id);
     
-    // Remove this submission from any other position
-    const finalWinners = updatedWinners.filter(w => w.submissionId !== submissionId);
-    
-    // Add new selection
-    finalWinners.push({ submissionId, position });
-    
-    setSelectedWinners(finalWinners);
+    if (existingWinner) {
+      // Remove winner
+      setSelectedWinners(prev => prev.filter(w => w.submissionId !== submission.id));
+    } else {
+      // Add winner with default values
+      const newWinner: Winner = {
+        submissionId: submission.id,
+        creatorId: submission.creatorId,
+        rewardType: 'cash',
+        amount: 0,
+        description: `Reward for brief ${briefId}`
+      };
+      setSelectedWinners(prev => [...prev, newWinner]);
+    }
   };
 
-  const handleRewardChange = (position: number, field: keyof WinnerReward, value: string | number) => {
-    setWinnerRewards(prev => 
-      prev.map(reward => 
-        reward.position === position 
-          ? { ...reward, [field]: value }
-          : reward
+  const updateWinner = (submissionId: string, updates: Partial<Winner>) => {
+    setSelectedWinners(prev => 
+      prev.map(winner => 
+        winner.submissionId === submissionId 
+          ? { ...winner, ...updates }
+          : winner
       )
     );
   };
 
-  const getSelectedCreator = (position: number) => {
-    const winner = selectedWinners.find(w => w.position === position);
-    if (!winner) return null;
-    return submissions.find(s => s.id === winner.submissionId);
-  };
-
-  const handleConfirmSelection = async () => {
-    if (selectedWinners.length !== (brief?.amountOfWinners || 1)) {
-      alert(`Please select exactly ${brief?.amountOfWinners || 1} winners.`);
-      return;
-    }
-
-    setIsLoading(true);
+  const handleDistributeRewards = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/brands/briefs/select-winners', {
+      setLoading(true);
+      setError(null);
+
+      // Validate all winners have required data
+      for (const winner of selectedWinners) {
+        if (winner.rewardType === 'cash' && winner.amount <= 0) {
+          throw new Error(`Please set amount for cash reward`);
+        }
+        if (winner.rewardType === 'credit' && winner.amount <= 0) {
+          throw new Error(`Please set amount for credit reward`);
+        }
+        if (winner.rewardType === 'prize' && (!winner.prizeDetails?.name || !winner.prizeDetails?.description)) {
+          throw new Error(`Please provide prize details for prize reward`);
+        }
+      }
+
+      const response = await fetch('/api/rewards/distribute-with-stripe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          briefId: brief?.id,
-          winners: selectedWinners,
-          rewards: winnerRewards
-        })
+          briefId,
+          winners: selectedWinners
+        }),
       });
 
-      if (response.ok) {
-        onWinnersSelected(selectedWinners);
-        onClose();
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to select winners');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to distribute rewards');
       }
-    } catch (error) {
-      alert('Failed to select winners');
+
+      const results = await response.json();
+      onSuccess(results);
+      onClose();
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Distribution failed';
+      setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  if (!isOpen || !brief) return null;
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Select Winners for &quot;{brief.title}&quot;</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ✕
-          </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Select Winners & Assign Rewards
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            Brief #{briefId} • {submissions.length} submissions
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Submissions List */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Submissions ({submissions.length})
-            </h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {submissions.map((submission) => (
-                <div
-                  key={submission.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    selectedWinners.some(w => w.submissionId === submission.id)
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => {
-                    const currentPosition = selectedWinners.find(w => w.submissionId === submission.id)?.position;
-                    if (currentPosition) {
-                      // Remove selection
-                      setSelectedWinners(prev => prev.filter(w => w.submissionId !== submission.id));
-                    } else {
-                      // Find next available position
-                      const usedPositions = selectedWinners.map(w => w.position);
-                      const nextPosition = Array.from({ length: brief.amountOfWinners || 1 }, (_, i) => i + 1)
-                        .find(pos => !usedPositions.includes(pos));
-                      if (nextPosition) {
-                        handleWinnerSelect(submission.id, nextPosition);
-                      }
-                    }
-                  }}
-                >
-                  <div className="flex items-start space-x-3">
-                    <DefaultAvatar name={submission.creatorName} size="sm" />
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-md">
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {submissions.map((submission) => {
+              const isSelected = selectedWinners.some(w => w.submissionId === submission.id);
+              const winnerData = selectedWinners.find(w => w.submissionId === submission.id);
+
+              return (
+                <div key={submission.id} className={`border rounded-lg p-4 ${isSelected ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+                  <div className="flex items-start space-x-4">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleWinnerToggle(submission)}
+                      className="mt-1 w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    />
+                    
                     <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-gray-900">{submission.creatorName}</h4>
-                        <span className="text-sm text-gray-500">
-                          {new Date(submission.submittedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {submission.content}
-                      </p>
-                      {selectedWinners.some(w => w.submissionId === submission.id) && (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Position {selectedWinners.find(w => w.submissionId === submission.id)?.position}
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-900 dark:text-white">
+                          {submission.creatorName}
+                        </h4>
+                        <div className="flex items-center space-x-2">
+                          {submission.hasStripeAccount && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              ✓ Stripe Connected
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(submission.submittedAt).toLocaleDateString()}
                           </span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                        {submission.content.substring(0, 200)}...
+                      </p>
+
+                      {/* Reward Configuration */}
+                      {isSelected && winnerData && (
+                        <div className="mt-4 p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-3">
+                            Reward Configuration
+                          </h5>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Reward Type */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Reward Type
+                              </label>
+                              <select
+                                value={winnerData.rewardType}
+                                onChange={(e) => updateWinner(submission.id, { 
+                                  rewardType: e.target.value as 'cash' | 'credit' | 'prize' 
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              >
+                                <option value="cash">💰 Cash (Stripe Transfer)</option>
+                                <option value="credit">💳 Credit (In-app Balance)</option>
+                                <option value="prize">🏆 Prize (Non-cash)</option>
+                              </select>
+                            </div>
+
+                            {/* Amount (for cash and credit) */}
+                            {(winnerData.rewardType === 'cash' || winnerData.rewardType === 'credit') && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                  Amount ($)
+                                </label>
+                                <input
+                                  type="number"
+                                  value={winnerData.amount}
+                                  onChange={(e) => updateWinner(submission.id, { 
+                                    amount: parseFloat(e.target.value) || 0 
+                                  })}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            )}
+
+                            {/* Prize Details */}
+                            {winnerData.rewardType === 'prize' && (
+                              <div className="md:col-span-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                      Prize Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={winnerData.prizeDetails?.name || ''}
+                                      onChange={(e) => updateWinner(submission.id, { 
+                                        prizeDetails: { 
+                                          ...winnerData.prizeDetails, 
+                                          name: e.target.value 
+                                        }
+                                      })}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                      placeholder="e.g., Gift Card, Product"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                      Prize Value ($)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={winnerData.prizeDetails?.value || ''}
+                                      onChange={(e) => updateWinner(submission.id, { 
+                                        prizeDetails: { 
+                                          ...winnerData.prizeDetails, 
+                                          value: parseFloat(e.target.value) || 0 
+                                        }
+                                      })}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                      step="0.01"
+                                      min="0"
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="mt-4">
+                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Prize Description
+                                  </label>
+                                  <textarea
+                                    value={winnerData.prizeDetails?.description || ''}
+                                    onChange={(e) => updateWinner(submission.id, { 
+                                      prizeDetails: { 
+                                        ...winnerData.prizeDetails, 
+                                        description: e.target.value 
+                                      }
+                                    })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    rows={2}
+                                    placeholder="Describe the prize..."
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Description */}
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Description
+                              </label>
+                              <input
+                                type="text"
+                                value={winnerData.description}
+                                onChange={(e) => updateWinner(submission.id, { 
+                                  description: e.target.value 
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                placeholder="Reward description..."
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Winner Positions and Rewards */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Winner Positions & Rewards
-            </h3>
-                         <div className="space-y-4">
-               {Array.from({ length: brief.amountOfWinners || 1 }, (_, i) => i + 1).map((position) => {
-                const selectedCreator = getSelectedCreator(position);
-                const reward = winnerRewards.find(r => r.position === position);
-
-                return (
-                  <div key={position} className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-medium text-gray-900">
-                        {position === 1 ? '1st Spot' : position === 2 ? '2nd Spot' : position === 3 ? '3rd Spot' : `${position}th Spot`}
-                      </h4>
-                      {selectedCreator && (
-                        <span className="text-sm text-green-600 font-medium">
-                          ✓ {selectedCreator.creatorName}
-                        </span>
-                      )}
-                    </div>
-
-                    {selectedCreator ? (
-                      <div className="mb-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <DefaultAvatar name={selectedCreator.creatorName} size="sm" />
-                          <span className="text-sm text-gray-700">{selectedCreator.creatorName}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {selectedCreator.content}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg text-center">
-                        <p className="text-sm text-gray-500">Click on a submission to assign to this position</p>
-                      </div>
-                    )}
-
-                    {/* Reward Configuration */}
-                    <div className="space-y-3">
-                      <h5 className="text-sm font-medium text-gray-700">Reward Configuration</h5>
-                      
-                      {brief.rewardType === 'CASH' && (
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-1">Cash Amount ($)</label>
-                          <input
-                            type="number"
-                            value={reward?.cashAmount || 0}
-                            onChange={(e) => handleRewardChange(position, 'cashAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      )}
-
-                      {brief.rewardType === 'CREDIT' && (
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-1">Credit Amount</label>
-                          <input
-                            type="number"
-                            value={reward?.creditAmount || 0}
-                            onChange={(e) => handleRewardChange(position, 'creditAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="0"
-                          />
-                        </div>
-                      )}
-
-                      {brief.rewardType === 'PRIZES' && (
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-1">Prize Description</label>
-                          <textarea
-                            value={reward?.prizeDescription || ''}
-                            onChange={(e) => handleRewardChange(position, 'prizeDescription', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Describe the prize..."
-                            rows={2}
-                          />
-                        </div>
-                      )}
-
-                      {/* Mixed rewards */}
-                      {brief.rewardType !== 'CASH' && brief.rewardType !== 'CREDIT' && brief.rewardType !== 'PRIZES' && (
-                        <div className="space-y-2">
-                          <div>
-                            <label className="block text-sm text-gray-600 mb-1">Cash Amount ($)</label>
-                            <input
-                              type="number"
-                              value={reward?.cashAmount || 0}
-                              onChange={(e) => handleRewardChange(position, 'cashAmount', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm text-gray-600 mb-1">Credit Amount</label>
-                            <input
-                              type="number"
-                              value={reward?.creditAmount || 0}
-                              onChange={(e) => handleRewardChange(position, 'creditAmount', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="0"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm text-gray-600 mb-1">Prize Description</label>
-                            <textarea
-                              value={reward?.prizeDescription || ''}
-                              onChange={(e) => handleRewardChange(position, 'prizeDescription', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="Describe the prize..."
-                              rows={2}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirmSelection}
-            disabled={selectedWinners.length !== brief.amountOfWinners || isLoading}
-            className="px-6 py-2 bg-gradient-to-r from-[#00FF85] to-[#00C853] text-white rounded-md hover:from-[#00E676] hover:to-[#00BFA5] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Selecting Winners...' : `Confirm ${selectedWinners.length}/${brief.amountOfWinners || 1} Winners`}
-          </button>
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {selectedWinners.length} winner{selectedWinners.length !== 1 ? 's' : ''} selected
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDistributeRewards}
+                disabled={loading || selectedWinners.length === 0}
+                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                style={{
+                  boxShadow: loading ? 'none' : '0 0 20px rgba(34, 197, 94, 0.3)'
+                }}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Distributing...
+                  </>
+                ) : (
+                  <>
+                    🎉 Distribute Rewards
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

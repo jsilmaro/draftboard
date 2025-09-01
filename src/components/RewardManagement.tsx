@@ -73,6 +73,18 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
   const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
   const [winnerRewards, setWinnerRewards] = useState<{[key: string]: number}>({});
 
+  // Debug token
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('🔍 RewardManagement - Token debug:', {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token',
+      userType,
+      userId: _userId
+    });
+  }, [token, userType, _userId]);
+
   const fetchBriefs = useCallback(async () => {
     try {
       const response = await fetch('/api/brands/briefs', {
@@ -104,6 +116,14 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
 
   const fetchRewardPools = useCallback(async () => {
     try {
+      // Check if token is valid
+      if (!token || token.trim() === '') {
+        // eslint-disable-next-line no-console
+        console.error('❌ No valid token provided for reward pools request');
+        setRewardPools([]);
+        return;
+      }
+
       const response = await fetch('/api/rewards/brand/pools', {
         headers: {
           'Authorization': `Bearer ${token}`,

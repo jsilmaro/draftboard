@@ -5,13 +5,19 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
-const { PrismaClient } = require('@prisma/client');
 // Initialize Stripe only if API key is provided
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+
+// Import shared Prisma client
+const prisma = require('./prisma');
 
 // Import new routes
 const paymentRoutes = require('./routes/payments');
 const rewardRoutes = require('./routes/rewards');
+
+// Import Stripe integration routes
+const stripeRoutes = require('./stripe');
+const rewardsRoutes = require('./rewards');
 
 // Debug environment variables
 console.log('🔧 Environment check:');
@@ -23,68 +29,15 @@ console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 
 const app = express();
 
-// Function to enhance DATABASE_URL with connection pool settings
-function getEnhancedDatabaseUrl() {
-  const baseUrl = process.env.DATABASE_URL;
-  if (!baseUrl) return baseUrl;
-  
-  // Add connection pool parameters to prevent timeout issues
-  const separator = baseUrl.includes('?') ? '&' : '?';
-  const poolParams = [
-    'connection_limit=20', // Increased from 10
-    'pool_timeout=60',     // Increased from 30 to 60 seconds
-    'idle_timeout=120',    // Increased from 60 to 120 seconds
-    'connect_timeout=30'   // Increased from 15 to 30 seconds
-  ].join('&');
-  
-  return `${baseUrl}${separator}${poolParams}`;
-}
 
-// Configure Prisma client with connection pool settings to prevent timeout issues
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: getEnhancedDatabaseUrl(),
-    },
-  },
-  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
-});
+
+// Prisma client is now imported from shared module
 
 // Configure connection pool settings to prevent timeout issues
 // Note: $use middleware is not available in current Prisma version
 // Connection pool is handled automatically by Prisma
 
-// Add connection pool event listeners for better error handling
-prisma.$on('query', (e) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Query: ' + e.query);
-    console.log('Params: ' + e.params);
-    console.log('Duration: ' + e.duration + 'ms');
-    
-    // Log slow queries
-    if (e.duration > 1000) {
-      console.warn(`⚠️ Slow query detected: ${e.duration}ms - ${e.query}`);
-    }
-  }
-});
-
-prisma.$on('error', (e) => {
-  console.error('Prisma Error:', e);
-  
-  // Handle connection errors more gracefully
-  if (e.message && e.message.includes('connection')) {
-    console.error('❌ Database connection error detected');
-    console.error('🔧 Please check your DATABASE_URL and database service status');
-    
-    // In production, you might want to restart the connection
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🔄 Attempting to reconnect...');
-      setTimeout(() => {
-        console.log('🔄 Reconnection not needed - Prisma handles connections automatically');
-      }, 5000);
-    }
-  }
-});
+// Event listeners are now handled in the shared Prisma module
 
 const PORT = process.env.PORT || 3001;
 
@@ -240,6 +193,10 @@ app.get('/api', (req, res) => {
 // New Payment and Reward Routes
 app.use('/api/payments', paymentRoutes);
 app.use('/api/rewards', rewardRoutes);
+
+// Stripe integration routes
+app.use('/api/stripe', stripeRoutes);
+app.use('/api/rewards-system', rewardsRoutes);
 
 // Test endpoint for debugging
 app.get('/api/debug', (req, res) => {
@@ -2215,7 +2172,9 @@ app.get('/api/brands/briefs/:id/submissions', authenticateToken, async (req, res
     // Transform data to match frontend expectations
     const transformedSubmissions = submissions.map(sub => ({
       id: sub.id,
+      creatorId: sub.creatorId,
       creatorName: sub.creator.fullName || sub.creator.userName,
+      creatorEmail: sub.creator.email,
       content: sub.content,
       files: sub.files,
       submittedAt: sub.submittedAt,
