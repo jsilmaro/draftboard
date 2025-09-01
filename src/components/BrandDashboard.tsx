@@ -10,6 +10,7 @@ import BrandBriefCard from './BrandBriefCard';
 
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
+import SettingsButton from './SettingsButton';
 
 
 
@@ -2835,6 +2836,7 @@ const BrandDashboard: React.FC = () => {
           </div>
                       <div className="flex items-center space-x-3">
               <NotificationBell />
+              <SettingsButton />
               <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
@@ -3004,6 +3006,7 @@ const BrandDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationBell />
+              <SettingsButton />
               <DefaultAvatar name={user?.companyName || 'Brand'} size="md" />
             </div>
           </div>

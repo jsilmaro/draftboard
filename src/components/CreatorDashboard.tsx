@@ -7,6 +7,7 @@ import BriefCard from './BriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
 
 import NotificationBell from './NotificationBell';
+import SettingsButton from './SettingsButton';
 
 
 
@@ -1069,6 +1070,7 @@ const CreatorDashboard: React.FC = () => {
           </div>
                       <div className="flex items-center space-x-3">
               <NotificationBell />
+              <SettingsButton />
               <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
@@ -1240,6 +1242,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationBell />
+              <SettingsButton />
               <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="md" />
             </div>
           </div>
