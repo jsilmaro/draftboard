@@ -8,6 +8,8 @@ import BriefDetailsModal from './BriefDetailsModal';
 
 import NotificationBell from './NotificationBell';
 import SettingsButton from './SettingsButton';
+import SettingsModal from './SettingsModal';
+import Logo from './Logo';
 
 
 
@@ -78,6 +80,7 @@ const CreatorDashboard: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   // Search functionality
   const [searchQuery, setSearchQuery] = useState('');
@@ -401,7 +404,7 @@ const CreatorDashboard: React.FC = () => {
 
   const accountNav = [
     { id: 'earnings', label: 'Earnings', icon: 'payments' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettingsModal(true) },
     { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
 
@@ -1065,7 +1068,7 @@ const CreatorDashboard: React.FC = () => {
       <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-            <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.3))'}} />
+                          <Logo size="sm" className="mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]" />
             <span className="font-bold text-lg text-white">{user?.userName || 'Creator'}</span>
           </div>
                       <div className="flex items-center space-x-3">
@@ -1112,7 +1115,7 @@ const CreatorDashboard: React.FC = () => {
           {/* Logo Section */}
           <div className="flex items-center justify-center mb-6 lg:mb-8">
             <div className="relative">
-              <img src="/logo-light2.svg" alt="DraftBoard" className="h-10 w-auto" style={{filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.4))'}} />
+              <Logo size="md" className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
             </div>
           </div>
 
@@ -1332,6 +1335,12 @@ const CreatorDashboard: React.FC = () => {
           setShowBriefDetailsModal(false);
           setSelectedBriefId(null);
         }}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
       </div>
     </div>

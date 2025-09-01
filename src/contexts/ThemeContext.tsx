@@ -27,7 +27,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     
-    return 'light';
+    // Default to dark since the app is originally dark
+    return 'dark';
   });
 
   const toggleTheme = () => {

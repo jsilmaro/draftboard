@@ -13,6 +13,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { showSuccessToast, showErrorToast } = useToast();
   const [activeTab, setActiveTab] = useState<'general' | 'account' | 'notifications' | 'privacy'>('general');
+  
+  // Settings state
+  const [language, setLanguage] = useState('en');
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [briefUpdates, setBriefUpdates] = useState(true);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
   if (!isOpen) return null;
 
@@ -104,7 +111,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">English</p>
                     </div>
                   </div>
-                  <select className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <select 
+                    value={language}
+                    onChange={(e) => {
+                      setLanguage(e.target.value);
+                      showSuccessToast(`Language changed to ${e.target.value === 'en' ? 'English' : e.target.value === 'es' ? 'Español' : 'Français'}`);
+                    }}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
                     <option value="en">English</option>
                     <option value="es">Español</option>
                     <option value="fr">Français</option>
@@ -132,17 +146,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
-                      <h4 className="font-medium text-gray-900 dark:text-white">Edit Profile</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Update your information</p>
-                    </button>
-                    
-                    <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
-                      <h4 className="font-medium text-gray-900 dark:text-white">Change Password</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Update your password</p>
-                    </button>
-                  </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <button 
+                       onClick={() => {
+                         showSuccessToast('Edit profile feature opened');
+                         // In a real app, this would open a profile edit modal
+                       }}
+                       className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                     >
+                       <h4 className="font-medium text-gray-900 dark:text-white">Edit Profile</h4>
+                       <p className="text-sm text-gray-500 dark:text-gray-400">Update your information</p>
+                     </button>
+                     
+                     <button 
+                       onClick={() => {
+                         showSuccessToast('Change password feature opened');
+                         // In a real app, this would open a password change modal
+                       }}
+                       className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                     >
+                       <h4 className="font-medium text-gray-900 dark:text-white">Change Password</h4>
+                       <p className="text-sm text-gray-500 dark:text-gray-400">Update your password</p>
+                     </button>
+                   </div>
                 </div>
               </div>
 
@@ -174,7 +200,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={emailNotifications}
+                        onChange={(e) => {
+                          setEmailNotifications(e.target.checked);
+                          showSuccessToast(`Email notifications ${e.target.checked ? 'enabled' : 'disabled'}`);
+                        }}
+                      />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
@@ -190,7 +224,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={pushNotifications}
+                        onChange={(e) => {
+                          setPushNotifications(e.target.checked);
+                          showSuccessToast(`Push notifications ${e.target.checked ? 'enabled' : 'disabled'}`);
+                        }}
+                      />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
@@ -206,7 +248,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={briefUpdates}
+                        onChange={(e) => {
+                          setBriefUpdates(e.target.checked);
+                          showSuccessToast(`Brief updates ${e.target.checked ? 'enabled' : 'disabled'}`);
+                        }}
+                      />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
@@ -231,8 +281,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Add extra security</p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      Enable
+                    <button 
+                      onClick={() => {
+                        setTwoFactorEnabled(!twoFactorEnabled);
+                        showSuccessToast(`Two-factor authentication ${!twoFactorEnabled ? 'enabled' : 'disabled'}`);
+                      }}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        twoFactorEnabled 
+                          ? 'bg-green-600 text-white hover:bg-green-700' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {twoFactorEnabled ? 'Enabled' : 'Enable'}
                     </button>
                   </div>
 
@@ -246,7 +306,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Manage your data</p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <button 
+                      onClick={() => {
+                        showSuccessToast('Data usage information displayed');
+                        // In a real app, this would open a modal with data usage details
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
                       View
                     </button>
                   </div>
@@ -261,7 +327,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Permanently delete your account</p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <button 
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
+                          showSuccessToast('Account deletion request submitted');
+                          // In a real app, this would trigger account deletion process
+                        }
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
                       Delete
                     </button>
                   </div>

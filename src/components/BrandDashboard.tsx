@@ -11,6 +11,8 @@ import BrandBriefCard from './BrandBriefCard';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 import SettingsButton from './SettingsButton';
+import SettingsModal from './SettingsModal';
+import Logo from './Logo';
 
 
 
@@ -153,6 +155,7 @@ const BrandDashboard: React.FC = () => {
   });
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [editIsLoading, setEditIsLoading] = useState(false);
   const [editAmountOfWinners, setEditAmountOfWinners] = useState(1);
@@ -770,7 +773,7 @@ const BrandDashboard: React.FC = () => {
 
   const accountNav = [
     { id: 'awards', label: 'Rewards', icon: 'awards' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettingsModal(true) },
     { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
 
@@ -2831,7 +2834,7 @@ const BrandDashboard: React.FC = () => {
       <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-            <img src="/logo-light2.svg" alt="DraftBoard" className="h-8 w-auto mr-3" style={{filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.3))'}} />
+                          <Logo size="sm" className="mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]" />
             <span className="font-bold text-lg text-white">{user?.companyName || 'Brand'}</span>
           </div>
                       <div className="flex items-center space-x-3">
@@ -2875,7 +2878,7 @@ const BrandDashboard: React.FC = () => {
           {/* Logo Section */}
           <div className="flex items-center justify-center mb-6 lg:mb-8">
             <div className="relative">
-              <img src="/logo-light2.svg" alt="DraftBoard" className="h-10 w-auto" style={{filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.4))'}} />
+              <Logo size="md" className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
             </div>
           </div>
 
@@ -3434,6 +3437,12 @@ const BrandDashboard: React.FC = () => {
         isOpen={showWinnerSelectionModal}
         onClose={() => setShowWinnerSelectionModal(false)}
         onSuccess={handleWinnersSelected}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
 
 
