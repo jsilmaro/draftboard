@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 // Use shared Prisma client
 const prisma = require('./prisma');
@@ -13,6 +15,13 @@ const prisma = require('./prisma');
 // Distribute Multiple Rewards (Cash, Credit, Prize)
 router.post('/distribute', async (req, res) => {
   try {
+    // Check if Stripe is configured (needed for cash rewards)
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
     const { briefId, winners } = req.body;
 
     if (!briefId || !winners || !Array.isArray(winners)) {

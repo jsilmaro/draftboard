@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 const auth = require('../middleware/auth');
 
 // Use shared Prisma client
@@ -9,6 +10,13 @@ const prisma = require('../prisma');
 // Create Payment Intent for funding wallet
 router.post('/create-payment-intent', auth, async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
     const { amount, currency = 'usd' } = req.body;
     const userId = req.user.id;
     const userType = req.user.type;
@@ -41,6 +49,13 @@ router.post('/create-payment-intent', auth, async (req, res) => {
 // Confirm payment and fund wallet
 router.post('/confirm-payment', auth, async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
     const { paymentIntentId } = req.body;
     const userId = req.user.id;
     const userType = req.user.type;
@@ -248,6 +263,13 @@ router.get('/wallet/transactions', auth, async (req, res) => {
 // Request payout (for creators)
 router.post('/payout/request', auth, async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
     const { amount, accountId } = req.body;
     const userId = req.user.id;
     const userType = req.user.type;
@@ -315,6 +337,13 @@ router.post('/payout/request', auth, async (req, res) => {
 
 // Stripe webhook handler
 router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    return res.status(503).json({ 
+      error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+    });
+  }
+
   const sig = req.headers['stripe-signature'];
   let event;
 

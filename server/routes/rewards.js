@@ -556,6 +556,14 @@ router.post('/distribute-with-stripe', auth, async (req, res) => {
     }
 
     const distributionResults = [];
+    
+    // Check if Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+    
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     // Process each winner

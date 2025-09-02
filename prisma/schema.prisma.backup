@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Brand {
@@ -78,7 +78,6 @@ model Creator {
   wallet          CreatorWallet?
   submissions     Submission[]
   winners         Winner[]
-  withdrawalRequests WithdrawalRequest[]
 
   @@index([email])
   @@index([userName])
@@ -301,30 +300,10 @@ model Transaction {
   stripePaymentIntentId String?
   stripeTransferId      String?
   status                String   @default("pending")
-  createdAt             DateTime @default(now())
+  createdAt             DateTime
 
   @@index([userId, userType])
   @@index([type])
   @@index([status])
   @@index([createdAt])
-}
-
-model WithdrawalRequest {
-  id            String   @id @default(cuid())
-  creatorId     String
-  amount        Float
-  currency      String   @default("USD")
-  status        String   @default("pending") // pending, approved, rejected, completed
-  reason        String?  // Optional reason for rejection
-  adminNotes    String?  // Admin notes
-  stripeTransferId String? // Stripe transfer ID when processed
-  requestedAt   DateTime @default(now())
-  processedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  creator       Creator  @relation(fields: [creatorId], references: [id])
-
-  @@index([status])
-  @@index([creatorId])
-  @@index([requestedAt])
 }

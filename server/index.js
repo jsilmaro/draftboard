@@ -3517,10 +3517,14 @@ app.post('/api/creators/wallet/withdraw', authenticateToken, async (req, res) =>
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const { amount, paymentMethod } = req.body;
+    const { amount } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    if (amount < 10) {
+      return res.status(400).json({ error: 'Minimum withdrawal amount is $10.00' });
     }
 
     try {
@@ -3536,52 +3540,303 @@ app.post('/api/creators/wallet/withdraw', authenticateToken, async (req, res) =>
         return res.status(400).json({ error: 'Insufficient balance' });
       }
 
+      // Check for pending withdrawal requests (informational only)
+      const pendingRequests = await prisma.withdrawalRequest.findMany({
+        where: {
+          creatorId: req.user.id,
+          status: 'pending'
+        }
+      });
+
+      // Allow multiple pending requests but warn user
+      if (pendingRequests.length > 0) {
+        console.log(`Creator ${req.user.id} has ${pendingRequests.length} pending withdrawal requests`);
+      }
+
+      // Create withdrawal request instead of immediately processing
+      const withdrawalRequest = await prisma.withdrawalRequest.create({
+        data: {
+          creatorId: req.user.id,
+          amount: amount,
+          currency: 'USD',
+          status: 'pending'
+        }
+      });
+
+      // Notify creator about withdrawal request submission
+      await createNotification(
+        req.user.id,
+        'creator',
+        'Withdrawal Request Submitted 📋',
+        `Your withdrawal request for $${amount.toFixed(2)} has been submitted and is pending admin approval.`,
+        'wallet'
+      );
+
+      res.json({ 
+        message: 'Withdrawal request submitted successfully', 
+        data: { 
+          request: withdrawalRequest,
+          status: 'pending_approval'
+        }
+      });
+    } catch (tableError) {
+      // If tables don't exist, simulate successful withdrawal request
+      console.log('WithdrawalRequest table not available, simulating withdrawal request');
+      res.json({ 
+        message: 'Withdrawal request submitted successfully (simulated)', 
+        data: { 
+          request: {
+            id: `sim_${Date.now()}`,
+            amount: amount,
+            status: 'pending',
+            requestedAt: new Date().toISOString()
+          },
+          status: 'pending_approval'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error creating withdrawal request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get withdrawal requests for creator
+app.get('/api/creators/withdrawal-requests', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      const withdrawalRequests = await prisma.withdrawalRequest.findMany({
+        where: { creatorId: req.user.id },
+        orderBy: { requestedAt: 'desc' }
+      });
+
+      res.json(withdrawalRequests);
+    } catch (tableError) {
+      // If table doesn't exist, return empty array
+      console.log('WithdrawalRequest table not available, returning empty array');
+      res.json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching withdrawal requests:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all withdrawal requests for admin
+app.get('/api/admin/withdrawal-requests', authenticateToken, async (req, res) => {
+  try {
+    // For now, allow any authenticated user to access admin features
+    // In production, you should check for admin role
+    
+    const { status } = req.query;
+    
+    try {
+      const whereClause = status ? { status } : {};
+      
+      const withdrawalRequests = await prisma.withdrawalRequest.findMany({
+        where: whereClause,
+        include: {
+          creator: {
+            select: {
+              id: true,
+              fullName: true,
+              userName: true,
+              email: true
+            }
+          }
+        },
+        orderBy: { requestedAt: 'desc' }
+      });
+
+      res.json(withdrawalRequests);
+    } catch (tableError) {
+      // If table doesn't exist, return empty array
+      console.log('WithdrawalRequest table not available, returning empty array');
+      res.json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching withdrawal requests for admin:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Approve withdrawal request (admin)
+app.post('/api/admin/withdrawal-requests/:id/approve', authenticateToken, async (req, res) => {
+  try {
+    // For now, allow any authenticated user to access admin features
+    // In production, you should check for admin role
+    
+    const { id } = req.params;
+    const { adminNotes } = req.body;
+
+    try {
+      // Get the withdrawal request
+      const withdrawalRequest = await prisma.withdrawalRequest.findUnique({
+        where: { id },
+        include: {
+          creator: {
+            include: {
+              wallet: true
+            }
+          }
+        }
+      });
+
+      if (!withdrawalRequest) {
+        return res.status(404).json({ error: 'Withdrawal request not found' });
+      }
+
+      if (withdrawalRequest.status !== 'pending') {
+        return res.status(400).json({ error: 'This withdrawal request has already been processed' });
+      }
+
+      // Check if creator has sufficient balance
+      if (!withdrawalRequest.creator.wallet || withdrawalRequest.creator.wallet.balance < withdrawalRequest.amount) {
+        return res.status(400).json({ error: 'Creator has insufficient balance for this withdrawal' });
+      }
+
       // Process withdrawal in transaction
       const result = await prisma.$transaction(async (tx) => {
-        // Update wallet balance
-        const updatedWallet = await tx.creatorWallet.update({
-          where: { creatorId: req.user.id },
+        // Update withdrawal request status
+        const updatedRequest = await tx.withdrawalRequest.update({
+          where: { id },
           data: {
-            balance: { decrement: amount },
-            totalWithdrawn: { increment: amount }
+            status: 'approved',
+            processedAt: new Date(),
+            adminNotes
+          }
+        });
+
+        // Update creator wallet balance
+        const updatedWallet = await tx.creatorWallet.update({
+          where: { creatorId: withdrawalRequest.creatorId },
+          data: {
+            balance: { decrement: withdrawalRequest.amount },
+            totalWithdrawn: { increment: withdrawalRequest.amount }
           }
         });
 
         // Create transaction record
         await tx.walletTransaction.create({
           data: {
-            walletId: wallet.id,
+            walletId: withdrawalRequest.creator.wallet.id,
             type: 'withdrawal',
-            amount: amount,
-            description: `Withdrawal via ${paymentMethod}`,
-            balanceBefore: wallet.balance,
-            balanceAfter: updatedWallet.balance
+            amount: withdrawalRequest.amount,
+            description: `Withdrawal approved by admin`,
+            balanceBefore: withdrawalRequest.creator.wallet.balance,
+            balanceAfter: updatedWallet.balance,
+            referenceId: withdrawalRequest.id
           }
         });
 
-        return { wallet: updatedWallet };
+        return { request: updatedRequest, wallet: updatedWallet };
       });
 
-      // Notify creator about withdrawal
+      // Notify creator about approved withdrawal
       await createNotification(
-        req.user.id,
+        withdrawalRequest.creatorId,
         'creator',
-        'Withdrawal Processed 💸',
-        `Your withdrawal of $${amount} has been processed successfully.`,
+        'Withdrawal Approved! 💰',
+        `Your withdrawal request for $${withdrawalRequest.amount.toFixed(2)} has been approved and processed.`,
         'wallet'
       );
 
-      res.json({ message: 'Withdrawal processed successfully', data: result });
-    } catch (tableError) {
-      // If tables don't exist, simulate successful withdrawal
-      console.log('Wallet tables not available, simulating withdrawal');
       res.json({ 
-        message: 'Withdrawal processed successfully (simulated)', 
-        data: { wallet: { balance: 0, totalWithdrawn: amount } }
+        message: 'Withdrawal request approved successfully', 
+        data: result 
+      });
+    } catch (tableError) {
+      // If tables don't exist, simulate approval
+      console.log('WithdrawalRequest table not available, simulating approval');
+      res.json({ 
+        message: 'Withdrawal request approved successfully (simulated)', 
+        data: { 
+          request: { id, status: 'approved', processedAt: new Date() }
+        }
       });
     }
   } catch (error) {
-    console.error('Error processing withdrawal:', error);
+    console.error('Error approving withdrawal request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reject withdrawal request (admin)
+app.post('/api/admin/withdrawal-requests/:id/reject', authenticateToken, async (req, res) => {
+  try {
+    // For now, allow any authenticated user to access admin features
+    // In production, you should check for admin role
+    
+    const { id } = req.params;
+    const { reason, adminNotes } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ error: 'Rejection reason is required' });
+    }
+
+    try {
+      // Get the withdrawal request
+      const withdrawalRequest = await prisma.withdrawalRequest.findUnique({
+        where: { id },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              fullName: true,
+              userName: true
+            }
+          }
+        }
+      });
+
+      if (!withdrawalRequest) {
+        return res.status(404).json({ error: 'Withdrawal request not found' });
+      }
+
+      if (withdrawalRequest.status !== 'pending') {
+        return res.status(400).json({ error: 'This withdrawal request has already been processed' });
+      }
+
+      // Update withdrawal request status
+      const updatedRequest = await prisma.withdrawalRequest.update({
+        where: { id },
+        data: {
+          status: 'rejected',
+          reason,
+          adminNotes,
+          processedAt: new Date()
+        }
+      });
+
+      // Notify creator about rejected withdrawal
+      await createNotification(
+        withdrawalRequest.creatorId,
+        'creator',
+        'Withdrawal Request Rejected ❌',
+        `Your withdrawal request for $${withdrawalRequest.amount.toFixed(2)} has been rejected. Reason: ${reason}`,
+        'wallet'
+      );
+
+      res.json({ 
+        message: 'Withdrawal request rejected successfully', 
+        data: { request: updatedRequest }
+      });
+    } catch (tableError) {
+      // If tables don't exist, simulate rejection
+      console.log('WithdrawalRequest table not available, simulating rejection');
+      res.json({ 
+        message: 'Withdrawal request rejected successfully (simulated)', 
+        data: { 
+          request: { id, status: 'rejected', reason, processedAt: new Date() }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error rejecting withdrawal request:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

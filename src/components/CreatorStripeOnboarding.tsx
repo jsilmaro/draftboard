@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useStripe } from './StripeProvider';
+import { stripeService, isStripeLive } from '../services/stripeService';
 import LoadingSpinner from './LoadingSpinner';
 
 interface CreatorStripeOnboardingProps {
@@ -14,6 +16,7 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
 }) => {
   const { user } = useAuth();
   const { showSuccessToast, showErrorToast } = useToast();
+  const { isStripeReady, error: stripeError } = useStripe();
   
   const [step, setStep] = useState<'initial' | 'creating' | 'onboarding' | 'complete'>('initial');
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -33,29 +36,24 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
       return;
     }
 
+    // Check if Stripe is ready (for live mode)
+    if (isStripeLive() && !isStripeReady) {
+      showErrorToast('Stripe is not ready yet. Please wait a moment and try again.');
+      return;
+    }
+
     setLoading(true);
     setStep('creating');
 
     try {
-      const response = await fetch('/api/mock-stripe/create-connect-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          creatorId: user.id,
-          email: user.email,
-          name: user.fullName || user.userName
-        })
+      const result = await stripeService.createConnectAccount({
+        creatorId: user.id,
+        email: user.email,
+        name: user.fullName || user.userName || 'Unknown User',
+        country: 'US' // Default country
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create connect account');
-      }
-
-      const data = await response.json();
-      setAccountId(data.accountId);
+      setAccountId(result.accountId);
       setStep('onboarding');
 
       showSuccessToast('Stripe account created successfully!');
@@ -73,21 +71,13 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
     if (!accountId) return;
 
     try {
-      const response = await fetch(`/api/mock-stripe/connect-account/${accountId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const status = await stripeService.getConnectAccount(accountId);
+      setAccountStatus(status);
 
-      if (response.ok) {
-        const status = await response.json();
-        setAccountStatus(status);
-
-        if (status.charges_enabled && status.payouts_enabled) {
-          setStep('complete');
-          showSuccessToast('Account setup completed!');
-          onComplete?.();
-        }
+      if (status.charges_enabled && status.payouts_enabled) {
+        setStep('complete');
+        showSuccessToast('Account setup completed!');
+        onComplete?.();
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -101,24 +91,14 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
     setLoading(true);
 
     try {
-      // Simulate completing onboarding requirements
-      const response = await fetch('/api/mock-stripe/update-account-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          accountId: accountId,
-          charges_enabled: true,
-          payouts_enabled: true,
-          details_submitted: true
-        })
+      // Update account status using stripe service
+      await stripeService.updateAccountStatus(accountId, {
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted: true
       });
 
-      if (response.ok) {
-        await checkAccountStatus();
-      }
+      await checkAccountStatus();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error updating account status:', error);
@@ -135,6 +115,22 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
       return () => clearInterval(interval);
     }
   }, [step, accountId, checkAccountStatus]);
+
+  // Handle live Stripe return URLs
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const refresh = urlParams.get('refresh');
+
+    if (success === 'true' && isStripeLive()) {
+      showSuccessToast('Stripe onboarding completed successfully!');
+      setStep('complete');
+      onComplete?.();
+    } else if (refresh === 'true' && isStripeLive()) {
+      // Refresh the page to get latest account status
+      window.location.reload();
+    }
+  }, [onComplete, showSuccessToast]);
 
   if (loading) {
     return (
@@ -154,6 +150,28 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
           <p className="text-gray-600 dark:text-gray-400">
             Set up your payment account to receive rewards from brands.
           </p>
+          
+          {/* Mode Indicator */}
+          <div className="mt-3 flex items-center space-x-2">
+            {isStripeLive() ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                🌐 Live Mode
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                🧪 Mock Mode
+              </span>
+            )}
+          </div>
+
+          {/* Stripe Error Display */}
+          {stripeError && (
+            <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                ⚠️ Stripe Error: {stripeError}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Progress Steps */}
@@ -200,7 +218,7 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
               onClick={createConnectAccount}
               className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
             >
-              Create Account
+              {isStripeLive() ? 'Connect with Stripe' : 'Create Account (Mock)'}
             </button>
           </div>
         )}
@@ -262,7 +280,7 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
                 onClick={simulateOnboardingComplete}
                 className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
               >
-                Complete Setup (Mock)
+                {isStripeLive() ? 'Complete Setup' : 'Complete Setup (Mock)'}
               </button>
               {onCancel && (
                 <button

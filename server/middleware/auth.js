@@ -32,6 +32,16 @@ const auth = async (req, res, next) => {
       if (creator) {
         user = creator;
         userType = 'creator';
+      } else {
+        // Check if user is an admin
+        const admin = await prisma.admin.findUnique({
+          where: { id: decoded.id }
+        });
+
+        if (admin && admin.isActive) {
+          user = admin;
+          userType = 'admin';
+        }
       }
     }
 

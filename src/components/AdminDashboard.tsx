@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import WithdrawalManagement from './WithdrawalManagement';
 
 
 interface User {
@@ -243,6 +244,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'creators', label: 'Manage Creators', icon: '👤' },
     { id: 'briefs', label: 'Manage Briefs', icon: '📋' },
     { id: 'submissions', label: 'Submissions', icon: '📝' },
+    { id: 'withdrawals', label: 'Withdrawals', icon: '💸' },
     { id: 'payouts', label: 'Payouts', icon: '💰' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
   ];
@@ -640,6 +642,8 @@ const AdminDashboard: React.FC = () => {
         return renderBriefs();
       case 'submissions':
         return renderSubmissions();
+      case 'withdrawals':
+        return <WithdrawalManagement />;
       case 'payouts':
         return renderPayouts();
       case 'analytics':

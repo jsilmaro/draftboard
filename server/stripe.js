@@ -1,104 +1,88 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 
+// Initialize Stripe only if API key is provided
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+
 const prisma = new PrismaClient();
 
 /**
- * Stripe Integration for Reward + Payment System
- * Handles brand funding, creator onboarding, and reward distribution
+ * Live Stripe Implementation
+ * Handles real Stripe Connect operations for production
  */
 
-// Create Stripe Checkout Session for Brand Funding
-router.post('/create-checkout-session', async (req, res) => {
-  try {
-    const { briefId, amount, brandId, briefTitle } = req.body;
-
-    // Validate required fields
-    if (!briefId || !amount || !brandId || !briefTitle) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Brief Funding: ${briefTitle}`,
-              description: `Fund for brief ID: ${briefId}`,
-            },
-            unit_amount: Math.round(amount * 100), // Convert to cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/briefs/${briefId}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/briefs/${briefId}/cancel`,
-      metadata: {
-        briefId: briefId.toString(),
-        brandId: brandId.toString(),
-        type: 'brief_funding'
-      },
-    });
-
-    res.json({ sessionId: session.id, url: session.url });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    res.status(500).json({ error: 'Failed to create checkout session' });
-  }
-});
-
-// Create Stripe Connect Account for Creator Onboarding
+// Create Stripe Connect Account for Creator
 router.post('/create-connect-account', async (req, res) => {
   try {
-    const { creatorId, email, name } = req.body;
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
+    const { creatorId, email, name, country = 'US' } = req.body;
 
     if (!creatorId || !email || !name) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Create Stripe Connect Account
+    // Create Stripe Connect account
     const account = await stripe.accounts.create({
       type: 'express',
-      country: 'US',
+      country: country,
       email: email,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
+      business_type: 'individual',
       metadata: {
-        creatorId: creatorId.toString(),
-        name: name
+        creatorId: creatorId,
+        platform: 'draftboard'
       }
     });
 
-    // Create account link for onboarding
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
-      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
-      type: 'account_onboarding',
+    // Store account reference in database
+    await prisma.creatorStripeAccount.upsert({
+      where: { creatorId: creatorId },
+      update: { 
+        stripeAccountId: account.id,
+        status: 'pending',
+        updatedAt: new Date()
+      },
+      create: {
+        creatorId: creatorId,
+        stripeAccountId: account.id,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
     });
 
+    console.log(`✅ Live Stripe Connect account created: ${account.id} for creator ${creatorId}`);
+
     res.json({ 
-      accountId: account.id, 
-      onboardingUrl: accountLink.url,
-      account: account 
+      accountId: account.id,
+      accountLink: null // Will be created separately
     });
   } catch (error) {
-    console.error('Error creating connect account:', error);
-    res.status(500).json({ error: 'Failed to create connect account' });
+    console.error('Error creating live Stripe Connect account:', error);
+    res.status(500).json({ error: 'Failed to create Stripe account' });
   }
 });
 
-// Get Creator's Connect Account Status
+// Get Connect Account Status
 router.get('/connect-account/:accountId', async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
     const { accountId } = req.params;
 
     const account = await stripe.accounts.retrieve(accountId);
@@ -108,185 +92,316 @@ router.get('/connect-account/:accountId', async (req, res) => {
       charges_enabled: account.charges_enabled,
       payouts_enabled: account.payouts_enabled,
       details_submitted: account.details_submitted,
-      requirements: account.requirements
+      requirements: account.requirements,
+      country: account.country,
+      default_currency: account.default_currency,
+      email: account.email,
+      business_type: account.business_type,
+      capabilities: account.capabilities
     });
   } catch (error) {
-    console.error('Error retrieving connect account:', error);
+    console.error('Error retrieving Stripe account:', error);
     res.status(500).json({ error: 'Failed to retrieve account' });
   }
 });
 
-// Create Login Link for Existing Connect Account
-router.post('/create-login-link', async (req, res) => {
+// Create Account Link for Onboarding
+router.post('/create-account-link', async (req, res) => {
   try {
-    const { accountId } = req.body;
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
 
-    const loginLink = await stripe.accounts.createLoginLink(accountId);
+    const { accountId, refreshUrl, returnUrl } = req.body;
 
-    res.json({ url: loginLink.url });
-  } catch (error) {
-    console.error('Error creating login link:', error);
-    res.status(500).json({ error: 'Failed to create login link' });
-  }
-});
-
-// Distribute Cash Rewards via Stripe Connect
-router.post('/distribute-cash-reward', async (req, res) => {
-  try {
-    const { creatorAccountId, amount, briefId, creatorId, description } = req.body;
-
-    if (!creatorAccountId || !amount || !briefId || !creatorId) {
+    if (!accountId || !refreshUrl || !returnUrl) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Create transfer to creator's account
-    const transfer = await stripe.transfers.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      destination: creatorAccountId,
-      description: description || `Reward for brief ${briefId}`,
-      metadata: {
-        briefId: briefId.toString(),
-        creatorId: creatorId.toString(),
-        type: 'cash_reward'
-      }
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding',
     });
 
-    res.json({ 
-      transferId: transfer.id,
-      amount: amount,
-      status: 'success'
-    });
+    res.json({ url: accountLink.url });
   } catch (error) {
-    console.error('Error distributing cash reward:', error);
-    res.status(500).json({ error: 'Failed to distribute cash reward' });
+    console.error('Error creating account link:', error);
+    res.status(500).json({ error: 'Failed to create account link' });
   }
 });
 
-// Create Payment Intent for Platform Fee
-router.post('/create-payment-intent', async (req, res) => {
+// Create Transfer to Creator
+router.post('/create-transfer', async (req, res) => {
   try {
-    const { amount, briefId, brandId } = req.body;
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: 'usd',
+    const { amount, currency, destination, description, metadata } = req.body;
+
+    if (!amount || !currency || !destination) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Convert amount to cents for Stripe
+    const amountInCents = Math.round(amount * 100);
+
+    const transfer = await stripe.transfers.create({
+      amount: amountInCents,
+      currency: currency,
+      destination: destination,
+      description: description || 'Creator payment',
+      metadata: metadata || {}
+    });
+
+    // Store transfer record in database
+    await prisma.stripeTransfer.create({
+      data: {
+        stripeTransferId: transfer.id,
+        amount: amount,
+        currency: currency,
+        destination: destination,
+        status: transfer.status,
+        metadata: metadata || {},
+        createdAt: new Date()
+      }
+    });
+
+    console.log(`✅ Live Stripe transfer created: ${transfer.id} for $${amount}`);
+
+    res.json({
+      id: transfer.id,
+      amount: amount,
+      currency: currency,
+      destination: destination,
+      status: transfer.status,
+      created: transfer.created,
+      metadata: transfer.metadata
+    });
+  } catch (error) {
+    console.error('Error creating live Stripe transfer:', error);
+    res.status(500).json({ error: 'Failed to create transfer' });
+  }
+});
+
+// Create Checkout Session
+router.post('/create-checkout-session', async (req, res) => {
+  try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
+    const { briefId, amount, brandId, briefTitle } = req.body;
+
+    if (!briefId || !amount || !brandId || !briefTitle) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Convert amount to cents for Stripe
+    const amountInCents = Math.round(amount * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Brief: ${briefTitle}`,
+            description: `Funding for brief ${briefId}`,
+          },
+          unit_amount: amountInCents,
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/cancel`,
       metadata: {
         briefId: briefId.toString(),
         brandId: brandId.toString(),
-        type: 'platform_fee'
+        type: 'brief_funding'
       }
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    console.log(`✅ Live Stripe checkout session created: ${session.id} for $${amount}`);
+
+    res.json({
+      id: session.id,
+      amount_total: session.amount_total,
+      currency: session.currency,
+      status: session.status,
+      url: session.url,
+      payment_intent: session.payment_intent
+    });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).json({ error: 'Failed to create payment intent' });
+    console.error('Error creating live Stripe checkout session:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
 
-// Handle Stripe Webhooks
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+// Get Payment Intent
+router.get('/payment-intent/:paymentIntentId', async (req, res) => {
+  try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
+    const { paymentIntentId } = req.params;
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    res.json({
+      id: paymentIntent.id,
+      amount: paymentIntent.amount / 100, // Convert from cents
+      currency: paymentIntent.currency,
+      status: paymentIntent.status,
+      client_secret: paymentIntent.client_secret,
+      metadata: paymentIntent.metadata
+    });
+  } catch (error) {
+    console.error('Error retrieving payment intent:', error);
+    res.status(500).json({ error: 'Failed to retrieve payment intent' });
+  }
+});
+
+// Confirm Payment
+router.post('/confirm-payment', async (req, res) => {
+  try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+      });
+    }
+
+    const { paymentIntentId, paymentMethodId } = req.body;
+
+    if (!paymentIntentId || !paymentMethodId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
+      payment_method: paymentMethodId,
+    });
+
+    res.json({ status: paymentIntent.status });
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+});
+
+// Webhook Handler
+router.post('/webhooks', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    return res.status(503).json({ 
+      error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+    });
+  }
+
   const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
-  switch (event.type) {
-    case 'checkout.session.completed':
-      await handleCheckoutSessionCompleted(event.data.object);
-      break;
-    case 'account.updated':
-      await handleAccountUpdated(event.data.object);
-      break;
-    case 'transfer.created':
-      await handleTransferCreated(event.data.object);
-      break;
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
+  try {
+    switch (event.type) {
+      case 'account.updated':
+        await handleAccountUpdated(event.data.object);
+        break;
+      case 'payment_intent.succeeded':
+        await handlePaymentSucceeded(event.data.object);
+        break;
+      case 'transfer.created':
+        await handleTransferCreated(event.data.object);
+        break;
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
 
-  res.json({ received: true });
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Error handling webhook:', error);
+    res.status(500).json({ error: 'Webhook handler failed' });
+  }
 });
 
-// Webhook Handlers
-async function handleCheckoutSessionCompleted(session) {
+// Webhook Event Handlers
+async function handleAccountUpdated(account) {
   try {
-    console.log('Checkout session completed:', session.id);
-    
-    // Update brief funding status in database
-    const briefId = session.metadata.briefId;
-    const brandId = session.metadata.brandId;
-    const amount = session.amount_total / 100; // Convert from cents
-
-    // Update brief funding status
-    await prisma.brief.update({
-      where: { id: briefId },
+    // Update creator's Stripe account status
+    await prisma.creatorStripeAccount.updateMany({
+      where: { stripeAccountId: account.id },
       data: {
-        fundedAmount: amount,
-        fundedStatus: 'funded',
-        stripeSessionId: session.id
+        status: account.charges_enabled && account.payouts_enabled ? 'active' : 'pending',
+        updatedAt: new Date()
       }
     });
 
-    // Create transaction record
-    await prisma.transaction.create({
-      data: {
-        userId: brandId,
-        userType: 'brand',
-        type: 'deposit',
-        amount: amount,
-        stripePaymentIntentId: session.payment_intent,
-        status: 'completed'
-      }
-    });
-    
-    console.log(`Brief ${briefId} funded with $${amount} by brand ${brandId}`);
+    console.log(`✅ Updated Stripe account status for ${account.id}`);
   } catch (error) {
-    console.error('Error handling checkout session completed:', error);
+    console.error('Error updating account status:', error);
   }
 }
 
-async function handleAccountUpdated(account) {
+async function handlePaymentSucceeded(paymentIntent) {
   try {
-    console.log('Account updated:', account.id);
+    const { briefId, brandId } = paymentIntent.metadata;
     
-    // Update creator's Stripe account ID in database
-    if (account.metadata.creatorId) {
-      await prisma.creator.update({
-        where: { id: account.metadata.creatorId },
+    if (briefId && brandId) {
+      // Update brief funding status
+      await prisma.brief.update({
+        where: { id: briefId },
         data: {
-          stripeAccountId: account.id
+          isFunded: true,
+          fundedAt: new Date(),
+          fundedAmount: paymentIntent.amount / 100
         }
       });
+
+      console.log(`✅ Brief ${briefId} marked as funded`);
     }
-    
-    console.log(`Creator account ${account.id} status updated`);
   } catch (error) {
-    console.error('Error handling account updated:', error);
+    console.error('Error handling payment success:', error);
   }
 }
 
 async function handleTransferCreated(transfer) {
   try {
-    console.log('Transfer created:', transfer.id);
-    
-    // Log successful cash reward distribution
-    const briefId = transfer.metadata.briefId;
-    const creatorId = transfer.metadata.creatorId;
-    const amount = transfer.amount / 100;
-    
-    // await logRewardDistribution(creatorId, briefId, 'cash', amount, transfer.id);
-    
-    console.log(`Cash reward of $${amount} distributed to creator ${creatorId} for brief ${briefId}`);
+    // Update transfer status in database
+    await prisma.stripeTransfer.updateMany({
+      where: { stripeTransferId: transfer.id },
+      data: {
+        status: transfer.status,
+        updatedAt: new Date()
+      }
+    });
+
+    console.log(`✅ Updated transfer status for ${transfer.id}`);
   } catch (error) {
-    console.error('Error handling transfer created:', error);
+    console.error('Error updating transfer status:', error);
   }
 }
 

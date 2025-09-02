@@ -20,6 +20,7 @@ import PublicBriefDetails from './components/PublicBriefDetails'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { StripeProvider } from './components/StripeProvider'
 
 
 function App() {
@@ -36,8 +37,9 @@ function App() {
       <ToastProvider>
         <ThemeProvider>
           <AuthProvider>
-            <div className="min-h-screen bg-white dark:bg-black animate-fade-in transition-colors duration-300 overflow-x-hidden">
-            <Routes>
+            <StripeProvider>
+              <div className="min-h-screen bg-white dark:bg-black animate-fade-in transition-colors duration-300 overflow-x-hidden">
+              <Routes>
               {/* Public Marketplace Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
@@ -108,6 +110,7 @@ function App() {
 
             </Routes>
             </div>
+            </StripeProvider>
           </AuthProvider>
         </ThemeProvider>
       </ToastProvider>
