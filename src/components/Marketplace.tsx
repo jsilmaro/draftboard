@@ -24,6 +24,12 @@ interface Brief {
     submittedAt: string;
   }>;
   amountOfWinners: number;
+  winnerRewards?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+  }>;
 }
 
 const Marketplace = () => {
@@ -247,16 +253,31 @@ const Marketplace = () => {
 
                   {/* Reward and Stats */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className="text-2xl font-bold text-green-400">
-                      {formatCurrency(brief.reward)}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-400">
+                        {brief.winnerRewards && brief.winnerRewards.length > 0 
+                          ? formatCurrency(brief.winnerRewards.reduce((sum, r) => sum + (r.cashAmount || 0) + (r.creditAmount || 0), 0))
+                          : formatCurrency(brief.reward)
+                        }
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
+                      </div>
+                      {brief.winnerRewards && brief.winnerRewards.length > 0 && (
+                        <div className="text-xs text-blue-400">
+                          Calculated amounts
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-gray-400">
                         {brief.submissions.length} submissions
                       </div>
-                      <div className="text-sm text-gray-400">
-                        {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
-                      </div>
+                      {brief.amountOfWinners > 1 && (
+                        <div className="text-xs text-blue-400">
+                          Tiered rewards
+                        </div>
+                      )}
                     </div>
                   </div>
 

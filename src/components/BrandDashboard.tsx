@@ -34,6 +34,13 @@ interface Brief {
   winnersSelected?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  winnerRewards?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+
+  }>;
 }
 
 interface Submission {
@@ -980,12 +987,23 @@ const BrandDashboard: React.FC = () => {
                   setEditAmountOfWinners(brief.amountOfWinners || 1);
                   // Initialize winner rewards based on current amount of winners
                   const initialRewards = [];
+                  const baseReward = brief.reward || 0;
+                  
                   for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
+                    // Calculate reward for each position
+                    let percentage = 0;
+                    if (i === 1) percentage = 0.4;
+                    else if (i === 2) percentage = 0.3;
+                    else if (i === 3) percentage = 0.2;
+                    else percentage = 0.1;
+                    
+                    const calculatedAmount = baseReward * percentage;
+                    
                     initialRewards.push({
                       position: i,
-                      cashAmount: 0,
+                      cashAmount: calculatedAmount,
                       creditAmount: 0,
-                      prizeDescription: ''
+                      prizeDescription: `Reward ${i} - ${(percentage * 100).toFixed(0)}% of total`
                     });
                   }
                   setEditWinnerRewards(initialRewards);
@@ -1125,6 +1143,38 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Calculated Reward Amounts */}
+                  {selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg border border-green-500/30">
+                      <h5 className="font-medium text-white mb-3">🏆 Calculated Reward Amounts</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {selectedBrief.winnerRewards.map((reward) => (
+                          <div key={reward.position} className="bg-white/10 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-green-400 mb-1">
+                              {reward.position === 1 ? '🥇 1st' : 
+                               reward.position === 2 ? '🥈 2nd' : 
+                               reward.position === 3 ? '🥉 3rd' : 
+                               `${reward.position}th`}
+                            </div>
+                            <div className="text-sm text-white font-medium">
+                              ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
+                            </div>
+                            {reward.cashAmount > 0 && (
+                              <div className="text-xs text-gray-300">
+                                Cash: ${reward.cashAmount.toFixed(2)}
+                              </div>
+                            )}
+                            {reward.creditAmount > 0 && (
+                              <div className="text-xs text-gray-300">
+                                Credits: ${reward.creditAmount.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 bg-orange-50 rounded-lg border border-orange-200">

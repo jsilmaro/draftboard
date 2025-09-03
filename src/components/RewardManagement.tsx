@@ -9,6 +9,13 @@ interface Brief {
   status: string;
   createdAt: string;
   submissions: Submission[];
+  winnerRewards?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+
+  }>;
 }
 
 interface Submission {
@@ -71,7 +78,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
     [key: string]: unknown;
   }[]>([]);
   const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
-  const [winnerRewards, setWinnerRewards] = useState<{[key: string]: number}>({});
+  const [winnerRewards, setWinnerRewards] = useState<{[key: string]: number}>({}); // Stores position for each submission
 
   // Debug token
   useEffect(() => {
@@ -286,7 +293,15 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
   const distributeRewardsToWinners = async () => {
     if (!selectedPool || selectedWinners.length === 0) return;
 
-    const totalRewardAmount = Object.values(winnerRewards).reduce((sum, amount) => sum + amount, 0);
+    // Calculate total reward amount using calculated amounts from database
+    const totalRewardAmount = selectedWinners.reduce((sum, submissionId) => {
+      const position = winnerRewards[submissionId];
+      if (position && selectedPool.brief.winnerRewards) {
+        const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
+        return sum + (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+      }
+      return sum;
+    }, 0);
     
     if (totalRewardAmount > selectedPool.remainingAmount) {
       alert('Total reward amount exceeds remaining pool amount');
@@ -296,10 +311,18 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
     try {
       const requestData = {
         poolId: selectedPool.id,
-        winners: selectedWinners.map(submissionId => ({
-          submissionId,
-          amount: winnerRewards[submissionId]
-        }))
+        winners: selectedWinners.map(submissionId => {
+          const position = winnerRewards[submissionId];
+          let amount = 0;
+          if (position && selectedPool.brief.winnerRewards) {
+            const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
+            amount = (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+          }
+          return {
+            submissionId,
+            amount: amount
+          };
+        })
       };
       
       // Debug: Sending distribute request
@@ -567,16 +590,19 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                         </div>
                         {selectedWinners.includes(submission.id) && (
                           <div className="flex items-center space-x-2 bg-green-500 rounded-lg px-3 py-2 border border-green-300">
-                            <label className="text-sm text-white font-medium">Reward Amount:</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              max={selectedPool.remainingAmount}
-                              value={winnerRewards[submission.id] || 0}
-                              onChange={(e) => handleRewardAmountChange(submission.id, parseFloat(e.target.value) || 0)}
+                            <label className="text-sm text-white font-medium">Position:</label>
+                            <select
+                              value={winnerRewards[submission.id] || ''}
+                              onChange={(e) => handleRewardAmountChange(submission.id, parseInt(e.target.value) || 0)}
                               className="w-24 px-2 py-1 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-800 text-sm font-medium"
-                            />
+                            >
+                              <option value="">Select</option>
+                              {selectedPool.brief.winnerRewards?.map((reward) => (
+                                <option key={reward.position} value={reward.position}>
+                                  {reward.position === 1 ? '1st' : reward.position === 2 ? '2nd' : reward.position === 3 ? '3rd' : `${reward.position}th`} - ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         )}
                       </div>
@@ -590,7 +616,14 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                   <h4 className="font-semibold text-white mb-2 text-lg">Selected Winners Summary</h4>
                   <p className="text-green-100 font-medium">
                     Total Winners: <span className="text-white font-bold">{selectedWinners.length}</span> | 
-                    Total Reward Amount: <span className="text-white font-bold">${Object.values(winnerRewards).reduce((sum, amount) => sum + amount, 0).toFixed(2)}</span>
+                    Total Reward Amount: <span className="text-white font-bold">${selectedWinners.reduce((sum, submissionId) => {
+                      const position = winnerRewards[submissionId];
+                      if (position && selectedPool.brief.winnerRewards) {
+                        const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
+                        return sum + (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+                      }
+                      return sum;
+                    }, 0).toFixed(2)}</span>
                   </p>
                 </div>
               )}
@@ -598,7 +631,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={distributeRewardsToWinners}
-                  disabled={selectedWinners.length === 0 || Object.values(winnerRewards).some(amount => amount <= 0)}
+                  disabled={selectedWinners.length === 0 || selectedWinners.some(submissionId => !winnerRewards[submissionId] || winnerRewards[submissionId] <= 0)}
                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 border border-green-500 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200"
                 >
                   Distribute Rewards

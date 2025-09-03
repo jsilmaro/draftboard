@@ -322,11 +322,32 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({
                 <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-700">
                   <h3 className="text-lg font-semibold text-white mb-4">Reward Information</h3>
                   <div className="space-y-4">
-                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-100 dark:border-green-700">
+                                        <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-100 dark:border-green-700">
                       <p className="text-sm text-gray-400 mb-1">Total Reward</p>
                       <p className="text-2xl font-bold text-emerald-500 dark:text-emerald-400">${brief.reward.toLocaleString()}</p>
-                                             <p className="text-sm text-gray-400 mt-1">for {brief.amountOfWinners} reward{brief.amountOfWinners > 1 ? 's' : ''}</p>
+                      <p className="text-sm text-gray-400 mt-1">for {brief.amountOfWinners} reward{brief.amountOfWinners > 1 ? 's' : ''}</p>
                     </div>
+                    
+                    {brief.amountOfWinners > 1 && (
+                      <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                        <h4 className="text-sm font-medium text-gray-300 mb-3">Reward Distribution</h4>
+                        <div className="space-y-2">
+                          {brief.winnerRewards?.map((reward) => (
+                            <div key={reward.position} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-400">
+                                {reward.position === 1 ? '🥇 1st Place' : 
+                                 reward.position === 2 ? '🥈 2nd Place' : 
+                                 reward.position === 3 ? '🥉 3rd Place' : 
+                                 `${reward.position}th Place`}
+                              </span>
+                              <span className="font-medium text-white">
+                                ${reward.calculatedAmount?.toFixed(2) || reward.cashAmount.toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {brief.rewardTiers && brief.rewardTiers.length > 0 && (
                       <div>

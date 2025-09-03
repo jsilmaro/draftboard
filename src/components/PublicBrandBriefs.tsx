@@ -326,6 +326,29 @@ const PublicBrandBriefs: React.FC = () => {
                     <span className="text-gray-400 text-sm">Winners:</span>
                     <span className="font-semibold text-white">{brief.amountOfWinners}</span>
                   </div>
+                  
+                  {brief.amountOfWinners > 1 && brief.rewardTiers && brief.rewardTiers.length > 0 && (
+                    <div className="mt-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                      <div className="text-xs text-gray-400 mb-2">Reward Distribution:</div>
+                      <div className="space-y-1">
+                        {brief.rewardTiers.slice(0, 3).map((tier) => (
+                          <div key={tier.position} className="flex justify-between items-center text-xs">
+                            <span className="text-gray-400">
+                              {tier.position === 1 ? '🥇' : tier.position === 2 ? '🥈' : '🥉'}
+                            </span>
+                            <span className="text-white">
+                              ${(tier.cashAmount + tier.creditAmount).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                        {brief.amountOfWinners > 3 && (
+                          <div className="text-xs text-gray-500 text-center">
+                            +{brief.amountOfWinners - 3} more tiers
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">Submissions:</span>

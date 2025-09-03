@@ -46,6 +46,7 @@ interface Brief {
     cashAmount: number;
     creditAmount: number;
     prizeDescription: string;
+
   }>;
 }
 

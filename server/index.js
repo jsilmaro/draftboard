@@ -1352,6 +1352,20 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
 
     // Save reward tiers if provided
     if (rewardTiers && Array.isArray(rewardTiers) && rewardTiers.length > 0) {
+      // Create WinnerReward records
+      for (const tier of rewardTiers) {
+        await prisma.winnerReward.create({
+          data: {
+            briefId: brief.id,
+            position: tier.position,
+            cashAmount: tier.cashAmount || 0,
+            creditAmount: tier.creditAmount || 0,
+            prizeDescription: tier.prizeDescription || ''
+          }
+        });
+      }
+      
+      // Also save to publishedAwards for backward compatibility
       await prisma.publishedAward.create({
         data: {
           briefId: brief.id,
@@ -1403,7 +1417,8 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
       deadline,
       isPrivate,
       additionalFields,
-      status // allow status update (e.g., draft -> active)
+      status, // allow status update (e.g., draft -> active)
+      rewardTiers // allow updating reward tiers
     } = req.body;
 
     // Find the brief and check ownership
@@ -1429,6 +1444,27 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
         status: status !== undefined ? status : brief.status
       }
     });
+
+    // Update reward tiers if provided
+    if (rewardTiers && Array.isArray(rewardTiers)) {
+      // Delete existing reward tiers
+      await prisma.winnerReward.deleteMany({
+        where: { briefId: id }
+      });
+      
+      // Create new reward tiers
+      for (const tier of rewardTiers) {
+        await prisma.winnerReward.create({
+          data: {
+            briefId: id,
+            position: tier.position,
+            cashAmount: tier.cashAmount || 0,
+            creditAmount: tier.creditAmount || 0,
+            prizeDescription: tier.prizeDescription || ''
+          }
+        });
+      }
+    }
 
     // Notify brand about status changes
     if (status && status !== brief.status) {
@@ -1547,6 +1583,15 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
           select: {
             rewardTiers: true
           }
+        },
+        winnerRewards: {
+          select: {
+            position: true,
+            cashAmount: true,
+            creditAmount: true,
+            prizeDescription: true
+          },
+          orderBy: { position: 'asc' }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -2318,6 +2363,12 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
           }
         },
         winnerRewards: {
+          select: {
+            position: true,
+            cashAmount: true,
+            creditAmount: true,
+            prizeDescription: true
+          },
           orderBy: { position: 'asc' }
         }
       },
@@ -2352,12 +2403,7 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
 // Get all public briefs for marketplace (no authentication required)
 app.get('/api/briefs/public', async (req, res) => {
   try {
-    // Try to fetch from database first
-    let briefs = [];
-    let useMockData = false;
-    
-    try {
-      briefs = await prisma.brief.findMany({
+          const briefs = await prisma.brief.findMany({
         where: { 
           status: { in: ['published', 'active'] },
           isPrivate: false
@@ -2382,136 +2428,43 @@ app.get('/api/briefs/public', async (req, res) => {
               id: true,
               position: true
             }
+          },
+          winnerRewards: {
+            select: {
+              position: true,
+              cashAmount: true,
+              creditAmount: true,
+              prizeDescription: true
+            },
+            orderBy: { position: 'asc' }
           }
         },
         orderBy: { createdAt: 'desc' }
       });
 
-      // Transform briefs for public view
-      const transformedBriefs = briefs.map(brief => ({
-        id: brief.id,
-        title: brief.title,
-        description: brief.description,
-        requirements: brief.requirements,
-        reward: brief.reward,
-        deadline: brief.deadline,
-        status: brief.status,
-        createdAt: brief.createdAt,
-        amountOfWinners: brief.amountOfWinners,
-        brand: brief.brand,
-        submissions: brief.submissions,
-        winners: brief.winners
-      }));
+    // Transform briefs for public view
+    const transformedBriefs = briefs.map(brief => ({
+      id: brief.id,
+      title: brief.title,
+      description: brief.description,
+      requirements: brief.requirements,
+      reward: brief.reward,
+      deadline: brief.deadline,
+      status: brief.status,
+      createdAt: brief.createdAt,
+      amountOfWinners: brief.amountOfWinners,
+      brand: brief.brand,
+      submissions: brief.submissions,
+      winners: brief.winners,
+      winnerRewards: brief.winnerRewards
+    }));
 
-      briefs = transformedBriefs;
-      console.log(`✅ Fetched ${briefs.length} briefs from database`);
-      
-    } catch (dbError) {
-      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
-      useMockData = true;
-    }
-
-    // Use mock data if database failed
-    if (useMockData || briefs.length === 0) {
-      briefs = [
-        {
-          id: 'brief-1',
-          title: 'Social Media Content Creator',
-          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
-          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
-          reward: 1500,
-          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 3,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-2',
-          title: 'Product Review Video',
-          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
-          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
-          reward: 2500,
-          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 2,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-3',
-          title: 'Brand Logo Design',
-          description: 'Design a modern and memorable logo for our new software startup. We need something that represents innovation, trust, and professionalism.',
-          requirements: 'Graphic design experience, Portfolio of previous work, Understanding of brand identity, Proficiency in design software',
-          reward: 800,
-          deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 1,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-4',
-          title: 'Fashion Influencer Campaign',
-          description: 'Join our influencer campaign to showcase our latest clothing collection. We need authentic content that highlights the style and quality of our products.',
-          requirements: 'Active social media presence, Fashion sense, Photography skills, Engagement with followers',
-          reward: 2000,
-          deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 5,
-          brand: {
-            id: 'brand-2',
-            companyName: 'FashionForward',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-5',
-          title: 'Product Photography',
-          description: 'Create high-quality product photography for our e-commerce website. We need professional images that showcase our products in the best light.',
-          requirements: 'Professional photography equipment, Experience with product photography, Understanding of lighting, Portfolio of previous work',
-          reward: 1800,
-          deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 2,
-          brand: {
-            id: 'brand-2',
-            companyName: 'FashionForward',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        }
-      ];
-      console.log(`📋 Using ${briefs.length} mock briefs`);
-    }
-
-    res.json(briefs);
+    console.log(`✅ Fetched ${transformedBriefs.length} briefs from database`);
+    res.json(transformedBriefs);
+    
   } catch (error) {
     console.error('Error fetching public briefs:', error);
-    res.status(500).json({ error: 'Failed to fetch briefs' });
+    res.status(500).json({ error: 'Failed to fetch briefs from database' });
   }
 });
 
@@ -5320,9 +5273,8 @@ app.get('/api/test-proxy', (req, res) => {
 // Get all public briefs for marketplace (no authentication required)
 app.get('/api/briefs/public', async (req, res) => {
   try {
-    // Try to fetch from database first
+    // Fetch from database
     let briefs = [];
-    let useMockData = false;
     
     try {
       briefs = await prisma.brief.findMany({
@@ -5350,6 +5302,15 @@ app.get('/api/briefs/public', async (req, res) => {
               id: true,
               position: true
             }
+          },
+          winnerRewards: {
+            select: {
+              position: true,
+              cashAmount: true,
+              creditAmount: true,
+              prizeDescription: true
+            },
+            orderBy: { position: 'asc' }
           }
         },
         orderBy: { createdAt: 'desc' }
@@ -5368,112 +5329,17 @@ app.get('/api/briefs/public', async (req, res) => {
         amountOfWinners: brief.amountOfWinners,
         brand: brief.brand,
         submissions: brief.submissions,
-        winners: brief.winners
+        winners: brief.winners,
+        winnerRewards: brief.winnerRewards
       }));
 
       briefs = transformedBriefs;
       console.log(`✅ Fetched ${briefs.length} briefs from database`);
       
     } catch (dbError) {
-      console.log('⚠️ Database connection failed, using mock data:', dbError.message);
-      useMockData = true;
-    }
-
-    // Use mock data if database failed
-    if (useMockData || briefs.length === 0) {
-      briefs = [
-        {
-          id: 'brief-1',
-          title: 'Social Media Content Creator',
-          description: 'We are looking for a creative content creator to help us develop engaging social media content for our tech products. The ideal candidate should have experience in creating videos, graphics, and written content that resonates with our target audience.',
-          requirements: 'Experience with social media platforms (Instagram, TikTok, YouTube), Basic video editing skills, Creative mindset, Ability to meet deadlines',
-          reward: 1500,
-          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 3,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-2',
-          title: 'Product Review Video',
-          description: 'Create an honest and detailed review video of our latest smartphone. We want authentic feedback and creative presentation that will help potential customers make informed decisions.',
-          requirements: 'Experience with video production, Honest and unbiased approach, Good presentation skills, Access to video editing software',
-          reward: 2500,
-          deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 2,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-3',
-          title: 'Brand Logo Design',
-          description: 'Design a modern and memorable logo for our new software startup. We need something that represents innovation, trust, and professionalism.',
-          requirements: 'Graphic design experience, Portfolio of previous work, Understanding of brand identity, Proficiency in design software',
-          reward: 800,
-          deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 1,
-          brand: {
-            id: 'brand-1',
-            companyName: 'TechCorp',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-4',
-          title: 'Fashion Influencer Campaign',
-          description: 'Join our influencer campaign to showcase our latest clothing collection. We need authentic content that highlights the style and quality of our products.',
-          requirements: 'Active social media presence, Fashion sense, Photography skills, Engagement with followers',
-          reward: 2000,
-          deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 5,
-          brand: {
-            id: 'brand-2',
-            companyName: 'FashionForward',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        },
-        {
-          id: 'brief-5',
-          title: 'Product Photography',
-          description: 'Create high-quality product photography for our e-commerce website. We need professional images that showcase our products in the best light.',
-          requirements: 'Professional photography equipment, Experience with product photography, Understanding of lighting, Portfolio of previous work',
-          reward: 1800,
-          deadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'published',
-          createdAt: new Date().toISOString(),
-          amountOfWinners: 2,
-          brand: {
-            id: 'brand-2',
-            companyName: 'FashionForward',
-            logo: null
-          },
-          submissions: [],
-          winners: []
-        }
-      ];
-      console.log(`📋 Using ${briefs.length} mock briefs`);
+      console.error('❌ Database connection failed:', dbError.message);
+      res.status(500).json({ error: 'Failed to fetch briefs from database' });
+      return;
     }
 
     res.json(briefs);
@@ -5483,7 +5349,7 @@ app.get('/api/briefs/public', async (req, res) => {
   }
 });
 
-// Get public brief details (no authentication required)
+// Get public brand briefs (no authentication required)
 app.get('/api/briefs/:briefId/public', async (req, res) => {
   try {
     const { briefId } = req.params;
@@ -5666,6 +5532,16 @@ app.get('/api/public/brands/:brandId/briefs', async (req, res) => {
           select: {
             rewardTiers: true
           }
+        },
+        winnerRewards: {
+          select: {
+            position: true,
+            cashAmount: true,
+            creditAmount: true,
+            prizeDescription: true,
+            calculatedAmount: true
+          },
+          orderBy: { position: 'asc' }
         }
       },
       orderBy: { createdAt: 'desc' }

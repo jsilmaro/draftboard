@@ -20,6 +20,13 @@ interface Brief {
   title: string;
   reward: number;
   amountOfWinners: number;
+  winnerRewards?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    prizeDescription: string;
+
+  }>;
 }
 
 interface Winner {
@@ -86,6 +93,14 @@ const SimplifiedWinnerSelection: React.FC<SimplifiedWinnerSelectionProps> = ({
   };
 
   const getRewardAmount = (position: number) => {
+    // Use calculated amount from database if available, otherwise fallback to calculation
+    if (brief.winnerRewards && brief.winnerRewards.length > 0) {
+      const reward = brief.winnerRewards.find(r => r.position === position);
+      if (reward && (reward.cashAmount > 0 || reward.creditAmount > 0)) {
+        return (reward.cashAmount || 0) + (reward.creditAmount || 0);
+      }
+    }
+    // Fallback to percentage-based calculation
     return brief.reward * (1 - (position - 1) * 0.1);
   };
 

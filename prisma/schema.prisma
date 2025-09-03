@@ -225,6 +225,7 @@ model WinnerReward {
   cashAmount       Float     @default(0)
   creditAmount     Float     @default(0)
   prizeDescription String?
+  calculatedAmount Float     @default(0) // The calculated amount for this position
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   isPaid           Boolean   @default(false)

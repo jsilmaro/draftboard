@@ -199,12 +199,24 @@ const CreateBrief: React.FC = () => {
   const handleAmountOfWinnersChange = (amount: number) => {
     setFormData(prev => {
       const newRewardTiers = [];
+      const baseReward = prev.reward || 0;
+      
       for (let i = 1; i <= amount; i++) {
+        // Calculate reward for each position
+        // 1st place gets 40%, 2nd gets 30%, 3rd gets 20%, 4th+ gets 10%
+        let percentage = 0;
+        if (i === 1) percentage = 0.4;
+        else if (i === 2) percentage = 0.3;
+        else if (i === 3) percentage = 0.2;
+        else percentage = 0.1;
+        
+        const calculatedAmount = baseReward * percentage;
+        
         newRewardTiers.push({
           position: i,
-          cashAmount: 0,
+          cashAmount: calculatedAmount,
           creditAmount: 0,
-          prizeDescription: ''
+          prizeDescription: `Reward ${i} - ${(percentage * 100).toFixed(0)}% of total`
         });
       }
       return {
@@ -478,26 +490,45 @@ const CreateBrief: React.FC = () => {
                 Reward Configuration
               </h3>
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount of Rewards *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={formData.amountOfWinners}
-                  onChange={(e) => handleAmountOfWinnersChange(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="How many creators can win?"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Total Reward Amount *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={formData.reward}
+                    onChange={(e) => handleInputChange('reward', parseFloat(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Total reward amount"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Amount of Winners *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={formData.amountOfWinners}
+                    onChange={(e) => handleAmountOfWinnersChange(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="How many creators can win?"
+                  />
+                </div>
               </div>
 
               {formData.rewardTiers.length > 0 && (
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-300">Reward Tiers</h4>
+                  <h4 className="text-md font-medium text-gray-300">Reward Tiers (Auto-Calculated)</h4>
+                  <div className="text-sm text-gray-400 mb-3">
+                    Rewards are automatically distributed: 1st (40%), 2nd (30%), 3rd (20%), 4th+ (10%)
+                  </div>
                   {formData.rewardTiers.map((tier, _index) => (
-                    <div key={tier.position} className="border border-gray-700 dark:border-gray-600 rounded-lg p-4">
+                    <div key={tier.position} className="border border-gray-700 dark:border-gray-600 rounded-lg p-4 bg-gray-800/50">
                       <h5 className="font-medium text-white mb-3">
                         Reward {tier.position}
                       </h5>
