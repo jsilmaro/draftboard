@@ -184,7 +184,7 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
   return (
     <div className="creator-rewards-dashboard">
       <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h2 className="text-2xl font-bold text-white mb-6">
           Rewards Dashboard
         </h2>
 
@@ -213,9 +213,9 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
         )}
 
         {/* Rewards History */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <div className="bg-gray-800 rounded-lg shadow-lg">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-white">
               Reward History
             </h3>
           </div>
@@ -226,8 +226,8 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
                 <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
-                <p className="text-gray-500 dark:text-gray-400">No rewards yet</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                            <p className="text-gray-400">No rewards yet</p>
+            <p className="text-sm text-gray-500 mt-1">
                   Start participating in briefs to earn rewards!
                 </p>
               </div>
@@ -238,19 +238,19 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
                     <div className="flex items-center space-x-4">
                       {getRewardTypeIcon(reward.rewardType)}
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white capitalize">
+                        <h4 className="font-medium text-white capitalize">
                           {reward.rewardType} Reward
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <p className="text-sm text-gray-300">
                           {reward.description}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-400">
                           Brief #{reward.briefId} • {new Date(reward.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-gray-900 dark:text-white">
+                                              <div className="font-semibold text-white">
                         {reward.rewardType === 'prize' ? 'Prize' : `$${reward.amount.toFixed(2)}`}
                       </div>
                       {getStatusBadge(reward.status)}
@@ -265,11 +265,11 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
         {/* Redeem Credits Modal */}
         {showRedeemModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                              <h3 className="text-lg font-semibold text-white mb-4">
                 Redeem Credits
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                              <p className="text-sm text-gray-300 mb-4">
                 Available credits: ${creditBalance?.creditBalance.toFixed(2)}
               </p>
               <input
@@ -277,7 +277,7 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
                 value={redeemAmount}
                 onChange={(e) => setRedeemAmount(e.target.value)}
                 placeholder="Enter amount to redeem"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                  className="w-full px-3 py-2 border border-gray-600 rounded-md mb-4 bg-gray-700 text-white"
                 step="0.01"
                 min="0.01"
                 max={creditBalance?.creditBalance}
@@ -285,7 +285,7 @@ const CreatorRewardsDashboard: React.FC<CreatorRewardsDashboardProps> = ({ creat
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowRedeemModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700"
                 >
                   Cancel
                 </button>

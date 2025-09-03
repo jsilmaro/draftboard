@@ -853,9 +853,9 @@ const BrandDashboard: React.FC = () => {
             </div>
                     <div className="text-right">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                        submission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                        'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                        submission.status === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
+                        submission.status === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                        'bg-yellow-900/20 text-yellow-400'
                       }`}>
                         {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                       </span>
@@ -897,8 +897,8 @@ const BrandDashboard: React.FC = () => {
                 <p className="text-xs text-gray-400">Real-time creator activity</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-400 font-semibold">LIVE</span>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-emerald-500 font-semibold">LIVE</span>
         </div>
       </div>
 
@@ -1535,7 +1535,7 @@ const BrandDashboard: React.FC = () => {
                         <>
                           <button 
                             onClick={() => handleApproveSubmission(submission)}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3"
+                            className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mr-3"
                           >
                             Approve
                           </button>
@@ -1815,7 +1815,7 @@ const BrandDashboard: React.FC = () => {
               <div className="text-3xl mr-3">💰</div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Rewards Configured</h3>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-3xl font-bold text-emerald-500">
                   {briefs.filter(brief => brief.rewardType).length}
                 </p>
               </div>
@@ -2167,12 +2167,12 @@ const BrandDashboard: React.FC = () => {
                   <td className="py-3 px-4 text-white font-medium">{brief.briefTitle}</td>
                   <td className="py-3 px-4 text-white">{brief.totalSubmissions}</td>
                   <td className="py-3 px-4 text-yellow-400">{brief.pendingSubmissions}</td>
-                  <td className="py-3 px-4 text-green-400">{brief.approvedSubmissions}</td>
+                  <td className="py-3 px-4 text-emerald-500">{brief.approvedSubmissions}</td>
                   <td className="py-3 px-4 text-red-400">{brief.rejectedSubmissions}</td>
                   <td className="py-3 px-4 text-gray-200">{brief.avgSubmissionsPerDay.toFixed(1)}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      brief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
+                      brief.status === 'active' ? 'bg-emerald-900/30 text-emerald-300 backdrop-blur-sm border border-emerald-600/30' :
                       brief.status === 'completed' ? 'bg-blue-100/20 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 backdrop-blur-sm border border-blue-200/30 dark:border-blue-600/30' :
                       'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                     }`}>
@@ -2257,9 +2257,9 @@ const BrandDashboard: React.FC = () => {
                 <div>
                   <span className="font-medium text-white">Status:</span>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ml-2 ${
-                    selectedSubmission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                    selectedSubmission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                    selectedSubmission.status === 'approved' ? 'bg-emerald-900/30 text-emerald-300' :
+                    selectedSubmission.status === 'rejected' ? 'bg-red-900/30 text-red-300' :
+                    'bg-yellow-900/30 text-yellow-300'
                   }`}>
                     {selectedSubmission.status === 'approved' ? 'Shortlisted' :
                      selectedSubmission.status === 'rejected' ? 'Rejected' :

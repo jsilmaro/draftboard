@@ -84,7 +84,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
       case 'completed':
         return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-300 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${baseClasses} bg-gray-900/20 text-gray-400`;
     }
   };
 
@@ -94,7 +94,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 group ${
+      className={`bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-700 overflow-hidden transition-all duration-300 group ${
         isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -144,14 +144,14 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
-            <div className="text-xs text-gray-300 dark:text-gray-400 mb-1">Target</div>
+          <div className="bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
+            <div className="text-xs text-gray-400 mb-1">Target</div>
             <div className="text-sm sm:text-lg font-bold text-white">
               {brief.amountOfWinners || 1}
             </div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
-            <div className="text-xs text-gray-300 dark:text-gray-400 mb-1">Applied</div>
+          <div className="bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
+            <div className="text-xs text-gray-400 mb-1">Applied</div>
             <div className="text-sm sm:text-lg font-bold text-white">
               {submissionsCount}
             </div>
@@ -162,11 +162,11 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
           {/* Submissions Progress */}
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-300 dark:text-gray-400 mb-1">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
               <span>Submissions Progress</span>
               <span>{submissionsProgress.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+            <div className="w-full bg-gray-600 rounded-full h-2">
               <div 
                 className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${submissionsProgress}%` }}
@@ -176,11 +176,11 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
           {/* Rewards Progress */}
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-300 dark:text-gray-400 mb-1">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
               <span>Rewards Progress</span>
               <span>{rewardsProgress.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+            <div className="w-full bg-gray-600 rounded-full h-2">
               <div 
                 className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${rewardsProgress}%` }}
@@ -191,9 +191,9 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Total Value */}
         {totalRewardValue > 0 && (
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4">
-            <div className="text-xs text-green-600 dark:text-green-400 mb-1">Total Value</div>
-            <div className="text-sm sm:text-lg font-bold text-green-700 dark:text-green-300">
+          <div className="bg-green-900/20 rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4">
+            <div className="text-xs text-green-400 mb-1">Total Value</div>
+            <div className="text-sm sm:text-lg font-bold text-green-300">
               ${totalRewardValue.toLocaleString()}
             </div>
           </div>
@@ -203,7 +203,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={() => onViewClick?.(brief)}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-300 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="px-3 py-2 bg-gray-700 text-gray-300 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-600 transition-colors"
           >
             View
           </button>

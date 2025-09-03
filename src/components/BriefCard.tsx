@@ -67,7 +67,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer group ${
+      className={`bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer group ${
         isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -99,9 +99,9 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
           </div>
           <div className="text-right flex-shrink-0">
             <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-              daysRemaining < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-              daysRemaining <= 3 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' :
-              'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+              daysRemaining < 0 ? 'bg-red-900/20 text-red-400' :
+              daysRemaining <= 3 ? 'bg-orange-900/20 text-orange-400' :
+              'bg-emerald-900/20 text-emerald-400'
             }`}>
               {getTimeRemainingText()}
             </div>
@@ -119,14 +119,14 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
         </div>
 
         {/* Reward Information */}
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                    <div className="bg-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs sm:text-sm font-medium text-gray-300">Reward</span>
-            <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
+            <span className="text-base sm:text-lg font-bold text-emerald-500 dark:text-emerald-400">
               ${brief.reward.toLocaleString()}
             </span>
           </div>
-          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-300 dark:text-gray-400">
+                      <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400">
             <span>Target: {brief.amountOfWinners} creators</span>
             <span>{brief.submissions.length} applied</span>
           </div>
@@ -134,11 +134,11 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
         {/* Progress Bar */}
         <div className="mb-3 sm:mb-4">
-          <div className="flex items-center justify-between text-xs text-gray-300 dark:text-gray-400 mb-1">
+                      <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
             <span>Rewards Progress</span>
             <span>{progressPercentage.toFixed(1)}%</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                      <div className="w-full bg-gray-600 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(progressPercentage, 100)}%` }}

@@ -175,7 +175,7 @@ const RewardFlowDemo: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900 dark:text-white">Total Reward:</h3>
-                  <p className="text-green-600 dark:text-green-400 font-semibold">${mockBrief.reward}</p>
+                  <p className="text-emerald-500 dark:text-emerald-400 font-semibold">${mockBrief.reward}</p>
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900 dark:text-white">Submissions Received:</h3>

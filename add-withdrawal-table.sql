@@ -25,3 +25,6 @@ CREATE INDEX IF NOT EXISTS "WithdrawalRequest_requestedAt_idx" ON "WithdrawalReq
 ALTER TABLE "WithdrawalRequest" ADD CONSTRAINT "WithdrawalRequest_creatorId_fkey" 
     FOREIGN KEY ("creatorId") REFERENCES "Creator"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+
+
+

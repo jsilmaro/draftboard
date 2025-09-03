@@ -379,10 +379,10 @@ const CreatorWallet: React.FC = () => {
                 </div>
               )}
               
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-blue-700 dark:text-blue-400 text-sm">
-                  Your withdrawal request will be reviewed by our admin team. You will be notified once it&apos;s processed.
-                </p>
+                              <div className="mb-4 p-3 bg-blue-900/20 border border-blue-800 rounded-lg">
+                            <p className="text-blue-400 text-sm">
+              Your withdrawal request will be reviewed by our admin team. You will be notified once it&apos;s processed.
+            </p>
               </div>
 
               <div className="flex space-x-3">

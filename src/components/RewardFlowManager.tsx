@@ -108,7 +108,7 @@ const RewardFlowManager: React.FC<RewardFlowManagerProps> = ({
                     
                     <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                       <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
-                      <span className="font-medium text-green-600 dark:text-green-400">${submission.amount}</span>
+                      <span className="font-medium text-emerald-500 dark:text-emerald-400">${submission.amount}</span>
                     </div>
                   </div>
                 ))}

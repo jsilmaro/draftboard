@@ -19,7 +19,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-black relative overflow-hidden font-sans">
       {/* Sophisticated Background with Glass-morphism */}
       <div className="absolute inset-0">
         {/* Primary dark gradient background */}

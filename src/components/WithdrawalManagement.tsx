@@ -125,7 +125,7 @@ const WithdrawalManagement: React.FC = () => {
       case 'completed':
         return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
+        return `${baseClasses} bg-gray-900/20 text-gray-400`;
     }
   };
 
@@ -147,7 +147,7 @@ const WithdrawalManagement: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm border border-white/10 dark:border-gray-700/30 rounded-lg shadow-xl p-6">
+              <div className="bg-gray-800/10 backdrop-blur-sm border border-gray-700/30 rounded-lg shadow-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-200">Withdrawal Management</h2>
           <div className="flex items-center space-x-4">
@@ -208,7 +208,7 @@ const WithdrawalManagement: React.FC = () => {
         </div>
 
         {/* Withdrawal Requests Table */}
-        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg border border-white/10 dark:border-gray-600/20 overflow-hidden">
+        <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg border border-gray-600/20 overflow-hidden">
           {filteredRequests.length === 0 ? (
             <div className="p-8 text-center">
               <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -232,7 +232,7 @@ const WithdrawalManagement: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-white/10 dark:divide-gray-700/30">
                   {filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-white/5 dark:hover:bg-gray-600/20">
+                    <tr key={request.id} className="hover:bg-gray-600/20">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-white">{request.creator.fullName}</div>
@@ -267,7 +267,7 @@ const WithdrawalManagement: React.FC = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => openActionModal(request, 'approve')}
-                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 font-medium"
+                              className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
                             >
                               Approve
                             </button>
@@ -296,10 +296,10 @@ const WithdrawalManagement: React.FC = () => {
       {/* Action Modal */}
       {showActionModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+          <div className="bg-gray-800 rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-white">
                   {actionType === 'approve' ? 'Approve' : 'Reject'} Withdrawal Request
                 </h3>
                 <button
@@ -309,7 +309,7 @@ const WithdrawalManagement: React.FC = () => {
                     setActionReason('');
                     setAdminNotes('');
                   }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-400 hover:text-gray-300"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -317,27 +317,27 @@ const WithdrawalManagement: React.FC = () => {
                 </button>
               </div>
 
-              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="mb-4 p-4 bg-gray-700 rounded-lg">
+                <p className="text-sm text-gray-300">
                   <strong>Creator:</strong> {selectedRequest.creator.fullName} (@{selectedRequest.creator.userName})
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-gray-300">
                   <strong>Amount:</strong> ${selectedRequest.amount.toFixed(2)}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-gray-300">
                   <strong>Requested:</strong> {new Date(selectedRequest.requestedAt).toLocaleDateString()}
                 </p>
               </div>
 
               {actionType === 'reject' && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Rejection Reason *
                   </label>
                   <textarea
                     value={actionReason}
                     onChange={(e) => setActionReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     rows={3}
                     placeholder="Enter reason for rejection..."
                     required
@@ -346,13 +346,13 @@ const WithdrawalManagement: React.FC = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Admin Notes (Optional)
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={2}
                   placeholder="Internal notes..."
                 />
@@ -366,7 +366,7 @@ const WithdrawalManagement: React.FC = () => {
                     setActionReason('');
                     setAdminNotes('');
                   }}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-gray-300 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>

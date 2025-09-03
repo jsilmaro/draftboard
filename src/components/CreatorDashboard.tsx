@@ -494,9 +494,9 @@ const CreatorDashboard: React.FC = () => {
                     {hasSubmittedToBrief(brief.id) && (
                       <div className="absolute top-4 right-4 z-10">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                          getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                          'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                          getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
+                          getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                          'bg-yellow-900/20 text-yellow-400'
                         }`}>
                           {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
                            getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
@@ -530,8 +530,8 @@ const CreatorDashboard: React.FC = () => {
                 <p className="text-xs text-gray-400">Real-time brief updates</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-400 font-semibold">LIVE</span>
+                                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-emerald-500 font-semibold">LIVE</span>
               </div>
             </div>
             
@@ -585,7 +585,7 @@ const CreatorDashboard: React.FC = () => {
         <div className="flex space-x-2">
           <button 
             onClick={fetchDashboardData}
-            className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700 transition-colors"
           >
             Refresh
           </button>
@@ -643,9 +643,9 @@ const CreatorDashboard: React.FC = () => {
                 {hasSubmittedToBrief(brief.id) && (
                   <div className="absolute top-4 right-4 z-10">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                      'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
+                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                      'bg-yellow-900/20 text-yellow-400'
                     }`}>
                       {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
                        getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
@@ -662,7 +662,7 @@ const CreatorDashboard: React.FC = () => {
       {/* View Brief Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">{selectedBrief.title}</h3>
               <button
@@ -695,9 +695,9 @@ const CreatorDashboard: React.FC = () => {
               <div className="flex justify-between">
                 <span className="font-medium text-white">Status:</span>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedBrief.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                  selectedBrief.status === 'draft' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400' :
-                  'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                  selectedBrief.status === 'active' ? 'bg-emerald-900/20 text-emerald-400' :
+                                      selectedBrief.status === 'draft' ? 'bg-yellow-900/20 text-yellow-400' :
+                    'bg-gray-700 text-gray-300'
                 }`}>
                   {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                 </span>
@@ -710,7 +710,7 @@ const CreatorDashboard: React.FC = () => {
                 <h4 className="text-lg font-semibold text-white mb-3">🏆 Reward Breakdown</h4>
                 <div className="space-y-3">
                   {selectedBrief.winnerRewards.map((reward, index) => (
-                    <div key={index} className="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <div key={index} className="bg-gray-800/20 p-3 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-white">
                                               {reward.position === 1 ? '🥇 1st Spot' :
@@ -738,7 +738,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
               >
                 Close
               </button>
@@ -750,7 +750,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Apply Modal */}
       {showApplyModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">
                 {hasSubmittedToBrief(selectedBrief.id) ? 'Edit Submission' : 'Apply to'} {selectedBrief.title}
@@ -780,7 +780,7 @@ const CreatorDashboard: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-700 p-4 rounded-lg">
                 <h4 className="font-medium text-white mb-2">Brief Summary</h4>
                 <div className="space-y-2 text-sm text-gray-300">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
@@ -797,7 +797,7 @@ const CreatorDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
                 >
                   Cancel
                 </button>
@@ -821,7 +821,7 @@ const CreatorDashboard: React.FC = () => {
       <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+            <thead className="bg-gray-700/30 backdrop-blur-sm">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
@@ -842,9 +842,9 @@ const CreatorDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                      submission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                      'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                      submission.status === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
+                      submission.status === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                      'bg-yellow-900/20 text-yellow-400'
                     }`}>
                       {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                     </span>
@@ -855,7 +855,7 @@ const CreatorDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => handleViewSubmission(submission)}
-                      className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3"
+                      className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mr-3"
                     >
                       View
                     </button>
@@ -893,33 +893,33 @@ const CreatorDashboard: React.FC = () => {
       
       {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
+        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">Total Earnings</h3>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">${metrics.totalEarnings}</p>
+          <p className="text-3xl font-bold text-emerald-500">${metrics.totalEarnings}</p>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
+        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">This Month</h3>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
+          <p className="text-3xl font-bold text-emerald-500">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
+        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
           <h3 className="text-lg font-semibold text-white">Pending</h3>
-          <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
+          <p className="text-3xl font-bold text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
         </div>
       </div>
 
       {/* Earnings Table */}
-      <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
+      <div className="bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-600/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-700/30 backdrop-blur-sm">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brief</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Paid Date</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-gray-800/10 divide-y divide-gray-700/30">
               {earnings.map((earning) => (
                 <tr key={earning.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
@@ -928,9 +928,9 @@ const CreatorDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${earning.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      earning.status === 'paid' ? 'bg-green-100 text-green-800' :
-                      earning.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
+                      earning.status === 'paid' ? 'bg-emerald-900/20 text-emerald-400' :
+                      earning.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400' :
+                      'bg-blue-900/20 text-blue-400'
                     }`}>
                       {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
                     </span>
@@ -951,7 +951,7 @@ const CreatorDashboard: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Profile</h2>
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-700 p-6">
+      <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
         <div className="flex items-center mb-6">
           <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="xl" className="mr-4" />
           <div>
@@ -1268,7 +1268,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Submission View Modal */}
       {showSubmissionViewModal && selectedSubmission && submissionDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+                  <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-white">Submission Details</h3>
             <button
@@ -1280,16 +1280,16 @@ const CreatorDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <div className="bg-gray-700 p-4 rounded-lg">
               <h4 className="font-medium text-white mb-2">Brief Information</h4>
               <div className="space-y-2 text-sm text-gray-300">
                 <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
                 <p><strong>Amount:</strong> ${selectedSubmission.amount}</p>
                 <p><strong>Status:</strong> 
                   <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                    selectedSubmission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                    selectedSubmission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                    'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                    selectedSubmission.status === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
+                    selectedSubmission.status === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                    'bg-yellow-900/20 text-yellow-400'
                   }`}>
                     {selectedSubmission.status.charAt(0).toUpperCase() + selectedSubmission.status.slice(1)}
                   </span>
@@ -1301,7 +1301,7 @@ const CreatorDashboard: React.FC = () => {
             {submissionDetails.files && (
               <div>
                 <h4 className="font-medium text-white mb-2">Content Submission Link</h4>
-                <div className="bg-white dark:bg-gray-700 p-3 rounded border border-gray-700 dark:border-gray-600">
+                <div className="bg-gray-700 p-3 rounded border border-gray-600">
                   <a 
                     href={submissionDetails.files} 
                     target="_blank" 
@@ -1317,7 +1317,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowSubmissionViewModal(false)}
-                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
               >
                 Close
               </button>

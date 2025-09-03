@@ -247,7 +247,7 @@
 
 /* Mobile navigation */
 .mobile-nav {
-  @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 lg:hidden;
+  @apply fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50 lg:hidden;
 }
 
 .mobile-nav-item {

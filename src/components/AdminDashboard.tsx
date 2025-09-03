@@ -302,23 +302,23 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBrands = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
-      <div className="p-6 border-b border-gray-700">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Brand Management</h3>
         <p className="text-sm text-gray-300 mt-1">Overview of registered brands with contact information</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700/30 backdrop-blur-sm">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
+          <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
             {brands.map((brand) => (
               <tr key={brand.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -336,7 +336,7 @@ const AdminDashboard: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    brand.isVerified ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                    brand.isVerified ? 'bg-green-900/20 text-green-400' : 'bg-yellow-900/20 text-yellow-400'
                   }`}>
                     {brand.isVerified ? 'Verified' : 'Pending'}
                   </span>
@@ -345,8 +345,8 @@ const AdminDashboard: React.FC = () => {
                   {new Date(brand.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">View</button>
-                  <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
+                  <button className="text-indigo-400 hover:text-indigo-300 mr-3">View</button>
+                  <button className="text-red-400 hover:text-red-300">Delete</button>
                 </td>
               </tr>
             ))}
@@ -357,23 +357,23 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderCreators = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
-      <div className="p-6 border-b border-gray-700">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Creator Management</h3>
         <p className="text-sm text-gray-300 mt-1">Overview of registered creators with contact information</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700/30 backdrop-blur-sm">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
+          <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
             {creators.map((creator) => (
               <tr key={creator.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -383,7 +383,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-white">{creator.fullName}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-300">@{creator.userName}</div>
+                      <div className="text-sm text-gray-300">@{creator.userName}</div>
                     </div>
                   </div>
                 </td>
@@ -392,7 +392,7 @@ const AdminDashboard: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    creator.isVerified ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                    creator.isVerified ? 'bg-green-900/20 text-green-400' : 'bg-yellow-900/20 text-yellow-400'
                   }`}>
                     {creator.isVerified ? 'Verified' : 'Pending'}
                   </span>
@@ -401,8 +401,8 @@ const AdminDashboard: React.FC = () => {
                   {new Date(creator.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">View</button>
-                  <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
+                  <button className="text-indigo-400 hover:text-indigo-300 mr-3">View</button>
+                  <button className="text-red-400 hover:text-red-300">Delete</button>
                 </td>
               </tr>
             ))}
@@ -413,45 +413,45 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBriefs = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
-      <div className="p-6 border-b border-gray-700">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Brief Management</h3>
         <p className="text-sm text-gray-300 mt-1">Manage all campaign briefs</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700/30 backdrop-blur-sm">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reward</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submissions</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Reward</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Submissions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
+          <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
             {briefs.map((brief) => (
               <tr key={brief.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-white">{brief.title}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-300">Created {new Date(brief.createdAt).toLocaleDateString()}</div>
+                  <div className="text-sm text-gray-300">Created {new Date(brief.createdAt).toLocaleDateString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.brandName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${brief.reward.toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    brief.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                    brief.status === 'completed' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400' :
-                    'bg-gray-800 text-gray-800 dark:text-gray-300'
+                    brief.status === 'active' ? 'bg-green-900/20 text-green-400' :
+                    brief.status === 'completed' ? 'bg-blue-900/20 text-blue-400' :
+                    'bg-gray-800 text-gray-300'
                   }`}>
                     {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.submissions}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">View</button>
-                  <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
+                  <button className="text-indigo-400 hover:text-indigo-300 mr-3">View</button>
+                  <button className="text-red-400 hover:text-red-300">Delete</button>
                 </td>
               </tr>
             ))}
@@ -462,36 +462,36 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderSubmissions = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
-      <div className="p-6 border-b border-gray-700">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Submission Monitoring</h3>
         <p className="text-sm text-gray-300 mt-1">Track all creator submissions</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700/30 backdrop-blur-sm">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Submitted</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
+          <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
             {submissions.map((submission) => (
               <tr key={submission.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white">{submission.creatorName}</div>
+                  <div className="text-sm font-medium text-white">{submission.briefTitle}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{submission.briefTitle}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{submission.creatorName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    submission.status === 'approved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
-                    submission.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                    'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
+                    submission.status === 'approved' ? 'bg-green-900/20 text-green-400' :
+                    submission.status === 'rejected' ? 'bg-red-900/20 text-red-400' :
+                    'bg-yellow-900/20 text-yellow-400'
                   }`}>
                     {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                   </span>
@@ -500,9 +500,9 @@ const AdminDashboard: React.FC = () => {
                   {new Date(submission.submittedAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">Review</button>
-                  <button className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3">Approve</button>
-                  <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Reject</button>
+                  <button className="text-indigo-400 hover:text-indigo-300 mr-3">Review</button>
+                  <button className="text-emerald-500 hover:text-emerald-400 mr-3">Approve</button>
+                  <button className="text-red-400 hover:text-red-300">Reject</button>
                 </td>
               </tr>
             ))}
@@ -513,45 +513,45 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderPayouts = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-600/30">
-      <div className="p-6 border-b border-gray-700">
+    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Payout Management</h3>
         <p className="text-sm text-gray-300 mt-1">Track and manage creator payouts</p>
       </div>
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-green-800 dark:text-green-400">Total Payouts</h4>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">${analytics.totalPayouts.toLocaleString()}</p>
+          <div className="bg-emerald-900/20 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-emerald-500">Total Payouts</h4>
+            <p className="text-2xl font-bold text-emerald-500">${analytics.totalPayouts.toLocaleString()}</p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-blue-800 dark:text-blue-400">Pending Payouts</h4>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${submissions.filter(s => s.status === 'approved').reduce((sum, s) => sum + s.amount, 0).toLocaleString()}</p>
+          <div className="bg-blue-900/20 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-blue-400">Pending Payouts</h4>
+            <p className="text-2xl font-bold text-blue-400">${submissions.filter(s => s.status === 'approved').reduce((sum, s) => sum + s.amount, 0).toLocaleString()}</p>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-yellow-800 dark:text-yellow-400">This Month</h4>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${(analytics.monthlyRevenue * 0.7).toLocaleString()}</p>
+          <div className="bg-yellow-900/20 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-yellow-400">This Month</h4>
+            <p className="text-2xl font-bold text-yellow-400">${(analytics.monthlyRevenue * 0.7).toLocaleString()}</p>
           </div>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm">
+          <table className="min-w-full divide-y divide-gray-700">
+            <thead className="bg-gray-700/30 backdrop-blur-sm">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-gray-900/10 divide-y divide-white/10 dark:divide-gray-700/30">
+            <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
               {submissions.filter(s => s.status === 'approved').map((submission) => (
                 <tr key={submission.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{submission.creatorName}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400">
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-900/20 text-emerald-500">
                       Paid
                     </span>
                   </td>
@@ -559,7 +559,7 @@ const AdminDashboard: React.FC = () => {
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">View Details</button>
+                    <button className="text-indigo-400 hover:text-indigo-300">View Details</button>
                   </td>
                 </tr>
               ))}
@@ -614,15 +614,15 @@ const AdminDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-white mb-4">User Growth</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{analytics.totalBrands}</div>
+            <div className="text-2xl font-bold text-blue-400">{analytics.totalBrands}</div>
             <div className="text-sm text-gray-300">Total Brands</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{analytics.totalCreators}</div>
+            <div className="text-2xl font-bold text-green-400">{analytics.totalCreators}</div>
             <div className="text-sm text-gray-300">Total Creators</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{analytics.totalBriefs}</div>
+            <div className="text-2xl font-bold text-purple-400">{analytics.totalBriefs}</div>
             <div className="text-sm text-gray-300">Total Briefs</div>
           </div>
         </div>
@@ -663,12 +663,12 @@ const AdminDashboard: React.FC = () => {
               <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
             </div>
                          <div className="flex items-center space-x-4">
-               <Link to="/" className="text-gray-300 hover:text-white dark:hover:text-white">
+               <Link to="/" className="text-gray-300 hover:text-white">
                  ← Back to Home
                </Link>
                <button
                  onClick={logout}
-                 className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-medium"
+                 className="text-red-400 hover:text-red-300 font-medium"
                >
                  Logout
                </button>
@@ -687,8 +687,8 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-300 dark:hover:text-gray-300 hover:border-gray-600'
+                    ? 'border-indigo-500 text-indigo-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'
                 }`}
               >
                 <span>{tab.icon}</span>

@@ -144,7 +144,7 @@ const SimplifiedWinnerSelection: React.FC<SimplifiedWinnerSelectionProps> = ({
                   <h4 className="font-medium text-gray-900 dark:text-white">
                     {positionInfo.label}
                   </h4>
-                  <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  <p className="text-sm text-emerald-500 dark:text-emerald-400 font-medium">
                     ${rewardAmount.toFixed(2)}
                   </p>
                 </div>
@@ -242,7 +242,7 @@ const SimplifiedWinnerSelection: React.FC<SimplifiedWinnerSelectionProps> = ({
                   </p>
                   <div className="flex justify-between items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
                     <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
-                    <span className="font-medium text-green-600 dark:text-green-400">${submission.amount}</span>
+                    <span className="font-medium text-emerald-500 dark:text-emerald-400">${submission.amount}</span>
                   </div>
                 </div>
               );
@@ -259,7 +259,7 @@ const SimplifiedWinnerSelection: React.FC<SimplifiedWinnerSelectionProps> = ({
               </p>
               {selectedWinners.length > 0 && (
                 <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                  Total Reward Amount: <span className="text-green-600 dark:text-green-400">${totalRewardAmount.toFixed(2)}</span>
+                  Total Reward Amount: <span className="text-emerald-500 dark:text-emerald-400">${totalRewardAmount.toFixed(2)}</span>
                 </p>
               )}
             </div>

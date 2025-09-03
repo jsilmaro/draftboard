@@ -124,8 +124,8 @@ const PaymentForm: React.FC<{
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -178,7 +178,7 @@ const PaymentForm: React.FC<{
           <div className="border-t border-gray-200 dark:border-gray-600 mt-4 pt-4">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-900 dark:text-white">Total Amount:</span>
-              <span className="font-bold text-xl text-green-600 dark:text-green-400">${totalAmount.toFixed(2)}</span>
+                                  <span className="font-bold text-xl text-emerald-500 dark:text-emerald-400">${totalAmount.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -236,8 +236,8 @@ const PaymentForm: React.FC<{
   if (paymentStep === 'success') {
     return (
       <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
-          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -258,7 +258,7 @@ const PaymentForm: React.FC<{
           Enter Payment Details
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Total amount: <span className="font-bold text-green-600 dark:text-green-400">${totalAmount.toFixed(2)}</span>
+                          Total amount: <span className="font-bold text-emerald-500 dark:text-emerald-400">${totalAmount.toFixed(2)}</span>
         </p>
       </div>
 

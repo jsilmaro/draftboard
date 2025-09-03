@@ -234,7 +234,7 @@ const BrandForm: React.FC = () => {
           <span className="text-2xl font-bold text-yellow-600">B</span>
         </div>
         <h2 className="text-2xl font-bold text-white">Basic Information</h2>
-        <p className="text-gray-300 dark:text-gray-400">Let&apos;s start with your company details</p>
+                    <p className="text-gray-400">Let&apos;s start with your company details</p>
       </div>
 
       {/* Google Sign-In Option */}
@@ -323,7 +323,7 @@ const BrandForm: React.FC = () => {
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white">Contact Information</h2>
-        <p className="text-gray-300 dark:text-gray-400">Provide your business contact details</p>
+                    <p className="text-gray-400">Provide your business contact details</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -431,7 +431,7 @@ const BrandForm: React.FC = () => {
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white">Social Media (Optional)</h2>
-        <p className="text-gray-300 dark:text-gray-400">Help creators discover your brand</p>
+                    <p className="text-gray-400">Help creators discover your brand</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -494,7 +494,7 @@ const BrandForm: React.FC = () => {
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white">Payment Information</h2>
-        <p className="text-gray-300 dark:text-gray-400">This information is required to process payments to creators</p>
+                    <p className="text-gray-400">This information is required to process payments to creators</p>
       </div>
 
       <div className="space-y-6">
@@ -640,12 +640,12 @@ const BrandForm: React.FC = () => {
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white">Terms & Conditions</h2>
-        <p className="text-gray-300 dark:text-gray-400">Please review and accept our terms</p>
+                    <p className="text-gray-400">Please review and accept our terms</p>
       </div>
 
       <div className="bg-gray-50 p-6 rounded-lg max-h-64 overflow-y-auto">
         <h3 className="font-semibold text-white mb-4">Terms of Service</h3>
-        <div className="text-sm text-gray-300 dark:text-gray-400 space-y-3">
+                  <div className="text-sm text-gray-400 space-y-3">
           <p>By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
           <p>You acknowledge that:</p>
           <ul className="list-disc list-inside space-y-1 ml-4">
