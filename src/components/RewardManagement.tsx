@@ -426,51 +426,127 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
 
         {/* Reward Pools List */}
         <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-200 mb-4">Reward Pools</h3>
-          <div className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-2">Creator Reward Pools</h3>
+              <p className="text-gray-300">Manage and distribute rewards to talented creators</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-sm text-gray-400">Total Pools</p>
+                <p className="text-2xl font-bold text-white">{rewardPools.length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid gap-6">
             {rewardPools.length === 0 ? (
-              <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm border border-white/10 dark:border-gray-700/30 rounded-lg p-8 text-center">
-                <p className="text-gray-300 mb-4">No reward pools created yet.</p>
-                <p className="text-sm text-gray-400">Create your first reward pool to start rewarding creators for their submissions.</p>
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-12 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-3xl">🏆</span>
+                </div>
+                <h4 className="text-xl font-semibold text-white mb-3">No Reward Pools Yet</h4>
+                <p className="text-gray-300 mb-6 max-w-md mx-auto">
+                  Create your first reward pool to start recognizing and rewarding the amazing creators in your community.
+                </p>
+                <button
+                  onClick={handleCreatePool}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  Create First Pool
+                </button>
               </div>
             ) : (
               rewardPools.map((pool) => (
-              <div key={pool.id} className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm border border-white/10 dark:border-gray-700/30 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="font-semibold text-gray-200">{pool.brief.title}</h4>
-                    <p className="text-sm text-gray-300">Pool ID: {pool.id}</p>
-                    <p className="text-sm text-gray-300">
-                      Created: {new Date(pool.createdAt).toLocaleDateString()}
-                    </p>
+                <div key={pool.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-200 group">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    {/* Left Section - Pool Info */}
+                    <div className="flex-1">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <span className="text-xl">💎</span>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">
+                            {pool.brief.title}
+                          </h4>
+                          <div className="flex items-center gap-4 text-sm text-gray-300">
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                              {new Date(pool.createdAt).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                              {pool.status === 'active' ? 'Active' : 'Completed'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-300">Pool Progress</span>
+                          <span className="text-white font-medium">
+                            ${(pool.totalAmount - pool.remainingAmount).toFixed(2)} / ${pool.totalAmount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700/50 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${((pool.totalAmount - pool.remainingAmount) / pool.totalAmount) * 100}%` 
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Section - Amounts & Actions */}
+                    <div className="flex flex-col items-end gap-4">
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-white mb-1">
+                          ${pool.totalAmount.toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-400">Total Pool Value</div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-green-400 mb-1">
+                          ${pool.remainingAmount.toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-400">Available</div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        pool.status === 'active' 
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                          : 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
+                      }`}>
+                        {pool.status === 'active' ? '🟢 Active' : '⚫ Completed'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-gray-200">
-                      ${pool.totalAmount.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-300">
-                      Remaining: ${pool.remainingAmount.toFixed(2)}
-                    </p>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      pool.status === 'active' 
-                        ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' 
-                        : 'bg-gray-100/20 dark:bg-gray-800/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
-                    }`}>
-                      {pool.status}
-                    </span>
-                  </div>
+
+                  {/* Action Button */}
+                  {pool.status === 'active' && pool.remainingAmount > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-700/30">
+                      <button
+                        onClick={() => handleSelectWinners(pool)}
+                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <span>🎯</span>
+                        Select Winners
+                      </button>
+                    </div>
+                  )}
                 </div>
-                
-                {pool.status === 'active' && pool.remainingAmount > 0 && (
-                  <button
-                    onClick={() => handleSelectWinners(pool)}
-                    className="bg-green-600/80 hover:bg-green-700/80 backdrop-blur-sm border border-green-500/30 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                  >
-                    Select Winners
-                  </button>
-                )}
-              </div>
-            ))
+              ))
             )}
           </div>
         </div>
