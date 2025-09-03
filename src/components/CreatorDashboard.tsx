@@ -1113,7 +1113,7 @@ const CreatorDashboard: React.FC = () => {
         <div className="p-4 lg:p-6">
           
           {/* Logo Section */}
-          <div className="flex items-center justify-center mb-6 lg:mb-8">
+          <div className="flex items-center justify-start mb-6 lg:mb-8">
             <div className="relative">
               <Logo size="md" className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
             </div>

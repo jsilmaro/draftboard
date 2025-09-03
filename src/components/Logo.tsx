@@ -18,11 +18,11 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', className = '' }) => {
   const logoSrc = `/logo-light2.svg?t=${Date.now()}`;
 
   return (
-    <div className={`${className} flex items-center justify-center p-1`}>
+    <div className={`${className} flex items-center justify-start p-1`}>
       <img 
         src={logoSrc} 
         alt="DraftBoard Logo" 
-        className={`${sizeClasses[size]} object-contain object-center`}
+        className={`${sizeClasses[size]} object-contain`}
         style={{
           maxWidth: '100%',
           height: 'auto',
