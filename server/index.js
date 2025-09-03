@@ -4271,7 +4271,7 @@ app.post('/api/brands/payments/process', authenticateToken, async (req, res) => 
 // ==================== STRIPE PAYMENT ROUTES ====================
 
 // Create payment intent for brand to pay creator
-app.post('/api/payments/create-payment-intent', authenticateToken, async (req, res) => {
+app.post('/api/payments/create-winner-payment-intent', authenticateToken, async (req, res) => {
   try {
     const { winnerId, amount, rewardType } = req.body;
     
