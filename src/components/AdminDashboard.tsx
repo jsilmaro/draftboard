@@ -309,13 +309,13 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700/30 backdrop-blur-sm">
+          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
@@ -364,13 +364,13 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700/30 backdrop-blur-sm">
+          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
@@ -420,14 +420,14 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700/30 backdrop-blur-sm">
+          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Reward</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Submissions</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Reward</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submissions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
@@ -469,14 +469,14 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700/30 backdrop-blur-sm">
+          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Submitted</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submitted</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
@@ -536,13 +536,13 @@ const AdminDashboard: React.FC = () => {
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-700/30 backdrop-blur-sm">
+            <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
@@ -685,10 +685,10 @@ const AdminDashboard: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'
+                    ? 'border-blue-500 text-blue-400 bg-blue-900/20 px-3 py-2 rounded-t-lg'
+                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-500 hover:bg-gray-800/30 px-3 py-2 rounded-t-lg'
                 }`}
               >
                 <span>{tab.icon}</span>
