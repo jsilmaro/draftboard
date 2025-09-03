@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import LoadingSpinner from './LoadingSpinner';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { adminLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
-    setIsLoading(true);
 
     try {
       const response = await fetch('/api/admin/login', {
@@ -25,110 +24,90 @@ const AdminLogin: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
+        // Use the AuthContext adminLogin function
         adminLogin(data.user, data.token);
-        navigate('/admin');
+        // Navigate to admin dashboard
+        navigate('/admin/dashboard');
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Login failed');
+        setError(data.error || 'Login failed');
       }
     } catch (error) {
       setError('Network error. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="max-w-md w-full mx-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Admin Login</h1>
+            <p className="text-gray-300">Access the admin dashboard</p>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Admin Access
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-300">
-            Site Owner Login Only
-          </p>
-        </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                Email
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Admin email"
+                required
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="admin@draftboard.com"
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Password
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Admin password"
+                required
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    {error}
-                  </h3>
-                </div>
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+                <p className="text-red-400 text-sm">{error}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          <div>
             <button
               type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              {isLoading ? (
-                <LoadingSpinner size="sm" color="white" />
-              ) : (
-                'Sign in as Admin'
-              )}
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
-          </div>
+          </form>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="text-sm text-gray-300 hover:text-white"
-            >
-              ← Back to Home
-            </button>
+          <div className="mt-6 text-center">
+            <p className="text-gray-400 text-sm">
+              Demo Credentials:
+            </p>
+            <p className="text-gray-300 text-sm mt-1">
+              Email: admin@draftboard.com
+            </p>
+            <p className="text-gray-300 text-sm">
+              Password: admin123456
+            </p>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

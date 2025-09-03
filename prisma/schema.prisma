@@ -158,10 +158,47 @@ model Admin {
   email     String   @unique
   password  String
   fullName  String
-  role      String   @default("admin")
   isActive  Boolean  @default(true)
+  role      String   @default("admin") // admin, super_admin
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  auditLogs AuditLog[]
+  notifications AdminNotification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String   // VIEW_BRAND, DELETE_BRAND, etc.
+  details    String   // Detailed description of the action
+  targetType String?  // brand, creator, brief, submission, etc.
+  targetId   String?  // ID of the target object
+  timestamp  DateTime @default(now())
+  admin      Admin    @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType])
+  @@index([timestamp])
+}
+
+model AdminNotification {
+  id        String    @id @default(cuid())
+  adminId   String
+  title     String
+  message   String
+  type      String    // info, warning, error, success
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  admin     Admin     @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([isRead])
+  @@index([createdAt])
 }
 
 model Winner {

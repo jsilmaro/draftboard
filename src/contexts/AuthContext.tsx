@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else if (userData.type === 'creator') {
       navigate('/creator/dashboard');
     } else if (userData.type === 'admin') {
-      navigate('/admin');
+      navigate('/admin/dashboard');
     }
   };
 
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
     
     // Admin users go directly to admin dashboard
-    navigate('/admin');
+    navigate('/admin/dashboard');
   };
 
   const logout = () => {

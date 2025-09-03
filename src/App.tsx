@@ -98,7 +98,7 @@ function App() {
 
               {/* Admin Routes */}
               <Route 
-                path="/admin" 
+                path="/admin/dashboard" 
                 element={
                   <ProtectedRoute requiredUserType="admin">
                     <AdminDashboard />
