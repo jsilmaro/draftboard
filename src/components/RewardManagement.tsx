@@ -248,6 +248,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
     }
   }, [userType, fetchBriefs, fetchRewardPools, fetchAnalytics, fetchWalletData]);
 
+
   const createRewardPool = async () => {
     if (!selectedBrief || !poolAmount) return;
 
@@ -579,8 +580,21 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
 
         {/* Create Pool Modal */}
         {showCreatePool && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-gray-800 border border-blue-500 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+          <div 
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowCreatePool(false);
+              }
+            }}
+          >
+            <div 
+              className="bg-gray-800 border border-blue-500 rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
+              style={{
+                maxHeight: '90vh',
+                margin: 'auto'
+              }}
+            >
               <div className="bg-blue-600 rounded-lg p-4 mb-6">
                 <h3 className="text-2xl font-bold text-white">Create Reward Pool</h3>
               </div>
@@ -958,8 +972,21 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
 
         {/* Submission Details Modal */}
         {showSubmissionModal && selectedSubmission && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-gray-800 border border-blue-500 rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowSubmissionModal(false);
+              }
+            }}
+          >
+            <div 
+              className="bg-gray-800 border border-blue-500 rounded-xl shadow-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              style={{
+                maxHeight: '90vh',
+                margin: 'auto'
+              }}
+            >
               <div className="bg-blue-600 rounded-lg p-4 mb-6">
                 <h3 className="text-2xl font-bold mb-2 text-white">Submission Details</h3>
                 <p className="text-blue-100 font-medium">

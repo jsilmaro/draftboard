@@ -59,6 +59,26 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
     }
   }, [isOpen]);
 
+  // Track scroll position for modal positioning
+  const [scrollPosition, setScrollPosition] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+    
+    if (isOpen) {
+      // Set initial scroll position
+      setScrollPosition(window.scrollY);
+      // Listen for scroll events
+      window.addEventListener('scroll', handleScroll);
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [isOpen]);
+
   const handleWinnerToggle = (submission: Submission) => {
     const existingWinner = selectedWinners.find(w => w.submissionId === submission.id);
     
@@ -137,8 +157,30 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        transform: `translateY(${scrollPosition}px)`,
+        transition: 'transform 0.1s ease-out'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+        style={{
+          maxHeight: '90vh',
+          margin: 'auto'
+        }}
+      >
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">

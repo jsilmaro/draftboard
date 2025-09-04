@@ -957,7 +957,7 @@ const CreatorDashboard: React.FC = () => {
       
       <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
         <div className="flex items-center mb-6">
-          <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="xl" className="mr-4" />
+          <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="lg" className="mr-4" />
           <div>
             <h3 className="text-xl font-semibold text-white">{user?.fullName || 'Creator Name'}</h3>
             <p className="text-gray-300">@{user?.userName || 'username'}</p>
@@ -1112,8 +1112,8 @@ const CreatorDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Enhanced Sidebar */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 bg-black backdrop-blur-xl border-r border-gray-800 text-white lg:min-h-screen shadow-2xl`}>
+      {/* Enhanced Sidebar - Fixed Position */}
+      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 bg-black backdrop-blur-xl border-r border-gray-800 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
         <div className="p-4 lg:p-6">
           
           {/* Logo Section */}
@@ -1211,7 +1211,7 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm">
+      <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm lg:ml-72">
         {/* Desktop Header */}
         <div className="hidden lg:block bg-black border-b border-gray-800 px-8 py-4">
           <div className="flex items-center justify-between">
