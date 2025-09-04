@@ -2,8 +2,8 @@
 // Toggle between mock and live implementations
 
 export const STRIPE_CONFIG = {
-  // Set to 'mock' for development/testing, 'live' for production
-  MODE: import.meta.env.VITE_STRIPE_MODE || 'mock',
+  // Set to 'test' for development/testing with real Stripe test keys, 'live' for production
+  MODE: import.meta.env.VITE_STRIPE_MODE || 'test',
   
   // Live Stripe Configuration (when MODE is 'live')
   LIVE: {
@@ -30,6 +30,7 @@ export const STRIPE_CONFIG = {
 
 // Helper functions
 export const isStripeLive = () => STRIPE_CONFIG.MODE === 'live';
+export const isStripeTest = () => STRIPE_CONFIG.MODE === 'test';
 export const isStripeMock = () => STRIPE_CONFIG.MODE === 'mock';
 
 export const getStripeConfig = () => {
@@ -37,6 +38,13 @@ export const getStripeConfig = () => {
     return {
       mode: 'live',
       publishableKey: STRIPE_CONFIG.LIVE.PUBLISHABLE_KEY,
+      connectClientId: STRIPE_CONFIG.LIVE.CONNECT_CLIENT_ID,
+      baseUrl: '/api/stripe',
+    };
+  } else if (isStripeTest()) {
+    return {
+      mode: 'test',
+      publishableKey: STRIPE_CONFIG.LIVE.PUBLISHABLE_KEY, // Use same keys for test mode
       connectClientId: STRIPE_CONFIG.LIVE.CONNECT_CLIENT_ID,
       baseUrl: '/api/stripe',
     };
