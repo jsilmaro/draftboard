@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -53,6 +53,22 @@ const CreateBrief: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showShareModal, setShowShareModal] = useState(false);
   const [briefId, setBriefId] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
+
+  // Ensure form is always empty on mount
+  useEffect(() => {
+    console.log('🎯 Component mounted - resetting form to empty');
+    setFormData({
+      title: '',
+      description: '',
+      requirements: '',
+      reward: 0,
+      deadline: '',
+      amountOfWinners: 1,
+      rewardTiers: [],
+      additionalFields: {}
+    });
+  }, []);
 
   const templates: BriefTemplate[] = [
     {
@@ -61,11 +77,11 @@ const CreateBrief: React.FC = () => {
       description: 'Perfect for promoting podcast episodes, live streams, or virtual events',
       icon: '/icons/Green_icons/Video1.png',
       fields: {
-        title: 'Podcast Promotion Campaign',
-        description: 'Create engaging content to promote our podcast episodes and live events',
-        requirements: 'Create social media content, video clips, or graphics that highlight key moments from our podcast. Include call-to-action to subscribe and follow.',
+        title: '',
+        description: '',
+        requirements: '',
         reward: 0, // Default value
-        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        deadline: '',
         additionalFields: {
           podcastName: '',
           episodeTopics: '',
@@ -80,11 +96,11 @@ const CreateBrief: React.FC = () => {
       description: 'Ideal for product launches, reviews, and e-commerce campaigns',
       icon: '/icons/Green_icons/Campaign1.png',
       fields: {
-        title: 'Product Launch Campaign',
-        description: 'Generate buzz and drive sales for our new product launch',
-        requirements: 'Create authentic product reviews, unboxing videos, or lifestyle content featuring our products. Include honest feedback and genuine user experience.',
+        title: '',
+        description: '',
+        requirements: '',
         reward: 0, // Default value
-        deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        deadline: '',
         additionalFields: {
           productName: '',
           productCategory: '',
@@ -99,11 +115,11 @@ const CreateBrief: React.FC = () => {
       description: 'Great for contests, giveaways, and community engagement campaigns',
       icon: '/icons/Green_icons/Trophy1.png',
       fields: {
-        title: 'Talent Giveaway Campaign',
-        description: 'Run an exciting giveaway to engage our community and reward our audience',
-        requirements: 'Create engaging content that promotes our giveaway, explains the prizes, and encourages participation. Include clear entry instructions and deadline.',
+        title: '',
+        description: '',
+        requirements: '',
         reward: 0, // Default value
-        deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        deadline: '',
         additionalFields: {
           giveawayType: '',
           prizes: '',
@@ -118,11 +134,11 @@ const CreateBrief: React.FC = () => {
       description: 'Perfect for Twitter/X campaigns, viral content, and social media engagement',
       icon: '/icons/Green_icons/Campaign1.png',
       fields: {
-        title: 'Twitter/X Campaign',
-        description: 'Create engaging tweets and Twitter content to boost brand awareness and engagement',
-        requirements: 'Create compelling tweets, threads, or Twitter content that resonates with our audience. Focus on engagement, virality, and brand voice consistency.',
+        title: '',
+        description: '',
+        requirements: '',
         reward: 0, // Default value
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        deadline: '',
         additionalFields: {
           campaignTheme: '',
           hashtags: '',
@@ -137,11 +153,11 @@ const CreateBrief: React.FC = () => {
       description: 'Ideal for Instagram Stories campaigns, quick engagement, and visual storytelling',
       icon: '/icons/Green_icons/Campaign1.png',
       fields: {
-        title: 'Instagram Stories Campaign',
-        description: 'Create engaging Instagram Stories content to drive engagement and brand awareness',
-        requirements: 'Create visually appealing Instagram Stories that tell our brand story, showcase products, or engage followers. Include interactive elements and compelling visuals.',
+        title: '',
+        description: '',
+        requirements: '',
         reward: 0, // Default value
-        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        deadline: '',
         additionalFields: {
           storyTheme: '',
           visualStyle: '',
@@ -153,29 +169,41 @@ const CreateBrief: React.FC = () => {
   ];
 
   const handleTemplateSelect = (templateId: string | null) => {
+    console.log('🎯 Template selected:', templateId);
     setSelectedTemplate(templateId);
-    if (templateId && templateId !== 'scratch') {
-      const template = templates.find(t => t.id === templateId);
-      if (template) {
-        setFormData({
-          ...template.fields,
-          reward: 0, // Initialize with empty reward type
-          amountOfWinners: 1,
-          rewardTiers: []
-        });
-      }
-    } else if (templateId === 'scratch') {
-      setFormData({
-        title: '',
-        description: '',
-        requirements: '',
-        reward: 0, // Default value for reward field
-        deadline: '',
-        amountOfWinners: 1,
-        rewardTiers: [],
-        additionalFields: {}
-      });
-    }
+    
+    // Force form reset with empty values
+    const emptyFormData = {
+      title: '',
+      description: '',
+      requirements: '',
+      reward: 0,
+      deadline: '',
+      amountOfWinners: 1,
+      rewardTiers: [],
+      additionalFields: templateId && templateId !== 'scratch' ? 
+        (() => {
+          const template = templates.find(t => t.id === templateId);
+          if (template) {
+            const emptyAdditionalFields: Record<string, string | string[]> = {};
+            Object.keys(template.fields.additionalFields).forEach(key => {
+              if (Array.isArray(template.fields.additionalFields[key])) {
+                emptyAdditionalFields[key] = [];
+              } else {
+                emptyAdditionalFields[key] = '';
+              }
+            });
+            return emptyAdditionalFields;
+          }
+          return {};
+        })() : {}
+    };
+    
+    console.log('🎯 Setting empty form data:', emptyFormData);
+    setFormData(emptyFormData);
+    
+    // Force form re-render
+    setFormKey(prev => prev + 1);
     setCurrentStep(2);
   };
 
@@ -414,7 +442,7 @@ const CreateBrief: React.FC = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form key={formKey} onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
