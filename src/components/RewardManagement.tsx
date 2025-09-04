@@ -296,9 +296,13 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
     // Calculate total reward amount using calculated amounts from database
     const totalRewardAmount = selectedWinners.reduce((sum, submissionId) => {
       const position = winnerRewards[submissionId];
-      if (position && selectedPool.brief.winnerRewards) {
+      if (position && selectedPool.brief.winnerRewards && selectedPool.brief.winnerRewards.length > 0) {
         const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
         return sum + (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+      } else if (position) {
+        // Fallback calculation if winnerRewards is not available
+        const fallbackAmounts = { 1: 0.5, 2: 0.3, 3: 0.2 };
+        return sum + (selectedPool.totalAmount * (fallbackAmounts[position as keyof typeof fallbackAmounts] || 0));
       }
       return sum;
     }, 0);
@@ -314,9 +318,13 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
         winners: selectedWinners.map(submissionId => {
           const position = winnerRewards[submissionId];
           let amount = 0;
-          if (position && selectedPool.brief.winnerRewards) {
+          if (position && selectedPool.brief.winnerRewards && selectedPool.brief.winnerRewards.length > 0) {
             const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
             amount = (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+          } else if (position) {
+            // Fallback calculation if winnerRewards is not available
+            const fallbackAmounts = { 1: 0.5, 2: 0.3, 3: 0.2 };
+            amount = selectedPool.totalAmount * (fallbackAmounts[position as keyof typeof fallbackAmounts] || 0);
           }
           return {
             submissionId,
@@ -568,6 +576,15 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                     onChange={(e) => {
                       const brief = briefs.find(b => b.id === e.target.value);
                       setSelectedBrief(brief || null);
+                      // Auto-calculate pool amount based on brief's calculated reward tiers
+                      if (brief && brief.winnerRewards && brief.winnerRewards.length > 0) {
+                        const calculatedTotal = brief.winnerRewards.reduce((sum, reward) => 
+                          sum + (reward.cashAmount || 0) + (reward.creditAmount || 0), 0
+                        );
+                        setPoolAmount(calculatedTotal.toFixed(2));
+                      } else {
+                        setPoolAmount(brief?.reward?.toFixed(2) || '');
+                      }
                     }}
                     className="w-full px-3 py-2 border border-blue-400/50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-white font-medium"
                     required
@@ -589,6 +606,39 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                     </p>
                   )}
                 </div>
+
+                {/* Display calculated reward breakdown */}
+                {selectedBrief && selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
+                  <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-200 mb-3">Reward Breakdown (Auto-calculated)</h4>
+                    <div className="space-y-2">
+                      {selectedBrief.winnerRewards.map((reward) => (
+                        <div key={reward.position} className="flex justify-between text-sm">
+                          <span className="text-gray-300">
+                            {reward.position === 1 ? '1st Place' : 
+                             reward.position === 2 ? '2nd Place' : 
+                             reward.position === 3 ? '3rd Place' : 
+                             `${reward.position}th Place`}
+                          </span>
+                          <span className="text-white font-medium">
+                            ${((reward.cashAmount || 0) + (reward.creditAmount || 0)).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t border-blue-500/30 pt-2 mt-2">
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span className="text-blue-200">Total Pool Amount:</span>
+                          <span className="text-white">
+                            ${selectedBrief.winnerRewards.reduce((sum, reward) => 
+                              sum + (reward.cashAmount || 0) + (reward.creditAmount || 0), 0
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-blue-200 mb-2">
                     Pool Amount (USD)
@@ -603,6 +653,14 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                     placeholder="Enter amount"
                     required
                   />
+                  {selectedBrief && selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
+                    <p className="text-sm text-blue-200 mt-2">
+                      💡 This amount should match the calculated total: $
+                      {selectedBrief.winnerRewards.reduce((sum, reward) => 
+                        sum + (reward.cashAmount || 0) + (reward.creditAmount || 0), 0
+                      ).toFixed(2)}
+                    </p>
+                  )}
                   {walletData && parseFloat(poolAmount) > walletData.balance && (
                     <p className="text-sm text-red-200 mt-2 bg-red-600 p-2 rounded border border-red-500">
                       ⚠️ Insufficient wallet balance. Current balance: ${walletData.balance.toFixed(2)}
@@ -670,14 +728,23 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                             <select
                               value={winnerRewards[submission.id] || ''}
                               onChange={(e) => handleRewardAmountChange(submission.id, parseInt(e.target.value) || 0)}
-                              className="w-24 px-2 py-1 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-800 text-sm font-medium"
+                              className="w-32 px-2 py-1 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-800 text-sm font-medium"
                             >
                               <option value="">Select</option>
-                              {selectedPool.brief.winnerRewards?.map((reward) => (
-                                <option key={reward.position} value={reward.position}>
-                                  {reward.position === 1 ? '1st' : reward.position === 2 ? '2nd' : reward.position === 3 ? '3rd' : `${reward.position}th`} - ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
-                                </option>
-                              ))}
+                              {selectedPool.brief.winnerRewards && selectedPool.brief.winnerRewards.length > 0 ? (
+                                selectedPool.brief.winnerRewards.map((reward) => (
+                                  <option key={reward.position} value={reward.position}>
+                                    {reward.position === 1 ? '1st' : reward.position === 2 ? '2nd' : reward.position === 3 ? '3rd' : `${reward.position}th`} - ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
+                                  </option>
+                                ))
+                              ) : (
+                                // Fallback options if winnerRewards is not available
+                                <>
+                                  <option value="1">1st - ${(selectedPool.totalAmount * 0.5).toFixed(2)}</option>
+                                  <option value="2">2nd - ${(selectedPool.totalAmount * 0.3).toFixed(2)}</option>
+                                  <option value="3">3rd - ${(selectedPool.totalAmount * 0.2).toFixed(2)}</option>
+                                </>
+                              )}
                             </select>
                           </div>
                         )}
@@ -694,9 +761,13 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                     Total Winners: <span className="text-white font-bold">{selectedWinners.length}</span> | 
                     Total Reward Amount: <span className="text-white font-bold">${selectedWinners.reduce((sum, submissionId) => {
                       const position = winnerRewards[submissionId];
-                      if (position && selectedPool.brief.winnerRewards) {
+                      if (position && selectedPool.brief.winnerRewards && selectedPool.brief.winnerRewards.length > 0) {
                         const reward = selectedPool.brief.winnerRewards.find(r => r.position === position);
                         return sum + (reward?.cashAmount || 0) + (reward?.creditAmount || 0);
+                      } else if (position) {
+                        // Fallback calculation if winnerRewards is not available
+                        const fallbackAmounts = { 1: 0.5, 2: 0.3, 3: 0.2 };
+                        return sum + (selectedPool.totalAmount * (fallbackAmounts[position as keyof typeof fallbackAmounts] || 0));
                       }
                       return sum;
                     }, 0).toFixed(2)}</span>
@@ -707,7 +778,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={distributeRewardsToWinners}
-                  disabled={selectedWinners.length === 0 || selectedWinners.some(submissionId => !winnerRewards[submissionId] || winnerRewards[submissionId] <= 0)}
+                  disabled={selectedWinners.length === 0 || selectedWinners.some(submissionId => !winnerRewards[submissionId] || winnerRewards[submissionId] === 0)}
                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 border border-green-500 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200"
                 >
                   Distribute Rewards

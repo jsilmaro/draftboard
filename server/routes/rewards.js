@@ -424,74 +424,97 @@ router.post('/distribute', auth, async (req, res) => {
       return res.status(400).json({ error: 'Total reward amount exceeds remaining pool amount' });
     }
 
-    // Start a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create reward transactions for each winner
-      const rewardTransactions = [];
-      for (const winner of winners) {
-        // Get the submission to find the creator
-        const submission = await tx.submission.findUnique({
-          where: { id: winner.submissionId },
-          include: { creator: true }
-        });
+    // Process rewards without nested transactions
+    const rewardTransactions = [];
+    
+    for (const winner of winners) {
+      // Get the submission to find the creator
+      const submission = await prisma.submission.findUnique({
+        where: { id: winner.submissionId },
+        include: { creator: true }
+      });
 
-        if (!submission) {
-          throw new Error(`Submission ${winner.submissionId} not found`);
-        }
-
-        // Create reward transaction
-        const transaction = await tx.transaction.create({
-          data: {
-            userId: submission.creatorId,
-            userType: 'creator',
-            type: 'reward',
-            amount: winner.amount,
-            status: 'completed'
-          }
-        });
-
-        rewardTransactions.push(transaction);
-
-        // Update creator wallet
-        await tx.creatorWallet.upsert({
-          where: { creatorId: submission.creatorId },
-          update: {
-            balance: { increment: winner.amount },
-            totalEarned: { increment: winner.amount }
-          },
-          create: {
-            creatorId: submission.creatorId,
-            balance: winner.amount,
-            totalEarned: winner.amount
-          }
-        });
+      if (!submission) {
+        throw new Error(`Submission ${winner.submissionId} not found`);
       }
 
-      // Update reward pool
-      const updatedPool = await tx.rewardPool.update({
-        where: { id: poolId },
-        data: {
-          remainingAmount: { decrement: totalRewardAmount },
-          status: pool.remainingAmount - totalRewardAmount <= 0 ? 'distributed' : 'active'
-        }
-      });
+      // Create a simple transaction record for tracking
+      const transactionRecord = {
+        id: `reward-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId: submission.creatorId,
+        userType: 'creator',
+        type: 'reward',
+        amount: winner.amount,
+        status: 'completed'
+      };
 
-      // Update brand wallet (deduct from balance)
-      await tx.brandWallet.upsert({
-        where: { brandId: userId },
+      rewardTransactions.push(transactionRecord);
+
+      // Get or create creator wallet
+      const creatorWallet = await prisma.creatorWallet.upsert({
+        where: { creatorId: submission.creatorId },
         update: {
-          balance: { decrement: totalRewardAmount },
-          totalSpent: { increment: totalRewardAmount }
+          balance: { increment: winner.amount },
+          totalEarned: { increment: winner.amount }
         },
         create: {
-          brandId: userId,
-          balance: -totalRewardAmount,
-          totalSpent: totalRewardAmount
+          creatorId: submission.creatorId,
+          balance: winner.amount,
+          totalEarned: winner.amount
         }
       });
 
-      return { rewardTransactions, updatedPool };
+      // Create wallet transaction record
+      await prisma.walletTransaction.create({
+        data: {
+          walletId: creatorWallet.id,
+          type: 'reward',
+          amount: winner.amount,
+          description: `Reward for submission ${winner.submissionId}`,
+          referenceId: transactionRecord.id,
+          balanceBefore: creatorWallet.balance - winner.amount,
+          balanceAfter: creatorWallet.balance
+        }
+      });
+    }
+
+    // Update reward pool
+    const updatedPool = await prisma.rewardPool.update({
+      where: { id: poolId },
+      data: {
+        remainingAmount: { decrement: totalRewardAmount },
+        status: pool.remainingAmount - totalRewardAmount <= 0 ? 'distributed' : 'active'
+      }
     });
+
+    // Get or create brand wallet
+    const brandWallet = await prisma.brandWallet.upsert({
+      where: { brandId: userId },
+      update: {
+        balance: { decrement: totalRewardAmount },
+        totalSpent: { increment: totalRewardAmount }
+      },
+      create: {
+        brandId: userId,
+        balance: -totalRewardAmount,
+        totalSpent: totalRewardAmount
+      }
+    });
+
+    // Create brand wallet transaction record
+    await prisma.brandWalletTransaction.create({
+      data: {
+        walletId: brandWallet.id,
+        type: 'reward_distribution',
+        amount: totalRewardAmount,
+        description: `Distributed rewards to ${winners.length} winners`,
+        referenceId: poolId,
+        balanceBefore: brandWallet.balance + totalRewardAmount,
+        balanceAfter: brandWallet.balance
+      }
+    });
+
+    const result = { rewardTransactions, updatedPool };
 
     res.json({
       success: true,
@@ -506,9 +529,15 @@ router.post('/distribute', auth, async (req, res) => {
       message: error.message,
       stack: error.stack,
       body: req.body,
-      userId: req.user?.id
+      userId: req.user?.id,
+      errorName: error.name,
+      errorCode: error.code
     });
-    res.status(500).json({ error: 'Failed to distribute rewards' });
+    res.status(500).json({ 
+      error: 'Failed to distribute rewards',
+      details: error.message,
+      code: error.code || 'UNKNOWN_ERROR'
+    });
   }
 });
 

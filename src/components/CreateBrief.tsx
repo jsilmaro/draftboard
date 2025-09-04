@@ -201,22 +201,15 @@ const CreateBrief: React.FC = () => {
       const newRewardTiers = [];
       const baseReward = prev.reward || 0;
       
+      // Divide the total reward equally among all winners
+      const rewardPerWinner = baseReward / amount;
+      
       for (let i = 1; i <= amount; i++) {
-        // Calculate reward for each position
-        // 1st place gets 40%, 2nd gets 30%, 3rd gets 20%, 4th+ gets 10%
-        let percentage = 0;
-        if (i === 1) percentage = 0.4;
-        else if (i === 2) percentage = 0.3;
-        else if (i === 3) percentage = 0.2;
-        else percentage = 0.1;
-        
-        const calculatedAmount = baseReward * percentage;
-        
         newRewardTiers.push({
           position: i,
-          cashAmount: calculatedAmount,
+          cashAmount: rewardPerWinner,
           creditAmount: 0,
-          prizeDescription: `Reward ${i} - ${(percentage * 100).toFixed(0)}% of total`
+          prizeDescription: `Reward ${i} - Equal share ($${rewardPerWinner.toFixed(2)})`
         });
       }
       return {
