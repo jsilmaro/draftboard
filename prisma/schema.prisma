@@ -177,6 +177,8 @@ model AuditLog {
   targetType String?  // brand, creator, brief, submission, etc.
   targetId   String?  // ID of the target object
   timestamp  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   admin      Admin    @relation(fields: [adminId], references: [id])
 
   @@index([adminId])
@@ -235,19 +237,87 @@ model WinnerReward {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  userType  String
-  title     String
-  message   String
-  type      String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  userType         String
+  title            String
+  message          String
+  type             String
+  category         String    @default("general")
+  priority         String    @default("normal")
+  isRead           Boolean   @default(false)
+  readAt           DateTime?
+  dismissedAt      DateTime?
+  expiresAt        DateTime?
+  actionUrl        String?
+  actionText       String?
+  metadata         Json?
+  relatedEntityType String?
+  relatedEntityId   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deliveries       NotificationDelivery[]
 
   @@index([userId, userType])
   @@index([isRead])
   @@index([createdAt])
+  @@index([category])
+  @@index([priority])
+  @@index([readAt])
+  @@index([dismissedAt])
+  @@index([expiresAt])
+  @@index([relatedEntityType, relatedEntityId])
+  @@index([userType, category])
+  @@index([userId, isRead])
+}
+
+model NotificationPreferences {
+  id                 String   @id @default(cuid())
+  userId             String
+  userType           String
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  inAppNotifications Boolean  @default(true)
+  categories         Json     @default("{\"system\": true, \"brief\": true, \"submission\": true, \"payment\": true, \"wallet\": true, \"invitation\": true, \"security\": true, \"reward\": true, \"winner\": true, \"general\": true}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, userType])
+  @@index([userId, userType])
+}
+
+model NotificationTemplate {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  type            String
+  category        String
+  titleTemplate   String
+  messageTemplate String
+  actionText      String?
+  actionUrlTemplate String?
+  priority        String   @default("normal")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([type])
+  @@index([category])
+  @@index([isActive])
+}
+
+model NotificationDelivery {
+  id             String       @id @default(cuid())
+  notificationId String
+  deliveryMethod String
+  status         String
+  deliveredAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([status])
+  @@index([deliveredAt])
 }
 
 model Payment {

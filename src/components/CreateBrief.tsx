@@ -57,6 +57,7 @@ const CreateBrief: React.FC = () => {
 
   // Ensure form is always empty on mount
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('🎯 Component mounted - resetting form to empty');
     setFormData({
       title: '',
@@ -169,6 +170,7 @@ const CreateBrief: React.FC = () => {
   ];
 
   const handleTemplateSelect = (templateId: string | null) => {
+    // eslint-disable-next-line no-console
     console.log('🎯 Template selected:', templateId);
     setSelectedTemplate(templateId);
     
@@ -199,6 +201,7 @@ const CreateBrief: React.FC = () => {
         })() : {}
     };
     
+    // eslint-disable-next-line no-console
     console.log('🎯 Setting empty form data:', emptyFormData);
     setFormData(emptyFormData);
     

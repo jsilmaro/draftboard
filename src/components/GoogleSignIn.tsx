@@ -92,8 +92,8 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         </div>
       </div>
       
-      <div className="mt-6 flex justify-center">
-        <div id="google-signin-container">
+      <div className="mt-6 flex justify-center items-center">
+        <div id="google-signin-container" className="w-full max-w-64 mx-auto text-center flex justify-center">
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={handleError}
@@ -107,6 +107,8 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
             shape="rectangular"
             logo_alignment="left"
             width="100%"
+            ux_mode="popup"
+            itp_support={false}
           />
         </div>
       </div>

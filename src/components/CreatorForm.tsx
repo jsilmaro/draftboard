@@ -190,8 +190,12 @@ const CreatorForm: React.FC = () => {
   const renderStep1 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl font-bold text-teal-600">C</span>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
         </div>
         <h2 className="text-2xl font-bold text-white">Basic Information</h2>
         <p className="text-gray-300 dark:text-gray-400">Let&apos;s start with your personal details</p>
@@ -219,7 +223,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.userName}
             onChange={(e) => handleInputChange('userName', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="Choose a unique username"
           />
         </div>
@@ -232,7 +236,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.fullName}
             onChange={(e) => handleInputChange('fullName', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="Enter your full name"
           />
         </div>
@@ -245,7 +249,7 @@ const CreatorForm: React.FC = () => {
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="Enter your email address"
           />
         </div>
@@ -258,7 +262,7 @@ const CreatorForm: React.FC = () => {
             type="password"
             value={formData.password}
             onChange={(e) => handleInputChange('password', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="Create a strong password"
           />
         </div>
@@ -271,7 +275,7 @@ const CreatorForm: React.FC = () => {
             type="password"
             value={formData.confirmPassword}
             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="Confirm your password"
           />
         </div>
@@ -295,7 +299,7 @@ const CreatorForm: React.FC = () => {
             <select
               value={formData.phoneCountry}
               onChange={(e) => handleInputChange('phoneCountry', e.target.value)}
-              className="w-24 px-3 py-2 border border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-24 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             >
               {countries.map(country => (
                 <option key={country.code} value={country.code}>
@@ -307,7 +311,7 @@ const CreatorForm: React.FC = () => {
               type="tel"
               value={formData.phoneNumber}
               onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-600 rounded-r-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-r-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
               placeholder="(555) 123-4567"
             />
           </div>
@@ -320,7 +324,7 @@ const CreatorForm: React.FC = () => {
           <select
             value={formData.addressCountry}
             onChange={(e) => handleInputChange('addressCountry', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
           >
             <option value="United States">United States</option>
             <option value="United Kingdom">United Kingdom</option>
@@ -340,7 +344,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.addressStreet}
             onChange={(e) => handleInputChange('addressStreet', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="123 Main Street"
           />
         </div>
@@ -353,7 +357,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.addressCity}
             onChange={(e) => handleInputChange('addressCity', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="New York"
           />
         </div>
@@ -366,7 +370,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.addressState}
             onChange={(e) => handleInputChange('addressState', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="NY"
           />
         </div>
@@ -379,7 +383,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.addressZip}
             onChange={(e) => handleInputChange('addressZip', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="10001"
           />
         </div>
@@ -403,7 +407,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.socialInstagram}
             onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="@yourusername"
           />
         </div>
@@ -416,7 +420,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.socialTwitter}
             onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="@yourusername"
           />
         </div>
@@ -429,7 +433,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.socialLinkedIn}
             onChange={(e) => handleInputChange('socialLinkedIn', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="in/yourprofile"
           />
         </div>
@@ -442,7 +446,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.socialTikTok}
             onChange={(e) => handleInputChange('socialTikTok', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="@yourusername"
           />
         </div>
@@ -455,7 +459,7 @@ const CreatorForm: React.FC = () => {
             type="text"
             value={formData.socialYouTube}
             onChange={(e) => handleInputChange('socialYouTube', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
             placeholder="@yourchannel"
           />
         </div>

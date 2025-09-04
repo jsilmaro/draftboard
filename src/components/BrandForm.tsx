@@ -230,8 +230,12 @@ const BrandForm: React.FC = () => {
   const renderStep1 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl font-bold text-yellow-600">B</span>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
         </div>
         <h2 className="text-2xl font-bold text-white">Basic Information</h2>
                     <p className="text-gray-400">Let&apos;s start with your company details</p>
@@ -259,7 +263,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.companyName}
             onChange={(e) => handleInputChange('companyName', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Enter your company name"
           />
         </div>
@@ -272,7 +276,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.contactName}
             onChange={(e) => handleInputChange('contactName', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Enter the contact person's name"
           />
         </div>
@@ -285,7 +289,7 @@ const BrandForm: React.FC = () => {
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Enter your email address"
           />
         </div>
@@ -298,7 +302,7 @@ const BrandForm: React.FC = () => {
             type="password"
             value={formData.password}
             onChange={(e) => handleInputChange('password', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Create a strong password"
           />
         </div>
@@ -311,7 +315,7 @@ const BrandForm: React.FC = () => {
             type="password"
             value={formData.confirmPassword}
             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Confirm your password"
           />
         </div>
@@ -360,7 +364,7 @@ const BrandForm: React.FC = () => {
           <select
             value={formData.addressCountry}
             onChange={(e) => handleInputChange('addressCountry', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
             <option value="United States">United States</option>
             <option value="United Kingdom">United Kingdom</option>
@@ -380,7 +384,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.addressStreet}
             onChange={(e) => handleInputChange('addressStreet', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="123 Business Street"
           />
         </div>
@@ -393,7 +397,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.addressCity}
             onChange={(e) => handleInputChange('addressCity', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="New York"
           />
         </div>
@@ -406,7 +410,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.addressState}
             onChange={(e) => handleInputChange('addressState', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="NY"
           />
         </div>
@@ -419,7 +423,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.addressZip}
             onChange={(e) => handleInputChange('addressZip', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="10001"
           />
         </div>
@@ -443,7 +447,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.socialInstagram}
             onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="@yourbrand"
           />
         </div>
@@ -456,7 +460,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.socialTwitter}
             onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="@yourbrand"
           />
         </div>
@@ -469,7 +473,7 @@ const BrandForm: React.FC = () => {
             type="text"
             value={formData.socialLinkedIn}
             onChange={(e) => handleInputChange('socialLinkedIn', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="company/yourbrand"
           />
         </div>
@@ -482,7 +486,7 @@ const BrandForm: React.FC = () => {
             type="url"
             value={formData.socialWebsite}
             onChange={(e) => handleInputChange('socialWebsite', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="https://yourbrand.com"
           />
         </div>
@@ -549,7 +553,7 @@ const BrandForm: React.FC = () => {
                 type="text"
                 value={formData.cardNumber}
                 onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="**** **** **** 1234"
                 maxLength={19}
               />
@@ -562,7 +566,7 @@ const BrandForm: React.FC = () => {
               <select
                 value={formData.cardType}
                 onChange={(e) => handleInputChange('cardType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               >
                 <option value="">Select card type</option>
                 {cardTypes.map(type => (
@@ -583,7 +587,7 @@ const BrandForm: React.FC = () => {
                 type="text"
                 value={formData.bankName}
                 onChange={(e) => handleInputChange('bankName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Bank of America"
               />
             </div>
@@ -595,7 +599,7 @@ const BrandForm: React.FC = () => {
               <select
                 value={formData.bankAccountType}
                 onChange={(e) => handleInputChange('bankAccountType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               >
                 <option value="">Select account type</option>
                 {bankAccountTypes.map(type => (
@@ -612,7 +616,7 @@ const BrandForm: React.FC = () => {
                 type="text"
                 value={formData.bankRouting}
                 onChange={(e) => handleInputChange('bankRouting', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="123456789"
               />
             </div>
@@ -625,7 +629,7 @@ const BrandForm: React.FC = () => {
                 type="text"
                 value={formData.bankAccount}
                 onChange={(e) => handleInputChange('bankAccount', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="**** 5678"
                 maxLength={8}
               />

@@ -223,12 +223,14 @@ const CreatorDashboard: React.FC = () => {
     } catch (error) {
       // Error fetching dashboard data
     }
-  }, [earnings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Fetch data from API
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch earnings data when earnings tab is active
   useEffect(() => {
@@ -388,12 +390,6 @@ const CreatorDashboard: React.FC = () => {
       }
 
       const earningsData = await response.json();
-      // eslint-disable-next-line no-console
-      console.log('💰 Frontend received earnings data from wallet:', earningsData);
-      // eslint-disable-next-line no-console
-      console.log('💰 Earnings data length:', earningsData?.length || 0);
-      // eslint-disable-next-line no-console
-      console.log('💰 First earning:', earningsData?.[0] || 'No earnings');
       setEarnings(earningsData || []);
 
       // Calculate detailed metrics from wallet transactions
@@ -409,13 +405,7 @@ const CreatorDashboard: React.FC = () => {
         return earningDate.getMonth() === currentMonth && earningDate.getFullYear() === currentYear;
       }).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
 
-      // eslint-disable-next-line no-console
-      console.log('💰 Calculated metrics:', {
-        totalEarnings,
-        paidEarnings,
-        pendingEarnings,
-        thisMonthEarnings
-      });
+      // Metrics calculated successfully
 
       setMetrics(prev => ({
         ...prev,
@@ -456,8 +446,7 @@ const CreatorDashboard: React.FC = () => {
       }
 
       const submissionsData = await response.json();
-      // eslint-disable-next-line no-console
-      console.log('📝 Frontend received submissions data:', submissionsData);
+      // Submissions data received successfully
       
       // Transform submissions to earnings format
       const potentialEarnings: Earning[] = submissionsData.map((submission: SubmissionData) => ({
@@ -1760,12 +1749,15 @@ const CreatorDashboard: React.FC = () => {
       <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-                          <Logo size="sm" className="mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]" />
-            <span className="font-bold text-lg text-white">{user?.userName || 'Creator'}</span>
+            {/* Logo */}
+            <img 
+              src="/logo-light2.svg" 
+              alt="DraftBoard" 
+              className="w-22 h-7 mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]"
+            />
           </div>
-                      <div className="flex items-center space-x-3">
-              <NotificationBell />
-              <button
+          <div className="flex items-center">
+            <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
             >

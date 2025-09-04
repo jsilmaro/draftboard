@@ -2945,12 +2945,15 @@ const BrandDashboard: React.FC = () => {
       <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-                          <Logo size="sm" className="mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]" />
-            <span className="font-bold text-lg text-white">{user?.companyName || 'Brand'}</span>
+            {/* Logo */}
+            <img 
+              src="/logo-light2.svg" 
+              alt="DraftBoard" 
+              className="w-22 h-7 mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]"
+            />
           </div>
-                      <div className="flex items-center space-x-3">
-              <NotificationBell />
-              <button
+          <div className="flex items-center">
+            <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
             >

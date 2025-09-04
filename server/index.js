@@ -1379,13 +1379,8 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
 
     // Notify brand about brief creation
     try {
-      await createNotification(
-        req.user.id,
-        'brand',
-        'Brief Published Successfully! 📢',
-        `Your brief "${title}" has been published and is now visible to creators.`,
-        'brief'
-      );
+      const NotificationTriggers = require('./utils/notificationTriggers');
+      await NotificationTriggers.briefCreated(brief.id, req.user.id, title);
       console.log('🔔 Brief creation notification sent successfully');
     } catch (error) {
       console.error('🔔 Failed to send brief creation notification:', error);
@@ -2819,32 +2814,20 @@ app.post('/api/creators/submissions', authenticateToken, async (req, res) => {
       select: { fullName: true, userName: true }
     });
 
-    // Notify the brand owner about the new submission
+    // Notify both brand and creator about the new submission
     try {
-      await createNotification(
-        brief.brandId, // brand's user ID
-        'brand',
-        'New Application Received',
-        `${creator?.fullName || creator?.userName || 'A creator'} submitted an application to your brief "${brief.title}"`,
-        'application'
-      );
-      console.log('🔔 Brand notification sent for new submission');
-    } catch (error) {
-      console.error('🔔 Failed to send brand notification for submission:', error);
-    }
-
-    // Notify the creator about successful submission
-    try {
-      await createNotification(
+      const NotificationTriggers = require('./utils/notificationTriggers');
+      await NotificationTriggers.submissionReceived(
+        submission.id,
+        brief.id,
+        brief.title,
+        brief.brandId,
         req.user.id,
-        'creator',
-        'Application Submitted Successfully! 📝',
-        `Your application for "${brief.title}" has been submitted successfully. The brand will review it soon.`,
-        'application'
+        creator?.fullName || creator?.userName || 'A creator'
       );
-      console.log('🔔 Creator notification sent for submission');
+      console.log('🔔 Submission notifications sent successfully');
     } catch (error) {
-      console.error('🔔 Failed to send creator notification for submission:', error);
+      console.error('🔔 Failed to send submission notifications:', error);
     }
 
     res.status(201).json({
@@ -3070,7 +3053,7 @@ app.get('/api/brands/creators/:creatorId/contact', authenticateToken, async (req
 // Get earnings for a creator (based on wallet transactions)
 app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
   try {
-    console.log('💰 Fetching earnings for creator:', req.user.id);
+    // Fetching earnings for creator
     
     if (req.user.type !== 'creator') {
       return res.status(403).json({ error: 'Access denied' });
@@ -3095,33 +3078,19 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
 
       if (wallet) {
         walletTransactions = wallet.transactions;
-        console.log('💰 Found wallet transactions:', walletTransactions.length);
-        console.log('💰 Sample transaction:', walletTransactions[0] || 'No transactions found');
+        // Found wallet transactions
       } else {
-        console.log('💰 No wallet found, will try to create one or fallback to submissions');
+        // No wallet found, will try to create one or fallback to submissions
       }
     } catch (walletError) {
-      console.log('💰 Wallet table might not exist, falling back to submissions:', walletError.message);
+      // Wallet table might not exist, falling back to submissions
     }
 
     // If no wallet transactions, fallback to approved submissions
     if (walletTransactions.length === 0) {
-      console.log('💰 No wallet transactions found, fetching approved submissions as fallback');
+      // No wallet transactions found, fetching approved submissions as fallback
       
-      // First, let's check all submissions for this creator
-      const allSubmissions = await prisma.submission.findMany({
-        where: { 
-          creatorId: req.user.id
-        },
-        select: {
-          id: true,
-          status: true,
-          amount: true
-        }
-      });
-      
-      console.log('💰 All submissions for creator:', allSubmissions.length);
-      console.log('💰 Submission statuses:', allSubmissions.map(s => ({ id: s.id, status: s.status, amount: s.amount })));
+      // Debug logging removed for production
 
       const submissions = await prisma.submission.findMany({
         where: { 
@@ -3142,7 +3111,6 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
                   companyName: true
                 }
               },
-              rewardType: true,
               publishedAwards: {
                 select: {
                   rewardTiers: true
@@ -3154,15 +3122,9 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
         orderBy: { submittedAt: 'desc' }
       });
 
-      console.log('💰 Found approved submissions:', submissions.length);
-      console.log('💰 Sample submission:', submissions[0] || 'No submissions found');
+      // Found approved submissions
       
-      // Log reward tiers for debugging
-      submissions.forEach((sub, index) => {
-        if (sub.brief.publishedAwards && sub.brief.publishedAwards.length > 0) {
-          console.log(`💰 Submission ${index + 1} reward tiers:`, sub.brief.publishedAwards[0].rewardTiers);
-        }
-      });
+      // Process reward tiers for each submission
 
       const transformedEarnings = submissions.map(submission => {
         // Get the REAL reward amount from the brief's reward tiers
@@ -3186,7 +3148,7 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
           realAmount = 100; // Default amount for approved submissions
         }
 
-        console.log(`💰 Submission ${submission.id}: original amount ${submission.amount}, real amount ${realAmount}`);
+        // Process submission amount
         
         return {
           id: submission.id,
@@ -3204,7 +3166,7 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
         };
       });
 
-      console.log('💰 Returning transformed earnings from submissions:', transformedEarnings.length);
+      // Returning transformed earnings from submissions
       res.json(transformedEarnings);
       return;
     }
@@ -3245,7 +3207,7 @@ app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
       };
     });
 
-    console.log('💰 Returning transformed earnings from wallet:', transformedEarnings.length);
+    // Returning transformed earnings from wallet
     res.json(transformedEarnings);
   } catch (error) {
     console.error('Error fetching creator earnings:', error);
@@ -5268,129 +5230,273 @@ app.get('/api/brands/winners', authenticateToken, async (req, res) => {
 
 
 
-// ==================== NOTIFICATION ROUTES ====================
+// ==================== ENHANCED NOTIFICATION ROUTES ====================
 
-// Get notifications for user
+const NotificationService = require('./services/notificationService');
+
+// Get notifications for user with filtering and pagination
 app.get('/api/notifications', authenticateToken, async (req, res) => {
   try {
+    const { 
+      category, 
+      priority, 
+      isRead, 
+      limit = 20, 
+      offset = 0, 
+      includeDismissed = false 
+    } = req.query;
+
     console.log(`🔔 Fetching notifications for user: ${req.user.id}, type: ${req.user.type}`);
     
-    const notifications = await prisma.notification.findMany({
-      where: {
-        userId: req.user.id,
-        userType: req.user.type // 'brand' or 'creator'
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 20 // Limit to 20 most recent notifications
+    const result = await NotificationService.getUserNotifications({
+      userId: req.user.id,
+      userType: req.user.type,
+      category: category || null,
+      priority: priority || null,
+      isRead: isRead !== undefined ? isRead === 'true' : null,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      includeDismissed: includeDismissed === 'true'
     });
 
-    console.log(`🔔 Found ${notifications.length} notifications for user ${req.user.id}`);
-    console.log('🔔 Notifications:', notifications.map(n => ({ id: n.id, title: n.title, type: n.type, isRead: n.isRead })));
+    console.log(`🔔 Found ${result.notifications.length} notifications for user ${req.user.id}`);
 
-    res.json({ notifications: notifications });
+    res.json({
+      notifications: result.notifications,
+      total: result.total,
+      hasMore: result.hasMore,
+      pagination: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        total: result.total
+      }
+    });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
 
-// Mark notification as read
+// Get notification statistics
+app.get('/api/notifications/stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = await NotificationService.getStats(req.user.id, req.user.type);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching notification stats:', error);
+    res.status(500).json({ error: 'Failed to fetch notification stats' });
+  }
+});
+
+// Mark notifications as read (single or multiple)
+app.post('/api/notifications/read', authenticateToken, async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+    
+    const count = await NotificationService.markAsRead(
+      req.user.id, 
+      req.user.type, 
+      notificationIds
+    );
+
+    res.json({ 
+      success: true, 
+      count,
+      message: `Marked ${count} notifications as read`
+    });
+  } catch (error) {
+    console.error('Error marking notifications as read:', error);
+    res.status(500).json({ error: 'Failed to mark notifications as read' });
+  }
+});
+
+// Mark single notification as read (legacy endpoint)
 app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    const notification = await prisma.notification.update({
-      where: {
-        id: id,
-        userId: req.user.id
-      },
-      data: {
-        isRead: true
-      }
-    });
+    const count = await NotificationService.markAsRead(
+      req.user.id, 
+      req.user.type, 
+      [id]
+    );
 
-    res.json({ notification });
+    res.json({ 
+      success: true, 
+      count,
+      message: count > 0 ? 'Notification marked as read' : 'Notification not found'
+    });
   } catch (error) {
     console.error('Error marking notification as read:', error);
     res.status(500).json({ error: 'Failed to mark notification as read' });
   }
 });
 
+// Dismiss notifications (single or multiple)
+app.post('/api/notifications/dismiss', authenticateToken, async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+    
+    const count = await NotificationService.dismiss(
+      req.user.id, 
+      req.user.type, 
+      notificationIds
+    );
+
+    res.json({ 
+      success: true, 
+      count,
+      message: `Dismissed ${count} notifications`
+    });
+  } catch (error) {
+    console.error('Error dismissing notifications:', error);
+    res.status(500).json({ error: 'Failed to dismiss notifications' });
+  }
+});
+
 // Mark all notifications as read
 app.post('/api/notifications/mark-all-read', authenticateToken, async (req, res) => {
   try {
-    await prisma.notification.updateMany({
-      where: {
-        userId: req.user.id,
-        userType: req.user.type,
-        isRead: false
-      },
-      data: {
-        isRead: true
-      }
+    const count = await NotificationService.markAsRead(req.user.id, req.user.type);
+    res.json({ 
+      success: true, 
+      count,
+      message: `Marked ${count} notifications as read`
     });
-
-    res.json({ message: 'All notifications marked as read' });
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
     res.status(500).json({ error: 'Failed to mark all notifications as read' });
   }
 });
 
-// Create notification (internal use)
-const createNotification = async (userId, userType, title, message, type) => {
+// Dismiss all notifications
+app.post('/api/notifications/dismiss-all', authenticateToken, async (req, res) => {
   try {
-    console.log(`🔔 Creating notification:`, { userId, userType, title, message, type });
-    
-    // Validate inputs
-    if (!userId || !userType || !title || !message || !type) {
-      console.error('🔔 Missing required fields for notification:', { userId, userType, title, message, type });
-      throw new Error('Missing required fields for notification');
-    }
-    
-    const notification = await prisma.notification.create({
-      data: {
-        userId,
-        userType,
-        title,
-        message,
-        type
-      }
+    const count = await NotificationService.dismiss(req.user.id, req.user.type);
+    res.json({ 
+      success: true, 
+      count,
+      message: `Dismissed ${count} notifications`
     });
+  } catch (error) {
+    console.error('Error dismissing all notifications:', error);
+    res.status(500).json({ error: 'Failed to dismiss all notifications' });
+  }
+});
+
+// Get user notification preferences
+app.get('/api/notifications/preferences', authenticateToken, async (req, res) => {
+  try {
+    const preferences = await NotificationService.getUserPreferences(req.user.id, req.user.type);
+    res.json(preferences);
+  } catch (error) {
+    console.error('Error fetching notification preferences:', error);
+    res.status(500).json({ error: 'Failed to fetch notification preferences' });
+  }
+});
+
+// Update user notification preferences
+app.put('/api/notifications/preferences', authenticateToken, async (req, res) => {
+  try {
+    const preferences = await NotificationService.updateUserPreferences(
+      req.user.id, 
+      req.user.type, 
+      req.body
+    );
+    res.json(preferences);
+  } catch (error) {
+    console.error('Error updating notification preferences:', error);
+    res.status(500).json({ error: 'Failed to update notification preferences' });
+  }
+});
+
+// Create test notification (for development)
+app.post('/api/test-notification', authenticateToken, async (req, res) => {
+  try {
+    const { title, message, type = 'general', category = 'general', priority = 'normal' } = req.body;
     
-    console.log(`🔔 Notification created successfully:`, notification.id);
-    return notification;
+    const notification = await NotificationService.createNotification({
+      userId: req.user.id,
+      userType: req.user.type,
+      title: title || 'Test Notification',
+      message: message || 'This is a test notification',
+      type,
+      category,
+      priority
+    });
+
+    res.json({ 
+      success: true, 
+      notification,
+      message: 'Test notification created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating test notification:', error);
+    res.status(500).json({ error: 'Failed to create test notification' });
+  }
+});
+
+// Get notification count (for real-time updates)
+app.get('/api/notifications/count', authenticateToken, async (req, res) => {
+  try {
+    const stats = await NotificationService.getStats(req.user.id, req.user.type);
+    res.json({ 
+      total: Number(stats.total_count),
+      unread: Number(stats.unread_count),
+      urgent: Number(stats.urgent_unread_count)
+    });
+  } catch (error) {
+    console.error('Error fetching notification count:', error);
+    res.status(500).json({ error: 'Failed to fetch notification count' });
+  }
+});
+
+
+// Create notification (internal use)
+// Enhanced createNotification function using the new service
+const createNotification = async (userId, userType, title, message, type, options = {}) => {
+  try {
+    console.log(`🔔 Creating notification:`, { userId, userType, title, message, type, options });
+    
+    // Use the enhanced notification service
+    return await NotificationService.createNotification({
+      userId,
+      userType,
+      title,
+      message,
+      type,
+      category: options.category || getCategoryFromType(type),
+      priority: options.priority || 'normal',
+      actionUrl: options.actionUrl || null,
+      actionText: options.actionText || null,
+      metadata: options.metadata || null,
+      relatedEntityType: options.relatedEntityType || null,
+      relatedEntityId: options.relatedEntityId || null,
+      expiresAt: options.expiresAt || null
+    });
   } catch (error) {
     console.error('🔔 Error creating notification:', error);
-    console.error('🔔 Error details:', { userId, userType, title, message, type });
     throw error;
   }
 };
 
-// Test endpoint to create a notification (for debugging)
-app.post('/api/test-notification', authenticateToken, async (req, res) => {
-  try {
-    const { title, message, type } = req.body;
-    
-    console.log('🔔 Test notification request received:', { userId: req.user.id, userType: req.user.type, title, message, type });
-    
-    const notification = await createNotification(
-      req.user.id,
-      req.user.type,
-      title || 'Test Notification',
-      message || 'This is a test notification',
-      type || 'application'
-    );
-    
-    console.log('🔔 Test notification created successfully:', notification.id);
-    res.json({ success: true, notification });
-  } catch (error) {
-    console.error('Error creating test notification:', error);
-    res.status(500).json({ error: 'Failed to create test notification', details: error.message });
-  }
-});
+// Helper function to determine category from type
+const getCategoryFromType = (type) => {
+  const categoryMap = {
+    'brief': 'brief',
+    'application': 'submission',
+    'submission': 'submission',
+    'payment': 'payment',
+    'wallet': 'wallet',
+    'invitation': 'invitation',
+    'security': 'security',
+    'reward': 'reward',
+    'winner': 'winner',
+    'system': 'system'
+  };
+  return categoryMap[type] || 'general';
+};
+
 
 // Test endpoint to check notification count
 app.get('/api/test-notifications-count', authenticateToken, async (req, res) => {
