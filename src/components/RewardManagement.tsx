@@ -70,15 +70,33 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
   const [selectedPool, setSelectedPool] = useState<RewardPool | null>(null);
   const [submissions, setSubmissions] = useState<{
     id: string;
+    creatorId: string;
+    creatorName?: string;
+    creatorEmail?: string;
+    content?: string;
+    files?: string[];
+    submittedAt?: string | number | Date;
+    amount?: number;
     creator?: {
+      id: string;
       fullName?: string;
       userName?: string;
+      email?: string;
     };
-    submittedAt?: string | number | Date;
     [key: string]: unknown;
   }[]>([]);
   const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
   const [winnerRewards, setWinnerRewards] = useState<{[key: string]: number}>({}); // Stores position for each submission
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<{
+    id: string;
+    creator?: { id: string; fullName?: string; userName?: string; email?: string };
+    creatorName?: string;
+    creatorEmail?: string;
+    content?: string;
+    files?: string | string[];
+    submittedAt?: string;
+  } | null>(null);
 
   // Debug token
   useEffect(() => {
@@ -702,7 +720,26 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                 {submissions.length === 0 ? (
                   <p className="text-gray-300 text-center py-8">No submissions available for this brief.</p>
                 ) : (
-                  submissions.map((submission) => (
+                  submissions.map((submission: {
+                    [key: string]: unknown;
+                    id: string;
+                    creatorId: string;
+                    creatorName?: string;
+                    creatorEmail?: string;
+                    content?: string;
+                    files?: string[] | string;
+                    submittedAt?: string | number | Date;
+                    amount?: number;
+                    creator?: { id: string; fullName?: string; userName?: string; email?: string };
+                  }) => {
+                    // Ensure submission has required properties
+                    if (!submission || !submission.id) {
+                      // eslint-disable-next-line no-console
+                      console.warn('Invalid submission data:', submission);
+                      return null;
+                    }
+                    
+                    return (
                     <div key={submission.id} className={`border rounded-lg p-4 transition-all duration-200 ${
                       selectedWinners.includes(submission.id) 
                         ? 'bg-green-600 border-green-400 shadow-lg' 
@@ -716,10 +753,130 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                             onChange={(e) => handleWinnerSelection(submission.id, e.target.checked)}
                             className="w-5 h-5 text-green-600 bg-gray-700 border-gray-500 rounded focus:ring-green-500 focus:ring-2"
                           />
-                          <div>
-                            <h4 className="font-semibold text-white">{submission.creator?.fullName || 'Unknown Creator'}</h4>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-white">{submission.creator?.fullName || submission.creatorName || 'Unknown Creator'}</h4>
                             <p className="text-sm text-blue-200">@{submission.creator?.userName || 'unknown'}</p>
                             <p className="text-sm text-gray-300">Submitted: {submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : 'Unknown date'}</p>
+                            
+                            {/* Submission Content Preview */}
+                            <div className="mt-2">
+                              {(() => {
+                                // Function to detect and make URLs clickable
+                                const makeLinksClickable = (text: string) => {
+                                  if (!text) return text;
+                                  
+                                  // URL regex pattern
+                                  const urlRegex = /(https?:\/\/[^\s]+)/g;
+                                  const parts = text.split(urlRegex);
+                                  
+                                  return parts.map((part, index) => {
+                                    if (urlRegex.test(part)) {
+                                      return (
+                                        <a
+                                          key={index}
+                                          href={part}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-400 hover:text-blue-300 underline break-all"
+                                        >
+                                          {part}
+                                        </a>
+                                      );
+                                    }
+                                    return part;
+                                  });
+                                };
+
+
+                                // Extract actual submission content
+                                let displayContent = '';
+
+                                if (submission.content) {
+                                  try {
+                                    const parsedContent = JSON.parse(submission.content);
+                                    if (parsedContent.originalContent) {
+                                      if (typeof parsedContent.originalContent === 'string') {
+                                        try {
+                                          const innerContent = JSON.parse(parsedContent.originalContent);
+                                          displayContent = innerContent.originalContent || '';
+                                        } catch (e) {
+                                          displayContent = parsedContent.originalContent || '';
+                                        }
+                                      }
+                                    }
+                                  } catch (e) {
+                                    displayContent = submission.content;
+                                  }
+                                }
+
+                                // Also check for files field (submission links)
+                                // Handle both string and array formats for files
+                                let fileLinks: string[] = [];
+                                if (submission.files) {
+                                  if (typeof submission.files === 'string') {
+                                    // If it's a string, treat it as a single link
+                                    fileLinks = [submission.files];
+                                  } else if (Array.isArray(submission.files)) {
+                                    // If it's an array, use it directly
+                                    fileLinks = submission.files;
+                                  }
+                                }
+
+                                if (fileLinks.length > 0) {
+                                  return (
+                                    <div className="space-y-2">
+                                      <div className="text-sm text-gray-300">
+                                        <span className="font-medium text-white">Submitted Links:</span>
+                                      </div>
+                                      <div className="space-y-1">
+                                        {fileLinks.map((file: string, index: number) => (
+                                          <div key={index} className="bg-gray-800 rounded p-2">
+                                            <a
+                                              href={file}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-400 hover:text-blue-300 underline break-all text-sm"
+                                            >
+                                              📎 Link {index + 1}: {file}
+                                            </a>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {displayContent && (
+                                        <div className="text-sm text-gray-300">
+                                          <span className="font-medium text-white">Content:</span>
+                                          <div className="mt-1">
+                                            {displayContent.length > 100 
+                                              ? makeLinksClickable(`${displayContent.substring(0, 100)}...`)
+                                              : makeLinksClickable(displayContent)}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                } else if (displayContent && displayContent.trim() !== '') {
+                                  return (
+                                    <div className="text-sm text-gray-300">
+                                      <span className="font-medium text-white">Content:</span>
+                                      <div className="mt-1">
+                                        {displayContent.length > 100 
+                                          ? makeLinksClickable(`${displayContent.substring(0, 100)}...`)
+                                          : makeLinksClickable(displayContent)}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                // No content found
+                                return (
+                                  <div className="text-sm text-gray-400 italic">
+                                    No submission content or links provided
+                                  </div>
+                                );
+                              })()}
+                              
+                            </div>
+                            
                           </div>
                         </div>
                         {selectedWinners.includes(submission.id) && (
@@ -733,9 +890,9 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                               <option value="">Select</option>
                               {selectedPool.brief.winnerRewards && selectedPool.brief.winnerRewards.length > 0 ? (
                                 selectedPool.brief.winnerRewards.map((reward) => (
-                                  <option key={reward.position} value={reward.position}>
-                                    {reward.position === 1 ? '1st' : reward.position === 2 ? '2nd' : reward.position === 3 ? '3rd' : `${reward.position}th`} - ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
-                                  </option>
+                                <option key={reward.position} value={reward.position}>
+                                  {reward.position === 1 ? '1st' : reward.position === 2 ? '2nd' : reward.position === 3 ? '3rd' : `${reward.position}th`} - ${(reward.cashAmount + reward.creditAmount).toFixed(2)}
+                                </option>
                                 ))
                               ) : (
                                 // Fallback options if winnerRewards is not available
@@ -750,7 +907,8 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                         )}
                       </div>
                     </div>
-                  ))
+                    );
+                  }).filter(Boolean) // Remove null entries
                 )}
               </div>
 
@@ -792,6 +950,191 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                   className="flex-1 bg-gray-600 hover:bg-gray-700 border border-gray-500 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Submission Details Modal */}
+        {showSubmissionModal && selectedSubmission && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-gray-800 border border-blue-500 rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+              <div className="bg-blue-600 rounded-lg p-4 mb-6">
+                <h3 className="text-2xl font-bold mb-2 text-white">Submission Details</h3>
+                <p className="text-blue-100 font-medium">
+                  {selectedSubmission.creator?.fullName || selectedSubmission.creatorName || 'Unknown Creator'} • 
+                  Submitted: {selectedSubmission.submittedAt ? new Date(selectedSubmission.submittedAt).toLocaleDateString() : 'Unknown date'}
+                </p>
+      </div>
+              
+              <div className="space-y-4">
+                {/* Creator Information */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-2">Creator Information</h4>
+                  <p className="text-gray-300">Name: {selectedSubmission.creator?.fullName || selectedSubmission.creatorName || 'Unknown'}</p>
+                  <p className="text-gray-300">Username: @{selectedSubmission.creator?.userName || 'unknown'}</p>
+                  <p className="text-gray-300">Email: {selectedSubmission.creator?.email || selectedSubmission.creatorEmail || 'Not provided'}</p>
+    </div>
+
+                {/* Submitted Links - Most Important */}
+                {(() => {
+                  // Handle both string and array formats for files
+                  let fileLinks: string[] = [];
+                  if (selectedSubmission.files) {
+                    if (typeof selectedSubmission.files === 'string') {
+                      fileLinks = [selectedSubmission.files];
+                    } else if (Array.isArray(selectedSubmission.files)) {
+                      fileLinks = selectedSubmission.files;
+                    }
+                  }
+                  
+                  return fileLinks.length > 0;
+                })() && (
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-3">📎 Submitted Links (Click to View Creator&apos;s Work)</h4>
+                    <div className="space-y-3">
+                      {(() => {
+                        // Handle both string and array formats for files
+                        let fileLinks: string[] = [];
+                        if (selectedSubmission.files) {
+                          if (typeof selectedSubmission.files === 'string') {
+                            fileLinks = [selectedSubmission.files];
+                          } else if (Array.isArray(selectedSubmission.files)) {
+                            fileLinks = selectedSubmission.files;
+                          }
+                        }
+                        return fileLinks;
+                      })().map((file: string, index: number) => (
+                        <div key={index} className="bg-gray-800 rounded-lg p-4 border border-blue-500/30">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <a
+                                href={file}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline break-all font-medium"
+                              >
+                                {file}
+                              </a>
+                              <p className="text-xs text-gray-400 mt-1">Click to view creator&apos;s submission</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Submission Content */}
+                {selectedSubmission.content && (
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Submission Content</h4>
+                    <div className="bg-gray-800 rounded p-3">
+                      {(() => {
+                        // Function to detect and make URLs clickable
+                        const makeLinksClickable = (text: string) => {
+                          if (!text) return text;
+                          
+                          // URL regex pattern
+                          const urlRegex = /(https?:\/\/[^\s]+)/g;
+                          const parts = text.split(urlRegex);
+                          
+                          return parts.map((part, index) => {
+                            if (urlRegex.test(part)) {
+                              return (
+                                <a
+                                  key={index}
+                                  href={part}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 underline break-all"
+                                >
+                                  {part}
+                                </a>
+                              );
+                            }
+                            return part;
+                          });
+                        };
+
+                        try {
+                          // Try to parse the content as JSON first
+                          const parsedContent = JSON.parse(selectedSubmission.content);
+                          
+                          // If it's an object with originalContent, extract that
+                          if (parsedContent.originalContent) {
+                            // Check if originalContent is a string that contains JSON
+                            if (typeof parsedContent.originalContent === 'string') {
+                              try {
+                                const innerContent = JSON.parse(parsedContent.originalContent);
+                                if (innerContent.originalContent) {
+                                  return (
+                                    <div>
+                                      <div className="text-gray-300 whitespace-pre-wrap mb-2">
+                                        {makeLinksClickable(innerContent.originalContent || 'No content provided')}
+                                      </div>
+                                      <div className="text-xs text-gray-400 border-t border-gray-600 pt-2">
+                                        <p>Brief: {innerContent.briefTitle || 'Unknown'}</p>
+                                        <p>Approved: {innerContent.approvedAt ? new Date(innerContent.approvedAt).toLocaleString() : 'Not approved'}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              } catch (e) {
+                                // If inner parsing fails, show the string content
+                                return (
+                                  <div>
+                                    <div className="text-gray-300 whitespace-pre-wrap mb-2">
+                                      {makeLinksClickable(parsedContent.originalContent)}
+                                    </div>
+                                    <div className="text-xs text-gray-400 border-t border-gray-600 pt-2">
+                                      <p>Brief: {parsedContent.briefTitle || 'Unknown'}</p>
+                                      <p>Approved: {parsedContent.approvedAt ? new Date(parsedContent.approvedAt).toLocaleString() : 'Not approved'}</p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            }
+                          }
+                          
+                          // If it's just a string, show it directly with clickable links
+                          return <div className="text-gray-300 whitespace-pre-wrap">{makeLinksClickable(selectedSubmission.content)}</div>;
+                        } catch (e) {
+                          // If JSON parsing fails, show the raw content with clickable links
+                          return <div className="text-gray-300 whitespace-pre-wrap">{makeLinksClickable(selectedSubmission.content)}</div>;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+
+              </div>
+
+              <div className="flex justify-between mt-6">
+                <button
+                  onClick={() => {
+                    setShowSubmissionModal(false);
+                    setSelectedSubmission(null);
+                  }}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-500 text-white rounded-lg font-semibold transition-all duration-200"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSubmissionModal(false);
+                    setSelectedSubmission(null);
+                  }}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 border border-gray-500 text-white rounded-lg font-semibold transition-all duration-200"
+                >
+                  Close
                 </button>
               </div>
             </div>

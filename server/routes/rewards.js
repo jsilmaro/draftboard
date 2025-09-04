@@ -135,23 +135,54 @@ router.post('/distribute/:poolId', auth, async (req, res) => {
     }
 
     // Distribute rewards to creators
+    console.log('🎁 Starting reward distribution:', { poolId, distributions });
     const distributionResults = [];
     for (const [creatorId, amount] of Object.entries(distributions)) {
       if (amount > 0) {
-        // Update creator wallet
-        await prisma.creatorWallet.upsert({
+        console.log(`💰 Distributing ${amount} to creator ${creatorId}`);
+        // Get or create creator wallet
+        const creatorWallet = await prisma.creatorWallet.upsert({
           where: { creatorId: creatorId },
           update: {
             balance: { increment: amount },
+            totalEarned: { increment: amount },
             updatedAt: new Date()
           },
           create: {
             creatorId: creatorId,
-            balance: amount
+            balance: amount,
+            totalEarned: amount
           }
         });
+        
+        console.log(`✅ Wallet updated for creator ${creatorId}:`, {
+          walletId: creatorWallet.id,
+          newBalance: creatorWallet.balance,
+          amountAdded: amount
+        });
 
-        // Record transaction
+        // Record wallet transaction
+        const walletTransaction = await prisma.walletTransaction.create({
+          data: {
+            walletId: creatorWallet.id,
+            type: 'reward',
+            amount: amount,
+            description: `Reward from brief: ${rewardPool.brief.title}`,
+            referenceId: rewardPool.id,
+            balanceBefore: creatorWallet.balance - amount,
+            balanceAfter: creatorWallet.balance
+          }
+        });
+        
+        console.log(`📝 Wallet transaction created:`, {
+          transactionId: walletTransaction.id,
+          walletId: creatorWallet.id,
+          amount: amount,
+          balanceBefore: walletTransaction.balanceBefore,
+          balanceAfter: walletTransaction.balanceAfter
+        });
+
+        // Record general transaction
         await prisma.transaction.create({
           data: {
             userId: creatorId,

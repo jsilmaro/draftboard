@@ -2210,8 +2210,10 @@ app.get('/api/brands/briefs/:id/submissions', authenticateToken, async (req, res
       include: {
         creator: {
           select: {
+            id: true,
             fullName: true,
-            userName: true
+            userName: true,
+            email: true
           }
         }
       },
@@ -2227,7 +2229,13 @@ app.get('/api/brands/briefs/:id/submissions', authenticateToken, async (req, res
       content: sub.content,
       files: sub.files,
       submittedAt: sub.submittedAt,
-      amount: sub.amount
+      amount: sub.amount,
+      creator: {
+        id: sub.creator.id,
+        fullName: sub.creator.fullName,
+        userName: sub.creator.userName,
+        email: sub.creator.email
+      }
     }));
 
     res.json(transformedSubmissions);

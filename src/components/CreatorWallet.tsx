@@ -51,7 +51,7 @@ const CreatorWallet: React.FC = () => {
             'Content-Type': 'application/json'
           }
         }),
-        fetch('/api/rewards/creator/earnings', {
+        fetch('/api/creators/earnings', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -65,14 +65,40 @@ const CreatorWallet: React.FC = () => {
         })
       ]);
 
-      const walletData = walletResponse.ok ? await walletResponse.json() : { balance: 0 };
-      const earningsData = earningsResponse.ok ? await earningsResponse.json() : { totalEarnings: 0, recentRewards: [] };
+      const walletData = walletResponse.ok ? await walletResponse.json() : { balance: 0, transactions: [] };
+      const earningsData = earningsResponse.ok ? await earningsResponse.json() : [];
       const withdrawalData = withdrawalResponse.ok ? await withdrawalResponse.json() : [];
+
+      // Calculate total earnings from the earnings data
+      const totalEarnings = earningsData.reduce((sum: number, earning: { amount?: number }) => sum + (earning.amount || 0), 0);
+
+      // Use wallet transactions if available, otherwise use earnings data
+      let recentTransactions = [];
+      
+      if (walletData.transactions && walletData.transactions.length > 0) {
+        // Use actual wallet transactions
+        recentTransactions = walletData.transactions.map((transaction: { id: string; type: string; amount: number; description: string; createdAt: string }) => ({
+          id: transaction.id,
+          type: transaction.type,
+          amount: transaction.amount,
+          description: transaction.description,
+          createdAt: transaction.createdAt
+        }));
+      } else {
+        // Fallback to earnings data
+        recentTransactions = earningsData.map((earning: { id: string; amount: number; briefTitle: string; paidAt: string }) => ({
+          id: earning.id,
+          type: 'reward',
+          amount: earning.amount,
+          description: `Reward from: ${earning.briefTitle}`,
+          createdAt: earning.paidAt
+        }));
+      }
 
       setWalletData({
         balance: walletData.balance || 0,
-        totalEarnings: earningsData.totalEarnings || 0,
-        recentTransactions: earningsData.recentRewards || []
+        totalEarnings: totalEarnings,
+        recentTransactions: recentTransactions
       });
       
       setWithdrawalRequests(withdrawalData);
@@ -204,7 +230,7 @@ const CreatorWallet: React.FC = () => {
             <h3 className="text-sm font-medium opacity-90">Total Earnings</h3>
             <p className="text-2xl font-bold">${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
           </div>
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
             <h3 className="text-sm font-medium opacity-90">Pending Requests</h3>
             <p className="text-2xl font-bold">{pendingWithdrawals.length}</p>
           </div>
