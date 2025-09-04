@@ -15,6 +15,7 @@ const prisma = require('./prisma');
 const paymentRoutes = require('./routes/payments');
 const rewardRoutes = require('./routes/rewards');
 const adminRoutes = require('./routes/admin');
+const searchRoutes = require('./routes/search');
 
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
@@ -196,6 +197,7 @@ app.get('/api', (req, res) => {
 app.use('/api/payments', paymentRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/search', searchRoutes);
 
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);

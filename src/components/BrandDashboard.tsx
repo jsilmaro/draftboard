@@ -122,6 +122,22 @@ interface EditingRewards {
   type?: string;
 }
 
+interface SearchResult {
+  type: 'brief' | 'submission';
+  id: string;
+  title: string;
+  description: string;
+  brandName: string;
+  brandContact?: string;
+  category: string;
+  reward: number;
+  deadline: string;
+  location?: string;
+  submissionsCount?: number;
+  status?: string;
+  data: Brief | Submission;
+}
+
 
 
 const BrandDashboard: React.FC = () => {
@@ -162,6 +178,12 @@ const BrandDashboard: React.FC = () => {
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const [editIsLoading, setEditIsLoading] = useState(false);
   const [editAmountOfWinners, setEditAmountOfWinners] = useState(1);
@@ -764,6 +786,108 @@ const BrandDashboard: React.FC = () => {
     } else {
       setActiveTab(tabId);
     }
+  };
+
+  // Search functionality
+  const handleSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setShowSearchResults(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
+
+      // Search across briefs, creators, and submissions using database
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const results = await response.json();
+        setSearchResults(results);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('API search failed, falling back to local search');
+        // Fallback: search locally in available data
+        const localResults = searchLocally(searchQuery);
+        setSearchResults(localResults);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Search error:', error);
+      // Fallback: search locally in available data
+      const localResults = searchLocally(searchQuery);
+      setSearchResults(localResults);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const searchLocally = (query: string): SearchResult[] => {
+    const results: SearchResult[] = [];
+    const lowerQuery = query.toLowerCase();
+
+    // Search in created briefs
+    (briefs || []).forEach((brief: Brief) => {
+      if (
+        brief.title.toLowerCase().includes(lowerQuery) ||
+        (brief.description && brief.description.toLowerCase().includes(lowerQuery)) ||
+        (brief.requirements && brief.requirements.toLowerCase().includes(lowerQuery))
+      ) {
+        results.push({
+          type: 'brief',
+          id: brief.id,
+          title: brief.title,
+          description: brief.description || '',
+          brandName: user?.companyName || 'Your Brand',
+          category: 'Brief',
+          reward: brief.reward,
+          deadline: brief.deadline,
+          data: brief
+        });
+      }
+    });
+
+    // Search in submissions
+    submissions.forEach(submission => {
+      if (
+        submission.briefTitle.toLowerCase().includes(lowerQuery) ||
+        submission.creatorName.toLowerCase().includes(lowerQuery) ||
+        submission.status.toLowerCase().includes(lowerQuery)
+      ) {
+        results.push({
+          type: 'submission',
+          id: submission.id,
+          title: submission.briefTitle,
+          description: `Creator: ${submission.creatorName} - Status: ${submission.status}`,
+          brandName: submission.creatorName,
+          category: 'Submission',
+          reward: (submission as Submission & { reward?: number }).reward || 0,
+          deadline: submission.submittedAt,
+          data: submission
+        });
+      }
+    });
+
+    return results;
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit(e);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
   };
 
   const navigation = [
@@ -2593,6 +2717,154 @@ const BrandDashboard: React.FC = () => {
     );
   };
 
+  const renderSearchResults = () => (
+    <div className="space-y-6">
+      {/* Search Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Search Results</h1>
+          <p className="text-gray-400">
+            {isSearching ? 'Searching...' : `Found ${searchResults.length} results for "${searchQuery}"`}
+          </p>
+        </div>
+        <button
+          onClick={clearSearch}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+        >
+          Clear Search
+        </button>
+      </div>
+
+      {/* Loading State */}
+      {isSearching && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          <span className="ml-3 text-gray-400">Searching...</span>
+        </div>
+      )}
+
+      {/* No Results */}
+      {!isSearching && searchResults.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
+          <p className="text-gray-400">Try searching with different keywords</p>
+        </div>
+      )}
+
+      {/* Search Results Grid */}
+      {!isSearching && searchResults.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {searchResults.map((result, index) => (
+            <div key={`${result.type}-${result.id}-${index}`} className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                    result.type === 'brief' ? 'bg-blue-600' : 'bg-green-600'
+                  }`}>
+                    {result.type === 'brief' ? (
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      result.type === 'brief' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {result.type === 'brief' ? 'Brief' : 'Submission'}
+                    </span>
+                  </div>
+                </div>
+                {result.reward && (
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-400">${result.reward}</p>
+                  </div>
+                )}
+              </div>
+
+              <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">{result.title}</h3>
+              <p className="text-gray-400 text-sm mb-4 line-clamp-3">{result.description}</p>
+              
+              {/* Additional info for briefs */}
+              {result.type === 'brief' && (
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                  {result.location && (
+                    <span className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {result.location}
+                    </span>
+                  )}
+                  {result.submissionsCount !== undefined && (
+                    <span className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      {result.submissionsCount} submissions
+                    </span>
+                  )}
+                  {result.status && (
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      result.status === 'active' ? 'bg-green-100 text-green-800' :
+                      result.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                      result.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {result.status}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center text-gray-400">
+                  <span className="mr-2">{result.type === 'brief' ? 'by' : 'from'}</span>
+                  <span className="font-medium text-white">{result.brandName}</span>
+                  {result.brandContact && (
+                    <span className="ml-1 text-gray-500">({result.brandContact})</span>
+                  )}
+                </div>
+                {result.deadline && (
+                  <span className="text-gray-400">
+                    {new Date(result.deadline).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <button
+                  onClick={() => {
+                    if (result.type === 'brief') {
+                      setSelectedBrief(result.data as Brief);
+                      setShowViewModal(true);
+                    } else {
+                      setSelectedSubmission(result.data as Submission);
+                      setShowReviewModal(true);
+                    }
+                  }}
+                  className="w-full py-2 px-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 font-medium"
+                >
+                  {result.type === 'brief' ? 'View Brief' : 'View Submission'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -2694,11 +2966,26 @@ const BrandDashboard: React.FC = () => {
           <div className="relative">
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
               placeholder="Search creators, briefs, or submissions..."
               className="w-full pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
+              onClick={handleSearchSubmit}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2856,11 +3143,26 @@ const BrandDashboard: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
                     placeholder="Search creators, briefs, or submissions..."
                     className="w-80 pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="absolute right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
                   <button
                     type="button"
+                    onClick={handleSearchSubmit}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2878,7 +3180,7 @@ const BrandDashboard: React.FC = () => {
         </div>
         
         <div className="p-4 lg:p-8">
-          {renderContent()}
+          {showSearchResults ? renderSearchResults() : renderContent()}
         </div>
       </div>
 
