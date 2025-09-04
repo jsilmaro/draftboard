@@ -774,12 +774,11 @@ const BrandDashboard: React.FC = () => {
     { id: 'create', label: 'Create a Brief', icon: 'create' },
     { id: 'creators', label: 'Creators', icon: 'creators' },
     { id: 'statistics', label: 'Statistics', icon: 'statistics' },
-    { id: 'rewards-payments', label: 'Rewards', icon: 'rewards-payments' },
     { id: 'payments', label: 'Wallet & Payments', icon: 'payments' },
   ];
 
   const accountNav = [
-    { id: 'awards', label: 'Rewards', icon: 'awards' },
+    { id: 'rewards-payments', label: 'Rewards', icon: 'rewards-payments' },
     { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettingsModal(true) },
     { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
@@ -1837,216 +1836,6 @@ const BrandDashboard: React.FC = () => {
     </div>
   );
 
-  const renderRewards = () => {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">Rewards Management</h2>
-          <button 
-            onClick={() => setActiveTab('briefs')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Manage Briefs
-          </button>
-        </div>
-
-        {/* Overview Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
-            <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">📋</div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Total Briefs</h3>
-                <p className="text-3xl font-bold text-gray-200">{briefs.length}</p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-300">Active and draft briefs</p>
-          </div>
-
-          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
-            <div className="flex items-center mb-4">
-              <img src="/icons/Green_icons/MoneyBag1.png" alt="Money" className="w-8 h-8 mr-3" />
-              <div>
-                <h3 className="text-lg font-semibold text-white">Rewards Configured</h3>
-                <p className="text-3xl font-bold text-emerald-500">
-                  {briefs.filter(brief => brief.rewardType).length}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-300">Briefs with reward types set</p>
-          </div>
-
-          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
-            <div className="flex items-center mb-4">
-              <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-8 h-8 mr-3" />
-              <div>
-                <h3 className="text-lg font-semibold text-white">Total Winners</h3>
-                <p className="text-3xl font-bold text-purple-600">
-                  {briefs.reduce((total, brief) => total + (brief.amountOfWinners || 0), 0)}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-300">Across all briefs</p>
-          </div>
-        </div>
-
-        {/* Briefs with Rewards Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Briefs with Rewards</h3>
-          {briefs.filter(brief => brief.rewardType).length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {briefs.filter(brief => brief.rewardType).map((brief) => (
-                <BrandBriefCard
-                  key={brief.id}
-                  brief={{
-                    ...brief,
-                    description: brief.description || '',
-                    amountOfWinners: brief.amountOfWinners || 1,
-                    brand: {
-                      id: brief.id,
-                      companyName: 'Your Brand',
-                      logo: undefined
-                    }
-                  }}
-                  onViewClick={(_briefData) => handleViewBrief(brief)}
-                  onEditClick={(_briefData) => handleEditBrief(brief)}
-                  onEditRewardsClick={(_briefData) => {
-                          setEditingRewards({
-                            brief,
-                            rewardData: null,
-                            type: 'edit'
-                          });
-                          setEditAmountOfWinners(brief.amountOfWinners || 1);
-                          // Initialize winner rewards
-                          const initialRewards = [];
-                          for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                            initialRewards.push({
-                              position: i,
-                              cashAmount: 0,
-                              creditAmount: 0,
-                              prizeDescription: ''
-                            });
-                          }
-                          setEditWinnerRewards(initialRewards);
-                          setShowEditRewardsModal(true);
-                        }}
-                  onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
-                  onViewSubmissionsClick={() => {
-                          setActiveTab('submissions');
-                          setSubmissionFilter('all');
-                        }}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-700">
-              <div className="text-4xl mb-4">🎁</div>
-              <h3 className="text-lg font-semibold text-white mb-2">No rewards configured yet</h3>
-              <p className="text-gray-300 mb-4">Start by creating a brief and setting up rewards for your campaigns</p>
-              <div className="flex justify-center space-x-3">
-                <button 
-                  onClick={() => navigate('/brand/create-brief')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Create Brief
-                </button>
-                <button 
-                  onClick={() => setActiveTab('briefs')}
-                  className="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  View All Briefs
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Briefs without Rewards Section */}
-        {briefs.filter(brief => !brief.rewardType).length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Briefs Needing Rewards</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {briefs.filter(brief => !brief.rewardType).map((brief) => (
-                <BrandBriefCard
-                  key={brief.id}
-                  brief={{
-                    ...brief,
-                    description: brief.description || '',
-                    amountOfWinners: brief.amountOfWinners || 1,
-                    brand: {
-                      id: brief.id,
-                      companyName: 'Your Brand',
-                      logo: undefined
-                    }
-                  }}
-                  onViewClick={(_briefData) => handleViewBrief(brief)}
-                  onEditClick={(_briefData) => handleEditBrief(brief)}
-                  onEditRewardsClick={(_briefData) => {
-                        setEditingRewards({
-                          brief,
-                          rewardData: null,
-                          type: 'edit'
-                        });
-                        setEditAmountOfWinners(brief.amountOfWinners || 1);
-                        // Initialize winner rewards
-                        const initialRewards = [];
-                        for (let i = 1; i <= (brief.amountOfWinners || 1); i++) {
-                          initialRewards.push({
-                            position: i,
-                            cashAmount: 0,
-                            creditAmount: 0,
-                            prizeDescription: ''
-                          });
-                        }
-                        setEditWinnerRewards(initialRewards);
-                        setShowEditRewardsModal(true);
-                      }}
-                  onSelectWinnersClick={(_briefData) => handleSelectWinners(brief)}
-                  onViewSubmissionsClick={() => {
-                    setActiveTab('submissions');
-                    setSubmissionFilter('all');
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
-              onClick={() => navigate('/brand/create-brief')}
-              className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-left"
-            >
-              <div className="text-2xl mb-2">📝</div>
-              <h4 className="font-semibold mb-1">Create New Brief</h4>
-              <p className="text-sm text-blue-100">Start a new campaign with rewards</p>
-            </button>
-            
-            <button 
-              onClick={() => setActiveTab('briefs')}
-              className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors text-left"
-            >
-              <div className="text-2xl mb-2">📋</div>
-              <h4 className="font-semibold mb-1">Manage Briefs</h4>
-              <p className="text-sm text-green-100">View and edit all your briefs</p>
-            </button>
-            
-            <button 
-              onClick={() => setActiveTab('submissions')}
-              className="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors text-left"
-            >
-              <div className="text-2xl mb-2">📥</div>
-              <h4 className="font-semibold mb-1">Review Submissions</h4>
-              <p className="text-sm text-purple-100">Evaluate creator submissions</p>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const renderSettings = () => (
     <div className="space-y-6">
@@ -2837,8 +2626,6 @@ const BrandDashboard: React.FC = () => {
             />
           </Suspense>
         );
-      case 'awards':
-        return renderRewards();
       case 'settings':
         return renderSettings();
       default:
@@ -3037,7 +2824,6 @@ const BrandDashboard: React.FC = () => {
                  activeTab === 'rewards-payments' ? 'Rewards & Payments' :
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'payments' ? 'Payments' :
-                 activeTab === 'awards' ? 'Rewards' :
                  activeTab === 'settings' ? 'Settings' : 'Dashboard'}
               </h1>
               
