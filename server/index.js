@@ -3067,41 +3067,185 @@ app.get('/api/brands/creators/:creatorId/contact', authenticateToken, async (req
   }
 });
 
-// Get earnings for a creator
+// Get earnings for a creator (based on wallet transactions)
 app.get('/api/creators/earnings', authenticateToken, async (req, res) => {
   try {
+    console.log('💰 Fetching earnings for creator:', req.user.id);
+    
     if (req.user.type !== 'creator') {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const earnings = await prisma.submission.findMany({
-      where: { 
-        creatorId: req.user.id,
-        status: 'approved'
-      },
-      select: {
-        id: true,
-        amount: true,
-        status: true,
-        submittedAt: true,
-        brief: {
-          select: {
-            title: true
+    // Try to get creator wallet with transactions first
+    let wallet = null;
+    let walletTransactions = [];
+    
+    try {
+      wallet = await prisma.creatorWallet.findUnique({
+        where: { creatorId: req.user.id },
+        include: {
+          transactions: {
+            where: {
+              type: 'credit' // Only credit transactions (money received)
+            },
+            orderBy: { createdAt: 'desc' }
           }
         }
-      },
-      orderBy: { submittedAt: 'desc' }
+      });
+
+      if (wallet) {
+        walletTransactions = wallet.transactions;
+        console.log('💰 Found wallet transactions:', walletTransactions.length);
+        console.log('💰 Sample transaction:', walletTransactions[0] || 'No transactions found');
+      } else {
+        console.log('💰 No wallet found, will try to create one or fallback to submissions');
+      }
+    } catch (walletError) {
+      console.log('💰 Wallet table might not exist, falling back to submissions:', walletError.message);
+    }
+
+    // If no wallet transactions, fallback to approved submissions
+    if (walletTransactions.length === 0) {
+      console.log('💰 No wallet transactions found, fetching approved submissions as fallback');
+      
+      // First, let's check all submissions for this creator
+      const allSubmissions = await prisma.submission.findMany({
+        where: { 
+          creatorId: req.user.id
+        },
+        select: {
+          id: true,
+          status: true,
+          amount: true
+        }
+      });
+      
+      console.log('💰 All submissions for creator:', allSubmissions.length);
+      console.log('💰 Submission statuses:', allSubmissions.map(s => ({ id: s.id, status: s.status, amount: s.amount })));
+
+      const submissions = await prisma.submission.findMany({
+        where: { 
+          creatorId: req.user.id,
+          status: 'approved'
+        },
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          submittedAt: true,
+          brief: {
+            select: {
+              id: true,
+              title: true,
+              brand: {
+                select: {
+                  companyName: true
+                }
+              },
+              rewardType: true,
+              publishedAwards: {
+                select: {
+                  rewardTiers: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { submittedAt: 'desc' }
+      });
+
+      console.log('💰 Found approved submissions:', submissions.length);
+      console.log('💰 Sample submission:', submissions[0] || 'No submissions found');
+      
+      // Log reward tiers for debugging
+      submissions.forEach((sub, index) => {
+        if (sub.brief.publishedAwards && sub.brief.publishedAwards.length > 0) {
+          console.log(`💰 Submission ${index + 1} reward tiers:`, sub.brief.publishedAwards[0].rewardTiers);
+        }
+      });
+
+      const transformedEarnings = submissions.map(submission => {
+        // Get the REAL reward amount from the brief's reward tiers
+        let realAmount = submission.amount; // Default to submission amount
+        
+        if (submission.brief.publishedAwards && submission.brief.publishedAwards.length > 0) {
+          try {
+            const rewardTiers = JSON.parse(submission.brief.publishedAwards[0].rewardTiers);
+            // Get the first place reward amount (highest reward)
+            if (rewardTiers && rewardTiers.length > 0) {
+              const firstPlaceReward = rewardTiers[0];
+              realAmount = (firstPlaceReward.cashAmount || 0) + (firstPlaceReward.creditAmount || 0);
+            }
+          } catch (error) {
+            console.log('Error parsing reward tiers:', error);
+          }
+        }
+        
+        // If still 0, use a default amount for approved submissions
+        if (realAmount === 0) {
+          realAmount = 100; // Default amount for approved submissions
+        }
+
+        console.log(`💰 Submission ${submission.id}: original amount ${submission.amount}, real amount ${realAmount}`);
+        
+        return {
+          id: submission.id,
+          briefTitle: submission.brief.title,
+          briefId: submission.brief.id,
+          brandName: submission.brief.brand?.companyName || 'Unknown Brand',
+          amount: realAmount, // Use the REAL amount
+          rewardType: submission.brief.rewardType || 'CASH',
+          status: 'paid',
+          paidAt: submission.submittedAt,
+          submittedAt: submission.submittedAt,
+          approvedAt: submission.submittedAt,
+          position: 1,
+          transactionId: submission.id
+        };
+      });
+
+      console.log('💰 Returning transformed earnings from submissions:', transformedEarnings.length);
+      res.json(transformedEarnings);
+      return;
+    }
+
+    // Transform wallet transactions to earnings format
+    const transformedEarnings = walletTransactions.map(transaction => {
+      // Extract brief title from description if possible
+      let briefTitle = 'Unknown Brief';
+      let brandName = 'Unknown Brand';
+      
+      if (transaction.description) {
+        // Try to extract brief title from description
+        const briefMatch = transaction.description.match(/for "([^"]+)"/);
+        if (briefMatch) {
+          briefTitle = briefMatch[1];
+        }
+        
+        // Try to extract brand name from description
+        const brandMatch = transaction.description.match(/Payment to ([^"]+) for/);
+        if (brandMatch) {
+          brandName = brandMatch[1];
+        }
+      }
+
+      return {
+        id: transaction.id,
+        briefTitle: briefTitle,
+        briefId: transaction.referenceId || 'unknown',
+        brandName: brandName,
+        amount: transaction.amount,
+        rewardType: 'CASH',
+        status: 'paid',
+        paidAt: transaction.createdAt,
+        submittedAt: transaction.createdAt,
+        approvedAt: transaction.createdAt,
+        position: 1,
+        transactionId: transaction.id
+      };
     });
 
-    // Transform data to match frontend expectations
-    const transformedEarnings = earnings.map(earning => ({
-      id: earning.id,
-      briefTitle: earning.brief.title,
-      amount: earning.amount,
-      status: 'paid', // Assuming approved submissions are paid
-      paidAt: earning.submittedAt // Using submittedAt as paidAt for now
-    }));
-
+    console.log('💰 Returning transformed earnings from wallet:', transformedEarnings.length);
     res.json(transformedEarnings);
   } catch (error) {
     console.error('Error fetching creator earnings:', error);

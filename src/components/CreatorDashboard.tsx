@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
@@ -65,6 +65,23 @@ interface Earning {
   amount: number;
   status: 'paid' | 'pending' | 'processing';
   paidAt?: string;
+  briefId?: string;
+  brandName?: string;
+  rewardType?: 'CASH' | 'CREDIT' | 'PRIZES';
+  position?: number;
+  submittedAt?: string;
+  approvedAt?: string;
+  transactionId?: string;
+}
+
+interface SubmissionData {
+  id: string;
+  briefTitle?: string;
+  briefId: string;
+  brandName?: string;
+  amount: number;
+  status: string;
+  submittedAt: string;
 }
 
 interface SearchResult {
@@ -89,6 +106,13 @@ const CreatorDashboard: React.FC = () => {
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [earningsFilter, setEarningsFilter] = useState<'all' | 'paid' | 'pending' | 'processing'>('all');
+  const [earningsSortBy, setEarningsSortBy] = useState<'date' | 'amount' | 'brief'>('date');
+  const [earningsSortOrder, setEarningsSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [selectedEarning, setSelectedEarning] = useState<Earning | null>(null);
+  const [showEarningDetails, setShowEarningDetails] = useState(false);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+  const [earningsError, setEarningsError] = useState<string | null>(null);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -137,15 +161,13 @@ const CreatorDashboard: React.FC = () => {
     submissionsThisWeek: 0,
     approvedSubmissions: 0,
     totalEarnings: 0,
+    paidEarnings: 0,
+    pendingEarnings: 0,
+    thisMonthEarnings: 0,
     avgSubmissions: 0
   });
 
-  useEffect(() => {
-    // Fetch data from API
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -177,19 +199,11 @@ const CreatorDashboard: React.FC = () => {
 
 
 
-      // Fetch earnings
-      const earningsResponse = await fetch('/api/creators/earnings', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      let earningsData = [];
-      if (earningsResponse.ok) {
-        earningsData = await earningsResponse.json();
-        setEarnings(earningsData);
-      }
+      // Fetch earnings using the dedicated function
+      await fetchEarningsData(); // Fetch real earnings data
 
       // Calculate metrics with the fetched data
       const approvedSubmissions = submissionsData.filter((s: Submission) => s.status === 'approved').length;
-      const totalEarnings = earningsData.reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
       const submissionsThisWeek = submissionsData.filter((s: Submission) => {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
@@ -200,15 +214,28 @@ const CreatorDashboard: React.FC = () => {
         activeBriefs: briefsData.length,
         submissionsThisWeek,
         approvedSubmissions,
-        totalEarnings,
+        totalEarnings: earnings.reduce((sum, e) => sum + e.amount, 0),
+        paidEarnings: 0, // Will be updated when earnings are fetched
+        pendingEarnings: 0, // Will be updated when earnings are fetched
+        thisMonthEarnings: 0, // Will be updated when earnings are fetched
         avgSubmissions: submissionsData.length
       });
     } catch (error) {
       // Error fetching dashboard data
     }
-  };
+  }, [earnings]);
 
+  useEffect(() => {
+    // Fetch data from API
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
+  // Fetch earnings data when earnings tab is active
+  useEffect(() => {
+    if (activeTab === 'earnings') {
+      fetchEarningsData(); // Fetch real earnings data from database
+    }
+  }, [activeTab]);
 
   // Search functionality
   const handleSearchSubmit = async (e: React.FormEvent) => {
@@ -309,6 +336,176 @@ const CreatorDashboard: React.FC = () => {
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchResults(false);
+  };
+
+  // Helper functions for earnings
+  const generateEarningsCSV = (earningsData: Earning[]) => {
+    const headers = ['Brief Title', 'Brand Name', 'Amount', 'Reward Type', 'Status', 'Submitted Date', 'Paid Date', 'Position'];
+    const rows = earningsData.map(earning => [
+      earning.briefTitle,
+      earning.brandName || 'Unknown Brand',
+      earning.amount.toFixed(2),
+      earning.rewardType || 'Cash',
+      earning.status,
+      earning.submittedAt ? new Date(earning.submittedAt).toLocaleDateString() : '',
+      earning.paidAt ? new Date(earning.paidAt).toLocaleDateString() : '',
+      earning.position || ''
+    ]);
+    
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
+  };
+
+  const downloadCSV = (csvContent: string, filename: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+  // Dedicated function to fetch earnings data from database
+  const fetchEarningsData = async () => {
+    try {
+      setEarningsLoading(true);
+      setEarningsError(null);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/creators/earnings', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch earnings: ${response.status}`);
+      }
+
+      const earningsData = await response.json();
+      // eslint-disable-next-line no-console
+      console.log('💰 Frontend received earnings data from wallet:', earningsData);
+      // eslint-disable-next-line no-console
+      console.log('💰 Earnings data length:', earningsData?.length || 0);
+      // eslint-disable-next-line no-console
+      console.log('💰 First earning:', earningsData?.[0] || 'No earnings');
+      setEarnings(earningsData || []);
+
+      // Calculate detailed metrics from wallet transactions
+      const totalEarnings = (earningsData || []).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      const paidEarnings = (earningsData || []).filter((e: Earning) => e.status === 'paid').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      const pendingEarnings = (earningsData || []).filter((e: Earning) => e.status === 'pending').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      
+      // Calculate this month's earnings
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const thisMonthEarnings = (earningsData || []).filter((e: Earning) => {
+        const earningDate = new Date(e.paidAt || e.submittedAt || new Date());
+        return earningDate.getMonth() === currentMonth && earningDate.getFullYear() === currentYear;
+      }).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+
+      // eslint-disable-next-line no-console
+      console.log('💰 Calculated metrics:', {
+        totalEarnings,
+        paidEarnings,
+        pendingEarnings,
+        thisMonthEarnings
+      });
+
+      setMetrics(prev => ({
+        ...prev,
+        totalEarnings,
+        paidEarnings,
+        pendingEarnings,
+        thisMonthEarnings
+      }));
+
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching earnings:', error);
+      setEarningsError(error instanceof Error ? error.message : 'Failed to fetch earnings');
+      setEarnings([]); // Clear earnings on error
+    } finally {
+      setEarningsLoading(false);
+    }
+  };
+
+  // Function to fetch all submissions (including pending ones) for demonstration
+  const fetchAllSubmissions = async () => {
+    try {
+      setEarningsLoading(true);
+      setEarningsError(null);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch all submissions to show potential earnings
+      const response = await fetch('/api/creators/submissions', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch submissions: ${response.status}`);
+      }
+
+      const submissionsData = await response.json();
+      // eslint-disable-next-line no-console
+      console.log('📝 Frontend received submissions data:', submissionsData);
+      
+      // Transform submissions to earnings format
+      const potentialEarnings: Earning[] = submissionsData.map((submission: SubmissionData) => ({
+        id: submission.id,
+        briefTitle: submission.briefTitle || 'Unknown Brief',
+        briefId: submission.briefId,
+        brandName: submission.brandName || 'Unknown Brand',
+        amount: submission.amount || 0, // Use the actual amount from database
+        rewardType: 'CASH' as const,
+        status: submission.status === 'approved' ? 'paid' as const : 
+                submission.status === 'pending' ? 'pending' as const : 'processing' as const,
+        submittedAt: submission.submittedAt,
+        approvedAt: submission.status === 'approved' ? submission.submittedAt : undefined,
+        paidAt: submission.status === 'approved' ? submission.submittedAt : undefined,
+        position: 1
+      }));
+
+      setEarnings(potentialEarnings);
+
+      // Calculate detailed metrics from submissions
+      const totalEarnings = potentialEarnings.reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      const paidEarnings = potentialEarnings.filter((e: Earning) => e.status === 'paid').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      const pendingEarnings = potentialEarnings.filter((e: Earning) => e.status === 'pending').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+      
+      // Calculate this month's earnings
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const thisMonthEarnings = potentialEarnings.filter((e: Earning) => {
+        const earningDate = new Date(e.paidAt || e.submittedAt || new Date());
+        return earningDate.getMonth() === currentMonth && earningDate.getFullYear() === currentYear;
+      }).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
+
+      setMetrics(prev => ({
+        ...prev,
+        totalEarnings,
+        paidEarnings,
+        pendingEarnings,
+        thisMonthEarnings
+      }));
+
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching submissions:', error);
+      setEarningsError(error instanceof Error ? error.message : 'Failed to fetch submissions');
+      setEarnings([]);
+    } finally {
+      setEarningsLoading(false);
+    }
   };
 
   // Recent activity carousel
@@ -544,7 +741,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
           </div>
           <div className="text-white">
-            <p className="text-3xl font-bold mb-2">$0</p>
+            <p className="text-3xl font-bold mb-2">${metrics.totalEarnings.toFixed(2)}</p>
             <p className="text-sm opacity-90">Total Earnings</p>
           </div>
         </div>
@@ -1004,45 +1201,259 @@ const CreatorDashboard: React.FC = () => {
 
 
 
-  const renderEarnings = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Earnings</h2>
+  const renderEarnings = () => {
+    // Filter and sort earnings
+    const filteredEarnings = earnings.filter(earning => 
+      earningsFilter === 'all' || earning.status === earningsFilter
+    );
+
+    const sortedEarnings = [...filteredEarnings].sort((a, b) => {
+      let comparison = 0;
       
-      {/* Earnings Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
-          <h3 className="text-lg font-semibold text-white">Total Earnings</h3>
-          <p className="text-3xl font-bold text-emerald-500">${metrics.totalEarnings}</p>
+      switch (earningsSortBy) {
+        case 'amount': {
+          comparison = a.amount - b.amount;
+          break;
+        }
+        case 'brief': {
+          comparison = a.briefTitle.localeCompare(b.briefTitle);
+          break;
+        }
+        case 'date':
+        default: {
+          const dateA = new Date(a.paidAt || a.submittedAt || 0);
+          const dateB = new Date(b.paidAt || b.submittedAt || 0);
+          comparison = dateA.getTime() - dateB.getTime();
+          break;
+        }
+      }
+      
+      return earningsSortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    // Statistics are calculated in metrics state and used in summary cards
+
+    return (
+    <div className="space-y-6">
+        <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-bold text-white">Earnings</h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => fetchEarningsData()}
+              disabled={earningsLoading}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-500 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg className={`w-4 h-4 ${earningsLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>{earningsLoading ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+            <button
+              onClick={() => {
+                const csvContent = generateEarningsCSV(earnings);
+                downloadCSV(csvContent, 'earnings.csv');
+              }}
+              disabled={earnings.length === 0}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => fetchAllSubmissions()}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>View All Submissions</span>
+            </button>
+          </div>
         </div>
-        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
-          <h3 className="text-lg font-semibold text-white">This Month</h3>
-          <p className="text-3xl font-bold text-emerald-500">${earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0)}</p>
+        
+        {/* Enhanced Earnings Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-emerald-600 to-green-600 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-400 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/MoneyBag1.png" alt="Total Earnings" className="w-6 h-6" />
         </div>
-        <div className="bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-gray-600/30">
-          <h3 className="text-lg font-semibold text-white">Pending</h3>
-          <p className="text-3xl font-bold text-yellow-400">${earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)}</p>
+        </div>
+            <div className="text-white">
+              <p className="text-3xl font-bold mb-2">${metrics.totalEarnings.toFixed(2)}</p>
+              <p className="text-sm opacity-90">Total Earnings</p>
         </div>
       </div>
 
-      {/* Earnings Table */}
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">💰</span>
+              </div>
+            </div>
+            <div className="text-white">
+              <p className="text-3xl font-bold mb-2">${metrics.paidEarnings.toFixed(2)}</p>
+              <p className="text-sm opacity-90">Paid</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-yellow-600 to-orange-600 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">⏳</span>
+              </div>
+            </div>
+            <div className="text-white">
+              <p className="text-3xl font-bold mb-2">${metrics.pendingEarnings.toFixed(2)}</p>
+              <p className="text-sm opacity-90">Pending</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">📊</span>
+              </div>
+            </div>
+            <div className="text-white">
+              <p className="text-3xl font-bold mb-2">${metrics.thisMonthEarnings.toFixed(2)}</p>
+              <p className="text-sm opacity-90">This Month</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters and Sorting */}
+        <div className="bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-600/30 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-300">Filter:</label>
+                <select
+                  value={earningsFilter}
+                  onChange={(e) => setEarningsFilter(e.target.value as 'all' | 'paid' | 'pending' | 'processing')}
+                  className="px-3 py-1 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All</option>
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-300">Sort by:</label>
+                <select
+                  value={earningsSortBy}
+                  onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
+                  className="px-3 py-1 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="date">Date</option>
+                  <option value="amount">Amount</option>
+                  <option value="brief">Brief</option>
+                </select>
+              </div>
+              
+              <button
+                onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-md text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+              >
+                <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                <span>{earningsSortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-400">
+              Showing {sortedEarnings.length} of {earnings.length} earnings
+            </div>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {earningsError && (
+          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+              </svg>
+              <span className="text-red-400 font-medium">Error loading earnings:</span>
+              <span className="text-red-300">{earningsError}</span>
+            </div>
+            <p className="text-red-300 text-sm mt-2">
+              Click &quot;Refresh&quot; to try again or &quot;View All Submissions&quot; to see your submission history. Earnings are based on wallet transactions.
+            </p>
+          </div>
+        )}
+
+        {/* Enhanced Earnings Table */}
       <div className="bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-600/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-700/30 backdrop-blur-sm">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Paid Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-gray-800/10 divide-y divide-gray-700/30">
-              {earnings.map((earning) => (
-                <tr key={earning.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                    {earning.briefTitle}
+                {earningsLoading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                      <div className="flex flex-col items-center space-y-2">
+                        <svg className="w-8 h-8 animate-spin text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <p>Loading earnings...</p>
+                      </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${earning.amount}</td>
+                  </tr>
+                ) : sortedEarnings.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                      <div className="flex flex-col items-center space-y-2">
+                        <span className="text-4xl">💰</span>
+                        <p>No earnings found</p>
+                        <p className="text-sm">Earnings are based on wallet transactions. Start submitting to briefs to earn rewards!</p>
+                        <button
+                          onClick={() => fetchAllSubmissions()}
+                          className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                        >
+                          View All Submissions
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  sortedEarnings.map((earning) => (
+                    <tr key={earning.id} className="hover:bg-gray-700/20 transition-colors duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{earning.briefTitle}</div>
+                        {earning.position && (
+                          <div className="text-xs text-gray-400">Position #{earning.position}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {earning.brandName || 'Unknown Brand'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
+                        ${earning.amount.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          earning.rewardType === 'CASH' ? 'bg-green-900/20 text-green-400' :
+                          earning.rewardType === 'CREDIT' ? 'bg-blue-900/20 text-blue-400' :
+                          earning.rewardType === 'PRIZES' ? 'bg-purple-900/20 text-purple-400' :
+                          'bg-gray-900/20 text-gray-400'
+                        }`}>
+                          {earning.rewardType || 'Cash'}
+                        </span>
+                      </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       earning.status === 'paid' ? 'bg-emerald-900/20 text-emerald-400' :
@@ -1052,17 +1463,43 @@ const CreatorDashboard: React.FC = () => {
                       {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {earning.paidAt ? new Date(earning.paidAt).toLocaleDateString() : '-'}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <div>
+                          {earning.paidAt ? (
+                            <div>
+                              <div>Paid: {new Date(earning.paidAt).toLocaleDateString()}</div>
+                              {earning.submittedAt && (
+                                <div className="text-xs text-gray-500">
+                                  Submitted: {new Date(earning.submittedAt).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          ) : earning.submittedAt ? (
+                            <div>Submitted: {new Date(earning.submittedAt).toLocaleDateString()}</div>
+                          ) : '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => {
+                            setSelectedEarning(earning);
+                            setShowEarningDetails(true);
+                          }}
+                          className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                        >
+                          View Details
+                        </button>
                   </td>
                 </tr>
-              ))}
+                  ))
+                )}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   );
+  };
 
   const renderProfile = () => (
     <div className="space-y-6">
@@ -1437,9 +1874,9 @@ const CreatorDashboard: React.FC = () => {
                   title={item.label}
                 >
                   <div className="flex items-center">
-                    <span className={`mr-3 transition-all duration-200 ${
-                      activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                    }`}>
+                  <span className={`mr-3 transition-all duration-200 ${
+                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                  }`}>
                       {item.id === 'settings' ? (
                         // Settings gear icon
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1452,14 +1889,14 @@ const CreatorDashboard: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                       ) : (
-                        <img 
-                          src={`/icons/${item.icon}.png`} 
-                          alt={item.label}
-                          className="w-5 h-5"
-                        />
+                    <img 
+                      src={`/icons/${item.icon}.png`} 
+                      alt={item.label}
+                      className="w-5 h-5"
+                    />
                       )}
-                    </span>
-                    <span className="text-sm font-normal">{item.label}</span>
+                  </span>
+                  <span className="text-sm font-normal">{item.label}</span>
                   </div>
                   {item.id === 'settings' && (
                     <span className="text-gray-400 group-hover:text-white">
@@ -1641,6 +2078,151 @@ const CreatorDashboard: React.FC = () => {
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
       />
+
+      {/* Earnings Details Modal */}
+      {showEarningDetails && selectedEarning && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-white">Earning Details</h3>
+                <button
+                  onClick={() => setShowEarningDetails(false)}
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Earning Summary */}
+                <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-semibold mb-2">{selectedEarning.briefTitle}</h4>
+                      <p className="text-3xl font-bold">${selectedEarning.amount.toFixed(2)}</p>
+                      <p className="text-sm opacity-90 mt-1">
+                        {selectedEarning.brandName || 'Unknown Brand'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                        selectedEarning.status === 'paid' ? 'bg-emerald-500/20 text-emerald-100' :
+                        selectedEarning.status === 'pending' ? 'bg-yellow-500/20 text-yellow-100' :
+                        'bg-blue-500/20 text-blue-100'
+                      }`}>
+                        {selectedEarning.status.charAt(0).toUpperCase() + selectedEarning.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-700/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-300 mb-3">Reward Information</h5>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Type:</span>
+                        <span className="text-white">
+                          {selectedEarning.rewardType || 'Cash'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Amount:</span>
+                        <span className="text-white font-semibold">
+                          ${selectedEarning.amount.toFixed(2)}
+                        </span>
+                      </div>
+                      {selectedEarning.position && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Position:</span>
+                          <span className="text-white">#{selectedEarning.position}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-700/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-300 mb-3">Timeline</h5>
+                    <div className="space-y-2">
+                      {selectedEarning.submittedAt && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Submitted:</span>
+                          <span className="text-white">
+                            {new Date(selectedEarning.submittedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {selectedEarning.approvedAt && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Approved:</span>
+                          <span className="text-white">
+                            {new Date(selectedEarning.approvedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {selectedEarning.paidAt && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Paid:</span>
+                          <span className="text-white">
+                            {new Date(selectedEarning.paidAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Details */}
+                {(selectedEarning.briefId || selectedEarning.transactionId) && (
+                  <div className="bg-gray-700/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-300 mb-3">Reference Information</h5>
+                    <div className="space-y-2">
+                      {selectedEarning.briefId && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Brief ID:</span>
+                          <span className="text-white font-mono text-sm">{selectedEarning.briefId}</span>
+                        </div>
+                      )}
+                      {selectedEarning.transactionId && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Transaction ID:</span>
+                          <span className="text-white font-mono text-sm">{selectedEarning.transactionId}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-600">
+                  <button
+                    onClick={() => setShowEarningDetails(false)}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors duration-200"
+                  >
+                    Close
+                  </button>
+                  {selectedEarning.briefId && (
+                    <button
+                      onClick={() => {
+                        setSelectedBriefId(selectedEarning.briefId!);
+                        setShowBriefDetailsModal(true);
+                        setShowEarningDetails(false);
+                      }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      View Brief
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
