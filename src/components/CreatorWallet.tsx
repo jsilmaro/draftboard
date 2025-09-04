@@ -230,7 +230,7 @@ const CreatorWallet: React.FC = () => {
             <h3 className="text-sm font-medium opacity-90">Total Earnings</h3>
             <p className="text-2xl font-bold">${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
           </div>
-                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600Cannot find name 'hasContent'. text-white p-4 rounded-lg">
             <h3 className="text-sm font-medium opacity-90">Pending Requests</h3>
             <p className="text-2xl font-bold">{pendingWithdrawals.length}</p>
           </div>
