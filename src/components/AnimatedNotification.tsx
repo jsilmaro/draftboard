@@ -36,15 +36,15 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
   const getIcon = () => {
     switch (type) {
       case 'error':
-        return '❌';
+        return <img src="/icons/Green_icons/NotificationBell.png" alt="Error" className="w-7 h-7" />;
       case 'warning':
-        return '⚠️';
+        return <img src="/icons/Green_icons/NotificationBell.png" alt="Warning" className="w-7 h-7" />;
       case 'info':
-        return 'ℹ️';
+        return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
       case 'success':
-        return '✅';
+        return <img src="/icons/Green_icons/Paid1.png" alt="Success" className="w-7 h-7" />;
       default:
-        return 'ℹ️';
+        return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
     }
   };
 

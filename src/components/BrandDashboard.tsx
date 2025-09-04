@@ -744,9 +744,9 @@ const BrandDashboard: React.FC = () => {
         
         // Show animated success notification
         setSuccessNotification({
-          title: 'Submission Shortlisted! 🎉',
+          title: 'Submission Shortlisted!',
           message: 'The creator has been notified and is excited to work with your brand!',
-          icon: '🏆'
+          icon: '/icons/Green_icons/Trophy1.png'
         });
         setShowSuccessNotification(true);
       } else {
@@ -789,7 +789,7 @@ const BrandDashboard: React.FC = () => {
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-4">
-            Grow Your Brand with Amazing Creators 🚀
+            Grow Your Brand with Amazing Creators
         </h1>
         <p className="text-lg text-gray-300">
             Connect with talented creators and bring your brand vision to life with compelling content.
@@ -802,7 +802,7 @@ const BrandDashboard: React.FC = () => {
         <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📄</span>
+              <img src="/icons/Green_icons/LiveBrief.png" alt="Active Briefs" className="w-8 h-8" />
               </div>
               </div>
           <div className="text-white">
@@ -815,7 +815,7 @@ const BrandDashboard: React.FC = () => {
         <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📈</span>
+              <img src="/icons/Green_icons/Performance1.png" alt="Performance" className="w-8 h-8" />
         </div>
         </div>
           <div className="text-white">
@@ -828,7 +828,7 @@ const BrandDashboard: React.FC = () => {
         <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🏆</span>
+              <img src="/icons/Green_icons/Trophy1.png" alt="Rewards" className="w-8 h-8" />
           </div>
         </div>
           <div className="text-white">
@@ -852,7 +852,7 @@ const BrandDashboard: React.FC = () => {
                 <div key={submission.id} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
-                      <span className="text-white">👤</span>
+                      <img src="/icons/profile.png" alt="User" className="w-9 h-9" />
                 </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-white">{submission.creatorName}</p>
@@ -925,7 +925,7 @@ const BrandDashboard: React.FC = () => {
                         ? 'bg-gradient-to-br from-green-500 to-blue-600 text-white' 
                         : 'bg-gray-700 text-gray-300'
                     }`}>
-                      👤
+                      <img src="/icons/profile.png" alt="User" className="w-8 h-8" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">
@@ -1090,7 +1090,7 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl">🎯</span>
+                      <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-6 h-6" />
                     </div>
                   </div>
                   
@@ -1147,7 +1147,10 @@ const BrandDashboard: React.FC = () => {
                   {/* Calculated Reward Amounts */}
                   {selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
                     <div className="mt-4 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg border border-green-500/30">
-                      <h5 className="font-medium text-white mb-3">🏆 Calculated Reward Amounts</h5>
+                      <h5 className="font-medium text-white mb-3 flex items-center">
+                        <img src="/icons/Green_icons/Trophy1.png" alt="Rewards" className="w-5 h-5 mr-2" />
+                        Calculated Reward Amounts
+                      </h5>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {selectedBrief.winnerRewards.map((reward) => (
                           <div key={reward.position} className="bg-white/10 rounded-lg p-3 text-center">
@@ -1355,7 +1358,7 @@ const BrandDashboard: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     >
                       <option value="draft">📝 Draft</option>
-                      <option value="active">🚀 Active</option>
+                      <option value="active">Active</option>
                     </select>
                   </div>
                 </div>
@@ -1445,7 +1448,7 @@ const BrandDashboard: React.FC = () => {
                     onClick={() => handlePublishBrief(selectedBrief.id)}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
-                    🚀 Publish Brief
+                    Publish Brief
                   </button>
                 )}
               </div>
@@ -1551,9 +1554,9 @@ const BrandDashboard: React.FC = () => {
                       {(() => {
                         const brief = briefs.find(b => b.title === submission.briefTitle);
                         if (brief?.rewardType) {
-                          const rewardTypeDisplay = brief.rewardType === 'CASH' ? '💰 Cash' : 
-                                                   brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                                                   brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType;
+                          const rewardTypeDisplay = brief.rewardType === 'CASH' ? 'Cash' : 
+                                                   brief.rewardType === 'CREDIT' ? 'Credit' : 
+                                                   brief.rewardType === 'PRIZES' ? 'Prizes' : brief.rewardType;
                           return rewardTypeDisplay;
                         } else {
                           return 'Not set';
@@ -1862,7 +1865,7 @@ const BrandDashboard: React.FC = () => {
 
           <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
             <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">💰</div>
+              <img src="/icons/Green_icons/MoneyBag1.png" alt="Money" className="w-8 h-8 mr-3" />
               <div>
                 <h3 className="text-lg font-semibold text-white">Rewards Configured</h3>
                 <p className="text-3xl font-bold text-emerald-500">
@@ -1875,7 +1878,7 @@ const BrandDashboard: React.FC = () => {
 
           <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-6 rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30">
             <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">🎯</div>
+              <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-8 h-8 mr-3" />
               <div>
                 <h3 className="text-lg font-semibold text-white">Total Winners</h3>
                 <p className="text-3xl font-bold text-purple-600">
@@ -2121,7 +2124,7 @@ const BrandDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Statistics & Analytics 📊
+          Statistics & Analytics
         </h1>
         <p className="text-lg text-gray-300">
           Track your brief performance and submission analytics to optimize your creator campaigns.
@@ -2666,9 +2669,9 @@ const BrandDashboard: React.FC = () => {
                 <span className="font-medium text-blue-900">Current Reward Type:</span>
                 <span className="ml-2">
                   {brief.rewardType ? (
-                    brief.rewardType === 'CASH' ? '💰 Cash' : 
-                    brief.rewardType === 'CREDIT' ? '🎫 Credit' : 
-                    brief.rewardType === 'PRIZES' ? '🎁 Prizes' : brief.rewardType
+                    brief.rewardType === 'CASH' ? 'Cash' : 
+                    brief.rewardType === 'CREDIT' ? 'Credit' : 
+                    brief.rewardType === 'PRIZES' ? 'Prizes' : brief.rewardType
                   ) : 'Not set'}
                 </span>
               </div>
@@ -3142,7 +3145,7 @@ const BrandDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl">🎯</span>
+                      <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-6 h-6" />
                     </div>
                   </div>
                   
@@ -3370,7 +3373,7 @@ const BrandDashboard: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
                     >
                       <option value="draft">📝 Draft</option>
-                      <option value="active">🚀 Active</option>
+                      <option value="active">Active</option>
                     </select>
                   </div>
                 </div>
@@ -3471,7 +3474,7 @@ const BrandDashboard: React.FC = () => {
                     onClick={() => handlePublishBrief(selectedBrief.id)}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
-                    🚀 Publish Brief
+                    Publish Brief
                   </button>
                 )}
               </div>

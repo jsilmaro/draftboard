@@ -469,7 +469,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
             {rewardPools.length === 0 ? (
               <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-12 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-3xl">🏆</span>
+                  <img src="/icons/Green_icons/Trophy1.png" alt="Trophy" className="w-8 h-8" />
                 </div>
                 <h4 className="text-xl font-semibold text-white mb-3">No Reward Pools Yet</h4>
                 <p className="text-gray-300 mb-6 max-w-md mx-auto">
@@ -490,7 +490,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                     <div className="flex-1">
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <span className="text-xl">💎</span>
+                          <img src="/icons/Green_icons/Trophy1.png" alt="Diamond" className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
                           <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">
@@ -566,7 +566,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                         onClick={() => handleSelectWinners(pool)}
                         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
                       >
-                        <span>🎯</span>
+                        <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-4 h-4" />
                         Select Winners
                       </button>
                     </div>
@@ -673,7 +673,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
                   />
                   {selectedBrief && selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
                     <p className="text-sm text-blue-200 mt-2">
-                      💡 This amount should match the calculated total: $
+                      This amount should match the calculated total: $
                       {selectedBrief.winnerRewards.reduce((sum, reward) => 
                         sum + (reward.cashAmount || 0) + (reward.creditAmount || 0), 0
                       ).toFixed(2)}

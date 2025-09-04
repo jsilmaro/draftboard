@@ -499,7 +499,10 @@ const RewardsPaymentPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-bold">🎯 Rewards</h1>
+              <h1 className="text-xl font-bold flex items-center">
+                <img src="/icons/Green_icons/Target1.png" alt="Rewards" className="w-6 h-6 mr-2" />
+                Rewards
+              </h1>
             </div>
             <div className="flex items-center space-x-6">
               <div className="text-right">
@@ -526,7 +529,7 @@ const RewardsPaymentPage: React.FC = () => {
             <nav className="-mb-px flex space-x-8">
               {[
                 { id: 'submissions', label: '📋 Submissions', count: filteredSubmissions.length },
-                { id: 'rewards', label: '🏆 Rewards', count: filteredWinners.length }
+                { id: 'rewards', label: 'Rewards', count: filteredWinners.length }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -579,7 +582,10 @@ const RewardsPaymentPage: React.FC = () => {
             {/* Brief Progress */}
             {selectedBrief && (
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <h3 className="text-lg font-semibold mb-4">📊 Brief Progress</h3>
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <img src="/icons/Green_icons/Statistic1.png" alt="Progress" className="w-5 h-5 mr-2" />
+                  Brief Progress
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-400">{getBriefProgress(selectedBrief).totalSubmissions}</div>
@@ -677,7 +683,7 @@ const RewardsPaymentPage: React.FC = () => {
                             onClick={() => handleSelectWinner(submission.id)}
                             className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
                           >
-                            🏆 Select Winner
+                            Select Winner
                           </button>
                           <button
                             onClick={() => handleSubmissionStatusChange(submission.id, 'rejected')}
@@ -689,7 +695,7 @@ const RewardsPaymentPage: React.FC = () => {
                       )}
 
                       {submission.status === 'winner' && (
-                        <div className="text-green-400 text-sm">🏆 Winner Selected</div>
+                        <div className="text-green-400 text-sm">Winner Selected</div>
                       )}
                     </div>
                   </div>
@@ -702,7 +708,10 @@ const RewardsPaymentPage: React.FC = () => {
         {activeTab === 'rewards' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">🏆 Rewards</h2>
+              <h2 className="text-2xl font-bold flex items-center">
+                <img src="/icons/Green_icons/Trophy1.png" alt="Rewards" className="w-6 h-6 mr-2" />
+                Rewards
+              </h2>
               <div className="flex items-center space-x-4">
                 {pendingWinners.length > 0 && (
                   <>
@@ -733,7 +742,10 @@ const RewardsPaymentPage: React.FC = () => {
             {/* Payment Summary */}
             {filteredWinners.length > 0 && (
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <h3 className="text-lg font-semibold mb-4">💰 Payment Summary</h3>
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <img src="/icons/Green_icons/MoneyBag1.png" alt="Payment" className="w-5 h-5 mr-2" />
+                  Payment Summary
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-400">{filteredWinners.length}</div>
@@ -757,7 +769,9 @@ const RewardsPaymentPage: React.FC = () => {
             
             {filteredWinners.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">🏆</div>
+                <div className="mb-4 flex justify-center">
+                  <img src="/icons/Green_icons/Trophy1.png" alt="Trophy" className="w-16 h-16" />
+                </div>
                 <h3 className="text-xl font-semibold mb-2">No Winners Yet</h3>
                 <p className="text-gray-400">Select winners from the submissions tab to see them here.</p>
               </div>
@@ -779,7 +793,7 @@ const RewardsPaymentPage: React.FC = () => {
                           'bg-gray-600'
                         }`}>
                           <span className="text-white text-xl">
-                            {winner.status === 'paid' ? '✅' : winner.status === 'processing' ? '⏳' : '🏆'}
+                            {winner.status === 'paid' ? 'Paid' : winner.status === 'processing' ? 'Processing' : 'Pending'}
                           </span>
                         </div>
                         <div>

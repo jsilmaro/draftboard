@@ -168,9 +168,7 @@ const NotificationBell: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 00-6 6v3.75l-2.25 2.25v3h15v-3l-2.25-2.25V9.75a6 6 0 00-6-6z" />
-        </svg>
+        <img src="/icons/Green_icons/NotificationBell.png" alt="Notifications" className="w-10 h-10 drop-shadow-lg" style={{filter: 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.6))'}} />
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
@@ -283,7 +281,9 @@ const NotificationBell: React.FC = () => {
               </div>
             ) : (
               <div className="p-8 text-center">
-                <div className="text-gray-400 text-4xl mb-4">🔔</div>
+                <div className="mb-4 flex justify-center">
+                  <img src="/icons/Green_icons/NotificationBell.png" alt="No notifications" className="w-12 h-12" />
+                </div>
                 <p className="text-gray-600">No notifications yet</p>
                 <p className="text-sm text-gray-500 mt-1">
                   We&apos;ll notify you about payments, applications, and updates

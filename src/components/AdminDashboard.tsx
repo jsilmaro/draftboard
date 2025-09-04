@@ -492,14 +492,14 @@ const AdminDashboard: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'brands', label: 'Manage Brands', icon: '🏢' },
-    { id: 'creators', label: 'Manage Creators', icon: '👤' },
-    { id: 'briefs', label: 'Manage Briefs', icon: '📋' },
-    { id: 'submissions', label: 'Submissions', icon: '📝' },
-    { id: 'withdrawals', label: 'Withdrawals', icon: '💸' },
-    { id: 'payouts', label: 'Payouts', icon: '💰' },
-    { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'overview', label: 'Overview', icon: '/icons/Green_icons/Dashboard1.png' },
+    { id: 'brands', label: 'Manage Brands', icon: '/icons/profile.png' },
+    { id: 'creators', label: 'Manage Creators', icon: '/icons/profile.png' },
+    { id: 'briefs', label: 'Manage Briefs', icon: '/icons/Green_icons/Brief1.png' },
+    { id: 'submissions', label: 'Submissions', icon: '/icons/Green_icons/Task1.png' },
+    { id: 'withdrawals', label: 'Withdrawals', icon: '/icons/Green_icons/Withdrawal1.png' },
+    { id: 'payouts', label: 'Payouts', icon: '/icons/Green_icons/MoneyBag1.png' },
+    { id: 'analytics', label: 'Analytics', icon: '/icons/Green_icons/Statistic1.png' },
   ];
 
   const renderOverview = () => (
@@ -507,7 +507,7 @@ const AdminDashboard: React.FC = () => {
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-blue-100 rounded-full">
-            <span className="text-2xl">🏢</span>
+            <img src="/icons/profile.png" alt="Brands" className="w-10 h-10" />
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-300">Total Brands</p>
@@ -519,7 +519,7 @@ const AdminDashboard: React.FC = () => {
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-green-100 rounded-full">
-            <span className="text-2xl">👤</span>
+            <img src="/icons/profile.png" alt="Creators" className="w-10 h-10" />
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-300">Total Creators</p>
@@ -531,7 +531,7 @@ const AdminDashboard: React.FC = () => {
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-purple-100 rounded-full">
-            <span className="text-2xl">📋</span>
+            <img src="/icons/Green_icons/Brief1.png" alt="Briefs" className="w-6 h-6" />
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-300">Available Briefs</p>
@@ -543,7 +543,7 @@ const AdminDashboard: React.FC = () => {
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
           <div className="p-3 bg-yellow-100 rounded-full">
-            <span className="text-2xl">💰</span>
+            <img src="/icons/Green_icons/MoneyBag1.png" alt="Payouts" className="w-6 h-6" />
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-300">Monthly Revenue</p>
@@ -1082,7 +1082,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-3xl font-bold text-blue-400">{analytics.totalBrands}</p>
               </div>
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🏢</span>
+                <img src="/icons/profile.png" alt="Brands" className="w-10 h-10" />
               </div>
             </div>
           </div>
@@ -1094,7 +1094,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-3xl font-bold text-green-400">{analytics.totalCreators}</p>
               </div>
               <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">👤</span>
+                <img src="/icons/profile.png" alt="Creators" className="w-10 h-10" />
               </div>
             </div>
           </div>
@@ -1106,7 +1106,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-3xl font-bold text-purple-400">{analytics.totalBriefs}</p>
               </div>
               <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">📋</span>
+                <img src="/icons/Green_icons/Brief1.png" alt="Briefs" className="w-6 h-6" />
               </div>
             </div>
           </div>
@@ -1118,7 +1118,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-3xl font-bold text-yellow-400">${analytics.monthlyRevenue.toLocaleString()}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">💰</span>
+                <img src="/icons/Green_icons/MoneyBag1.png" alt="Payouts" className="w-6 h-6" />
               </div>
             </div>
           </div>
@@ -1350,7 +1350,7 @@ const AdminDashboard: React.FC = () => {
                     : 'border-transparent text-gray-400 hover:text-white hover:border-gray-500 hover:bg-gray-800/30 px-3 py-2 rounded-t-lg'
                 }`}
               >
-                <span>{tab.icon}</span>
+                <img src={tab.icon} alt={tab.label} className="w-7 h-7 mr-2" />
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -1413,7 +1413,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl p-8 border border-white/20">
                     <div className="flex items-center space-x-4 mb-6">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                        <span className="text-3xl">🏢</span>
+                        <img src="/icons/profile.png" alt="Brand" className="w-12 h-12" />
                       </div>
                       <div>
                         <h4 className="text-3xl font-bold text-white mb-2">
@@ -1432,7 +1432,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="space-y-6">
                       <div className="bg-gradient-to-r from-gray-900/40 to-gray-800/40 rounded-2xl p-6 border border-white/10">
                         <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
-                          <span className="mr-3">📋</span>
+                          <img src="/icons/Green_icons/Brief1.png" alt="Info" className="w-5 h-5 mr-3" />
                           Basic Information
                         </h5>
                         <div className="space-y-4">
@@ -1482,7 +1482,7 @@ const AdminDashboard: React.FC = () => {
                       {selectedItem.additionalFields && (
                         <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 rounded-2xl p-6 border border-white/10">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
-                            <span className="mr-3">📋</span>
+                            <img src="/icons/Green_icons/Brief1.png" alt="Requirements" className="w-5 h-5 mr-3" />
                             Additional Requirements
                           </h5>
                           <div className="space-y-4">
@@ -1525,7 +1525,7 @@ const AdminDashboard: React.FC = () => {
                       {selectedItem.brand && (
                         <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-2xl p-6 border border-white/10">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
-                            <span className="mr-3">🏢</span>
+                            <img src="/icons/profile.png" alt="Brand" className="w-9 h-9 mr-3" />
                             Brand Information
                           </h5>
                           <div className="space-y-4">
@@ -1545,7 +1545,7 @@ const AdminDashboard: React.FC = () => {
                       {selectedItem.creator && (
                         <div className="bg-gradient-to-r from-indigo-900/40 to-blue-900/40 rounded-2xl p-6 border border-white/10">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
-                            <span className="mr-3">👤</span>
+                            <img src="/icons/profile.png" alt="Creator" className="w-9 h-9 mr-3" />
                             Creator Information
                           </h5>
                           <div className="space-y-4">

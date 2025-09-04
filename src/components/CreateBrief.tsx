@@ -59,7 +59,7 @@ const CreateBrief: React.FC = () => {
       id: 'podcast-live',
       name: 'Podcast & Live Events',
       description: 'Perfect for promoting podcast episodes, live streams, or virtual events',
-      icon: '🎙️',
+      icon: '/icons/Green_icons/Video1.png',
       fields: {
         title: 'Podcast Promotion Campaign',
         description: 'Create engaging content to promote our podcast episodes and live events',
@@ -78,7 +78,7 @@ const CreateBrief: React.FC = () => {
       id: 'ecommerce-product',
       name: 'E-commerce & Product',
       description: 'Ideal for product launches, reviews, and e-commerce campaigns',
-      icon: '🛍️',
+      icon: '/icons/Green_icons/Campaign1.png',
       fields: {
         title: 'Product Launch Campaign',
         description: 'Generate buzz and drive sales for our new product launch',
@@ -97,7 +97,7 @@ const CreateBrief: React.FC = () => {
       id: 'talent-giveaway',
       name: 'Talent Giveaways',
       description: 'Great for contests, giveaways, and community engagement campaigns',
-      icon: '🎁',
+      icon: '/icons/Green_icons/Trophy1.png',
       fields: {
         title: 'Talent Giveaway Campaign',
         description: 'Run an exciting giveaway to engage our community and reward our audience',
@@ -116,7 +116,7 @@ const CreateBrief: React.FC = () => {
       id: 'tweets',
       name: 'Tweets',
       description: 'Perfect for Twitter/X campaigns, viral content, and social media engagement',
-      icon: '🐦',
+      icon: '/icons/Green_icons/Campaign1.png',
       fields: {
         title: 'Twitter/X Campaign',
         description: 'Create engaging tweets and Twitter content to boost brand awareness and engagement',
@@ -135,7 +135,7 @@ const CreateBrief: React.FC = () => {
       id: 'ig-story-blitz',
       name: 'IG Story Blitz',
       description: 'Ideal for Instagram Stories campaigns, quick engagement, and visual storytelling',
-      icon: '📱',
+      icon: '/icons/Green_icons/Campaign1.png',
       fields: {
         title: 'Instagram Stories Campaign',
         description: 'Create engaging Instagram Stories content to drive engagement and brand awareness',
@@ -369,7 +369,9 @@ const CreateBrief: React.FC = () => {
                 onClick={() => handleTemplateSelect(template.id)}
               >
                 <div className="text-center">
-                  <div className="text-4xl mb-4">{template.icon}</div>
+                  <div className="mb-4 flex justify-center">
+                    <img src={template.icon} alt={template.name} className="w-12 h-12" />
+                  </div>
                   <h3 className="text-lg font-semibold text-white mb-2">
                     {template.name}
                   </h3>
@@ -670,7 +672,7 @@ const CreateBrief: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                      <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg p-6 max-w-md w-full mx-4 border border-white/20 dark:border-gray-600/30">
             <h3 className="text-lg font-semibold text-white mb-4">
-              Brief Created Successfully! 🎉
+              Brief Created Successfully!
             </h3>
             <p className="text-gray-300 mb-4">
               Share this link with creators to invite them to your brief:

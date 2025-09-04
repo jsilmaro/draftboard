@@ -350,7 +350,7 @@ const CreatorDashboard: React.FC = () => {
         
         // Show animated success notification
         setSuccessNotification({
-          title: isEdit ? 'Application Updated! ✏️' : 'Application Submitted! 🚀',
+          title: isEdit ? 'Application Updated!' : 'Application Submitted!',
           message: isEdit ? 'Your application has been updated successfully!' : 'Your application has been sent to the brand. Good luck!',
           icon: isEdit ? '✏️' : '📤'
         });
@@ -414,7 +414,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-4">
-            Connect with Amazing Brands 🚀
+            Connect with Amazing Brands
           </h1>
         <p className="text-lg text-gray-300">
             Showcase your creativity and discover exciting opportunities with top brands worldwide.
@@ -427,7 +427,7 @@ const CreatorDashboard: React.FC = () => {
         <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">💰</span>
+              <img src="/icons/Green_icons/MoneyBag1.png" alt="Money" className="w-6 h-6" />
             </div>
           </div>
           <div className="text-white">
@@ -453,7 +453,7 @@ const CreatorDashboard: React.FC = () => {
         <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🎯</span>
+              <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-6 h-6" />
             </div>
           </div>
           <div className="text-white">
@@ -708,7 +708,10 @@ const CreatorDashboard: React.FC = () => {
             {/* Detailed Reward Information */}
             {selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
               <div className="mt-6 p-4 bg-gradient-to-r from-[#00FF85] to-[#00C853] rounded-lg">
-                <h4 className="text-lg font-semibold text-white mb-3">🏆 Reward Breakdown</h4>
+                <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
+                  <img src="/icons/Green_icons/Trophy1.png" alt="Rewards" className="w-5 h-5 mr-2" />
+                  Reward Breakdown
+                </h4>
                 <div className="space-y-3">
                   {selectedBrief.winnerRewards.map((reward, index) => (
                     <div key={index} className="bg-gray-800/20 p-3 rounded-lg">
@@ -722,7 +725,7 @@ const CreatorDashboard: React.FC = () => {
                       </div>
                       <div className="space-y-1 text-sm text-white">
                         {reward.cashAmount > 0 && (
-                          <p>💰 Cash: ${reward.cashAmount.toLocaleString()}</p>
+                          <p>Cash: ${reward.cashAmount.toLocaleString()}</p>
                         )}
                         {reward.creditAmount > 0 && (
                           <p>🎫 Credits: {reward.creditAmount.toLocaleString()}</p>
