@@ -204,8 +204,21 @@ router.post('/create-checkout-session', async (req, res) => {
 
     const { briefId, amount, brandId, briefTitle } = req.body;
 
-    if (!briefId || !amount || !brandId || !briefTitle) {
+    if (!amount) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // For wallet funding, we need to get the brandId from the token
+    let actualBrandId = brandId;
+    if (brandId === 'current-user' && req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.replace('Bearer ', '');
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        actualBrandId = decoded.id;
+      } catch (tokenError) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
     }
 
     // Convert amount to cents for Stripe
@@ -217,20 +230,20 @@ router.post('/create-checkout-session', async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `Brief: ${briefTitle}`,
-            description: `Funding for brief ${briefId}`,
+            name: briefId === 'wallet-funding' ? 'Wallet Funding' : `Brief: ${briefTitle}`,
+            description: briefId === 'wallet-funding' ? 'Add funds to your wallet' : `Funding for brief ${briefId}`,
           },
           unit_amount: amountInCents,
         },
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/cancel`,
+      success_url: `${process.env.FRONTEND_URL || 'https://draftboard-b44q.vercel.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'https://draftboard-b44q.vercel.app'}/payment/cancel`,
       metadata: {
-        briefId: briefId.toString(),
-        brandId: brandId.toString(),
-        type: 'brief_funding'
+        briefId: briefId ? briefId.toString() : 'wallet-funding',
+        brandId: actualBrandId.toString(),
+        type: briefId === 'wallet-funding' ? 'wallet_funding' : 'brief_funding'
       }
     });
 

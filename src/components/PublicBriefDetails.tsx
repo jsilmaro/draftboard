@@ -134,7 +134,7 @@ const PublicBriefDetails = () => {
     if (!user) {
       // Redirect to login with return URL
       navigate('/login', { state: { returnUrl: `/brief/${briefId}` } });
-    } else if (user.userType !== 'creator') {
+    } else if (user.type !== 'creator') {
       // Show message that only creators can apply
       alert('Only creators can apply to briefs. Please log in with a creator account.');
     } else {

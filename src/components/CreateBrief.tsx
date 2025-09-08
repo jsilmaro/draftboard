@@ -461,7 +461,7 @@ const CreateBrief: React.FC = () => {
                     type="text"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Enter brief title"
                     required
                   />
@@ -475,7 +475,7 @@ const CreateBrief: React.FC = () => {
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => handleInputChange('deadline', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                   />
                 </div>
@@ -489,7 +489,7 @@ const CreateBrief: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Describe your brief"
                   required
                 />
@@ -503,7 +503,7 @@ const CreateBrief: React.FC = () => {
                   value={formData.requirements}
                   onChange={(e) => handleInputChange('requirements', e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="What do you want creators to do?"
                   required
                 />
@@ -527,7 +527,7 @@ const CreateBrief: React.FC = () => {
                     step="0.01"
                     value={formData.reward}
                     onChange={(e) => handleInputChange('reward', parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Total reward amount"
                   />
                 </div>
@@ -541,7 +541,7 @@ const CreateBrief: React.FC = () => {
                     max="10"
                     value={formData.amountOfWinners}
                     onChange={(e) => handleAmountOfWinnersChange(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="How many creators can win?"
                   />
                 </div>
@@ -568,7 +568,7 @@ const CreateBrief: React.FC = () => {
                             min="0"
                             value={tier.cashAmount}
                             onChange={(e) => handleRewardTierChange(tier.position, 'cashAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           />
                         </div>
                         <div>
@@ -580,7 +580,7 @@ const CreateBrief: React.FC = () => {
                             min="0"
                             value={tier.creditAmount}
                             onChange={(e) => handleRewardTierChange(tier.position, 'creditAmount', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           />
                         </div>
                         <div>
@@ -591,7 +591,7 @@ const CreateBrief: React.FC = () => {
                             type="text"
                             value={tier.prizeDescription}
                             onChange={(e) => handleRewardTierChange(tier.position, 'prizeDescription', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             placeholder="e.g., Product, Gift Card, etc."
                           />
                         </div>
@@ -627,7 +627,7 @@ const CreateBrief: React.FC = () => {
                           <select
                             value={Array.isArray(formData.additionalFields[key]) ? (formData.additionalFields[key] as string[])[0] || '' : ''}
                             onChange={(e) => handleAdditionalFieldChange(key, [e.target.value])}
-                            className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           >
                             <option value="">Select {fieldName}</option>
                                         {value.map((option, _index) => (
@@ -649,7 +649,7 @@ const CreateBrief: React.FC = () => {
                           type="text"
                           value={formData.additionalFields[key] as string}
                           onChange={(e) => handleAdditionalFieldChange(key, e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           placeholder={`Enter ${fieldName.toLowerCase()}`}
                         />
                       </div>
@@ -713,7 +713,7 @@ const CreateBrief: React.FC = () => {
                 type="text"
                 value={shareableLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-200"
+                className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               <button
                 onClick={copyToClipboard}

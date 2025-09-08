@@ -49,7 +49,7 @@ const MarketplaceNav = () => {
             {/* User-specific links */}
             {user ? (
               <>
-                {user.userType === 'brand' && (
+                {user.type === 'brand' && (
                   <Link
                     to="/brand/dashboard"
                     className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
@@ -57,7 +57,7 @@ const MarketplaceNav = () => {
                     Dashboard
                   </Link>
                 )}
-                {user.userType === 'creator' && (
+                {user.type === 'creator' && (
                   <Link
                     to="/creator/dashboard"
                     className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
@@ -175,7 +175,7 @@ const MarketplaceNav = () => {
             
             {user ? (
               <>
-                {user.userType === 'brand' && (
+                {user.type === 'brand' && (
                   <Link
                     to="/brand/dashboard"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
@@ -184,7 +184,7 @@ const MarketplaceNav = () => {
                     Dashboard
                   </Link>
                 )}
-                {user.userType === 'creator' && (
+                {user.type === 'creator' && (
                   <Link
                     to="/creator/dashboard"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"

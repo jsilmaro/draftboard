@@ -1,10 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { STRIPE_CONFIG, isStripeMock, isStripeTest } from '../config/stripe';
-
-// Load Stripe with proper configuration
-const stripePromise = loadStripe(STRIPE_CONFIG.LIVE.PUBLISHABLE_KEY);
 
 interface WalletData {
   balance: number;
@@ -230,16 +224,14 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-md w-full mx-4 border border-white/10 dark:border-gray-600/20">
               <h3 className="text-xl font-bold text-gray-200 mb-4">Fund Your Wallet</h3>
-              <Elements stripe={stripePromise}>
-                <FundWalletForm
-                  token={token}
-                  onSuccess={() => {
-                    setShowFundWallet(false);
-                    fetchWalletData();
-                  }}
-                  onCancel={() => setShowFundWallet(false)}
-                />
-              </Elements>
+              <FundWalletForm
+                token={token}
+                onSuccess={() => {
+                  setShowFundWallet(false);
+                  fetchWalletData();
+                }}
+                onCancel={() => setShowFundWallet(false)}
+              />
             </div>
           </div>
         )}
@@ -343,116 +335,48 @@ interface FundWalletFormProps {
   onCancel: () => void;
 }
 
-const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCancel }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess: _onSuccess, onCancel }) => {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Create payment intent
-      const response = await fetch('/api/payments/create-payment-intent', {
+      // Create Stripe Checkout session
+      const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount: parseFloat(amount)
+          briefId: 'wallet-funding',
+          amount: parseFloat(amount),
+          brandId: 'current-user', // This will be handled by the backend
+          briefTitle: 'Wallet Funding'
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+        throw new Error('Failed to create checkout session');
       }
 
-      const { clientSecret, paymentIntentId, mode } = await response.json();
-
-      // Check if we're in mock mode
-      if (mode === 'mock' || clientSecret.includes('pi_mock_') || paymentIntentId.includes('pi_mock_')) {
-        // Mock mode - simulate payment processing
-        // eslint-disable-next-line no-console
-        console.log('🔄 Processing mock payment...');
-        
-        // Simulate processing delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Confirm mock payment
-        const confirmResponse = await fetch('/api/payments/confirm-payment', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            paymentIntentId: paymentIntentId,
-            amount: parseFloat(amount)
-          })
-        });
-
-        if (confirmResponse.ok) {
-          alert('Wallet funded successfully! (Mock Payment)');
-          onSuccess();
-        } else {
-          const errorData = await confirmResponse.json();
-          // eslint-disable-next-line no-console
-          console.error('Mock payment confirmation failed:', errorData);
-          alert('Mock payment failed. Please try again.');
-        }
-      } else {
-        // Live mode - use real Stripe
-        if (!stripe || !elements) {
-          throw new Error('Stripe not available');
-        }
-
-        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement)!,
-          }
-        });
-
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error('Payment failed:', error);
-          alert(`Payment failed: ${error.message}`);
-        } else if (paymentIntent.status === 'succeeded') {
-          // Payment succeeded, update wallet via backend
-          const confirmResponse = await fetch('/api/payments/confirm-payment', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              paymentIntentId: paymentIntent.id,
-              amount: parseFloat(amount)
-            })
-          });
-
-          if (confirmResponse.ok) {
-            alert('Wallet funded successfully!');
-            onSuccess();
-          } else {
-            const errorData = await confirmResponse.json();
-            // eslint-disable-next-line no-console
-            console.error('Backend confirmation failed:', errorData);
-            alert('Payment succeeded but failed to update wallet. Please contact support.');
-          }
-        } else {
-          // eslint-disable-next-line no-console
-          console.error('Payment not succeeded:', paymentIntent);
-          alert('Payment was not completed successfully.');
-        }
-      }
+      const { url } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
+      console.error('Error creating checkout session:', error);
+      alert('Failed to start payment process. Please try again.');
       setLoading(false);
     }
   };
@@ -475,56 +399,17 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess, onCan
         />
       </div>
 
-      {/* Only show card input in live/test mode */}
-      {!isStripeMock() && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Card Information
-          </label>
-          <div className="p-3 bg-gray-800 border border-gray-600 rounded-md">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: '16px',
-                    color: '#ffffff',
-                    '::placeholder': {
-                      color: '#9ca3af',
-                    },
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Show mode indicator */}
-      {isStripeTest() && (
-        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-          <h4 className="text-blue-400 font-semibold mb-2">🧪 Test Mode</h4>
-          <p className="text-sm text-gray-300">
-            Using Stripe test keys. No real money will be charged. 
-            Use test card: <span className="font-mono bg-gray-700 px-2 py-1 rounded">4242 4242 4242 4242</span>
-          </p>
-        </div>
-      )}
-      
-      {/* Show fallback mode indicator */}
-      {isStripeMock() && (
-        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
-          <h4 className="text-yellow-400 font-semibold mb-2">⚠️ Fallback Mode</h4>
-          <p className="text-sm text-gray-300">
-            Stripe keys are invalid or missing. Using mock payment processing. 
-            No real payment will be processed.
-          </p>
-        </div>
-      )}
+      <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+        <h4 className="text-blue-400 font-semibold mb-2">💳 Secure Payment</h4>
+        <p className="text-sm text-gray-300">
+          You will be redirected to Stripe&apos;s secure checkout page to complete your payment.
+        </p>
+      </div>
 
       <div className="flex space-x-3">
         <button
           type="submit"
-          disabled={loading || !amount || (!isStripeMock() && !stripe)}
+          disabled={loading || !amount}
           className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Processing...' : 'Add Funds'}

@@ -12,6 +12,8 @@ import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import PublicBrandBriefs from './components/PublicBrandBriefs'
 import RewardsPaymentPage from './components/RewardsPaymentPage'
+import PaymentSuccess from './components/PaymentSuccess'
+import PaymentCancel from './components/PaymentCancel'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
@@ -105,6 +107,10 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+
+              {/* Payment Routes */}
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/cancel" element={<PaymentCancel />} />
 
               {/* Demo Routes */}
 

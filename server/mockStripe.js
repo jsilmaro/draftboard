@@ -22,11 +22,24 @@ const generateId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString
 // Create Mock Stripe Checkout Session for Brand Funding
 router.post('/create-checkout-session', async (req, res) => {
   try {
-    const { briefId, amount, brandId, briefTitle } = req.body;
+    const { briefId, amount, brandId } = req.body;
 
     // Validate required fields
-    if (!briefId || !amount || !brandId || !briefTitle) {
+    if (!amount) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // For wallet funding, we need to get the brandId from the token
+    let actualBrandId = brandId;
+    if (brandId === 'current-user' && req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.replace('Bearer ', '');
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        actualBrandId = decoded.id;
+      } catch (tokenError) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
     }
 
     const sessionId = generateId('cs');
@@ -41,9 +54,9 @@ router.post('/create-checkout-session', async (req, res) => {
       status: 'open',
       url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/mock-payment?session_id=${sessionId}`,
       metadata: {
-        briefId: briefId.toString(),
-        brandId: brandId.toString(),
-        type: 'brief_funding'
+        briefId: briefId ? briefId.toString() : 'wallet-funding',
+        brandId: actualBrandId.toString(),
+        type: briefId === 'wallet-funding' ? 'wallet_funding' : 'brief_funding'
       },
       created: Date.now()
     };
@@ -59,9 +72,9 @@ router.post('/create-checkout-session', async (req, res) => {
       status: 'requires_payment_method',
       client_secret: `pi_${paymentIntentId}_secret_${Math.random().toString(36).substr(2, 9)}`,
       metadata: {
-        briefId: briefId.toString(),
-        brandId: brandId.toString(),
-        type: 'platform_fee'
+        briefId: briefId ? briefId.toString() : 'wallet-funding',
+        brandId: actualBrandId.toString(),
+        type: briefId === 'wallet-funding' ? 'wallet_funding' : 'brief_funding'
       }
     };
 
@@ -544,4 +557,86 @@ router.get('/payment-intents', async (req, res) => {
   }
 });
 
-module.exports = router;
+// Mock webhook handler for checkout.session.completed
+router.post('/webhook', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    const session = mockCheckoutSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Simulate wallet funding for wallet_funding type
+    if (session.metadata && session.metadata.type === 'wallet_funding') {
+      const brandId = session.metadata.brandId;
+      const amount = session.amount_total / 100; // Convert from cents
+
+      try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+
+        // Find or create wallet
+        let wallet = await prisma.brandWallet.findUnique({
+          where: { brandId: brandId }
+        });
+
+        if (!wallet) {
+          wallet = await prisma.brandWallet.create({
+            data: {
+              brandId: brandId,
+              balance: 0,
+              totalSpent: 0,
+              totalDeposited: 0
+            }
+          });
+        }
+
+        await prisma.$transaction(async (tx) => {
+          // Update wallet balance
+          const updatedWallet = await tx.brandWallet.update({
+            where: { brandId: brandId },
+            data: {
+              balance: { increment: amount },
+              totalDeposited: { increment: amount }
+            }
+          });
+
+          // Create transaction record
+          await tx.brandWalletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'deposit',
+              amount: amount,
+              description: `Wallet funding via Mock Stripe Checkout`,
+              balanceBefore: wallet.balance,
+              balanceAfter: updatedWallet.balance,
+              referenceId: session.id
+            }
+          });
+        });
+
+        console.log(`✅ Mock wallet funding successful: $${amount} added to brand ${brandId} wallet`);
+      } catch (dbError) {
+        console.log('Database not available, simulating wallet funding:', dbError.message);
+      }
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Error processing mock webhook:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
+
+module.exports = {
+  router,
+  mockCheckoutSessions,
+  mockPaymentIntents,
+  mockAccounts,
+  mockTransfers
+};

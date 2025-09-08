@@ -20,7 +20,8 @@ const searchRoutes = require('./routes/search');
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
 const rewardsRoutes = require('./rewards');
-const mockStripeRoutes = require('./mockStripe');
+const mockStripe = require('./mockStripe');
+const mockStripeRoutes = mockStripe.router;
 
 // Debug environment variables
 console.log('🔧 Environment check:');
@@ -203,6 +204,158 @@ app.use('/api/search', searchRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/mock-stripe', mockStripeRoutes);
 app.use('/api/rewards-system', rewardsRoutes);
+
+// Additional webhook route for local development (port 3000)
+app.post('/api/stripe/webhook-local', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    // Check if we have a mock session
+    const mockCheckoutSessions = mockStripe.mockCheckoutSessions || new Map();
+    const session = mockCheckoutSessions.get(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Simulate wallet funding for wallet_funding type
+    if (session.metadata && session.metadata.type === 'wallet_funding') {
+      const brandId = session.metadata.brandId;
+      const amount = session.amount_total / 100; // Convert from cents
+
+      try {
+        // Find or create wallet
+        let wallet = await prisma.brandWallet.findUnique({
+          where: { brandId: brandId }
+        });
+
+        if (!wallet) {
+          wallet = await prisma.brandWallet.create({
+            data: {
+              brandId: brandId,
+              balance: 0,
+              totalSpent: 0,
+              totalDeposited: 0
+            }
+          });
+        }
+
+        await prisma.$transaction(async (tx) => {
+          // Update wallet balance
+          const updatedWallet = await tx.brandWallet.update({
+            where: { brandId: brandId },
+            data: {
+              balance: { increment: amount },
+              totalDeposited: { increment: amount }
+            }
+          });
+
+          // Create transaction record
+          await tx.brandWalletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'deposit',
+              amount: amount,
+              description: `Wallet funding via Stripe Checkout (Local)`,
+              balanceBefore: wallet.balance,
+              balanceAfter: updatedWallet.balance,
+              referenceId: session.id
+            }
+          });
+        });
+
+        console.log(`✅ Local webhook wallet funding successful: $${amount} added to brand ${brandId} wallet`);
+      } catch (dbError) {
+        console.log('Database error in local webhook:', dbError.message);
+      }
+    }
+
+    res.json({ received: true, source: 'local-webhook' });
+  } catch (error) {
+    console.error('Error processing local webhook:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
+
+// Fallback webhook route for when Stripe is not configured
+app.post('/api/stripe/webhook', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    // Check if we have a mock session
+    const mockCheckoutSessions = mockStripe.mockCheckoutSessions || new Map();
+    const session = mockCheckoutSessions.get(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Simulate wallet funding for wallet_funding type
+    if (session.metadata && session.metadata.type === 'wallet_funding') {
+      const brandId = session.metadata.brandId;
+      const amount = session.amount_total / 100; // Convert from cents
+
+      try {
+        // Find or create wallet
+        let wallet = await prisma.brandWallet.findUnique({
+          where: { brandId: brandId }
+        });
+
+        if (!wallet) {
+          wallet = await prisma.brandWallet.create({
+            data: {
+              brandId: brandId,
+              balance: 0,
+              totalSpent: 0,
+              totalDeposited: 0
+            }
+          });
+        }
+
+        await prisma.$transaction(async (tx) => {
+          // Update wallet balance
+          const updatedWallet = await tx.brandWallet.update({
+            where: { brandId: brandId },
+            data: {
+              balance: { increment: amount },
+              totalDeposited: { increment: amount }
+            }
+          });
+
+          // Create transaction record
+          await tx.brandWalletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'deposit',
+              amount: amount,
+              description: `Wallet funding via Stripe Checkout`,
+              balanceBefore: wallet.balance,
+              balanceAfter: updatedWallet.balance,
+              referenceId: session.id
+            }
+          });
+        });
+
+        console.log(`✅ Fallback wallet funding successful: $${amount} added to brand ${brandId} wallet`);
+      } catch (dbError) {
+        console.log('Database error in fallback webhook:', dbError.message);
+      }
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Error processing fallback webhook:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
 
 // Test endpoint for debugging
 app.get('/api/debug', (req, res) => {
@@ -4946,51 +5099,94 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 
   try {
     switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
+      case 'checkout.session.completed': {
+        const session = event.data.object;
         
-        // Check if this is a wallet top-up
-        if (paymentIntent.metadata && paymentIntent.metadata.type === 'wallet_top_up') {
-          const brandId = paymentIntent.metadata.brandId;
-          const amount = parseFloat(paymentIntent.metadata.amount);
+        // Check if this is a wallet funding session
+        if (session.metadata && session.metadata.type === 'wallet_funding') {
+          const brandId = session.metadata.brandId;
+          const amount = session.amount_total / 100; // Convert from cents
 
-          // Update wallet balance
-          const wallet = await prisma.brandWallet.findUnique({
+          // Find or create wallet
+          let wallet = await prisma.brandWallet.findUnique({
             where: { brandId: brandId }
           });
 
-          if (wallet) {
-            await prisma.$transaction(async (tx) => {
-              // Update wallet balance
-              const updatedWallet = await tx.brandWallet.update({
-                where: { brandId: brandId },
-                data: {
-                  balance: { increment: amount },
-                  totalDeposited: { increment: amount }
-                }
-              });
+          if (!wallet) {
+            // Create wallet if it doesn't exist
+            wallet = await prisma.brandWallet.create({
+              data: {
+                brandId: brandId,
+                balance: 0,
+                totalSpent: 0,
+                totalDeposited: 0
+              }
+            });
+          }
 
-              // Update transaction balance
-              await tx.brandWalletTransaction.updateMany({
-                where: { 
-                  walletId: wallet.id,
-                  referenceId: paymentIntent.id
-                },
-                data: {
-                  balanceAfter: updatedWallet.balance
-                }
-              });
+          await prisma.$transaction(async (tx) => {
+            // Update wallet balance
+            const updatedWallet = await tx.brandWallet.update({
+              where: { brandId: brandId },
+              data: {
+                balance: { increment: amount },
+                totalDeposited: { increment: amount }
+              }
             });
 
-            // Notify brand about successful top-up
+            // Create transaction record
+            await tx.brandWalletTransaction.create({
+              data: {
+                walletId: wallet.id,
+                type: 'deposit',
+                amount: amount,
+                description: `Wallet funding via Stripe Checkout`,
+                balanceBefore: wallet.balance,
+                balanceAfter: updatedWallet.balance,
+                referenceId: session.id
+              }
+            });
+          });
+
+          console.log(`✅ Wallet funding successful: $${amount} added to brand ${brandId} wallet`);
+
+          // Notify brand about successful top-up
+          try {
             await createNotification(
               brandId,
               'brand',
               'Wallet Top-Up Successful! 💰',
-              `Your wallet has been topped up with $${amount}. New balance: $${wallet.balance + amount}`,
+              `Your wallet has been topped up with $${amount.toFixed(2)}.`,
               'wallet'
             );
+          } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
           }
+        } else {
+          console.log('Non-wallet funding checkout session completed');
+        }
+        break;
+      }
+      
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object;
+        
+        // Handle regular payment to winners (existing logic)
+        const payment = await prisma.payment.findUnique({
+          where: { stripePaymentIntentId: paymentIntent.id },
+          include: { 
+            winner: {
+              include: {
+                brief: true,
+                creator: true
+              }
+            }
+          }
+        });
+
+        if (payment) {
+          // Payment found, process it
+          console.log('Processing existing payment:', payment.id);
         } else {
           // Handle regular payment to winners
           const payment = await prisma.payment.findUnique({

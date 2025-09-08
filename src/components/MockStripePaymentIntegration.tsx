@@ -162,7 +162,7 @@ const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           >
             <option value="card">💳 Credit Card</option>
             <option value="debit">💳 Debit Card</option>
@@ -180,7 +180,7 @@ const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
             onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
             placeholder="1234 5678 9012 3456"
             maxLength={19}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
             required
           />
         </div>
@@ -195,7 +195,7 @@ const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
             value={cardholderName}
             onChange={(e) => setCardholderName(e.target.value)}
             placeholder="John Doe"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
             required
           />
         </div>
@@ -212,7 +212,7 @@ const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
               onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
               placeholder="MM/YY"
               maxLength={5}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               required
             />
           </div>
@@ -226,7 +226,7 @@ const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
               onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').substring(0, 3))}
               placeholder="123"
               maxLength={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               required
             />
           </div>
