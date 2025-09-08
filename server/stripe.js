@@ -238,6 +238,7 @@ router.post('/create-checkout-session', async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
+      locale: 'en',
       success_url: `${process.env.FRONTEND_URL || 'https://draftboard-b44q.vercel.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL || 'https://draftboard-b44q.vercel.app'}/payment/cancel`,
       metadata: {

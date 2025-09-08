@@ -52,6 +52,7 @@ router.post('/create-checkout-session', async (req, res) => {
       amount_total: Math.round(amount * 100),
       currency: 'usd',
       status: 'open',
+      locale: 'en',
       url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/mock-payment?session_id=${sessionId}`,
       metadata: {
         briefId: briefId ? briefId.toString() : 'wallet-funding',
