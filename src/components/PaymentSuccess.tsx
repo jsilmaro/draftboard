@@ -24,7 +24,7 @@ const PaymentSuccess: React.FC = () => {
         
         // Trigger webhook processing to ensure wallet is updated
         try {
-          // Use the same domain for webhook (works for both local and deployed)
+          // Use the fallback webhook endpoint for manual triggering
           const webhookResponse = await fetch('/api/stripe/webhook', {
             method: 'POST',
             headers: {
