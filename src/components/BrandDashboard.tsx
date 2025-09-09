@@ -24,7 +24,7 @@ interface Brief {
   title: string;
   description?: string;
   requirements?: string;
-  status: 'active' | 'draft' | 'completed';
+  status: 'active' | 'draft' | 'completed' | 'archived';
   submissions: number;
   deadline: string;
   reward: number;
@@ -33,6 +33,7 @@ interface Brief {
   winnersSelected?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  archivedAt?: string;
   winnerRewards?: Array<{
     position: number;
     cashAmount: number;
@@ -169,6 +170,7 @@ const BrandDashboard: React.FC = () => {
   const [detailedSubmission, setDetailedSubmission] = useState<DetailedSubmission | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [submissionFilter, setSubmissionFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [briefsFilter, setBriefsFilter] = useState<'active' | 'archived' | 'all'>('active');
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [successNotification, setSuccessNotification] = useState({
     title: '',
@@ -1072,20 +1074,73 @@ const BrandDashboard: React.FC = () => {
     </div>
   );
 
-  const renderBriefs = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">My Briefs</h2>
-        <Link
-          to="/brand/create-brief"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Create New Brief
-        </Link>
-      </div>
+  const renderBriefs = () => {
+    // Filter briefs based on the selected filter
+    const filteredBriefs = briefs.filter(brief => {
+      if (briefsFilter === 'active') {
+        return brief.status !== 'archived';
+      } else if (briefsFilter === 'archived') {
+        return brief.status === 'archived';
+      } else {
+        return true; // 'all' shows everything
+      }
+    });
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {briefs.map((brief) => (
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-white">My Briefs</h2>
+          <Link
+            to="/brand/create-brief"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create New Brief
+          </Link>
+        </div>
+
+        {/* Filter Options */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setBriefsFilter('active')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              briefsFilter === 'active'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Active Briefs
+          </button>
+          <button
+            onClick={() => setBriefsFilter('archived')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              briefsFilter === 'archived'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Archived Briefs
+          </button>
+          <button
+            onClick={() => setBriefsFilter('all')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              briefsFilter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            All Briefs
+          </button>
+        </div>
+
+        {briefsFilter === 'archived' && filteredBriefs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-4">📁</div>
+            <h3 className="text-xl font-semibold text-white mb-2">No Archived Briefs</h3>
+            <p className="text-gray-400">Briefs that exceed their deadline will be automatically archived here.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBriefs.map((brief) => (
           <BrandBriefCard
             key={brief.id}
             brief={{
@@ -1138,9 +1193,10 @@ const BrandDashboard: React.FC = () => {
             }}
           />
         ))}
-      </div>
+          </div>
+        )}
 
-      {/* View Modal */}
+        {/* View Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-600/30">
@@ -1166,7 +1222,8 @@ const BrandDashboard: React.FC = () => {
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     selectedBrief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
                     selectedBrief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
-                    'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
+                    selectedBrief.status === 'archived' ? 'bg-gray-100/20 dark:bg-gray-800/30 text-gray-800 dark:text-gray-400 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30' :
+                    'bg-blue-100/20 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 backdrop-blur-sm border border-blue-200/30 dark:border-blue-600/30'
                   }`}>
                     {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                   </span>
@@ -1578,8 +1635,10 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  );
+      </div>
+    );
+  };
+
 
   const renderSubmissions = () => {
     const filteredSubmissions = submissions.filter(submission => {
@@ -2139,6 +2198,7 @@ const BrandDashboard: React.FC = () => {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       brief.status === 'active' ? 'bg-emerald-900/30 text-emerald-300 backdrop-blur-sm border border-emerald-600/30' :
                       brief.status === 'completed' ? 'bg-blue-100/20 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 backdrop-blur-sm border border-blue-200/30 dark:border-blue-600/30' :
+                      brief.status === 'archived' ? 'bg-gray-100/20 dark:bg-gray-800/30 text-gray-800 dark:text-gray-400 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30' :
                       'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                     }`}>
                       {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
@@ -2572,6 +2632,7 @@ const BrandDashboard: React.FC = () => {
                 <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                   brief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
                   brief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
+                  brief.status === 'archived' ? 'bg-gray-100/20 dark:bg-gray-800/30 text-gray-800 dark:text-gray-400 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30' :
                   'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
                 }`}>
                   {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
@@ -3213,7 +3274,8 @@ const BrandDashboard: React.FC = () => {
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     selectedBrief.status === 'active' ? 'bg-green-100/20 dark:bg-green-900/30 text-green-800 dark:text-green-300 backdrop-blur-sm border border-green-200/30 dark:border-green-600/30' :
                     selectedBrief.status === 'draft' ? 'bg-yellow-100/20 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 backdrop-blur-sm border border-yellow-200/30 dark:border-yellow-600/30' :
-                    'bg-gray-100/20 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30'
+                    selectedBrief.status === 'archived' ? 'bg-gray-100/20 dark:bg-gray-800/30 text-gray-800 dark:text-gray-400 backdrop-blur-sm border border-gray-200/30 dark:border-gray-600/30' :
+                    'bg-blue-100/20 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 backdrop-blur-sm border border-blue-200/30 dark:border-blue-600/30'
                   }`}>
                     {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                   </span>

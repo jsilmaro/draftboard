@@ -50,10 +50,12 @@ interface Brief {
   title: string;
   brandId: string;
   brandName: string;
-  status: 'active' | 'completed' | 'draft';
+  status: 'active' | 'completed' | 'draft' | 'archived';
   reward: number;
   submissions: number;
   createdAt: string;
+  deadline?: string;
+  archivedAt?: string;
 }
 
 interface Submission {
@@ -496,6 +498,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'brands', label: 'Manage Brands', icon: '/icons/profile.png' },
     { id: 'creators', label: 'Manage Creators', icon: '/icons/profile.png' },
     { id: 'briefs', label: 'Manage Briefs', icon: '/icons/Green_icons/Brief1.png' },
+    { id: 'archived-briefs', label: 'Archived Briefs', icon: '/icons/Green_icons/Brief1.png' },
     { id: 'submissions', label: 'Submissions', icon: '/icons/Green_icons/Task1.png' },
     { id: 'withdrawals', label: 'Withdrawals', icon: '/icons/Green_icons/Withdrawal1.png' },
     { id: 'payouts', label: 'Payouts', icon: '/icons/Green_icons/MoneyBag1.png' },
@@ -825,6 +828,115 @@ const AdminDashboard: React.FC = () => {
       </div>
     </div>
   );
+
+  const renderArchivedBriefs = () => {
+    const archivedBriefs = briefs.filter(brief => brief.status === 'archived');
+    
+    return (
+      <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+        <div className="px-6 py-4 border-b border-gray-700/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Archived Briefs</h3>
+              <p className="text-sm text-gray-300 mt-1">Briefs that have exceeded their deadline and been automatically archived</p>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/archive-expired-briefs', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  
+                  if (response.ok) {
+                    const result = await response.json();
+                    alert(`Archiving completed: ${result.result.archived} briefs archived, ${result.result.notifications} notifications sent`);
+                    // Refresh the data
+                    fetchData();
+                  } else {
+                    alert('Failed to run archiving process');
+                  }
+                } catch (error) {
+                  console.error('Error running archiving:', error);
+                  alert('Error running archiving process');
+                }
+              }}
+              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors duration-200"
+            >
+              🔄 Run Archive Process
+            </button>
+          </div>
+          
+          {/* Search and Filter Bar */}
+          <div className="mt-4 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search archived briefs..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {archivedBriefs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-4xl mb-4">📁</div>
+            <h3 className="text-xl font-semibold text-white mb-2">No Archived Briefs</h3>
+            <p className="text-gray-400">Briefs that exceed their deadline will be automatically archived here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Reward</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Deadline</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Archived</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submissions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-gray-900/10 divide-y divide-gray-700/30">
+                {archivedBriefs.map((brief) => (
+                  <tr key={brief.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-white">{brief.title}</div>
+                      <div className="text-sm text-gray-300">Created {new Date(brief.createdAt).toLocaleDateString()}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.brandName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${brief.reward.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-400">
+                      {brief.deadline ? new Date(brief.deadline).toLocaleDateString() : 'No deadline'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      {brief.archivedAt ? new Date(brief.archivedAt).toLocaleDateString() : 'Unknown'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{brief.submissions}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button 
+                        onClick={() => handleView(brief, 'briefs')}
+                        className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors duration-200 mr-2"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderSubmissions = () => (
     <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
@@ -1299,6 +1411,8 @@ const AdminDashboard: React.FC = () => {
         return renderCreators();
       case 'briefs':
         return renderBriefs();
+      case 'archived-briefs':
+        return renderArchivedBriefs();
       case 'submissions':
         return renderSubmissions();
       case 'withdrawals':

@@ -99,6 +99,7 @@ model Brief {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   closedAt         DateTime?
+  archivedAt       DateTime?
   amountOfWinners  Int              @default(1)
   winnersSelected  Boolean          @default(false)
   location         String?

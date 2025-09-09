@@ -45,6 +45,40 @@ const app = express();
 
 const PORT = process.env.PORT || 3001;
 
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  console.log('🔐 Authentication attempt:', {
+    hasAuthHeader: !!authHeader,
+    hasToken: !!token,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    url: req.url,
+    method: req.method
+  });
+
+  if (!token) {
+    console.log('❌ No token provided');
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    console.log('❌ JWT_SECRET not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.log('❌ Token verification failed:', err.message);
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    console.log('✅ Token verified successfully for user:', user.id);
+    req.user = user;
+    next();
+  });
+};
+
 // Utility function to validate URLs
 function isValidUrl(string) {
   try {
@@ -52,6 +86,118 @@ function isValidUrl(string) {
     return true;
   } catch (_) {
     return false;
+  }
+}
+
+// Utility function to archive expired briefs
+async function archiveExpiredBriefs() {
+  try {
+    console.log('🔄 Starting automatic brief archiving process...');
+    
+    const now = new Date();
+    const expiredBriefs = await prisma.brief.findMany({
+      where: {
+        deadline: {
+          lt: now
+        },
+        status: {
+          in: ['active', 'published']
+        }
+        // Note: archivedAt field might not exist in all database versions
+      },
+      include: {
+        brand: {
+          select: {
+            id: true,
+            companyName: true,
+            email: true
+          }
+        },
+        submissions: {
+          select: {
+            id: true,
+            creatorId: true
+          }
+        }
+      }
+    });
+
+    console.log(`📋 Found ${expiredBriefs.length} expired briefs to archive`);
+
+    if (expiredBriefs.length === 0) {
+      console.log('✅ No expired briefs to archive');
+      return { archived: 0, notifications: 0 };
+    }
+
+    let archivedCount = 0;
+    let notificationCount = 0;
+
+    for (const brief of expiredBriefs) {
+      try {
+        // Archive the brief
+        await prisma.brief.update({
+          where: { id: brief.id },
+          data: {
+            status: 'archived',
+            updatedAt: now
+            // Note: archivedAt field might not exist in all database versions
+          }
+        });
+
+        archivedCount++;
+        console.log(`✅ Archived brief: ${brief.title} (ID: ${brief.id})`);
+
+        // Send notifications to brand
+        try {
+          await createNotification(
+            brief.brandId,
+            'brand',
+            'Brief Automatically Archived 📁',
+            `Your brief "${brief.title}" has been automatically archived because it exceeded its deadline of ${new Date(brief.deadline).toLocaleDateString()}.`,
+            'brief',
+            'info',
+            'normal',
+            null,
+            null,
+            { briefId: brief.id, briefTitle: brief.title }
+          );
+          notificationCount++;
+        } catch (notificationError) {
+          console.error(`❌ Failed to send notification for brief ${brief.id}:`, notificationError);
+        }
+
+        // Send notifications to creators who submitted
+        for (const submission of brief.submissions) {
+          try {
+            await createNotification(
+              submission.creatorId,
+              'creator',
+              'Brief Application Archived 📁',
+              `The brief "${brief.title}" you applied to has been automatically archived because it exceeded its deadline.`,
+              'brief',
+              'info',
+              'normal',
+              null,
+              null,
+              { briefId: brief.id, briefTitle: brief.title }
+            );
+            notificationCount++;
+          } catch (notificationError) {
+            console.error(`❌ Failed to send notification to creator ${submission.creatorId}:`, notificationError);
+          }
+        }
+
+      } catch (error) {
+        console.error(`❌ Failed to archive brief ${brief.id}:`, error);
+      }
+    }
+
+    console.log(`✅ Archiving process completed: ${archivedCount} briefs archived, ${notificationCount} notifications sent`);
+    return { archived: archivedCount, notifications: notificationCount };
+
+  } catch (error) {
+    console.error('❌ Error in automatic brief archiving:', error);
+    throw error;
   }
 }
 
@@ -204,6 +350,143 @@ app.use('/api/search', searchRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/mock-stripe', mockStripeRoutes);
 app.use('/api/rewards-system', rewardsRoutes);
+
+// Test endpoint to create a brief with past deadline for testing
+app.post('/api/test/create-expired-brief', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { brandId } = req.body;
+    
+    if (!brandId) {
+      return res.status(400).json({ error: 'Brand ID is required' });
+    }
+
+    // Create a brief with deadline in the past
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1); // 1 day ago
+
+    const brief = await prisma.brief.create({
+      data: {
+        title: 'Test Expired Brief',
+        description: 'This is a test brief with an expired deadline',
+        requirements: 'Test requirements',
+        reward: 100,
+        deadline: pastDate,
+        status: 'active',
+        brandId: brandId,
+        amountOfWinners: 1
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Test expired brief created',
+      brief
+    });
+  } catch (error) {
+    console.error('Error creating test expired brief:', error);
+    res.status(500).json({ 
+      error: 'Failed to create test expired brief',
+      details: error.message 
+    });
+  }
+});
+
+// Brief archiving endpoints
+app.post('/api/admin/archive-expired-briefs', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const result = await archiveExpiredBriefs();
+    
+    res.json({
+      success: true,
+      message: 'Brief archiving process completed',
+      result
+    });
+  } catch (error) {
+    console.error('Error in manual brief archiving:', error);
+    res.status(500).json({ 
+      error: 'Failed to archive expired briefs',
+      details: error.message 
+    });
+  }
+});
+
+// Get archived briefs for admin
+app.get('/api/admin/archived-briefs', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const where = {
+      status: 'archived',
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { brand: { companyName: { contains: search, mode: 'insensitive' } } }
+        ]
+      })
+    };
+
+    const [archivedBriefs, totalCount] = await Promise.all([
+      prisma.brief.findMany({
+        where,
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              email: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          _count: {
+            select: {
+              submissions: true
+            }
+          }
+        },
+        orderBy: { archivedAt: 'desc' },
+        skip,
+        take: parseInt(limit)
+      }),
+      prisma.brief.count({ where })
+    ]);
+
+    res.json({
+      briefs: archivedBriefs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalCount,
+        pages: Math.ceil(totalCount / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching archived briefs:', error);
+    res.status(500).json({ error: 'Failed to fetch archived briefs' });
+  }
+});
 
 // Additional webhook route for local development (port 3000)
 app.post('/api/stripe/webhook-local', async (req, res) => {
@@ -459,42 +742,6 @@ const handleFileUpload = (file) => {
     // In development, use local file system
     return `/uploads/${file.filename}`;
   }
-};
-
-
-
-// Authentication middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  console.log('🔐 Authentication attempt:', {
-    hasAuthHeader: !!authHeader,
-    hasToken: !!token,
-    hasJwtSecret: !!process.env.JWT_SECRET,
-    url: req.url,
-    method: req.method
-  });
-
-  if (!token) {
-    console.log('❌ No token provided');
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  if (!process.env.JWT_SECRET) {
-    console.log('❌ JWT_SECRET not configured');
-    return res.status(500).json({ error: 'Server configuration error' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log('❌ Token verification failed:', err.message);
-      return res.status(403).json({ error: 'Invalid token' });
-    }
-    console.log('✅ Token verified successfully for user:', user.id);
-    req.user = user;
-    next();
-  });
 };
 
         // Brand registration
@@ -2639,7 +2886,8 @@ app.get('/api/briefs/:briefId/public', async (req, res) => {
       brief = await prisma.brief.findFirst({
         where: { 
           id: briefId,
-          isPrivate: false
+          isPrivate: false,
+          status: { in: ['published', 'active'] }
         },
         include: {
           brand: {
@@ -5818,7 +6066,8 @@ app.get('/api/briefs/:briefId/public', async (req, res) => {
       brief = await prisma.brief.findFirst({
         where: { 
           id: briefId,
-          isPrivate: false
+          isPrivate: false,
+          status: { in: ['published', 'active'] }
         },
         include: {
           brand: {
@@ -6119,9 +6368,48 @@ if (require.main === module) {
     console.log(`\n✅ Ready to use! Open http://localhost:${PORT} in your browser\n`);
   });
 
+  // Set up automatic brief archiving cron job
+  console.log('⏰ Setting up automatic brief archiving...');
+  
+  // Run archiving every hour (3600000 ms)
+  const ARCHIVE_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
+  
+  const archiveInterval = setInterval(async () => {
+    try {
+      console.log('🔄 Running scheduled brief archiving...');
+      const result = await archiveExpiredBriefs();
+      if (result.archived > 0) {
+        console.log(`✅ Scheduled archiving completed: ${result.archived} briefs archived, ${result.notifications} notifications sent`);
+      }
+    } catch (error) {
+      console.error('❌ Error in scheduled brief archiving:', error);
+    }
+  }, ARCHIVE_INTERVAL);
+
+  // Also run archiving on server start (with a delay to let the server fully initialize)
+  setTimeout(async () => {
+    try {
+      console.log('🔄 Running initial brief archiving on server start...');
+      const result = await archiveExpiredBriefs();
+      if (result.archived > 0) {
+        console.log(`✅ Initial archiving completed: ${result.archived} briefs archived, ${result.notifications} notifications sent`);
+      }
+    } catch (error) {
+      console.error('❌ Error in initial brief archiving:', error);
+    }
+  }, 10000); // 10 seconds delay
+
+  console.log(`⏰ Brief archiving scheduled to run every ${ARCHIVE_INTERVAL / 1000 / 60} minutes`);
+
   // Graceful shutdown handling
   const gracefulShutdown = async (signal) => {
     console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+    
+    // Clear the archiving interval
+    if (archiveInterval) {
+      clearInterval(archiveInterval);
+      console.log('✅ Archiving interval cleared');
+    }
     
     server.close(async () => {
       console.log('✅ HTTP server closed');

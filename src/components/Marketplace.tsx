@@ -67,7 +67,10 @@ const Marketplace = () => {
       
       const matchesStatus = filterStatus === 'all' || brief.status === filterStatus;
       
-      return matchesSearch && matchesStatus;
+      // Exclude archived briefs from public marketplace
+      const isNotArchived = brief.status !== 'archived';
+      
+      return matchesSearch && matchesStatus && isNotArchived;
     })
     .sort((a, b) => {
       switch (sortBy) {

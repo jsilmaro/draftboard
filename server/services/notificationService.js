@@ -144,6 +144,17 @@ class NotificationService {
       };
     } catch (error) {
       console.error('🔔 Error fetching user notifications:', error);
+      
+      // If it's a table doesn't exist error, return empty results
+      if (error.code === 'P2021' || error.message.includes("Can't reach database server")) {
+        console.log('🔔 Notification tables not available, returning empty results');
+        return {
+          notifications: [],
+          total: 0,
+          hasMore: false
+        };
+      }
+      
       throw error;
     }
   }

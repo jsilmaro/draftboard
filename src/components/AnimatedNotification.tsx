@@ -42,7 +42,7 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
       case 'info':
         return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
       case 'success':
-        return <img src="/icons/Green_icons/Paid1.png" alt="Success" className="w-7 h-7" />;
+        return <img src="/icons/Green_icons/NotificationBell.png" alt="Success" className="w-7 h-7" />;
       default:
         return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
     }
