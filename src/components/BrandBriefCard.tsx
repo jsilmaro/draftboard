@@ -31,6 +31,7 @@ interface BrandBriefCardProps {
   onEditRewardsClick?: (brief: BrandBriefCardProps['brief']) => void;
   onSelectWinnersClick?: (brief: BrandBriefCardProps['brief']) => void;
   onViewSubmissionsClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onDeleteClick?: (brief: BrandBriefCardProps['brief']) => void;
 
 }
 
@@ -40,7 +41,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   onEditClick: _onEditClick, 
   onEditRewardsClick: _onEditRewardsClick, 
   onSelectWinnersClick: _onSelectWinnersClick,
-  onViewSubmissionsClick
+  onViewSubmissionsClick,
+  onDeleteClick
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -227,6 +229,19 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
           >
             📤 Share
           </button>
+          {onDeleteClick && (
+            <button
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete "${brief.title}"? This action cannot be undone.`)) {
+                  onDeleteClick(brief);
+                }
+              }}
+              className="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-red-700 transition-colors"
+              title="Delete brief"
+            >
+              🗑️ Delete
+            </button>
+          )}
         </div>
       </div>
     </div>

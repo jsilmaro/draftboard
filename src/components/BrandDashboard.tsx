@@ -1191,6 +1191,7 @@ const BrandDashboard: React.FC = () => {
               setActiveTab('submissions');
               setSubmissionFilter('all');
             }}
+            onDeleteClick={(briefData) => handleDeleteBrief(briefData.id)}
           />
         ))}
           </div>

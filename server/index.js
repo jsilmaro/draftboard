@@ -1929,12 +1929,24 @@ app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    // Delete related records first (award drafts, published awards)
+    // Delete related records first (award drafts, published awards, winner rewards, winners, reward pools)
     await prisma.awardDraft.deleteMany({
       where: { briefId: id }
     });
 
     await prisma.publishedAward.deleteMany({
+      where: { briefId: id }
+    });
+
+    await prisma.winnerReward.deleteMany({
+      where: { briefId: id }
+    });
+
+    await prisma.winner.deleteMany({
+      where: { briefId: id }
+    });
+
+    await prisma.rewardPool.deleteMany({
       where: { briefId: id }
     });
 
