@@ -24,7 +24,7 @@ interface Brief {
   totalRewardsPaid: number;
   location?: string;
   deadline: string;
-  status: 'active' | 'draft' | 'completed';
+  status: 'published' | 'draft' | 'archived';
   brand: {
     id: string;
     companyName: string;
@@ -995,7 +995,7 @@ const CreatorDashboard: React.FC = () => {
               <div className="flex justify-between">
                 <span className="font-medium text-white">Status:</span>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedBrief.status === 'active' ? 'bg-emerald-900/20 text-emerald-400' :
+                  selectedBrief.status === 'published' ? 'bg-emerald-900/20 text-emerald-400' :
                                       selectedBrief.status === 'draft' ? 'bg-yellow-900/20 text-yellow-400' :
                     'bg-gray-700 text-gray-300'
                 }`}>

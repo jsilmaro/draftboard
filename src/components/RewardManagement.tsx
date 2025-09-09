@@ -127,7 +127,7 @@ const RewardManagement: React.FC<RewardManagementProps> = ({ userType, userId: _
         const allBriefs = Array.isArray(data) ? data : [];
         // Filter to only show published/active briefs (not drafts)
         const publishedBriefs = allBriefs.filter(brief => 
-          brief.status === 'published' || brief.status === 'active'
+          brief.status === 'published'
         );
         // eslint-disable-next-line no-console
         console.log('All briefs:', allBriefs.length, 'Published briefs:', publishedBriefs.length);

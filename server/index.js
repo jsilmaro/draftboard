@@ -101,7 +101,7 @@ async function archiveExpiredBriefs() {
           lt: now
         },
         status: {
-          in: ['active', 'published']
+          in: ['published']
         }
         // Note: archivedAt field might not exist in all database versions
       },
@@ -2822,7 +2822,7 @@ app.get('/api/briefs/public', async (req, res) => {
   try {
           const briefs = await prisma.brief.findMany({
         where: { 
-          status: { in: ['published', 'active'] },
+          status: { in: ['published'] },
           isPrivate: false
         },
         include: {
@@ -3084,7 +3084,7 @@ app.get('/api/briefs/:id', authenticateToken, async (req, res) => {
     console.log(`Found brief with status: ${brief.status}, isPrivate: ${brief.isPrivate}`);
 
     // Check if brief is accessible (not private and has valid status)
-    if (brief.isPrivate || !['published', 'active', 'draft'].includes(brief.status)) {
+    if (brief.isPrivate || !['published', 'draft'].includes(brief.status)) {
       console.log(`Brief ${id} has status: ${brief.status}, isPrivate: ${brief.isPrivate}`);
       return res.status(404).json({ error: 'Brief not accessible' });
     }
@@ -3170,10 +3170,10 @@ app.post('/api/creators/submissions', authenticateToken, async (req, res) => {
       where: {
         id: briefId,
         status: {
-          in: ['published', 'active'] // Allow submissions to both published and active briefs
+          in: ['published'] // Allow submissions to published briefs
         },
         deadline: {
-          gte: new Date() // Only allow submissions to active briefs
+          gte: new Date() // Only allow submissions to published briefs
         }
       }
     });
@@ -3188,7 +3188,7 @@ app.post('/api/creators/submissions', authenticateToken, async (req, res) => {
       
       if (!briefExists) {
         return res.status(404).json({ error: 'Brief not found' });
-      } else if (briefExists.status !== 'published' && briefExists.status !== 'active') {
+      } else if (briefExists.status !== 'published') {
         return res.status(400).json({ error: 'Brief is not accepting submissions at this time' });
       } else if (new Date(briefExists.deadline) < new Date()) {
         return res.status(400).json({ error: 'Brief deadline has passed' });
@@ -5995,7 +5995,7 @@ app.get('/api/briefs/public', async (req, res) => {
     try {
       briefs = await prisma.brief.findMany({
         where: { 
-          status: { in: ['published', 'active'] },
+          status: { in: ['published'] },
           isPrivate: false
         },
         include: {

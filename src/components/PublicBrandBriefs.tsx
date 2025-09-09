@@ -302,7 +302,7 @@ const PublicBrandBriefs: React.FC = () => {
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-semibold line-clamp-2 text-white group-hover:text-blue-300 transition-colors duration-300">{brief.title}</h3>
                   <span className={`px-3 py-1 text-xs rounded-full font-medium ${
-                    brief.status === 'active' 
+                    brief.status === 'published' 
                       ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/30'
                       : 'bg-gray-700/50 text-gray-300 border border-gray-600/30'
                   }`}>

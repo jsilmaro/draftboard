@@ -36,7 +36,7 @@ const Marketplace = () => {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const { user } = useAuth();
 
@@ -59,18 +59,40 @@ const Marketplace = () => {
     }
   };
 
+  // Function to determine brief type based on content
+  const getBriefType = (brief: Brief) => {
+    const content = (brief.title + ' ' + brief.description).toLowerCase();
+    
+    // Technical keywords
+    if (content.includes('code') || content.includes('development') || content.includes('programming') || 
+        content.includes('api') || content.includes('software') || content.includes('technical') ||
+        content.includes('backend') || content.includes('frontend') || content.includes('database')) {
+      return 'technical';
+    }
+    
+    // Business keywords
+    if (content.includes('strategy') || content.includes('business') || content.includes('consulting') ||
+        content.includes('marketing') || content.includes('sales') || content.includes('analysis') ||
+        content.includes('research') || content.includes('planning')) {
+      return 'business';
+    }
+    
+    // Default to creative for design, content, and other creative work
+    return 'creative';
+  };
+
   const filteredBriefs = briefs
     .filter(brief => {
       const matchesSearch = brief.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            brief.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            brief.brand.companyName.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesStatus = filterStatus === 'all' || brief.status === filterStatus;
+      const matchesType = filterType === 'all' || getBriefType(brief) === filterType;
       
-      // Exclude archived briefs from public marketplace
-      const isNotArchived = brief.status !== 'archived';
+      // Only show published briefs in public marketplace
+      const isPublished = brief.status === 'published';
       
-      return matchesSearch && matchesStatus && isNotArchived;
+      return matchesSearch && matchesType && isPublished;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -180,17 +202,17 @@ const Marketplace = () => {
               />
             </div>
 
-            {/* Status Filter */}
+            {/* Brief Type Filter */}
             <div>
               <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="active">Active</option>
-                <option value="closed">Closed</option>
+                <option value="all">All Types</option>
+                <option value="creative">Creative</option>
+                <option value="technical">Technical</option>
+                <option value="business">Business</option>
               </select>
             </div>
 
@@ -304,14 +326,15 @@ const Marketplace = () => {
                     </div>
                   </div>
 
-                  {/* Status Badge */}
+                  {/* Brief Type Badge */}
                   <div className="mb-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      brief.status === 'published' ? 'bg-green-100 text-green-800' :
-                      brief.status === 'active' ? 'bg-blue-100 text-blue-800' :
+                      getBriefType(brief) === 'creative' ? 'bg-purple-100 text-purple-800' :
+                      getBriefType(brief) === 'technical' ? 'bg-blue-100 text-blue-800' :
+                      getBriefType(brief) === 'business' ? 'bg-green-100 text-green-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                      {getBriefType(brief).charAt(0).toUpperCase() + getBriefType(brief).slice(1)}
                     </span>
                   </div>
 

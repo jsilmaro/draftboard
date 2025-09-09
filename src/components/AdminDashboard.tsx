@@ -50,7 +50,7 @@ interface Brief {
   title: string;
   brandId: string;
   brandName: string;
-  status: 'active' | 'completed' | 'draft' | 'archived';
+  status: 'published' | 'draft' | 'archived';
   reward: number;
   submissions: number;
   createdAt: string;
@@ -538,7 +538,7 @@ const AdminDashboard: React.FC = () => {
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-300">Available Briefs</p>
-            <p className="text-2xl font-bold text-white">{briefs.filter(b => b.status === 'active').length}</p>
+            <p className="text-2xl font-bold text-white">{briefs.filter(b => b.status === 'published').length}</p>
           </div>
         </div>
       </div>
@@ -776,8 +776,8 @@ const AdminDashboard: React.FC = () => {
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
           </select>
         </div>
       </div>
@@ -804,8 +804,8 @@ const AdminDashboard: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${brief.reward.toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    brief.status === 'active' ? 'bg-green-900/20 text-green-400' :
-                    brief.status === 'completed' ? 'bg-blue-900/20 text-blue-400' :
+                    brief.status === 'published' ? 'bg-green-900/20 text-green-400' :
+                    brief.status === 'archived' ? 'bg-blue-900/20 text-blue-400' :
                     'bg-gray-800 text-gray-300'
                   }`}>
                     {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
@@ -1134,8 +1134,8 @@ const AdminDashboard: React.FC = () => {
       datasets: [{
         data: [
           briefs.filter(b => b.status === 'draft').length,
-          briefs.filter(b => b.status === 'active').length,
-          briefs.filter(b => b.status === 'completed').length
+          briefs.filter(b => b.status === 'published').length,
+          briefs.filter(b => b.status === 'archived').length
         ],
         backgroundColor: [
           'rgba(108, 117, 125, 0.8)',
@@ -1355,13 +1355,13 @@ const AdminDashboard: React.FC = () => {
               <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                 <span className="text-sm text-gray-300">Available Briefs</span>
                 <span className="text-sm font-medium text-white bg-blue-500/20 px-3 py-1 rounded-full">
-                  {briefs.filter(b => b.status === 'active').length}
+                  {briefs.filter(b => b.status === 'published').length}
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                <span className="text-sm text-gray-300">Completed Briefs</span>
+                <span className="text-sm text-gray-300">Archived Briefs</span>
                 <span className="text-sm font-medium text-white bg-green-500/20 px-3 py-1 rounded-full">
-                  {briefs.filter(b => b.status === 'completed').length}
+                  {briefs.filter(b => b.status === 'archived').length}
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
