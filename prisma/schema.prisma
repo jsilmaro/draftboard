@@ -40,6 +40,7 @@ model Brand {
   wallet          BrandWallet?
   briefs          Brief[]
   publishedAwards PublishedAward[]
+  successStories  SuccessStory[]
 
   @@index([email])
   @@index([createdAt])
@@ -79,6 +80,7 @@ model Creator {
   submissions     Submission[]
   winners         Winner[]
   withdrawalRequests WithdrawalRequest[]
+  successStories  SuccessStory[]
 
   @@index([email])
   @@index([userName])
@@ -436,4 +438,232 @@ model WithdrawalRequest {
   @@index([status])
   @@index([creatorId])
   @@index([requestedAt])
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  participant1Id  String
+  participant2Id  String
+  participant1Type String   // 'brand' or 'creator'
+  participant2Type String   // 'brand' or 'creator'
+  lastMessageAt   DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  messages        Message[]
+  
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id])
+  @@index([participant2Id])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  senderType     String       // 'brand' or 'creator'
+  receiverType   String       // 'brand' or 'creator'
+  content        String
+  type           MessageType  @default(TEXT)
+  fileName       String?
+  fileUrl        String?
+  fileSize       Int?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+  VIDEO
+}
+
+// Community and Events Models
+model Event {
+  id               String    @id @default(cuid())
+  title            String
+  description      String
+  type             String    // webinar, workshop, networking, conference
+  category         String    // education, networking, business, creative, technical
+  hostId           String
+  date             DateTime
+  time             String
+  duration         String
+  timezone         String
+  maxAttendees     Int
+  currentAttendees Int       @default(0)
+  price            Float     @default(0)
+  currency         String    @default("USD")
+  isFree           Boolean   @default(true)
+  isLive           Boolean   @default(false)
+  isRecorded       Boolean   @default(false)
+  recordingUrl     String?
+  meetingUrl       String?
+  tags             String[]
+  requirements     String[]
+  learningOutcomes String[]
+  agenda           Json      @default("[]")
+  featured         Boolean   @default(false)
+  status           String    @default("upcoming") // upcoming, live, completed, cancelled
+  views            Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  host             User      @relation(fields: [hostId], references: [id])
+  attendees        EventRegistration[]
+  
+  @@index([date])
+  @@index([status])
+  @@index([type])
+  @@index([category])
+  @@index([featured])
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model ForumPost {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  authorId    String
+  category    String    // tips, networking, support, general
+  tags        String[]
+  likes       Int       @default(0)
+  replies     Int       @default(0)
+  views       Int       @default(0)
+  isPinned    Boolean   @default(false)
+  isLocked    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  author      User      @relation(fields: [authorId], references: [id])
+  forumReplies ForumReply[]
+  forumLikes  ForumPostLike[]
+  
+  @@index([category])
+  @@index([isPinned])
+  @@index([createdAt])
+  @@index([authorId])
+}
+
+model ForumReply {
+  id          String    @id @default(cuid())
+  postId      String
+  authorId    String
+  content     String
+  likes       Int       @default(0)
+  isSolution  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  post        ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id])
+  forumLikes  ForumReplyLike[]
+  
+  @@index([postId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model ForumPostLike {
+  id        String    @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime  @default(now())
+  
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model ForumReplyLike {
+  id        String     @id @default(cuid())
+  replyId   String
+  userId    String
+  createdAt DateTime   @default(now())
+  
+  reply     ForumReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([replyId, userId])
+  @@index([replyId])
+  @@index([userId])
+}
+
+model SuccessStory {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  briefTitle  String
+  brandId     String
+  creatorId   String
+  category    String    // creative, technical, business
+  budget      Float
+  duration    String
+  outcome     String
+  metrics     Json      @default("{}")
+  testimonial Json      @default("{}")
+  images      String[]
+  tags        String[]
+  featured    Boolean   @default(false)
+  verified    Boolean   @default(false)
+  views       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  brand       Brand     @relation(fields: [brandId], references: [id])
+  creator     Creator   @relation(fields: [creatorId], references: [id])
+  
+  @@index([category])
+  @@index([featured])
+  @@index([verified])
+  @@index([createdAt])
+}
+
+// Unified User model for events and forums
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  type      String    // brand, creator, platform
+  avatar    String?
+  bio       String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Relations
+  hostedEvents     Event[]
+  eventRegistrations EventRegistration[]
+  forumPosts       ForumPost[]
+  forumReplies     ForumReply[]
+  forumPostLikes   ForumPostLike[]
+  forumReplyLikes  ForumReplyLike[]
+  
+  @@index([type])
+  @@index([name])
 }

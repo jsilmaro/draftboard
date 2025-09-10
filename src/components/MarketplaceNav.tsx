@@ -45,6 +45,36 @@ const MarketplaceNav = () => {
             >
               Home
             </Link>
+            <Link
+              to="/community"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/community') 
+                  ? 'text-green-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              Community
+            </Link>
+            <Link
+              to="/events"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/events') 
+                  ? 'text-green-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              Events
+            </Link>
+            <Link
+              to="/success-stories"
+              className={`text-sm font-medium transition-colors ${
+                isActive('/success-stories') 
+                  ? 'text-green-400' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              Success Stories
+            </Link>
             
             {/* User-specific links */}
             {user ? (
@@ -88,6 +118,7 @@ const MarketplaceNav = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
+
                 <div className="hidden sm:flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">

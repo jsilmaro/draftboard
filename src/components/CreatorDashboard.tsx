@@ -9,6 +9,7 @@ import BriefDetailsModal from './BriefDetailsModal';
 import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
 import Logo from './Logo';
+import MessagingSystem from './MessagingSystem';
 
 
 
@@ -697,6 +698,7 @@ const CreatorDashboard: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: 'overview' },
     { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
     { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
+    { id: 'messaging', label: 'Messages', icon: 'messaging' },
     { id: 'earnings', label: 'Earnings', icon: 'payments' },
     { id: 'wallet', label: 'Wallet', icon: 'wallet' },
     { id: 'profile', label: 'Profile', icon: 'profile' },
@@ -1188,7 +1190,15 @@ const CreatorDashboard: React.FC = () => {
     </div>
   );
 
-
+  const renderMessaging = () => (
+    <div className="h-full">
+      <MessagingSystem
+        isOpen={true}
+        onClose={() => {}}
+        embedded={true}
+      />
+    </div>
+  );
 
   const renderEarnings = () => {
     // Filter and sort earnings
@@ -1696,7 +1706,8 @@ const CreatorDashboard: React.FC = () => {
         return renderBriefs();
       case 'submissions':
         return renderSubmissions();
-
+      case 'messaging':
+        return renderMessaging();
       case 'earnings':
         return renderEarnings();
       case 'wallet':
@@ -2215,6 +2226,7 @@ const CreatorDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
       </div>
     </div>
   );

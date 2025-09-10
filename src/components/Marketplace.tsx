@@ -38,6 +38,10 @@ const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [budgetRange, setBudgetRange] = useState({ min: '', max: '' });
+  const [deadlineFilter, setDeadlineFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -89,10 +93,38 @@ const Marketplace = () => {
       
       const matchesType = filterType === 'all' || getBriefType(brief) === filterType;
       
+      // Budget range filter
+      const matchesBudget = (() => {
+        if (!budgetRange.min && !budgetRange.max) return true;
+        const minBudget = budgetRange.min ? parseFloat(budgetRange.min) : 0;
+        const maxBudget = budgetRange.max ? parseFloat(budgetRange.max) : Infinity;
+        return brief.reward >= minBudget && brief.reward <= maxBudget;
+      })();
+      
+      // Deadline filter
+      const matchesDeadline = (() => {
+        if (deadlineFilter === 'all') return true;
+        const now = new Date();
+        const deadline = new Date(brief.deadline);
+        const daysUntilDeadline = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        switch (deadlineFilter) {
+          case 'urgent': return daysUntilDeadline <= 3;
+          case 'week': return daysUntilDeadline <= 7;
+          case 'month': return daysUntilDeadline <= 30;
+          case 'long-term': return daysUntilDeadline > 30;
+          default: return true;
+        }
+      })();
+      
+      // Location filter
+      const matchesLocation = locationFilter === 'all' || 
+        (brief.location && brief.location.toLowerCase().includes(locationFilter.toLowerCase()));
+      
       // Only show published briefs in public marketplace
       const isPublished = brief.status === 'published';
       
-      return matchesSearch && matchesType && isPublished;
+      return matchesSearch && matchesType && matchesBudget && matchesDeadline && matchesLocation && isPublished;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -231,6 +263,76 @@ const Marketplace = () => {
               </select>
             </div>
           </div>
+          
+          {/* Advanced Filters Toggle */}
+          <div className="mt-4 flex justify-between items-center">
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="text-green-400 hover:text-green-300 text-sm font-medium flex items-center"
+            >
+              {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+              <span className="ml-1">{showAdvancedFilters ? '▲' : '▼'}</span>
+            </button>
+            <span className="text-gray-400 text-sm">
+              {filteredBriefs.length} briefs found
+            </span>
+          </div>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Budget Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Budget Range</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="number"
+                      placeholder="Min $"
+                      value={budgetRange.min}
+                      onChange={(e) => setBudgetRange({...budgetRange, min: e.target.value})}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max $"
+                      value={budgetRange.max}
+                      onChange={(e) => setBudgetRange({...budgetRange, max: e.target.value})}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Deadline Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Deadline</label>
+                  <select
+                    value={deadlineFilter}
+                    onChange={(e) => setDeadlineFilter(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="all">Any Deadline</option>
+                    <option value="urgent">Urgent (&le;3 days)</option>
+                    <option value="week">This Week (&le;7 days)</option>
+                    <option value="month">This Month (&le;30 days)</option>
+                      <option value="long-term">Long-term (&gt;30 days)</option>
+                  </select>
+                </div>
+
+                {/* Location Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                  <input
+                    type="text"
+                    placeholder="City, Country, or Remote"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Briefs Grid */}

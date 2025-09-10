@@ -7,6 +7,7 @@ import WinnerSelectionModal from './WinnerSelectionModal';
 
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
+import MessagingSystem from './MessagingSystem';
 
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
@@ -898,6 +899,7 @@ const BrandDashboard: React.FC = () => {
     { id: 'submissions', label: 'Submissions', icon: 'submissions' },
     { id: 'create', label: 'Create a Brief', icon: 'create' },
     { id: 'creators', label: 'Creators', icon: 'creators' },
+    { id: 'messaging', label: 'Messages', icon: 'messaging' },
     { id: 'statistics', label: 'Statistics', icon: 'statistics' },
     { id: 'payments', label: 'Wallet & Payments', icon: 'payments' },
   ];
@@ -2037,6 +2039,15 @@ const BrandDashboard: React.FC = () => {
     </div>
   );
 
+  const renderMessaging = () => (
+    <div className="h-full">
+      <MessagingSystem
+        isOpen={true}
+        onClose={() => {}}
+        embedded={true}
+      />
+    </div>
+  );
 
   const renderSettings = () => (
     <div className="space-y-6">
@@ -2955,6 +2966,8 @@ const BrandDashboard: React.FC = () => {
         return renderSubmissions();
       case 'creators':
         return renderCreators();
+      case 'messaging':
+        return renderMessaging();
       case 'statistics':
         return renderStatistics();
       case 'rewards-payments':
@@ -3703,6 +3716,7 @@ const BrandDashboard: React.FC = () => {
           onClose={() => setShowSuccessNotification(false)}
         />
       )}
+
       </div>
     </div>
   );

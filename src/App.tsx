@@ -19,6 +19,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
 import Marketplace from './components/Marketplace'
 import PublicBriefDetails from './components/PublicBriefDetails'
+import CommunityPage from './components/CommunityPage'
+import EventsPage from './components/EventsPage'
+import SuccessStoriesPage from './components/SuccessStoriesPage'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -47,6 +50,11 @@ function App() {
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/brief/:briefId" element={<PublicBriefDetails />} />
               <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
+              
+              {/* Public Community Routes */}
+              <Route path="/community" element={<CommunityPage />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/success-stories" element={<SuccessStoriesPage />} />
               
               {/* Authentication Routes */}
               <Route path="/login" element={<LoginForm />} />

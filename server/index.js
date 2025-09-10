@@ -16,6 +16,10 @@ const paymentRoutes = require('./routes/payments');
 const rewardRoutes = require('./routes/rewards');
 const adminRoutes = require('./routes/admin');
 const searchRoutes = require('./routes/search');
+const messagingRoutes = require('./routes/messaging');
+const communityRoutes = require('./routes/community');
+const eventsRoutes = require('./routes/events');
+const successStoriesRoutes = require('./routes/success-stories');
 
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
@@ -345,6 +349,10 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/messages', messagingRoutes);
+app.use('/api/forums', communityRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/success-stories', successStoriesRoutes);
 
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);
