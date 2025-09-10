@@ -1720,26 +1720,47 @@ const CreatorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
-      {/* Sophisticated Background with Glass-morphism */}
+    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950 flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
+      {/* Dark Green Background with Glowing Green Accents */}
       <div className="absolute inset-0">
-        {/* Primary dark gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        {/* Primary dark green gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-950"></div>
         
-        {/* Subtle neon green lighting effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400/15 via-transparent to-green-600/8 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-green-600/4 via-transparent to-green-500/10 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Glowing green light beam - diagonal from bottom right */}
+        <div className="absolute inset-0 opacity-40">
+          <div 
+            className="absolute bottom-0 right-0 w-full h-full"
+            style={{
+              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.6) 60%, rgba(34, 197, 94, 0.8) 80%, rgba(34, 197, 94, 0.4) 100%)`,
+              clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
+            }}
+          ></div>
+        </div>
         
-        {/* Floating glass panels with mirror-like effects */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-gray-900/30 to-gray-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-15 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-gray-900/25 to-gray-800/30 backdrop-blur-xl border border-purple-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-gray-900/28 to-gray-800/18 backdrop-blur-xl border border-pink-500/15 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Secondary glowing green accent - upper right */}
+        <div className="absolute inset-0 opacity-20">
+          <div 
+            className="absolute top-0 right-0 w-1/2 h-1/2"
+            style={{
+              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%)`,
+              clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
+            }}
+          ></div>
+        </div>
         
-        {/* Subtle moving elements */}
-        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-30 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
-        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-purple-400 rounded-full opacity-25 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
-        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-pink-400 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
+        {/* Subtle animated green glow effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-green-600/5 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Floating glass panels with green accents */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-green-900/20 to-green-800/10 backdrop-blur-xl border border-green-400/20 rounded-2xl opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-green-900/15 to-green-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-green-900/18 to-green-800/12 backdrop-blur-xl border border-green-400/18 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Glowing green particles */}
+        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
+        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
         
         {/* CSS Animations */}
         <style dangerouslySetInnerHTML={{

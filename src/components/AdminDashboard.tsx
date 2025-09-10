@@ -1427,9 +1427,51 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950 relative overflow-hidden">
+      {/* Dark Green Background with Glowing Green Accents */}
+      <div className="absolute inset-0">
+        {/* Primary dark green gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-950"></div>
+        
+        {/* Glowing green light beam - diagonal from bottom right */}
+        <div className="absolute inset-0 opacity-40">
+          <div 
+            className="absolute bottom-0 right-0 w-full h-full"
+            style={{
+              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.6) 60%, rgba(34, 197, 94, 0.8) 80%, rgba(34, 197, 94, 0.4) 100%)`,
+              clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
+            }}
+          ></div>
+        </div>
+        
+        {/* Secondary glowing green accent - upper right */}
+        <div className="absolute inset-0 opacity-20">
+          <div 
+            className="absolute top-0 right-0 w-1/2 h-1/2"
+            style={{
+              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%)`,
+              clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
+            }}
+          ></div>
+        </div>
+        
+        {/* Subtle animated green glow effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-green-600/5 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Floating glass panels with green accents */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-green-900/20 to-green-800/10 backdrop-blur-xl border border-green-400/20 rounded-2xl opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-green-900/15 to-green-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-green-900/18 to-green-800/12 backdrop-blur-xl border border-green-400/18 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        
+        {/* Glowing green particles */}
+        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
+        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
+      </div>
+
       {/* Header */}
-      <div className="bg-gray-900 shadow-sm border-b border-gray-700">
+      <div className="relative z-10 bg-green-900/20 backdrop-blur-xl shadow-sm border-b border-green-400/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
@@ -1847,6 +1889,18 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* CSS Animations */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            25% { transform: translateY(-10px) translateX(5px); }
+            50% { transform: translateY(-5px) translateX(-3px); }
+            75% { transform: translateY(-15px) translateX(2px); }
+          }
+        `
+      }} />
     </div>
   );
 };
