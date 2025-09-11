@@ -148,6 +148,37 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Glass input styling for search bars and form inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
+  outline: none !important;
+}
+
+.glass-input::placeholder {
+  color: rgba(156, 163, 175, 0.8) !important;
+  opacity: 1 !important;
+}
+
+.glass-input:focus::placeholder {
+  color: rgba(156, 163, 175, 0.6) !important;
+}
+
+/* Ensure select elements also have proper styling */
+.glass-input option {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+}
+
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

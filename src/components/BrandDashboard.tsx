@@ -147,6 +147,8 @@ const BrandDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { showSuccessToast, showErrorToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
+  const [marketplaceLoading, setMarketplaceLoading] = useState(false);
 
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -181,6 +183,10 @@ const BrandDashboard: React.FC = () => {
   const [showEditRewardsModal, setShowEditRewardsModal] = useState(false);
   const [editingRewards, setEditingRewards] = useState<EditingRewards | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Marketplace brief details
+  const [selectedMarketplaceBrief, setSelectedMarketplaceBrief] = useState<Brief | null>(null);
+  const [showMarketplaceBriefModal, setShowMarketplaceBriefModal] = useState(false);
   
   // Search functionality
   const [searchQuery, setSearchQuery] = useState('');
@@ -398,10 +404,32 @@ const BrandDashboard: React.FC = () => {
     }
   }, []);
 
+  const fetchMarketplaceBriefs = useCallback(async () => {
+    try {
+      setMarketplaceLoading(true);
+      const response = await fetch('/api/briefs/public');
+      if (response.ok) {
+        const data = await response.json();
+        setMarketplaceBriefs(data);
+      }
+    } catch (error) {
+      console.error('Error fetching marketplace briefs:', error);
+      showErrorToast('Failed to load marketplace data');
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  }, [showErrorToast]);
+
   useEffect(() => {
     // Fetch data from API
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  useEffect(() => {
+    if (activeTab === 'marketplace') {
+      fetchMarketplaceBriefs();
+    }
+  }, [activeTab, fetchMarketplaceBriefs]);
 
   // Calculate detailed statistics for briefs and overall performance
   const calculateStatistics = (briefsData: Brief[], submissionsData: Submission[]) => {
@@ -895,6 +923,7 @@ const BrandDashboard: React.FC = () => {
 
   const navigation = [
     { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
     { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
     { id: 'submissions', label: 'Submissions', icon: 'submissions' },
     { id: 'create', label: 'Create a Brief', icon: 'create' },
@@ -968,14 +997,14 @@ const BrandDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Submissions */}
         <div className="lg:col-span-2">
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+          <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Recent Submissions</h2>
               <span className="text-sm text-gray-400">{submissions.length} total</span>
                   </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {submissions.slice(0, 4).map((submission) => (
-                <div key={submission.id} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                 <div key={submission.id} className="glass rounded-xl p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
                       <img src="/icons/profile.png" alt="User" className="w-9 h-9" />
@@ -2851,7 +2880,7 @@ const BrandDashboard: React.FC = () => {
       {!isSearching && searchResults.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {searchResults.map((result, index) => (
-            <div key={`${result.type}-${result.id}-${index}`} className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+            <div key={`${result.type}-${result.id}-${index}`} className="bg-gray-900/95 backdrop-blur-md rounded-xl p-6 border-2 border-gray-500/80 hover:border-gray-400/90 transition-all duration-300 shadow-2xl hover:shadow-2xl hover:shadow-green-500/20">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
@@ -2956,10 +2985,240 @@ const BrandDashboard: React.FC = () => {
     </div>
   );
 
+  const renderMarketplace = () => (
+    <div className="space-y-6">
+      {/* Marketplace Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          Discover Creative Opportunities
+        </h1>
+        <p className="text-gray-300 text-lg">
+          Explore briefs from other brands and get inspired for your next campaign
+        </p>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-600/50 p-6 mb-8">
+        <div className="flex flex-wrap gap-4">
+          <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+            Marketplace
+          </button>
+          <Link 
+            to="/community" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Community
+          </Link>
+          <Link 
+            to="/events" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Events
+          </Link>
+          <Link 
+            to="/success-stories" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Success Stories
+          </Link>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="glass-card rounded-xl p-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <input
+              type="text"
+              placeholder="Search briefs, brands, or keywords..."
+              className="w-full glass-input rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <select className="w-full glass-input rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="all">All Templates</option>
+              <option value="creative">Social Media Campaign</option>
+              <option value="technical">Product Review</option>
+              <option value="business">Brand Partnership</option>
+              <option value="content">Content Creation</option>
+              <option value="influencer">Influencer Marketing</option>
+              <option value="video">Video Production</option>
+              <option value="photography">Photography</option>
+              <option value="writing">Copywriting</option>
+              <option value="design">Graphic Design</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Marketplace Briefs Grid */}
+      {marketplaceLoading ? (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {marketplaceBriefs.map((brief) => (
+            <div key={brief.id} className="glass-card rounded-xl p-6 hover:scale-105 transition-transform">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-green-400 font-bold text-sm">
+                    B
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-medium text-white">Your Brand</h3>
+                  <p className="text-sm text-gray-400">
+                    {new Date(brief.createdAt || '').toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              <h2 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                {brief.title}
+              </h2>
+              <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+                {brief.description}
+              </p>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-green-400">
+                    ${brief.reward?.toLocaleString() || '0'}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {brief.amountOfWinners || 1} winner{(brief.amountOfWinners || 1) > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-400">
+                    {brief.submissions || 0} submissions
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-400">Deadline</span>
+                  <span className="text-sm font-medium text-green-400">
+                    {new Date(brief.deadline).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="bg-gray-800 rounded-full h-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '60%' }} />
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  setSelectedMarketplaceBrief(brief);
+                  setShowMarketplaceBriefModal(true);
+                }}
+                className="w-full glass-button text-white py-3 rounded-lg font-medium hover:scale-105 transition-transform"
+              >
+                View Details
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {marketplaceBriefs.length === 0 && !marketplaceLoading && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-lg mb-4">
+            No marketplace briefs available
+          </div>
+          <p className="text-gray-500">
+            Check back later for new opportunities
+          </p>
+        </div>
+      )}
+
+      {/* Marketplace Brief Details Modal */}
+      {showMarketplaceBriefModal && selectedMarketplaceBrief && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900/95 backdrop-blur-md rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border-2 border-gray-600/50 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-white">{selectedMarketplaceBrief.title}</h3>
+                <p className="text-sm text-gray-300 mt-1">Marketplace Brief Details</p>
+              </div>
+              <button
+                onClick={() => setShowMarketplaceBriefModal(false)}
+                className="text-gray-500 hover:text-gray-300 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Brief Overview */}
+            <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-600/30 mb-6">
+              <h4 className="text-lg font-semibold text-white mb-4">Brief Overview</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex justify-between">
+                  <span className="font-medium text-white">Reward:</span>
+                  <span className="text-green-400 font-bold">${selectedMarketplaceBrief.reward}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-white">Winners:</span>
+                  <span className="text-white">{selectedMarketplaceBrief.amountOfWinners || 1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-white">Submissions:</span>
+                  <span className="text-white">{selectedMarketplaceBrief.submissions || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-white">Deadline:</span>
+                  <span className="text-white">{new Date(selectedMarketplaceBrief.deadline).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Brief Description */}
+            <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-600/30 mb-6">
+              <h4 className="text-lg font-semibold text-white mb-4">Description</h4>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                {selectedMarketplaceBrief.description || 'No description provided'}
+              </p>
+            </div>
+
+            {/* Requirements */}
+            {selectedMarketplaceBrief.requirements && (
+              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-600/30 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">Requirements</h4>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {selectedMarketplaceBrief.requirements}
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowMarketplaceBriefModal(false)}
+                className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                Close
+              </button>
+              <Link
+                to={`/brief/${selectedMarketplaceBrief.id}`}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                View Full Details
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
         return renderOverview();
+      case 'marketplace':
+        return renderMarketplace();
       case 'briefs':
         return renderBriefs();
       case 'submissions':
@@ -2998,47 +3257,47 @@ const BrandDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950 flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
+     <div className="min-h-screen bg-black flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
       {/* Dark Green Background with Glowing Green Accents */}
       <div className="absolute inset-0">
-        {/* Primary dark green gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-950"></div>
+        {/* Primary black background */}
+        <div className="absolute inset-0 bg-black"></div>
         
-        {/* Glowing green light beam - diagonal from bottom right */}
-        <div className="absolute inset-0 opacity-40">
+        {/* Neon green light beam - diagonal from bottom right */}
+        <div className="absolute inset-0 opacity-30">
           <div 
             className="absolute bottom-0 right-0 w-full h-full"
             style={{
-              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.6) 60%, rgba(34, 197, 94, 0.8) 80%, rgba(34, 197, 94, 0.4) 100%)`,
+              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.3) 60%, rgba(34, 197, 94, 0.5) 80%, rgba(34, 197, 94, 0.2) 100%)`,
               clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
             }}
           ></div>
         </div>
         
-        {/* Secondary glowing green accent - upper right */}
-        <div className="absolute inset-0 opacity-20">
+        {/* Secondary neon green accent - upper right */}
+        <div className="absolute inset-0 opacity-15">
           <div 
             className="absolute top-0 right-0 w-1/2 h-1/2"
             style={{
-              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%)`,
+              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.2) 50%, transparent 100%)`,
               clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
             }}
           ></div>
         </div>
         
-        {/* Subtle animated green glow effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-green-600/5 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Subtle animated neon green glow effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 via-transparent to-green-600/3 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/4 via-transparent to-green-400/2 animate-pulse" style={{animationDelay: '2s'}}></div>
         
-        {/* Floating glass panels with green accents */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-green-900/20 to-green-800/10 backdrop-blur-xl border border-green-400/20 rounded-2xl opacity-15 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-green-900/15 to-green-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-green-900/18 to-green-800/12 backdrop-blur-xl border border-green-400/18 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Floating glass panels with glassmorphism accents */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-64 glass opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-80 h-48 glass opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 glass opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
         
-        {/* Glowing green particles */}
+        {/* Glowing neon green particles */}
         <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
         <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
-        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-pink-400 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
         
         {/* CSS Animations */}
         <style dangerouslySetInnerHTML={{
@@ -3056,7 +3315,7 @@ const BrandDashboard: React.FC = () => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
+       <div className="lg:hidden glass-nav border-b border-white/20 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             {/* Logo */}
@@ -3087,7 +3346,7 @@ const BrandDashboard: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleSearchKeyPress}
               placeholder="Search creators, briefs, or submissions..."
-              className="w-full pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+               className="w-full pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
             {searchQuery && (
               <button
@@ -3114,7 +3373,7 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Enhanced Sidebar - Fixed Position */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 bg-black backdrop-blur-xl border-r border-gray-800 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
+       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 glass-nav border-r border-white/20 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
         <div className="p-4 lg:p-6">
           
           {/* Logo Section */}
@@ -3238,13 +3497,14 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm lg:ml-72">
+       <div className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm lg:ml-72">
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-black border-b border-gray-800 px-8 py-4">
+        <div className="hidden lg:block glass-nav border-b border-white/20 px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <h1 className="text-2xl font-bold text-white">
                 {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'marketplace' ? 'Marketplace' :
                  activeTab === 'briefs' ? 'My Briefs' :
                  activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
@@ -3264,7 +3524,7 @@ const BrandDashboard: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
                     placeholder="Search creators, briefs, or submissions..."
-                    className="w-80 pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     className="w-80 pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                   {searchQuery && (
                     <button

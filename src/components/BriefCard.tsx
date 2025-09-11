@@ -67,8 +67,8 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
 
   return (
     <div
-      className={`bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-700 overflow-hidden transition-all duration-300 cursor-pointer group ${
-        isHovered ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md'
+      className={`bg-gray-900/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-500/80 overflow-hidden transition-all duration-300 cursor-pointer group ${
+        isHovered ? 'shadow-2xl transform -translate-y-1 bg-gray-800/95 border-gray-400/90 shadow-green-500/20' : 'hover:shadow-xl hover:bg-gray-850/95 hover:border-gray-400/70'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

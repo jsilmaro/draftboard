@@ -40,7 +40,6 @@ const Marketplace = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [budgetRange, setBudgetRange] = useState({ min: '', max: '' });
   const [deadlineFilter, setDeadlineFilter] = useState('all');
-  const [locationFilter, setLocationFilter] = useState('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { user } = useAuth();
 
@@ -117,14 +116,10 @@ const Marketplace = () => {
         }
       })();
       
-      // Location filter
-      const matchesLocation = locationFilter === 'all' || 
-        (brief.location && brief.location.toLowerCase().includes(locationFilter.toLowerCase()));
-      
       // Only show published briefs in public marketplace
       const isPublished = brief.status === 'published';
       
-      return matchesSearch && matchesType && matchesBudget && matchesDeadline && matchesLocation && isPublished;
+      return matchesSearch && matchesType && matchesBudget && matchesDeadline && isPublished;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -234,17 +229,23 @@ const Marketplace = () => {
               />
             </div>
 
-            {/* Brief Type Filter */}
+            {/* Brief Template Filter */}
             <div>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="all">All Types</option>
-                <option value="creative">Creative</option>
-                <option value="technical">Technical</option>
-                <option value="business">Business</option>
+                <option value="all">All Templates</option>
+                <option value="creative">Social Media Campaign</option>
+                <option value="technical">Product Review</option>
+                <option value="business">Brand Partnership</option>
+                <option value="content">Content Creation</option>
+                <option value="influencer">Influencer Marketing</option>
+                <option value="video">Video Production</option>
+                <option value="photography">Photography</option>
+                <option value="writing">Copywriting</option>
+                <option value="design">Graphic Design</option>
               </select>
             </div>
 
@@ -319,17 +320,6 @@ const Marketplace = () => {
                   </select>
                 </div>
 
-                {/* Location Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
-                  <input
-                    type="text"
-                    placeholder="City, Country, or Remote"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
               </div>
             </div>
           )}
@@ -462,7 +452,7 @@ const Marketplace = () => {
             <button
               onClick={() => {
                 setSearchTerm('');
-                setFilterStatus('all');
+                setFilterType('all');
                 setSortBy('newest');
               }}
               className="text-green-400 hover:text-green-300 transition-colors"

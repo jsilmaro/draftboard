@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
@@ -105,6 +106,8 @@ const CreatorDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
+  const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
+  const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [earningsFilter, setEarningsFilter] = useState<'all' | 'paid' | 'pending' | 'processing'>('all');
@@ -232,6 +235,27 @@ const CreatorDashboard: React.FC = () => {
     fetchDashboardData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchMarketplaceBriefs = useCallback(async () => {
+    try {
+      setMarketplaceLoading(true);
+      const response = await fetch('/api/briefs/public');
+      if (response.ok) {
+        const data = await response.json();
+        setMarketplaceBriefs(data);
+      }
+    } catch (error) {
+      console.error('Error fetching marketplace briefs:', error);
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'marketplace') {
+      fetchMarketplaceBriefs();
+    }
+  }, [activeTab, fetchMarketplaceBriefs]);
 
   // Fetch earnings data when earnings tab is active
   useEffect(() => {
@@ -696,6 +720,7 @@ const CreatorDashboard: React.FC = () => {
 
   const navigation = [
     { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
     { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
     { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
     { id: 'messaging', label: 'Messages', icon: 'messaging' },
@@ -768,7 +793,7 @@ const CreatorDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Briefs Section */}
         <div className="lg:col-span-2">
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Available Briefs</h2>
               <span className="text-sm text-gray-400">{availableBriefs.length} available</span>
@@ -1076,7 +1101,7 @@ const CreatorDashboard: React.FC = () => {
                   type="url"
                   value={applyFormData.contentUrl}
                   onChange={(e) => setApplyFormData(prev => ({ ...prev, contentUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-white placeholder-gray-400"
                   placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
                   required
                 />
@@ -1504,7 +1529,7 @@ const CreatorDashboard: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Profile</h2>
       
-      <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
+      <div className="bg-gray-900/95 backdrop-blur-md rounded-lg shadow-2xl border-2 border-gray-500/80 p-6">
         <div className="flex items-center mb-6">
           <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="lg" className="mr-4" />
           <div>
@@ -1519,15 +1544,15 @@ const CreatorDashboard: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300">Full Name</label>
-                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">Username</label>
-                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
             </div>
           </div>
@@ -1537,15 +1562,15 @@ const CreatorDashboard: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300">Instagram</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">TikTok</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">YouTube</label>
-                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2" />
+                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
               </div>
             </div>
           </div>
@@ -1603,7 +1628,7 @@ const CreatorDashboard: React.FC = () => {
       {!isSearching && searchResults.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {searchResults.map((result, index) => (
-            <div key={`${result.type}-${result.id}-${index}`} className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+            <div key={`${result.type}-${result.id}-${index}`} className="bg-gray-900/95 backdrop-blur-md rounded-xl p-6 border-2 border-gray-500/80 hover:border-gray-400/90 transition-all duration-300 shadow-2xl hover:shadow-2xl hover:shadow-green-500/20">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
@@ -1698,10 +1723,180 @@ const CreatorDashboard: React.FC = () => {
     </div>
   );
 
+  const renderMarketplace = () => (
+    <div className="space-y-6">
+      {/* Marketplace Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          Discover Opportunities
+        </h1>
+        <p className="text-gray-300 text-lg">
+          Find briefs that match your skills and start earning
+        </p>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-600/50 p-6 mb-8">
+        <div className="flex flex-wrap gap-4">
+          <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+            Marketplace
+          </button>
+          <Link 
+            to="/community" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Community
+          </Link>
+          <Link 
+            to="/events" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Events
+          </Link>
+          <Link 
+            to="/success-stories" 
+            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+          >
+            Success Stories
+          </Link>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="glass-card rounded-xl p-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <input
+              type="text"
+              placeholder="Search briefs, brands, or keywords..."
+              className="w-full glass-input rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <select className="w-full glass-input rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="all">All Templates</option>
+              <option value="creative">Social Media Campaign</option>
+              <option value="technical">Product Review</option>
+              <option value="business">Brand Partnership</option>
+              <option value="content">Content Creation</option>
+              <option value="influencer">Influencer Marketing</option>
+              <option value="video">Video Production</option>
+              <option value="photography">Photography</option>
+              <option value="writing">Copywriting</option>
+              <option value="design">Graphic Design</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Marketplace Briefs Grid */}
+      {marketplaceLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {marketplaceBriefs.map((brief) => {
+            const hasApplied = mySubmissions.some(sub => sub.briefTitle === brief.title);
+            const daysRemaining = Math.ceil((new Date(brief.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            
+            return (
+              <div key={brief.id} className="glass-card rounded-xl p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-green-400 font-bold text-sm">
+                      {brief.brand?.companyName?.charAt(0) || 'B'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-white">{brief.brand?.companyName || 'Brand'}</h3>
+                    <p className="text-sm text-gray-400">
+                      {new Date(brief.deadline).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                <h2 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                  {brief.title}
+                </h2>
+                <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+                  {brief.description}
+                </p>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-400">
+                      ${brief.reward?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {brief.amountOfWinners || 1} winner{(brief.amountOfWinners || 1) > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-400">
+                      {brief.submissions?.length || 0} submissions
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400">Deadline</span>
+                    <span className={`text-sm font-medium ${daysRemaining < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      {daysRemaining < 0 ? 'Expired' : `${daysRemaining} days left`}
+                    </span>
+                  </div>
+                  <div className="bg-gray-800 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${daysRemaining < 0 ? 'bg-red-500' : 'bg-green-500'}`} 
+                      style={{ width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%` }} 
+                    />
+                  </div>
+                </div>
+
+                {hasApplied ? (
+                  <button 
+                    disabled
+                    className="w-full bg-gray-600 text-gray-400 py-3 rounded-lg font-medium cursor-not-allowed"
+                  >
+                    Already Applied
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setSelectedBrief(brief);
+                      setShowApplyModal(true);
+                    }}
+                    className="w-full glass-button text-white py-3 rounded-lg font-medium hover:scale-105 transition-transform"
+                  >
+                    Apply Now
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {marketplaceBriefs.length === 0 && !marketplaceLoading && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-lg mb-4">
+            No marketplace briefs available
+          </div>
+          <p className="text-gray-500">
+            Check back later for new opportunities
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
         return renderOverview();
+      case 'marketplace':
+        return renderMarketplace();
       case 'briefs':
         return renderBriefs();
       case 'submissions':
@@ -1720,44 +1915,44 @@ const CreatorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950 flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
+     <div className="min-h-screen bg-black flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
       {/* Dark Green Background with Glowing Green Accents */}
       <div className="absolute inset-0">
-        {/* Primary dark green gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-950"></div>
+        {/* Primary black background */}
+        <div className="absolute inset-0 bg-black"></div>
         
-        {/* Glowing green light beam - diagonal from bottom right */}
-        <div className="absolute inset-0 opacity-40">
+        {/* Neon green light beam - diagonal from bottom right */}
+        <div className="absolute inset-0 opacity-30">
           <div 
             className="absolute bottom-0 right-0 w-full h-full"
             style={{
-              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.6) 60%, rgba(34, 197, 94, 0.8) 80%, rgba(34, 197, 94, 0.4) 100%)`,
+              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.3) 60%, rgba(34, 197, 94, 0.5) 80%, rgba(34, 197, 94, 0.2) 100%)`,
               clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
             }}
           ></div>
         </div>
         
-        {/* Secondary glowing green accent - upper right */}
-        <div className="absolute inset-0 opacity-20">
+        {/* Secondary neon green accent - upper right */}
+        <div className="absolute inset-0 opacity-15">
           <div 
             className="absolute top-0 right-0 w-1/2 h-1/2"
             style={{
-              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%)`,
+              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.2) 50%, transparent 100%)`,
               clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
             }}
           ></div>
         </div>
         
-        {/* Subtle animated green glow effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-green-600/5 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Subtle animated neon green glow effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 via-transparent to-green-600/3 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/4 via-transparent to-green-400/2 animate-pulse" style={{animationDelay: '2s'}}></div>
         
-        {/* Floating glass panels with green accents */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-green-900/20 to-green-800/10 backdrop-blur-xl border border-green-400/20 rounded-2xl opacity-15 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-green-900/15 to-green-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-green-900/18 to-green-800/12 backdrop-blur-xl border border-green-400/18 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* Floating glass panels with glassmorphism accents */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-64 glass opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-80 h-48 glass opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 glass opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
         
-        {/* Glowing green particles */}
+        {/* Glowing neon green particles */}
         <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
         <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
         <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
@@ -1778,7 +1973,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-black border-b border-gray-800 px-4 py-3">
+       <div className="lg:hidden glass-nav border-b border-white/20 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             {/* Logo */}
@@ -1809,7 +2004,7 @@ const CreatorDashboard: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleSearchKeyPress}
               placeholder="Search briefs, brands, or topics..."
-              className="w-full pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+               className="w-full pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
             {searchQuery && (
               <button
@@ -1836,7 +2031,7 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Enhanced Sidebar - Fixed Position */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 bg-black backdrop-blur-xl border-r border-gray-800 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
+       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 glass-nav border-r border-white/20 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
         <div className="p-4 lg:p-6">
           
           {/* Logo Section */}
@@ -1956,13 +2151,14 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-gray-900/30 backdrop-blur-sm lg:ml-72">
+       <div className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm lg:ml-72">
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-black border-b border-gray-800 px-8 py-4">
+        <div className="hidden lg:block glass-nav border-b border-white/20 px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <h1 className="text-2xl font-bold text-white">
                 {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'marketplace' ? 'Marketplace' :
                  activeTab === 'briefs' ? 'Available Briefs' :
                  activeTab === 'submissions' ? 'My Submissions' :
                  activeTab === 'earnings' ? 'Earnings' :
@@ -1979,7 +2175,7 @@ const CreatorDashboard: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
                     placeholder="Search briefs, brands, or topics..."
-                    className="w-80 pl-4 pr-10 py-2 text-sm border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     className="w-80 pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                   {searchQuery && (
                     <button
