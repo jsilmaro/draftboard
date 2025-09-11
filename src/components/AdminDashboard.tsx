@@ -164,14 +164,20 @@ const AdminDashboard: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async (search = '', status = '', page = 1) => {
     try {
+      setIsLoading(true);
       // Get the authentication token
       const token = localStorage.getItem('token');
       
+      console.log('🔍 Admin Dashboard: Starting data fetch...');
+      console.log('🔑 Token exists:', !!token);
+      
       if (!token) {
-        // No authentication token found
+        console.log('❌ No authentication token found');
+        setIsLoading(false);
         return;
       }
 
@@ -216,8 +222,10 @@ const AdminDashboard: React.FC = () => {
         })
       ]);
 
+      console.log('📊 Brands response status:', brandsRes.status);
       if (brandsRes.ok) {
         const brandsData = await brandsRes.json();
+        console.log('📊 Brands data received:', brandsData);
         const brandsArray = brandsData.brands || brandsData || [];
         setBrands(brandsArray.map((brand: ApiBrand) => ({
           id: brand.id,
@@ -227,6 +235,8 @@ const AdminDashboard: React.FC = () => {
           isVerified: brand.isVerified,
           createdAt: brand.createdAt
         })));
+      } else {
+        console.log('❌ Brands request failed:', brandsRes.status, brandsRes.statusText);
       }
 
       if (creatorsRes.ok) {
@@ -277,8 +287,10 @@ const AdminDashboard: React.FC = () => {
         })));
       }
 
+      console.log('📈 Analytics response status:', analyticsRes.status);
       if (analyticsRes.ok) {
         const analyticsData = await analyticsRes.json();
+        console.log('📈 Analytics data received:', analyticsData);
         setAnalytics({
           totalBrands: analyticsData.totalBrands,
           totalCreators: analyticsData.totalCreators,
@@ -287,8 +299,11 @@ const AdminDashboard: React.FC = () => {
           totalPayouts: analyticsData.totalPayouts,
           monthlyRevenue: analyticsData.monthlyRevenue
         });
+      } else {
+        console.log('❌ Analytics request failed:', analyticsRes.status, analyticsRes.statusText);
       }
     } catch (error) {
+      console.error('❌ Error fetching admin data:', error);
       // Error fetching admin data - set empty arrays when API fails
       setBrands([]);
       setCreators([]);
@@ -302,6 +317,8 @@ const AdminDashboard: React.FC = () => {
         totalPayouts: 0,
         monthlyRevenue: 0
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -505,7 +522,28 @@ const AdminDashboard: React.FC = () => {
     { id: 'analytics', label: 'Analytics', icon: '/icons/Green_icons/Statistic1.png' },
   ];
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    console.log('📊 Rendering overview with data:', {
+      brands: brands.length,
+      creators: creators.length,
+      briefs: briefs.length,
+      submissions: submissions.length,
+      analytics,
+      isLoading
+    });
+    
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+            <p className="text-gray-300">Loading dashboard data...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex items-center">
@@ -555,10 +593,11 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderBrands = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+    <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
       <div className="px-6 py-4 border-b border-gray-700/30">
         <div className="flex items-center justify-between">
           <div>
@@ -597,7 +636,7 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+          <thead className="bg-gray-700 border-b border-gray-600">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
@@ -650,7 +689,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderCreators = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+    <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
       <div className="px-6 py-4 border-b border-gray-700/30">
         <div className="flex items-center justify-between">
           <div>
@@ -689,7 +728,7 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+          <thead className="bg-gray-700 border-b border-gray-600">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
@@ -743,7 +782,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderBriefs = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+    <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
       <div className="px-6 py-4 border-b border-gray-700/30">
         <div className="flex items-center justify-between">
           <div>
@@ -783,7 +822,7 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+          <thead className="bg-gray-700 border-b border-gray-600">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
@@ -833,7 +872,7 @@ const AdminDashboard: React.FC = () => {
     const archivedBriefs = briefs.filter(brief => brief.status === 'archived');
     
     return (
-      <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+      <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
         <div className="px-6 py-4 border-b border-gray-700/30">
           <div className="flex items-center justify-between">
             <div>
@@ -893,7 +932,7 @@ const AdminDashboard: React.FC = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+              <thead className="bg-gray-700 border-b border-gray-600">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brand</th>
@@ -939,7 +978,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const renderSubmissions = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+    <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
       <div className="px-6 py-4 border-b border-gray-700/30">
         <div className="flex items-center justify-between">
           <div>
@@ -973,7 +1012,7 @@ const AdminDashboard: React.FC = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+          <thead className="bg-gray-700 border-b border-gray-600">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Brief</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
@@ -1043,7 +1082,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderPayouts = () => (
-    <div className="bg-gray-900/20 backdrop-blur-xl rounded-lg shadow-md border border-gray-600/30">
+    <div className="bg-gray-800 rounded-lg shadow-md border border-gray-600">
       <div className="px-6 py-4 border-b border-gray-700/30">
         <h3 className="text-lg font-semibold text-white">Payout Management</h3>
         <p className="text-sm text-gray-300 mt-1">Track and manage creator payouts</p>
@@ -1066,7 +1105,7 @@ const AdminDashboard: React.FC = () => {
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600/50">
+            <thead className="bg-gray-700 border-b border-gray-600">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Creator</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Amount</th>
@@ -1187,7 +1226,7 @@ const AdminDashboard: React.FC = () => {
       <div className="space-y-6">
         {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/20 p-6 rounded-xl border border-blue-500/20">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-300">Total Brands</p>
@@ -1199,7 +1238,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-900/20 to-green-800/20 p-6 rounded-xl border border-green-500/20">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-300">Total Creators</p>
@@ -1211,7 +1250,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/20 p-6 rounded-xl border border-purple-500/20">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-300">Total Briefs</p>
@@ -1223,7 +1262,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-900/20 to-yellow-800/20 p-6 rounded-xl border border-yellow-500/20">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-yellow-300">Monthly Revenue</p>
@@ -1239,7 +1278,7 @@ const AdminDashboard: React.FC = () => {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Submission Status Chart */}
-          <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <h3 className="text-lg font-semibold text-white mb-4">Submission Status Distribution</h3>
             <div className="h-64">
               <Doughnut 
@@ -1262,7 +1301,7 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Brief Status Chart */}
-          <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <h3 className="text-lg font-semibold text-white mb-4">Brief Status Distribution</h3>
             <div className="h-64">
               <Doughnut 
@@ -1286,7 +1325,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Revenue Trend Chart */}
-        <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
           <h3 className="text-lg font-semibold text-white mb-4">Revenue Trend (Last 12 Months)</h3>
           <div className="h-80">
             <Line 
@@ -1317,7 +1356,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* User Growth Chart */}
-        <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
           <h3 className="text-lg font-semibold text-white mb-4">User Growth Trend</h3>
           <div className="h-80">
             <Line 
@@ -1349,22 +1388,22 @@ const AdminDashboard: React.FC = () => {
 
         {/* Detailed Analytics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <h3 className="text-lg font-semibold text-white mb-4">Brief Performance</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Available Briefs</span>
                 <span className="text-sm font-medium text-white bg-blue-500/20 px-3 py-1 rounded-full">
                   {briefs.filter(b => b.status === 'published').length}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Archived Briefs</span>
                 <span className="text-sm font-medium text-white bg-green-500/20 px-3 py-1 rounded-full">
                   {briefs.filter(b => b.status === 'archived').length}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Total Submissions</span>
                 <span className="text-sm font-medium text-white bg-purple-500/20 px-3 py-1 rounded-full">
                   {submissions.length}
@@ -1373,22 +1412,22 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-gray-900/20 backdrop-blur-xl p-6 rounded-xl border border-gray-600/30">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
             <h3 className="text-lg font-semibold text-white mb-4">Financial Overview</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Total Payouts</span>
                 <span className="text-sm font-medium text-white bg-green-500/20 px-3 py-1 rounded-full">
                   ${analytics.totalPayouts.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Platform Fee (10%)</span>
                 <span className="text-sm font-medium text-white bg-yellow-500/20 px-3 py-1 rounded-full">
                   ${(analytics.monthlyRevenue * 0.1).toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
                 <span className="text-sm text-gray-300">Net Revenue</span>
                 <span className="text-sm font-medium text-white bg-blue-500/20 px-3 py-1 rounded-full">
                   ${(analytics.monthlyRevenue * 0.9).toLocaleString()}
@@ -1427,51 +1466,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-950 relative overflow-hidden">
-      {/* Dark Green Background with Glowing Green Accents */}
-      <div className="absolute inset-0">
-        {/* Primary dark green gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-950"></div>
-        
-        {/* Glowing green light beam - diagonal from bottom right */}
-        <div className="absolute inset-0 opacity-40">
-          <div 
-            className="absolute bottom-0 right-0 w-full h-full"
-            style={{
-              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.6) 60%, rgba(34, 197, 94, 0.8) 80%, rgba(34, 197, 94, 0.4) 100%)`,
-              clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
-            }}
-          ></div>
-        </div>
-        
-        {/* Secondary glowing green accent - upper right */}
-        <div className="absolute inset-0 opacity-20">
-          <div 
-            className="absolute top-0 right-0 w-1/2 h-1/2"
-            style={{
-              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%)`,
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
-            }}
-          ></div>
-        </div>
-        
-        {/* Subtle animated green glow effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-green-600/5 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/8 via-transparent to-green-400/4 animate-pulse" style={{animationDelay: '2s'}}></div>
-        
-        {/* Floating glass panels with green accents */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 bg-gradient-to-br from-green-900/20 to-green-800/10 backdrop-blur-xl border border-green-400/20 rounded-2xl opacity-15 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 bg-gradient-to-br from-green-900/15 to-green-800/20 backdrop-blur-xl border border-green-500/15 rounded-2xl opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 bg-gradient-to-br from-green-900/18 to-green-800/12 backdrop-blur-xl border border-green-400/18 rounded-2xl opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
-        
-        {/* Glowing green particles */}
-        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
-        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
-        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
-      </div>
+    <div className="min-h-screen bg-gray-900">
 
       {/* Header */}
-      <div className="relative z-10 bg-green-900/20 backdrop-blur-xl shadow-sm border-b border-green-400/20">
+      <div className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
@@ -1495,7 +1493,7 @@ const AdminDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tabs */}
         <div className="mb-8">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex space-x-8 overflow-x-auto bg-gray-800 rounded-lg p-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1514,18 +1512,20 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Content */}
-        {renderContent()}
+        <div>
+          {renderContent()}
+        </div>
       </div>
 
             {/* Enhanced Modal System for CRUD Operations */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg border border-gray-600 shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-sm border-b border-white/20 px-6 py-4 rounded-t-2xl">
+            <div className="bg-gray-700 border-b border-gray-600 px-6 py-4 rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-lg">
                       {modalType === 'view' ? '👁️' : 
                        modalType === 'edit' ? '✏️' : 
@@ -1553,7 +1553,7 @@ const AdminDashboard: React.FC = () => {
                     setFormData({});
                     setIsEditing(false);
                   }}
-                  className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200"
+                  className="w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded-lg flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200"
                 >
                   ✕
                 </button>
@@ -1566,9 +1566,9 @@ const AdminDashboard: React.FC = () => {
               {modalType === 'view' && selectedItem && (
                 <div className="space-y-8">
                   {/* Header Section */}
-                  <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl p-8 border border-white/20">
+                  <div className="bg-gray-700 rounded-lg p-8 border border-gray-600">
                     <div className="flex items-center space-x-4 mb-6">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                      <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
                         <img src="/icons/profile.png" alt="Brand" className="w-12 h-12" />
                       </div>
                       <div>
@@ -1586,7 +1586,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column - Basic Information */}
                     <div className="space-y-6">
-                      <div className="bg-gradient-to-r from-gray-900/40 to-gray-800/40 rounded-2xl p-6 border border-white/10">
+                      <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
                         <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
                           <img src="/icons/Green_icons/Brief1.png" alt="Info" className="w-5 h-5 mr-3" />
                           Basic Information
@@ -1622,7 +1622,7 @@ const AdminDashboard: React.FC = () => {
                             }
                             
                             return (
-                              <div key={key} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:border-white/30 hover:scale-[1.02]">
+                              <div key={key} className="bg-gray-600 rounded-lg p-4 border border-gray-500 hover:bg-gray-500 transition-all duration-300">
                                 <div className="text-sm font-medium text-gray-300 mb-2">{label}</div>
                                 <div className="text-white font-semibold text-lg">{String(displayValue)}</div>
                               </div>
@@ -1636,7 +1636,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="space-y-6">
                       {/* Additional Fields for Briefs */}
                       {selectedItem.additionalFields && (
-                        <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 rounded-2xl p-6 border border-white/10">
+                        <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
                             <img src="/icons/Green_icons/Brief1.png" alt="Requirements" className="w-5 h-5 mr-3" />
                             Additional Requirements
@@ -1659,7 +1659,7 @@ const AdminDashboard: React.FC = () => {
                                   const label = fieldKey.replace(/([A-Z])/g, ' $1').trim();
                                   
                                   return (
-                                    <div key={fieldKey} className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                                    <div key={fieldKey} className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                                       <div className="text-sm font-medium text-gray-300 mb-2">{label}</div>
                                       <div className="text-white font-medium">{String(displayValue)}</div>
                                     </div>
@@ -1667,7 +1667,7 @@ const AdminDashboard: React.FC = () => {
                                 });
                               } catch (error) {
                                 return (
-                                  <div className="text-gray-400 text-sm bg-white/10 rounded-xl p-4">
+                                  <div className="text-gray-400 text-sm bg-gray-600 rounded-lg p-4">
                                     Unable to parse additional fields
                                   </div>
                                 );
@@ -1679,17 +1679,17 @@ const AdminDashboard: React.FC = () => {
 
                       {/* Brand Information for Briefs */}
                       {selectedItem.brand && (
-                        <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-2xl p-6 border border-white/10">
+                        <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
                             <img src="/icons/profile.png" alt="Brand" className="w-9 h-9 mr-3" />
                             Brand Information
                           </h5>
                           <div className="space-y-4">
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Company Name</div>
                               <div className="text-white font-semibold text-lg">{selectedItem.brand.companyName}</div>
                             </div>
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Email</div>
                               <div className="text-white font-semibold text-lg">{selectedItem.brand.email}</div>
                             </div>
@@ -1699,25 +1699,25 @@ const AdminDashboard: React.FC = () => {
 
                       {/* Creator Information for Submissions */}
                       {selectedItem.creator && (
-                        <div className="bg-gradient-to-r from-indigo-900/40 to-blue-900/40 rounded-2xl p-6 border border-white/10">
+                        <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
                           <h5 className="text-xl font-semibold text-white mb-6 flex items-center">
                             <img src="/icons/profile.png" alt="Creator" className="w-9 h-9 mr-3" />
                             Creator Information
                           </h5>
                           <div className="space-y-4">
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Username</div>
                               <div className="text-white font-semibold text-lg">{selectedItem.creator.userName}</div>
                             </div>
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Full Name</div>
                               <div className="text-white font-semibold text-lg">{selectedItem.creator.fullName}</div>
                             </div>
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Email</div>
                               <div className="text-white font-semibold text-lg">{selectedItem.creator.email}</div>
                             </div>
-                            <div className="bg-white/15 rounded-xl p-4 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02]">
+                            <div className="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300">
                               <div className="text-sm font-medium text-gray-300 mb-2">Verification Status</div>
                               <div className="text-white font-semibold text-lg">
                                 {selectedItem.creator.isVerified ? '✅ Verified' : '⏳ Pending'}
@@ -1734,7 +1734,7 @@ const AdminDashboard: React.FC = () => {
               {/* Edit/Create Mode */}
               {(modalType === 'edit' || modalType === 'create') && (
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl p-6 border border-white/10">
+                  <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
                     <h4 className="text-lg font-semibold text-white mb-4">
                                              {modalType === 'create' ? 'Create New' : 'Edit'} {activeTab.slice(0, -1)}
                     </h4>
@@ -1864,7 +1864,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex space-x-4 mt-6">
                       <button
                         onClick={() => handleSave(activeTab)}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                       >
                         {modalType === 'create' ? 'Create' : 'Save Changes'}
                       </button>
@@ -1875,7 +1875,7 @@ const AdminDashboard: React.FC = () => {
                           setSelectedItem(null);
                           setIsEditing(false);
                         }}
-                        className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                        className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                       >
                         Cancel
                       </button>
@@ -1884,23 +1884,11 @@ const AdminDashboard: React.FC = () => {
                 </div>
               )}
 
-
             </div>
           </div>
         </div>
       )}
       
-      {/* CSS Animations */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes float {
-            0%, 100% { transform: translateY(0px) translateX(0px); }
-            25% { transform: translateY(-10px) translateX(5px); }
-            50% { transform: translateY(-5px) translateX(-3px); }
-            75% { transform: translateY(-15px) translateX(2px); }
-          }
-        `
-      }} />
     </div>
   );
 };
