@@ -41,48 +41,46 @@ model Brand {
   briefs          Brief[]
   publishedAwards PublishedAward[]
   successStories  SuccessStory[]
-  notifications   Notification[]
 
   @@index([email])
   @@index([createdAt])
 }
 
 model Creator {
-  id              String         @id @default(cuid())
-  userName        String         @unique
-  email           String         @unique
-  password        String
-  fullName        String
-  phoneCountry    String?
-  phoneNumber     String?
-  addressStreet   String?
-  addressCity     String?
-  addressState    String?
-  addressZip      String?
-  addressCountry  String?
-  socialInstagram String?
-  socialTwitter   String?
-  socialLinkedIn  String?
-  socialTikTok    String?
-  socialYouTube   String?
-  paymentMethod   String?
-  cardNumber      String?
-  cardType        String?
-  bankName        String?
-  bankAccountType String?
-  bankRouting     String?
-  bankAccount     String?
-  paypalEmail     String?
-  isVerified      Boolean        @default(false)
-  termsAccepted   Boolean        @default(false)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  wallet          CreatorWallet?
-  submissions     Submission[]
-  winners         Winner[]
+  id                 String              @id @default(cuid())
+  userName           String              @unique
+  email              String              @unique
+  password           String
+  fullName           String
+  phoneCountry       String?
+  phoneNumber        String?
+  addressStreet      String?
+  addressCity        String?
+  addressState       String?
+  addressZip         String?
+  addressCountry     String?
+  socialInstagram    String?
+  socialTwitter      String?
+  socialLinkedIn     String?
+  socialTikTok       String?
+  socialYouTube      String?
+  paymentMethod      String?
+  cardNumber         String?
+  cardType           String?
+  bankName           String?
+  bankAccountType    String?
+  bankRouting        String?
+  bankAccount        String?
+  paypalEmail        String?
+  isVerified         Boolean             @default(false)
+  termsAccepted      Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  wallet             CreatorWallet?
+  submissions        Submission[]
+  winners            Winner[]
   withdrawalRequests WithdrawalRequest[]
-  successStories  SuccessStory[]
-  notifications   Notification[]
+  successStories     SuccessStory[]
 
   @@index([email])
   @@index([userName])
@@ -159,15 +157,15 @@ model PublishedAward {
 }
 
 model Admin {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  fullName  String
-  isActive  Boolean  @default(true)
-  role      String   @default("admin") // admin, super_admin
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  auditLogs AuditLog[]
+  id            String              @id @default(cuid())
+  email         String              @unique
+  password      String
+  fullName      String
+  isActive      Boolean             @default(true)
+  role          String              @default("admin") // admin, super_admin
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  auditLogs     AuditLog[]
   notifications AdminNotification[]
 
   @@index([email])
@@ -177,10 +175,10 @@ model Admin {
 model AuditLog {
   id         String   @id @default(cuid())
   adminId    String
-  action     String   // VIEW_BRAND, DELETE_BRAND, etc.
-  details    String   // Detailed description of the action
-  targetType String?  // brand, creator, brief, submission, etc.
-  targetId   String?  // ID of the target object
+  action     String // VIEW_BRAND, DELETE_BRAND, etc.
+  details    String // Detailed description of the action
+  targetType String? // brand, creator, brief, submission, etc.
+  targetId   String? // ID of the target object
   timestamp  DateTime @default(now())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -197,7 +195,7 @@ model AdminNotification {
   adminId   String
   title     String
   message   String
-  type      String    // info, warning, error, success
+  type      String // info, warning, error, success
   isRead    Boolean   @default(false)
   readAt    DateTime?
   createdAt DateTime  @default(now())
@@ -242,26 +240,26 @@ model WinnerReward {
 }
 
 model Notification {
-  id               String    @id @default(cuid())
-  userId           String
-  userType         String
-  title            String
-  message          String
-  type             String
-  category         String    @default("general")
-  priority         String    @default("normal")
-  isRead           Boolean   @default(false)
-  readAt           DateTime?
-  dismissedAt      DateTime?
-  expiresAt        DateTime?
-  actionUrl        String?
-  actionText       String?
-  metadata         Json?
+  id                String                 @id @default(cuid())
+  userId            String
+  userType          String
+  title             String
+  message           String
+  type              String
+  category          String                 @default("general")
+  priority          String                 @default("normal")
+  isRead            Boolean                @default(false)
+  readAt            DateTime?
+  dismissedAt       DateTime?
+  expiresAt         DateTime?
+  actionUrl         String?
+  actionText        String?
+  metadata          Json?
   relatedEntityType String?
   relatedEntityId   String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deliveries       NotificationDelivery[]
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  deliveries        NotificationDelivery[]
 
   @@index([userId, userType])
   @@index([isRead])
@@ -292,18 +290,18 @@ model NotificationPreferences {
 }
 
 model NotificationTemplate {
-  id              String   @id @default(cuid())
-  name            String   @unique
-  type            String
-  category        String
-  titleTemplate   String
-  messageTemplate String
-  actionText      String?
+  id                String   @id @default(cuid())
+  name              String   @unique
+  type              String
+  category          String
+  titleTemplate     String
+  messageTemplate   String
+  actionText        String?
   actionUrlTemplate String?
-  priority        String   @default("normal")
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  priority          String   @default("normal")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([type])
   @@index([category])
@@ -423,19 +421,19 @@ model Transaction {
 }
 
 model WithdrawalRequest {
-  id            String   @id @default(cuid())
-  creatorId     String
-  amount        Float
-  currency      String   @default("USD")
-  status        String   @default("pending") // pending, approved, rejected, completed
-  reason        String?  // Optional reason for rejection
-  adminNotes    String?  // Admin notes
+  id               String    @id @default(cuid())
+  creatorId        String
+  amount           Float
+  currency         String    @default("USD")
+  status           String    @default("pending") // pending, approved, rejected, completed
+  reason           String? // Optional reason for rejection
+  adminNotes       String? // Admin notes
   stripeTransferId String? // Stripe transfer ID when processed
-  requestedAt   DateTime @default(now())
-  processedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  creator       Creator  @relation(fields: [creatorId], references: [id])
+  requestedAt      DateTime  @default(now())
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  creator          Creator   @relation(fields: [creatorId], references: [id])
 
   @@index([status])
   @@index([creatorId])
@@ -443,17 +441,17 @@ model WithdrawalRequest {
 }
 
 model Conversation {
-  id              String    @id @default(cuid())
-  participant1Id  String
-  participant2Id  String
-  participant1Type String   // 'brand' or 'creator'
-  participant2Type String   // 'brand' or 'creator'
-  lastMessageAt   DateTime  @default(now())
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  messages        Message[]
-  
+  id               String   @id @default(cuid())
+  participant1Id   String
+  participant2Id   String
+  participant1Type String // 'brand' or 'creator'
+  participant2Type String // 'brand' or 'creator'
+  lastMessageAt    DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  messages Message[]
+
   @@unique([participant1Id, participant2Id])
   @@index([participant1Id])
   @@index([participant2Id])
@@ -461,23 +459,23 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(cuid())
+  id             String      @id @default(cuid())
   conversationId String
   senderId       String
   receiverId     String
-  senderType     String       // 'brand' or 'creator'
-  receiverType   String       // 'brand' or 'creator'
+  senderType     String // 'brand' or 'creator'
+  receiverType   String // 'brand' or 'creator'
   content        String
-  type           MessageType  @default(TEXT)
+  type           MessageType @default(TEXT)
   fileName       String?
   fileUrl        String?
   fileSize       Int?
-  isRead         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
+  isRead         Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
   @@index([conversationId])
   @@index([senderId])
   @@index([receiverId])
@@ -493,38 +491,38 @@ enum MessageType {
 
 // Community and Events Models
 model Event {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   title            String
   description      String
-  type             String    // webinar, workshop, networking, conference
-  category         String    // education, networking, business, creative, technical
+  type             String // webinar, workshop, networking, conference
+  category         String // education, networking, business, creative, technical
   hostId           String
   date             DateTime
   time             String
   duration         String
   timezone         String
   maxAttendees     Int
-  currentAttendees Int       @default(0)
-  price            Float     @default(0)
-  currency         String    @default("USD")
-  isFree           Boolean   @default(true)
-  isLive           Boolean   @default(false)
-  isRecorded       Boolean   @default(false)
+  currentAttendees Int      @default(0)
+  price            Float    @default(0)
+  currency         String   @default("USD")
+  isFree           Boolean  @default(true)
+  isLive           Boolean  @default(false)
+  isRecorded       Boolean  @default(false)
   recordingUrl     String?
   meetingUrl       String?
   tags             String[]
   requirements     String[]
   learningOutcomes String[]
-  agenda           Json      @default("[]")
-  featured         Boolean   @default(false)
-  status           String    @default("upcoming") // upcoming, live, completed, cancelled
-  views            Int       @default(0)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  
-  host             User      @relation(fields: [hostId], references: [id])
-  attendees        EventRegistration[]
-  
+  agenda           Json     @default("[]")
+  featured         Boolean  @default(false)
+  status           String   @default("upcoming") // upcoming, live, completed, cancelled
+  views            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  host      User                @relation(fields: [hostId], references: [id])
+  attendees EventRegistration[]
+
   @@index([date])
   @@index([status])
   @@index([type])
@@ -537,34 +535,34 @@ model EventRegistration {
   eventId   String
   userId    String
   createdAt DateTime @default(now())
-  
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, userId])
   @@index([eventId])
   @@index([userId])
 }
 
 model ForumPost {
-  id          String    @id @default(cuid())
-  title       String
-  content     String
-  authorId    String
-  category    String    // tips, networking, support, general
-  tags        String[]
-  likes       Int       @default(0)
-  replies     Int       @default(0)
-  views       Int       @default(0)
-  isPinned    Boolean   @default(false)
-  isLocked    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  author      User      @relation(fields: [authorId], references: [id])
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  category  String // tips, networking, support, general
+  tags      String[]
+  likes     Int      @default(0)
+  replies   Int      @default(0)
+  views     Int      @default(0)
+  isPinned  Boolean  @default(false)
+  isLocked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author       User            @relation(fields: [authorId], references: [id])
   forumReplies ForumReply[]
-  forumLikes  ForumPostLike[]
-  
+  forumLikes   ForumPostLike[]
+
   @@index([category])
   @@index([isPinned])
   @@index([createdAt])
@@ -572,76 +570,76 @@ model ForumPost {
 }
 
 model ForumReply {
-  id          String    @id @default(cuid())
-  postId      String
-  authorId    String
-  content     String
-  likes       Int       @default(0)
-  isSolution  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  post        ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author      User      @relation(fields: [authorId], references: [id])
-  forumLikes  ForumReplyLike[]
-  
+  id         String   @id @default(cuid())
+  postId     String
+  authorId   String
+  content    String
+  likes      Int      @default(0)
+  isSolution Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  post       ForumPost        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author     User             @relation(fields: [authorId], references: [id])
+  forumLikes ForumReplyLike[]
+
   @@index([postId])
   @@index([authorId])
   @@index([createdAt])
 }
 
 model ForumPostLike {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   postId    String
   userId    String
-  createdAt DateTime  @default(now())
-  
-  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  createdAt DateTime @default(now())
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
 }
 
 model ForumReplyLike {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   replyId   String
   userId    String
-  createdAt DateTime   @default(now())
-  
-  reply     ForumReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  createdAt DateTime @default(now())
+
+  reply ForumReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([replyId, userId])
   @@index([replyId])
   @@index([userId])
 }
 
 model SuccessStory {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
   briefTitle  String
   brandId     String
   creatorId   String
-  category    String    // creative, technical, business
+  category    String // creative, technical, business
   budget      Float
   duration    String
   outcome     String
-  metrics     Json      @default("{}")
-  testimonial Json      @default("{}")
+  metrics     Json     @default("{}")
+  testimonial Json     @default("{}")
   images      String[]
   tags        String[]
-  featured    Boolean   @default(false)
-  verified    Boolean   @default(false)
-  views       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  brand       Brand     @relation(fields: [brandId], references: [id])
-  creator     Creator   @relation(fields: [creatorId], references: [id])
-  
+  featured    Boolean  @default(false)
+  verified    Boolean  @default(false)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brand   Brand   @relation(fields: [brandId], references: [id])
+  creator Creator @relation(fields: [creatorId], references: [id])
+
   @@index([category])
   @@index([featured])
   @@index([verified])
@@ -650,23 +648,22 @@ model SuccessStory {
 
 // Unified User model for events and forums
 model User {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  type      String    // brand, creator, platform
+  type      String // brand, creator, platform
   avatar    String?
   bio       String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  hostedEvents     Event[]
+  hostedEvents       Event[]
   eventRegistrations EventRegistration[]
-  forumPosts       ForumPost[]
-  forumReplies     ForumReply[]
-  forumPostLikes   ForumPostLike[]
-  forumReplyLikes  ForumReplyLike[]
-  
+  forumPosts         ForumPost[]
+  forumReplies       ForumReply[]
+  forumPostLikes     ForumPostLike[]
+  forumReplyLikes    ForumReplyLike[]
+
   @@index([type])
   @@index([name])
 }
-
