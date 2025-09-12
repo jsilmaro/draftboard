@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 interface AnimatedNotificationProps {
-  message: string;
-  type: 'error' | 'warning' | 'info' | 'success';
+  type: 'success' | 'error' | 'warning' | 'info';
+  message?: string; // Legacy prop for backward compatibility
+  title?: string;
+  description?: string;
   onClose?: () => void;
   autoClose?: boolean;
   duration?: number;
 }
 
 const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
-  message,
   type,
+  message, // Legacy prop
+  title,
+  description,
   onClose,
   autoClose = true,
   duration = 5000
@@ -33,33 +37,56 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
     setTimeout(() => onClose?.(), 300);
   };
 
-  const getIcon = () => {
+  // Backward compatibility: use message as title if title is not provided
+  const displayTitle = title || message || 'Notification';
+  const displayDescription = description || (message ? '' : 'No description available');
+
+  const getIconColor = () => {
     switch (type) {
-      case 'error':
-        return <img src="/icons/Green_icons/NotificationBell.png" alt="Error" className="w-7 h-7" />;
-      case 'warning':
-        return <img src="/icons/Green_icons/NotificationBell.png" alt="Warning" className="w-7 h-7" />;
-      case 'info':
-        return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
       case 'success':
-        return <img src="/icons/Green_icons/NotificationBell.png" alt="Success" className="w-7 h-7" />;
+        return '#2b9875';
+      case 'error':
+        return '#e53e3e';
+      case 'warning':
+        return '#f6ad55';
+      case 'info':
+        return '#3182ce';
       default:
-        return <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-7 h-7" />;
+        return '#3182ce';
     }
   };
 
-  const getBgColor = () => {
+  const getIcon = () => {
+    const color = getIconColor();
     switch (type) {
-      case 'error':
-        return 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700 text-red-800 dark:text-red-200';
-      case 'warning':
-        return 'bg-yellow-50 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200';
-      case 'info':
-        return 'bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-200';
       case 'success':
-        return 'bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-700 text-green-800 dark:text-green-200';
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6" style={{ color }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        );
+      case 'error':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6" style={{ color }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+        );
+      case 'warning':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6" style={{ color }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+        );
+      case 'info':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6" style={{ color }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+        );
       default:
-        return 'bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-200';
+        return (
+          <img src="/icons/Green_icons/NotificationBell.png" alt="Info" className="w-6 h-6" style={{ color }} />
+        );
     }
   };
 
@@ -68,32 +95,28 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
   }
 
   return (
-    <div className={`fixed top-4 right-4 z-50 max-w-md w-full transition-all duration-300 transform ${
+    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 transform ${
       isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
     }`}>
-      <div className={`rounded-lg border p-4 shadow-lg ${getBgColor()}`}>
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <span className="text-lg">{getIcon()}</span>
+      <div className="flex flex-col gap-2 w-60 sm:w-72 text-[10px] sm:text-xs">
+        <div className="cursor-default flex items-center justify-between w-full h-12 sm:h-14 rounded-lg bg-[#232531] px-[10px]">
+          <div className="flex gap-2">
+            <div className="bg-white/5 backdrop-blur-xl p-1 rounded-lg">
+              {getIcon()}
+            </div>
+            <div>
+              <p className="text-white">{displayTitle}</p>
+              {displayDescription && <p className="text-gray-500">{displayDescription}</p>}
+            </div>
           </div>
-          <div className="ml-3 flex-1">
-            <p className="text-sm font-medium">{message}</p>
-          </div>
-          <div className="ml-4 flex-shrink-0">
-            <button
-              onClick={handleClose}
-              className="inline-flex text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none focus:text-gray-600 dark:focus:text-gray-100"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
+          <button 
+            onClick={handleClose}
+            className="text-gray-600 hover:bg-white/5 p-1 rounded-md transition-colors ease-linear"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

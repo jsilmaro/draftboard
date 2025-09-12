@@ -20,6 +20,7 @@ const messagingRoutes = require('./routes/messaging');
 const communityRoutes = require('./routes/community');
 const eventsRoutes = require('./routes/events');
 const successStoriesRoutes = require('./routes/success-stories');
+const notificationsRoutes = require('./routes/notifications');
 
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
@@ -353,6 +354,7 @@ app.use('/api/messages', messagingRoutes);
 app.use('/api/forums', communityRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/success-stories', successStoriesRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);

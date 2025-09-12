@@ -22,6 +22,8 @@ import PublicBriefDetails from './components/PublicBriefDetails'
 import CommunityPage from './components/CommunityPage'
 import EventsPage from './components/EventsPage'
 import SuccessStoriesPage from './components/SuccessStoriesPage'
+import NotificationsPage from './pages/NotificationsPage'
+import NotificationDetailPage from './pages/NotificationDetailPage'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -119,6 +121,24 @@ function App() {
               {/* Payment Routes */}
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel" element={<PaymentCancel />} />
+
+              {/* Notification Routes */}
+              <Route 
+                path="/notifications" 
+                element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/notifications/:id" 
+                element={
+                  <ProtectedRoute>
+                    <NotificationDetailPage />
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* Demo Routes */}
 

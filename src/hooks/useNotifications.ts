@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
@@ -47,6 +48,7 @@ interface NotificationFilters {
 }
 
 const useNotifications = (pollingInterval = 60000) => {
+  const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stats, setStats] = useState<NotificationStats>({
     total: 0,
@@ -76,13 +78,16 @@ const useNotifications = (pollingInterval = 60000) => {
       setError(null);
       
       const token = localStorage.getItem('token');
-      if (!token) {
+      if (!token || !user || !isAuthenticated) {
         setNotifications([]);
         setStats({ total: 0, unread: 0, urgent: 0 });
         return;
       }
 
       const queryParams = new URLSearchParams();
+      queryParams.append('userId', user.id);
+      queryParams.append('userType', user.type);
+      
       if (filters.category) queryParams.append('category', filters.category);
       if (filters.priority) queryParams.append('priority', filters.priority);
       if (filters.isRead !== undefined) queryParams.append('isRead', filters.isRead.toString());
@@ -102,6 +107,12 @@ const useNotifications = (pollingInterval = 60000) => {
 
       const data = await response.json();
       setNotifications(data.notifications || []);
+      
+      // Update stats if provided
+      if (data.stats) {
+        setStats(data.stats);
+      }
+      
       lastFetchRef.current = Date.now();
       
       return data;
@@ -113,147 +124,119 @@ const useNotifications = (pollingInterval = 60000) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, isAuthenticated]);
 
-  // Fetch notification statistics
-  const fetchStats = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+  // Fetch notification statistics (calculated from notifications)
+  const fetchStats = useCallback(() => {
+    const total = notifications.length;
+    const unread = notifications.filter(n => !n.isRead).length;
+    const urgent = notifications.filter(n => n.priority === 'urgent').length;
+    
+    setStats({
+      total,
+      unread,
+      urgent
+    });
+  }, [notifications]);
 
-      const response = await fetch('/api/notifications/count', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching notification stats:', error);
-    }
-  }, []);
-
-  // Fetch user preferences
+  // Fetch user preferences (using default for now)
   const fetchPreferences = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch('/api/notifications/preferences', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPreferences(data);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching notification preferences:', error);
-    }
+    // For now, just use default preferences
+    setPreferences({
+      email: true,
+      push: true,
+      inApp: true,
+      inAppNotifications: true,
+      emailNotifications: true,
+      pushNotifications: true,
+      categories: {}
+    });
   }, []);
 
   // Mark notifications as read
   const markAsRead = useCallback(async (notificationIds: string[] | null = null) => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (!token || !user || !isAuthenticated) return false;
 
-      const response = await fetch('/api/notifications/read', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ notificationIds })
-      });
-
-      if (response.ok) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(notification => 
-            notificationIds 
-              ? (notificationIds.includes(notification.id) ? { ...notification, isRead: true, readAt: new Date().toISOString() } : notification)
-              : { ...notification, isRead: true, readAt: new Date().toISOString() }
-          )
+      if (notificationIds && notificationIds.length > 0) {
+        // Mark specific notifications as read
+        const promises = notificationIds.map(id => 
+          fetch(`/api/notifications/${id}/read?userId=${user.id}&userType=${user.type}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          })
         );
         
-        // Refresh stats
-        await fetchStats();
-        return true;
+        await Promise.all(promises);
       }
-      return false;
+
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => 
+          notificationIds 
+            ? (notificationIds.includes(notification.id) ? { ...notification, isRead: true, readAt: new Date().toISOString() } : notification)
+            : { ...notification, isRead: true, readAt: new Date().toISOString() }
+        )
+      );
+      
+      // Refresh stats
+      fetchStats();
+      return true;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error marking notifications as read:', error);
       return false;
     }
-  }, [fetchStats]);
+  }, [fetchStats, user, isAuthenticated]);
 
   // Dismiss notifications
   const dismiss = useCallback(async (notificationIds: string[] | null = null) => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (!token || !user || !isAuthenticated) return false;
 
-      const response = await fetch('/api/notifications/dismiss', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ notificationIds })
-      });
-
-      if (response.ok) {
-        // Update local state
-        setNotifications(prev => 
-          prev.filter(notification => 
-            notificationIds 
-              ? !notificationIds.includes(notification.id)
-              : false
-          )
+      if (notificationIds && notificationIds.length > 0) {
+        // Delete specific notifications
+        const promises = notificationIds.map(id => 
+          fetch(`/api/notifications/${id}?userId=${user.id}&userType=${user.type}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
         );
         
-        // Refresh stats
-        await fetchStats();
-        return true;
+        await Promise.all(promises);
       }
-      return false;
+
+      // Update local state
+      setNotifications(prev => 
+        prev.filter(notification => 
+          notificationIds 
+            ? !notificationIds.includes(notification.id)
+            : false
+        )
+      );
+      
+      // Refresh stats
+      fetchStats();
+      return true;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error dismissing notifications:', error);
       return false;
     }
-  }, [fetchStats]);
+  }, [fetchStats, user, isAuthenticated]);
 
-  // Update preferences
+  // Update preferences (local only for now)
   const updatePreferences = useCallback(async (newPreferences: Partial<NotificationPreferences>) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return false;
-
-      const response = await fetch('/api/notifications/preferences', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newPreferences)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPreferences(data);
-        return true;
-      }
-      return false;
+      setPreferences(prev => ({ ...prev, ...newPreferences }));
+      return true;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error updating notification preferences:', error);
@@ -265,20 +248,24 @@ const useNotifications = (pollingInterval = 60000) => {
   const createTestNotification = useCallback(async (notificationData: Partial<Notification>) => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (!token || !user || !isAuthenticated) return false;
 
-      const response = await fetch('/api/test-notification', {
+      const response = await fetch('/api/notifications/seed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(notificationData)
+        body: JSON.stringify({
+          userId: user.id,
+          userType: user.type,
+          ...notificationData
+        })
       });
 
       if (response.ok) {
         // Refresh notifications and stats
-        await Promise.all([fetchNotifications(), fetchStats()]);
+        await fetchNotifications();
         return true;
       }
       return false;
@@ -287,29 +274,29 @@ const useNotifications = (pollingInterval = 60000) => {
       console.error('Error creating test notification:', error);
       return false;
     }
-  }, [fetchNotifications, fetchStats]);
+  }, [fetchNotifications, user, isAuthenticated]);
 
   // Start polling for real-time updates
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
 
     pollingRef.current = setInterval(async () => {
-      // Only poll if we have a token and it's been at least 10 seconds since last fetch
+      // Only poll if we have a token and user is authenticated
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token || !user || !isAuthenticated) return;
       
       const now = Date.now();
       if (lastFetchRef.current && (now - lastFetchRef.current) < 10000) return;
 
       try {
-        // Only fetch stats during polling to reduce load
-        await fetchStats();
+        // Only fetch notifications during polling to reduce load
+        await fetchNotifications();
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error during polling:', error);
       }
     }, pollingInterval);
-  }, [pollingInterval, fetchStats]);
+  }, [pollingInterval, fetchNotifications, user, isAuthenticated]);
 
   // Stop polling
   const stopPolling = useCallback(() => {
@@ -323,12 +310,11 @@ const useNotifications = (pollingInterval = 60000) => {
   useEffect(() => {
     const initialize = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token || !user || !isAuthenticated) return;
 
       try {
         await Promise.all([
           fetchNotifications(),
-          fetchStats(),
           fetchPreferences()
         ]);
         startPolling();
@@ -347,7 +333,12 @@ const useNotifications = (pollingInterval = 60000) => {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [fetchNotifications, fetchStats, fetchPreferences, startPolling, stopPolling]);
+  }, [fetchNotifications, fetchPreferences, startPolling, stopPolling, user, isAuthenticated]);
+
+  // Update stats when notifications change
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   // Handle visibility change to pause/resume polling
   useEffect(() => {
@@ -373,13 +364,13 @@ const useNotifications = (pollingInterval = 60000) => {
     
     debounceRef.current = setTimeout(async () => {
       try {
-        await Promise.all([fetchNotifications(), fetchStats()]);
+        await fetchNotifications();
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error during debounced refresh:', error);
       }
     }, 500); // 500ms debounce
-  }, [fetchNotifications, fetchStats]);
+  }, [fetchNotifications]);
 
   return {
     notifications,
