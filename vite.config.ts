@@ -41,11 +41,12 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: (id) => {
           // Create a vendor chunk for node_modules
           if (id.includes('node_modules')) {
-            if (id.includes('react')) {
+            if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor';
             }
             if (id.includes('react-router')) {
