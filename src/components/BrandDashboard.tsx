@@ -12,7 +12,7 @@ import MessagingSystem from './MessagingSystem';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 import SettingsModal from './SettingsModal';
-import { Sidebar, SidebarBody, SidebarLink } from './ui/sidebar';
+import { Sidebar, SidebarBody, SidebarLink, SidebarProvider } from './ui/sidebar';
 import { SidebarLogo } from './ui/LogoComponents';
 import { IconRenderer } from './ui/iconRenderer';
 
@@ -3376,7 +3376,8 @@ const BrandDashboard: React.FC = () => {
       {/* New Sidebar Design */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block`}>
         <div className="lg:fixed lg:left-0 lg:top-0 lg:z-40 lg:h-screen lg:w-auto lg:max-w-none">
-          <Sidebar>
+          <SidebarProvider>
+            <Sidebar>
             <SidebarBody className="justify-between gap-10">
               <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
                 <SidebarLogo />
@@ -3443,7 +3444,8 @@ const BrandDashboard: React.FC = () => {
                 />
               </div>
             </SidebarBody>
-          </Sidebar>
+            </Sidebar>
+          </SidebarProvider>
         </div>
       </div>
 

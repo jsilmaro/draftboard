@@ -10,7 +10,7 @@ import BriefDetailsModal from './BriefDetailsModal';
 import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
 import MessagingSystem from './MessagingSystem';
-import { Sidebar, SidebarBody, SidebarLink } from './ui/sidebar';
+import { Sidebar, SidebarBody, SidebarLink, SidebarProvider } from './ui/sidebar';
 import { SidebarLogo } from './ui/LogoComponents';
 import { IconRenderer } from './ui/iconRenderer';
 
@@ -2035,7 +2035,8 @@ const CreatorDashboard: React.FC = () => {
       {/* New Sidebar Design */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block lg:relative`}>
         <div className="lg:fixed lg:left-0 lg:top-0 lg:z-40 lg:h-screen lg:w-auto lg:max-w-none">
-          <Sidebar>
+          <SidebarProvider>
+            <Sidebar>
             <SidebarBody className="justify-between gap-10">
               <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
                 <SidebarLogo />
@@ -2102,7 +2103,8 @@ const CreatorDashboard: React.FC = () => {
                 />
               </div>
             </SidebarBody>
-          </Sidebar>
+            </Sidebar>
+          </SidebarProvider>
         </div>
       </div>
 

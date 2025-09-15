@@ -1,5 +1,5 @@
+import React, { useState, createContext, useContext } from 'react';
 import { cn } from "../../lib/utils";
-import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 
@@ -48,9 +48,9 @@ export const Sidebar = ({
   children: React.ReactNode;
 }) => {
   return (
-    <SidebarProvider>
+    <div className="flex h-full w-full flex-col">
       {children}
-    </SidebarProvider>
+    </div>
   );
 };
 
