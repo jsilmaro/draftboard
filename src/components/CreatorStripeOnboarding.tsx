@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { useStripe } from './StripeProvider';
+import { useStripeContext } from './StripeProvider';
 import { stripeService, isStripeLive } from '../services/stripeService';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -16,7 +16,7 @@ const CreatorStripeOnboarding: React.FC<CreatorStripeOnboardingProps> = ({
 }) => {
   const { user } = useAuth();
   const { showSuccessToast, showErrorToast } = useToast();
-  const { isStripeReady, error: stripeError } = useStripe();
+  const { isStripeReady, error: stripeError } = useStripeContext();
   
   const [step, setStep] = useState<'initial' | 'creating' | 'onboarding' | 'complete'>('initial');
   const [accountId, setAccountId] = useState<string | null>(null);

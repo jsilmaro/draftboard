@@ -14,7 +14,7 @@ const StripeContext = createContext<StripeContextType>({
   error: null,
 });
 
-export const useStripe = () => useContext(StripeContext);
+export const useStripeContext = () => useContext(StripeContext);
 
 interface StripeProviderProps {
   children: ReactNode;
