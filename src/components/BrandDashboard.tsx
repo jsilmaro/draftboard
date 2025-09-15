@@ -12,9 +12,7 @@ import MessagingSystem from './MessagingSystem';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 import SettingsModal from './SettingsModal';
-import { Sidebar, SidebarBody, SidebarLink, SidebarProvider } from './ui/sidebar';
-import { SidebarLogo } from './ui/LogoComponents';
-import { IconRenderer } from './ui/iconRenderer';
+import Logo from './Logo';
 
 
 
@@ -415,6 +413,7 @@ const BrandDashboard: React.FC = () => {
         setMarketplaceBriefs(data);
       }
     } catch (error) {
+      console.error('Error fetching marketplace briefs:', error);
       showErrorToast('Failed to load marketplace data');
     } finally {
       setMarketplaceLoading(false);
@@ -3373,84 +3372,132 @@ const BrandDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* New Sidebar Design */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block`}>
-        <div className="lg:fixed lg:left-0 lg:top-0 lg:z-40 lg:h-screen lg:w-auto lg:max-w-none">
-          <SidebarProvider>
-            <Sidebar>
-            <SidebarBody className="justify-between gap-10">
-              <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <SidebarLogo />
+      {/* Enhanced Sidebar - Fixed Position */}
+       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 glass-nav border-r border-white/20 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
+        <div className="p-4 lg:p-6">
+          
+          {/* Logo Section */}
+          <div className="flex items-center justify-start mb-6 lg:mb-8">
+            <div className="relative">
+              <Logo size="md" className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+            </div>
+          </div>
 
           {/* Main Navigation */}
-                <div className="mt-8 flex flex-col gap-2">
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Discover</h3>
+            <nav className="space-y-2">
               {navigation.map((item) => (
-                    <SidebarLink
+                <button
                   key={item.id}
-                      link={{
-                        label: item.label,
-                        href: "#",
-                        icon: (
-                          <IconRenderer 
-                            iconName={item.icon} 
-                            className="h-5 w-5 shrink-0 text-white dark:text-white"
+                  onClick={() => handleTabClick(item.id)}
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
+                    activeTab === item.id
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title={item.label}
+                >
+                  <span className={`mr-3 transition-all duration-200 ${
+                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                  }`}>
+                    {item.id === 'settings' ? (
+                      // Settings gear icon
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    ) : item.id === 'logout' ? (
+                      // Logout icon
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    ) : (
+                      <img 
+                        src={`/icons/${item.icon}.png`} 
                         alt={item.label}
-                          />
-                        ),
-                        action: () => handleTabClick(item.id)
-                      }}
-                    />
-                  ))}
+                        className="w-5 h-5"
+                      />
+                    )}
+                  </span>
+                  <span className="text-sm font-normal">{item.label}</span>
+                </button>
+              ))}
+            </nav>
           </div>
 
           {/* Manage Section */}
-                <div className="mt-8 pt-6 border-t border-gray-800">
-                  <div className="flex flex-col gap-2">
+          <div className="pt-6 border-t border-gray-800">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Manage</h3>
+            <nav className="space-y-2">
               {accountNav.map((item) => (
-                      <SidebarLink
+                <button
                   key={item.id}
-                        link={{
-                          label: item.label,
-                          href: "#",
-                          icon: (
-                            <IconRenderer 
-                              iconName={item.icon} 
-                              className="h-5 w-5 shrink-0 text-white dark:text-white"
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else {
+                      setActiveTab(item.id);
+                    }
+                  }}
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
+                    activeTab === item.id
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title={item.label}
+                >
+                  <span className={`mr-3 transition-all duration-200 ${
+                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                  }`}>
+                    {item.id === 'settings' ? (
+                      // Settings gear icon
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    ) : item.id === 'logout' ? (
+                      // Logout icon
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    ) : (
+                      <img 
+                        src={`/icons/${item.icon}.png`} 
                         alt={item.label}
-                            />
-                          ),
-                          action: item.action || (() => setActiveTab(item.id))
-                        }}
+                        className="w-5 h-5"
                       />
-                    ))}
-                  </div>
-                </div>
+                    )}
+                  </span>
+                  <span className="text-sm font-normal">{item.label}</span>
+                </button>
+              ))}
+            </nav>
           </div>
 
           {/* User Info Section */}
-              <div>
-                <SidebarLink
-                  link={{
-                    label: user?.companyName || 'Brand Account',
-                    href: "#",
-                    icon: (
-                      <div className="h-7 w-7 shrink-0 rounded-full bg-gray-700 flex items-center justify-center">
+          <div className="mt-8 pt-6 border-t border-gray-800">
+            <div className="flex items-center px-3 py-3 rounded-lg bg-gray-800">
+              <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-3">
                 <span className="text-white font-medium text-sm">
                   {user?.companyName?.charAt(0) || 'B'}
                 </span>
               </div>
-                    ),
-                  }}
-                />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.companyName || 'Brand Account'}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {user?.email || 'brand@example.com'}
+                </p>
               </div>
-            </SidebarBody>
-            </Sidebar>
-          </SidebarProvider>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm lg:ml-72">
+       <div className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm lg:ml-72">
         {/* Desktop Header */}
         <div className="hidden lg:block glass-nav border-b border-white/20 px-8 py-4">
           <div className="flex items-center justify-between">
