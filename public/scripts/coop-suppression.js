@@ -1,4 +1,5 @@
 // Simple COOP error suppression
+/* eslint-disable no-console */
 (function() {
   const originalError = console.error;
   console.error = function(...args) {
