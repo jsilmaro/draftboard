@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import * as React from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { STRIPE_CONFIG, isStripeLive } from '../config/stripe';
 
@@ -8,24 +8,24 @@ interface StripeContextType {
   error: string | null;
 }
 
-const StripeContext = createContext<StripeContextType>({
+const StripeContext = React.createContext<StripeContextType>({
   stripe: null,
   isStripeReady: false,
   error: null,
 });
 
-export const useStripeContext = () => useContext(StripeContext);
+export const useStripeContext = () => React.useContext(StripeContext);
 
 interface StripeProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const StripeProvider: React.FC<StripeProviderProps> = ({ children }) => {
-  const [stripe, setStripe] = useState<Stripe | null>(null);
-  const [isStripeReady, setIsStripeReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [stripe, setStripe] = React.useState<Stripe | null>(null);
+  const [isStripeReady, setIsStripeReady] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const initializeStripe = async () => {
       // Only initialize Stripe.js if we're in live mode
       if (!isStripeLive()) {

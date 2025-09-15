@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import * as React from 'react';
 import AnimatedNotification from '../components/AnimatedNotification';
 
 interface Toast {
@@ -14,10 +14,10 @@ interface ToastContextType {
   showInfoToast: (message: string) => void;
 }
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
 export const useToast = () => {
-  const context = useContext(ToastContext);
+  const context = React.useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
@@ -29,13 +29,13 @@ interface ToastProviderProps {
 }
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const removeToast = useCallback((id: string) => {
+  const removeToast = React.useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
-  const addToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+  const addToast = React.useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = { id, message, type };
     
@@ -47,19 +47,19 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     }, 5000);
   }, [removeToast]);
 
-  const showSuccessToast = useCallback((message: string) => {
+  const showSuccessToast = React.useCallback((message: string) => {
     addToast(message, 'success');
   }, [addToast]);
 
-  const showErrorToast = useCallback((message: string) => {
+  const showErrorToast = React.useCallback((message: string) => {
     addToast(message, 'error');
   }, [addToast]);
 
-  const showWarningToast = useCallback((message: string) => {
+  const showWarningToast = React.useCallback((message: string) => {
     addToast(message, 'warning');
   }, [addToast]);
 
-  const showInfoToast = useCallback((message: string) => {
+  const showInfoToast = React.useCallback((message: string) => {
     addToast(message, 'info');
   }, [addToast]);
 

@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from 'react';
+import * as React from 'react';
 import { cn } from "../../lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
@@ -16,12 +16,12 @@ interface SidebarContextProps {
   animate: boolean;
 }
 
-const SidebarContext = createContext<SidebarContextProps | undefined>(
+const SidebarContext = React.createContext<SidebarContextProps | undefined>(
   undefined
 );
 
 export const useSidebar = () => {
-  const context = useContext(SidebarContext);
+  const context = React.useContext(SidebarContext);
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider");
   }
@@ -33,7 +33,7 @@ export const SidebarProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [openState, setOpenState] = useState(true);
+  const [openState, setOpenState] = React.useState(true);
 
   return (
     <SidebarContext.Provider value={{ open: openState, setOpen: setOpenState, animate: false }}>
