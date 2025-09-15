@@ -41,6 +41,7 @@ model Brand {
   briefs          Brief[]
   publishedAwards PublishedAward[]
   successStories  SuccessStory[]
+  notifications   Notification[]
 
   @@index([email])
   @@index([createdAt])
@@ -81,6 +82,7 @@ model Creator {
   winners            Winner[]
   withdrawalRequests WithdrawalRequest[]
   successStories     SuccessStory[]
+  notifications      Notification[]
 
   @@index([email])
   @@index([userName])
@@ -260,6 +262,10 @@ model Notification {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   deliveries        NotificationDelivery[]
+
+  // Relations to Brand and Creator models
+  brand   Brand?   @relation(fields: [userId], references: [id], map: "notification_brand_fk")
+  creator Creator? @relation(fields: [userId], references: [id], map: "notification_creator_fk")
 
   @@index([userId, userType])
   @@index([isRead])
