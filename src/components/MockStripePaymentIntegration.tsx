@@ -15,9 +15,9 @@ interface PaymentFormProps {
 const MockStripePaymentIntegration: React.FC<PaymentFormProps> = ({
   amount,
   recipientName,
-  _winnerId,
+  winnerId: _winnerId,
   briefId,
-  _creatorId,
+  creatorId: _creatorId,
   onSuccess,
   onError,
   onCancel

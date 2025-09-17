@@ -59,12 +59,6 @@ const BrandShowcase: React.FC<BrandShowcaseProps> = ({ brandId, isOpen, onClose 
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'campaigns' | 'testimonials'>('overview');
 
-  useEffect(() => {
-    if (isOpen && brandId) {
-      fetchBrandData();
-    }
-  }, [isOpen, brandId, fetchBrandData]);
-
   const fetchBrandData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -94,6 +88,12 @@ const BrandShowcase: React.FC<BrandShowcaseProps> = ({ brandId, isOpen, onClose 
       setIsLoading(false);
     }
   }, [brandId]);
+
+  useEffect(() => {
+    if (isOpen && brandId) {
+      fetchBrandData();
+    }
+  }, [isOpen, brandId, fetchBrandData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

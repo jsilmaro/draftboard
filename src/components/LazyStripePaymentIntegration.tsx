@@ -9,7 +9,7 @@ interface PaymentFormProps {
   creatorId?: string;
   onSuccess: (paymentId: string) => void;
   onError: (error: string) => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 const LazyStripePaymentIntegration: React.FC<PaymentFormProps> = (props) => {
@@ -22,7 +22,7 @@ const LazyStripePaymentIntegration: React.FC<PaymentFormProps> = (props) => {
     const loadStripeComponent = async () => {
       try {
         const { default: StripePaymentIntegration } = await import('./StripePaymentIntegration');
-        setStripeComponent(() => StripePaymentIntegration);
+        setStripeComponent(StripePaymentIntegration);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Failed to load Stripe component:', error);

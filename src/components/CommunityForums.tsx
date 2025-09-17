@@ -54,7 +54,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
   const [newPost, setNewPost] = useState({
     title: '',
     content: '',
-    category: 'general' as const,
+    category: 'general' as 'general' | 'tips' | 'networking' | 'support',
     tags: ''
   });
   const [newReply, setNewReply] = useState('');

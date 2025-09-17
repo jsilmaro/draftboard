@@ -158,11 +158,8 @@ const StripeDemo: React.FC = () => {
               </p>
               
               <CreatorStripeOnboarding
-                creatorId={sampleCreator.id}
-                creatorEmail={sampleCreator.email}
-                creatorName={sampleCreator.name}
-                onSuccess={handleOnboardingSuccess}
-                onError={handleOnboardingError}
+                onComplete={handleOnboardingSuccess}
+                onCancel={() => handleOnboardingError('Onboarding cancelled')}
               />
 
               <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">

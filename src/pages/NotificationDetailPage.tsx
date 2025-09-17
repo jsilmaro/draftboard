@@ -30,12 +30,6 @@ const NotificationDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchNotification(id);
-    }
-  }, [id, fetchNotification]);
-
   const fetchNotification = useCallback(async (notificationId: string) => {
     try {
       setLoading(true);
@@ -70,6 +64,12 @@ const NotificationDetailPage: React.FC = () => {
       // Silently handle error - notification will still be displayed
     }
   };
+
+  useEffect(() => {
+    if (id) {
+      fetchNotification(id);
+    }
+  }, [id, fetchNotification]);
 
   const getIconColor = (type: string) => {
     switch (type) {
