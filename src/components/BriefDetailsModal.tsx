@@ -3,18 +3,18 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface BriefDetailsModalProps {
   brief: {
-    id: string;
-    title: string;
+  id: string;
+  title: string;
     description?: string;
     requirements?: string;
-    reward: number;
+  reward: number;
     amountOfWinners?: number;
     totalRewardsPaid?: number;
-    deadline: string;
-    status: string;
-    isPrivate: boolean;
-    location?: string;
-    additionalFields?: Record<string, unknown>;
+  deadline: string;
+  status: string;
+  isPrivate: boolean;
+  location?: string;
+  additionalFields?: Record<string, unknown>;
     rewardTiers?: Array<{
       position: number;
       cashAmount: number;
@@ -28,24 +28,24 @@ interface BriefDetailsModalProps {
       prizeDescription: string;
       calculatedAmount?: number;
     }>;
-    brand: {
-      id: string;
-      companyName: string;
-      logo?: string;
-      socialInstagram?: string;
-      socialTwitter?: string;
-      socialLinkedIn?: string;
-      socialWebsite?: string;
+  brand: {
+    id: string;
+    companyName: string;
+    logo?: string;
+    socialInstagram?: string;
+    socialTwitter?: string;
+    socialLinkedIn?: string;
+    socialWebsite?: string;
+  };
+  submissions: Array<{
+    id: string;
+    creator: {
+      userName: string;
+      fullName: string;
     };
-    submissions: Array<{
-      id: string;
-      creator: {
-        userName: string;
-        fullName: string;
-      };
-      status: string;
-      submittedAt: string;
-    }>;
+    status: string;
+    submittedAt: string;
+  }>;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -96,7 +96,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
         <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl ${
           isDark ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'
         }`}>
-          {/* Header */}
+        {/* Header */}
           <div className={`flex items-center justify-between p-6 border-b ${
             isDark ? 'border-gray-700' : 'border-gray-200'
           }`}>
@@ -143,17 +143,17 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
           </div>
+        </div>
 
-          {/* Content */}
+        {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Description */}
                 {brief.description && (
-                  <div>
+                                                             <div>
                     <h3 className={`text-lg font-semibold mb-3 ${
                       isDark ? 'text-white' : 'text-gray-900'
                     }`}>
@@ -338,8 +338,8 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                       </p>
                     </div>
                   </div>
-                </div>
-
+                    </div>
+                    
                 {/* Reward Tiers */}
                 {brief.rewardTiers && brief.rewardTiers.length > 0 && (
                   <div className={`p-4 rounded-lg ${
@@ -360,17 +360,17 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                              tier.position === 2 ? '🥈 2nd Place' : 
                              tier.position === 3 ? '🥉 3rd Place' : 
                              `${tier.position}th Place`}
-                          </span>
+                              </span>
                           <span className={`font-bold ${
                             isDark ? 'text-white' : 'text-gray-900'
                           }`}>
                             ${tier.cashAmount.toLocaleString()}
-                          </span>
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    )}
 
                 {/* Brand Social Links */}
                 {brief.brand && (
@@ -448,13 +448,13 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                 )}
               </div>
             </div>
-          </div>
+        </div>
 
           {/* Footer */}
           <div className={`flex items-center justify-end space-x-3 p-6 border-t ${
             isDark ? 'border-gray-700' : 'border-gray-200'
           }`}>
-            <button
+                <button
               onClick={onClose}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isDark 
@@ -463,16 +463,16 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
               }`}
             >
               Close
-            </button>
-            <button
-              onClick={() => {
+                </button>
+                  <button
+                    onClick={() => {
                 // TODO: Implement edit functionality
                 // console.log('Edit brief:', brief.id);
               }}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Edit Brief
-            </button>
+                  </button>
           </div>
         </div>
       </div>
