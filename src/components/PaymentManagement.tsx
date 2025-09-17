@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface WalletData {
   balance: number;
@@ -26,6 +27,7 @@ interface PaymentManagementProps {
 }
 
 const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId: _userId, token }) => {
+  const { isDark } = useTheme();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFundWallet, setShowFundWallet] = useState(false);
@@ -161,50 +163,104 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg shadow-lg p-6 mb-6 border border-white/10 dark:border-gray-600/20">
-        <h2 className="text-2xl font-bold text-gray-200 mb-4">
+    <div className="max-w-6xl mx-auto p-6">
+      <div className={`rounded-xl shadow-lg p-8 mb-6 border ${
+        isDark 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
+        <h2 className={`text-3xl font-bold mb-6 ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>
           {userType === 'brand' ? 'Brand Wallet' : 'Creator Wallet'}
         </h2>
 
-        {/* Wallet Balance Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
-            <h3 className="text-sm font-medium opacity-90">Current Balance</h3>
-            <p className="text-2xl font-bold">${walletData?.balance?.toFixed(2) || '0.00'}</p>
+        {/* Wallet Balance Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium opacity-90 mb-2">Current Balance</h3>
+                <p className="text-3xl font-bold">${walletData?.balance?.toFixed(2) || '0.00'}</p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {userType === 'creator' ? (
             <>
-              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
-                <h3 className="text-sm font-medium opacity-90">Total Earned</h3>
-                <p className="text-2xl font-bold">${walletData?.totalEarned?.toFixed(2) || '0.00'}</p>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium opacity-90 mb-2">Total Earned</h3>
+                    <p className="text-3xl font-bold">${walletData?.totalEarned?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
-                <h3 className="text-sm font-medium opacity-90">Total Withdrawn</h3>
-                <p className="text-2xl font-bold">${walletData?.totalWithdrawn?.toFixed(2) || '0.00'}</p>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium opacity-90 mb-2">Total Withdrawn</h3>
+                    <p className="text-3xl font-bold">${walletData?.totalWithdrawn?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </>
           ) : (
             <>
-              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
-                <h3 className="text-sm font-medium opacity-90">Total Deposited</h3>
-                <p className="text-2xl font-bold">${walletData?.totalDeposited?.toFixed(2) || '0.00'}</p>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium opacity-90 mb-2">Total Deposited</h3>
+                    <p className="text-3xl font-bold">${walletData?.totalDeposited?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
-                <h3 className="text-sm font-medium opacity-90">Total Spent</h3>
-                <p className="text-2xl font-bold">${walletData?.totalSpent?.toFixed(2) || '0.00'}</p>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium opacity-90 mb-2">Total Spent</h3>
+                    <p className="text-3xl font-bold">${walletData?.totalSpent?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </>
           )}
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-8">
           {userType === 'brand' && (
             <button
               onClick={handleFundWallet}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
               Fund Wallet
             </button>
           )}
@@ -212,8 +268,11 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
           {userType === 'creator' && walletData && walletData.balance > 0 && (
             <button
               onClick={handlePayoutRequest}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
               Request Payout
             </button>
           )}
@@ -221,9 +280,17 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
 
         {/* Fund Wallet Modal */}
         {showFundWallet && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-md w-full mx-4 border border-white/10 dark:border-gray-600/20">
-              <h3 className="text-xl font-bold text-gray-200 mb-4">Fund Your Wallet</h3>
+          <div className={`fixed inset-0 flex items-center justify-center z-50 ${
+            isDark ? 'bg-black/50' : 'bg-gray-900/50'
+          }`}>
+            <div className={`rounded-xl shadow-xl p-6 max-w-md w-full mx-4 border ${
+              isDark 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-xl font-bold mb-4 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Fund Your Wallet</h3>
               <FundWalletForm
                 token={token}
                 onSuccess={() => {
@@ -238,12 +305,22 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
 
         {/* Payout Request Modal */}
         {showPayoutForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-6 max-w-md w-full mx-4 border border-white/10 dark:border-gray-600/20">
-              <h3 className="text-xl font-bold text-gray-200 mb-4">Request Payout</h3>
+          <div className={`fixed inset-0 flex items-center justify-center z-50 ${
+            isDark ? 'bg-black/50' : 'bg-gray-900/50'
+          }`}>
+            <div className={`rounded-xl shadow-xl p-6 max-w-md w-full mx-4 border ${
+              isDark 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-xl font-bold mb-4 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Request Payout</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     Amount (USD)
                   </label>
                   <input
@@ -253,20 +330,30 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
                     step="0.01"
                     value={payoutAmount}
                     onChange={(e) => setPayoutAmount(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'border-gray-600 bg-gray-700 text-white' 
+                        : 'border-gray-300 bg-white text-gray-900'
+                    }`}
                     placeholder="Enter amount"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     Stripe Account ID
                   </label>
                   <input
                     type="text"
                     value={payoutAccountId}
                     onChange={(e) => setPayoutAccountId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'border-gray-600 bg-gray-700 text-white' 
+                        : 'border-gray-300 bg-white text-gray-900'
+                    }`}
                     placeholder="acct_..."
                     required
                   />
@@ -293,8 +380,14 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
 
         {/* Transaction History */}
         <div className="mt-8">
-          <h3 className="text-xl font-bold text-gray-200 mb-4">Transaction History</h3>
-          <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm rounded-lg p-4 border border-white/10 dark:border-gray-600/20">
+          <h3 className={`text-xl font-bold mb-6 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>Transaction History</h3>
+          <div className={`rounded-xl p-6 border ${
+            isDark 
+              ? 'bg-gray-700 border-gray-600' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
             {walletData?.transactions && walletData.transactions.length > 0 ? (
               <div className="space-y-3">
                 {walletData.transactions.map((transaction) => {
@@ -303,14 +396,24 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
                   const amount = transaction.amount || 0;
                   
                   return (
-                    <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm rounded-lg shadow-sm border border-white/10 dark:border-gray-600/20">
+                    <div key={transaction.id} className={`flex justify-between items-center p-4 rounded-lg shadow-sm border ${
+                      isDark 
+                        ? 'bg-gray-600 border-gray-500' 
+                        : 'bg-white border-gray-200'
+                    }`}>
                       <div>
-                        <p className="font-medium text-gray-200">{description}</p>
-                        <p className="text-sm text-gray-400">{new Date(transaction.createdAt).toLocaleDateString()}</p>
-                        <p className="text-xs text-gray-500 capitalize">{transaction.status}</p>
+                        <p className={`font-medium ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}>{description}</p>
+                        <p className={`text-sm ${
+                          isDark ? 'text-gray-300' : 'text-gray-600'
+                        }`}>{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                        <p className={`text-xs capitalize ${
+                          isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>{transaction.status}</p>
                       </div>
                       <div className="text-right">
-                        <p className={`font-bold ${transactionType === 'credit' ? 'text-green-400' : transactionType === 'debit' ? 'text-red-400' : 'text-gray-400'}`}>
+                        <p className={`font-bold text-lg ${transactionType === 'credit' ? 'text-green-600' : transactionType === 'debit' ? 'text-red-600' : 'text-gray-500'}`}>
                           {transactionType === 'credit' ? '+' : transactionType === 'debit' ? '-' : ''}${amount.toFixed(2)}
                         </p>
                       </div>
@@ -319,7 +422,19 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ userType, userId:
                 })}
               </div>
             ) : (
-              <p className="text-gray-300 text-center py-4">No transactions yet</p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className={`text-lg font-medium ${
+                  isDark ? 'text-gray-300' : 'text-gray-600'
+                }`}>No transactions yet</p>
+                <p className={`text-sm mt-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>Your transaction history will appear here</p>
+              </div>
             )}
           </div>
         </div>
@@ -336,6 +451,7 @@ interface FundWalletFormProps {
 }
 
 const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess: _onSuccess, onCancel }) => {
+  const { isDark } = useTheme();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -384,7 +500,9 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess: _onSu
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className={`block text-sm font-medium mb-2 ${
+          isDark ? 'text-gray-300' : 'text-gray-700'
+        }`}>
           Amount to Add
         </label>
         <input
@@ -393,15 +511,27 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess: _onSu
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            isDark 
+              ? 'bg-gray-700 border-gray-600 text-white' 
+              : 'bg-white border-gray-300 text-gray-900'
+          }`}
           placeholder="Enter amount"
           required
         />
       </div>
 
-      <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-        <h4 className="text-blue-400 font-semibold mb-2">💳 Secure Payment</h4>
-        <p className="text-sm text-gray-300">
+      <div className={`border rounded-lg p-4 ${
+        isDark 
+          ? 'bg-blue-900/20 border-blue-500/30' 
+          : 'bg-blue-50 border-blue-200'
+      }`}>
+        <h4 className={`font-semibold mb-2 ${
+          isDark ? 'text-blue-400' : 'text-blue-600'
+        }`}>💳 Secure Payment</h4>
+        <p className={`text-sm ${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>
           You will be redirected to Stripe&apos;s secure checkout page to complete your payment.
         </p>
       </div>
@@ -410,14 +540,18 @@ const FundWalletForm: React.FC<FundWalletFormProps> = ({ token, onSuccess: _onSu
         <button
           type="submit"
           disabled={loading || !amount}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Processing...' : 'Add Funds'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-400 hover:text-white"
+          className={`px-4 py-2 transition-colors ${
+            isDark 
+              ? 'text-gray-400 hover:text-white' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
         >
           Cancel
         </button>

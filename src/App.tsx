@@ -24,6 +24,7 @@ import EventsPage from './components/EventsPage'
 import SuccessStoriesPage from './components/SuccessStoriesPage'
 import NotificationsPage from './pages/NotificationsPage'
 import NotificationDetailPage from './pages/NotificationDetailPage'
+import ThemeDemo from './components/ThemeDemo'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -45,7 +46,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <StripeProvider>
-              <div className="min-h-screen bg-black animate-fade-in transition-colors duration-300 overflow-x-hidden">
+              <div className="min-h-screen bg-background text-foreground animate-fade-in transition-colors duration-300 overflow-x-hidden">
               <Routes>
               {/* Public Marketplace Routes */}
               <Route path="/" element={<LandingPage />} />
@@ -141,6 +142,7 @@ function App() {
               />
 
               {/* Demo Routes */}
+              <Route path="/theme-demo" element={<ThemeDemo />} />
 
             </Routes>
             </div>

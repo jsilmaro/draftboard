@@ -13,7 +13,7 @@ const SettingsButton: React.FC<SettingsButtonProps> = ({ className = '', childre
     <>
       <button
         onClick={() => setIsSettingsOpen(true)}
-        className={`p-2 rounded-lg transition-colors text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 ${className}`}
+        className={`p-2 rounded-lg transition-colors text-foreground-secondary hover:text-foreground hover:bg-background-secondary ${className}`}
         title="Settings"
       >
         {children || (

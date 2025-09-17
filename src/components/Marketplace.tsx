@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import LoadingSpinner from './LoadingSpinner';
 import MarketplaceNav from './MarketplaceNav';
 
@@ -42,6 +43,7 @@ const Marketplace = () => {
   const [deadlineFilter, setDeadlineFilter] = useState('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { user } = useAuth();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     fetchBriefs();
@@ -163,25 +165,25 @@ const Marketplace = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <MarketplaceNav />
       
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 to-black border-b border-gray-800">
+      <div className="bg-background-secondary border-b border-card-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 Marketplace
               </h1>
-              <p className="text-gray-400 mt-2">
+              <p className="text-foreground-secondary mt-2">
                 Discover creative opportunities from top brands
               </p>
             </div>
@@ -190,13 +192,13 @@ const Marketplace = () => {
                 <>
                   <Link
                     to="/creator/register"
-                    className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+                    className="marketplace-button"
                   >
                     Join as Creator
                   </Link>
                   <Link
                     to="/login"
-                    className="border border-gray-600 text-gray-300 px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-all duration-200"
+                    className="marketplace-button-secondary"
                   >
                     Sign In
                   </Link>
@@ -204,7 +206,7 @@ const Marketplace = () => {
               ) : (
                 <Link
                   to="/creator/dashboard"
-                  className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+                  className="marketplace-button"
                 >
                   My Dashboard
                 </Link>
@@ -216,7 +218,7 @@ const Marketplace = () => {
 
       {/* Filters and Search */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-gray-900 rounded-lg p-6 mb-8">
+        <div className="marketplace-card p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
@@ -225,7 +227,7 @@ const Marketplace = () => {
                 placeholder="Search briefs, brands, or keywords..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="marketplace-search w-full"
               />
             </div>
 
@@ -234,7 +236,7 @@ const Marketplace = () => {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="marketplace-input"
               >
                 <option value="all">All Templates</option>
                 <option value="creative">Social Media Campaign</option>
@@ -254,7 +256,7 @@ const Marketplace = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="marketplace-input"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -269,48 +271,48 @@ const Marketplace = () => {
           <div className="mt-4 flex justify-between items-center">
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="text-green-400 hover:text-green-300 text-sm font-medium flex items-center"
+              className="text-accent-green hover:text-accent-green/80 text-sm font-medium flex items-center"
             >
               {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
               <span className="ml-1">{showAdvancedFilters ? '▲' : '▼'}</span>
             </button>
-            <span className="text-gray-400 text-sm">
+            <span className="text-foreground-muted text-sm">
               {filteredBriefs.length} briefs found
             </span>
           </div>
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-700">
+            <div className="mt-4 pt-4 border-t border-card-border">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Budget Range */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Budget Range</label>
+                  <label className="block text-sm font-medium text-foreground-secondary mb-2">Budget Range</label>
                   <div className="flex space-x-2">
                     <input
                       type="number"
                       placeholder="Min $"
                       value={budgetRange.min}
                       onChange={(e) => setBudgetRange({...budgetRange, min: e.target.value})}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="marketplace-input text-sm"
                     />
                     <input
                       type="number"
                       placeholder="Max $"
                       value={budgetRange.max}
                       onChange={(e) => setBudgetRange({...budgetRange, max: e.target.value})}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="marketplace-input text-sm"
                     />
                   </div>
                 </div>
 
                 {/* Deadline Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Deadline</label>
+                  <label className="block text-sm font-medium text-foreground-secondary mb-2">Deadline</label>
                   <select
                     value={deadlineFilter}
                     onChange={(e) => setDeadlineFilter(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="marketplace-input text-sm"
                   >
                     <option value="all">Any Deadline</option>
                     <option value="urgent">Urgent (&le;3 days)</option>
@@ -334,12 +336,16 @@ const Marketplace = () => {
             return (
               <div
                 key={brief.id}
-                className="bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 transition-all duration-200 overflow-hidden group"
+                className="product-card"
               >
                 {/* Brand Header */}
-                <div className="p-4 border-b border-gray-800">
+                <div className="product-card-content border-b border-card-border">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <div className={`w-10 h-10 ${
+                      isDark 
+                        ? 'bg-gradient-to-r from-green-500 to-blue-600' 
+                        : 'bg-gradient-to-r from-green-100 to-blue-100 border border-gray-200'
+                    } rounded-lg flex items-center justify-center`}>
                       {brief.brand.logo ? (
                         <img
                           src={brief.brand.logo}
@@ -347,51 +353,53 @@ const Marketplace = () => {
                           className="w-8 h-8 rounded"
                         />
                       ) : (
-                        <span className="text-white font-bold text-sm">
+                        <span className={`font-bold text-sm ${
+                          isDark ? 'text-white' : 'text-gray-700'
+                        }`}>
                           {brief.brand.companyName.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div>
-                      <h3 className="font-medium text-white">{brief.brand.companyName}</h3>
-                      <p className="text-sm text-gray-400">{formatDate(brief.createdAt)}</p>
+                      <h3 className="font-medium text-foreground">{brief.brand.companyName}</h3>
+                      <p className="text-sm text-foreground-muted">{formatDate(brief.createdAt)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Brief Content */}
                 <div className="p-4">
-                  <h2 className="text-xl font-semibold text-white mb-2 group-hover:text-green-400 transition-colors">
+                  <h2 className="product-card-title mb-2 group-hover:text-accent-green transition-colors">
                     {brief.title}
                   </h2>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                  <p className="text-foreground-muted text-sm mb-4 line-clamp-3">
                     {brief.description}
                   </p>
 
                   {/* Reward and Stats */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-green-400">
+                      <div className="product-card-price">
                         {brief.winnerRewards && brief.winnerRewards.length > 0 
                           ? formatCurrency(brief.winnerRewards.reduce((sum, r) => sum + (r.cashAmount || 0) + (r.creditAmount || 0), 0))
                           : formatCurrency(brief.reward)
                         }
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-foreground-muted">
                         {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
                       </div>
                       {brief.winnerRewards && brief.winnerRewards.length > 0 && (
-                        <div className="text-xs text-blue-400">
+                        <div className="text-xs text-accent-blue">
                           Calculated amounts
                         </div>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-foreground-muted">
                         {brief.submissions.length} submissions
                       </div>
                       {brief.amountOfWinners > 1 && (
-                        <div className="text-xs text-blue-400">
+                        <div className="text-xs text-accent-blue">
                           Tiered rewards
                         </div>
                       )}
@@ -401,15 +409,23 @@ const Marketplace = () => {
                   {/* Deadline */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-400">Deadline</span>
-                      <span className={`text-sm font-medium ${isExpired ? 'text-red-400' : 'text-green-400'}`}>
+                      <span className="text-sm text-foreground-muted">Deadline</span>
+                      <span className={`text-sm font-medium ${
+                        isExpired 
+                          ? (isDark ? 'text-red-400' : 'text-red-600')
+                          : (isDark ? 'text-green-400' : 'text-green-600')
+                      }`}>
                         {isExpired ? 'Expired' : `${daysRemaining} days left`}
                       </span>
                     </div>
-                    <div className="mt-2 bg-gray-800 rounded-full h-2">
+                    <div className={`mt-2 rounded-full h-2 ${
+                      isDark ? 'bg-gray-600' : 'bg-gray-200'
+                    }`}>
                       <div
                         className={`h-2 rounded-full ${
-                          isExpired ? 'bg-red-500' : 'bg-green-500'
+                          isExpired 
+                            ? (isDark ? 'bg-red-500' : 'bg-red-500')
+                            : (isDark ? 'bg-green-400' : 'bg-green-500')
                         }`}
                         style={{
                           width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%`
@@ -421,10 +437,10 @@ const Marketplace = () => {
                   {/* Brief Type Badge */}
                   <div className="mb-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getBriefType(brief) === 'creative' ? 'bg-purple-100 text-purple-800' :
-                      getBriefType(brief) === 'technical' ? 'bg-blue-100 text-blue-800' :
-                      getBriefType(brief) === 'business' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
+                      getBriefType(brief) === 'creative' ? 'badge-light' :
+                      getBriefType(brief) === 'technical' ? 'badge-light' :
+                      getBriefType(brief) === 'business' ? 'badge-light' :
+                      'badge-light'
                     }`}>
                       {getBriefType(brief).charAt(0).toUpperCase() + getBriefType(brief).slice(1)}
                     </span>
@@ -433,7 +449,7 @@ const Marketplace = () => {
                   {/* Action Button */}
                   <Link
                     to={`/brief/${brief.id}`}
-                    className="block w-full bg-gradient-to-r from-green-500 to-blue-600 text-white text-center py-2 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+                    className="marketplace-button w-full text-center"
                   >
                     View Details
                   </Link>
@@ -446,7 +462,7 @@ const Marketplace = () => {
         {/* Empty State */}
         {filteredBriefs.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-lg mb-4">
+            <div className="text-foreground-muted text-lg mb-4">
               No briefs found matching your criteria
             </div>
             <button
@@ -455,7 +471,7 @@ const Marketplace = () => {
                 setFilterType('all');
                 setSortBy('newest');
               }}
-              className="text-green-400 hover:text-green-300 transition-colors"
+              className="text-accent-green hover:text-accent-green/80 transition-colors"
             >
               Clear filters
             </button>

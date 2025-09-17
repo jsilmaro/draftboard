@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 
 const MarketplaceNav = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -13,7 +16,7 @@ const MarketplaceNav = () => {
   };
 
   return (
-    <nav className="bg-black border-b border-gray-800 sticky top-0 z-50">
+    <nav className="marketplace-header sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
@@ -27,53 +30,51 @@ const MarketplaceNav = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/marketplace"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/marketplace') 
-                  ? 'text-green-400' 
-                  : 'text-gray-300 hover:text-white'
+              className={`marketplace-nav-item ${
+                isActive('/marketplace') ? 'active' : ''
               }`}
             >
               Marketplace
             </Link>
             <Link
               to="/"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-green-400' 
-                  : 'text-gray-300 hover:text-white'
+              className={`marketplace-nav-item ${
+                isActive('/') ? 'active' : ''
               }`}
             >
               Home
             </Link>
             <Link
               to="/community"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/community') 
-                  ? 'text-green-400' 
-                  : 'text-gray-300 hover:text-white'
+              className={`marketplace-nav-item ${
+                isActive('/community') ? 'active' : ''
               }`}
             >
               Community
             </Link>
             <Link
               to="/events"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/events') 
-                  ? 'text-green-400' 
-                  : 'text-gray-300 hover:text-white'
+              className={`marketplace-nav-item ${
+                isActive('/events') ? 'active' : ''
               }`}
             >
               Events
             </Link>
             <Link
               to="/success-stories"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/success-stories') 
-                  ? 'text-green-400' 
-                  : 'text-gray-300 hover:text-white'
+              className={`marketplace-nav-item ${
+                isActive('/success-stories') ? 'active' : ''
               }`}
             >
               Success Stories
+            </Link>
+            <Link
+              to="/theme-demo"
+              className={`marketplace-nav-item ${
+                isActive('/theme-demo') ? 'active' : ''
+              }`}
+            >
+              Theme Demo
             </Link>
             
             {/* User-specific links */}
@@ -82,7 +83,7 @@ const MarketplaceNav = () => {
                 {user.type === 'brand' && (
                   <Link
                     to="/brand/dashboard"
-                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                    className="marketplace-nav-item"
                   >
                     Dashboard
                   </Link>
@@ -90,7 +91,7 @@ const MarketplaceNav = () => {
                 {user.type === 'creator' && (
                   <Link
                     to="/creator/dashboard"
-                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                    className="marketplace-nav-item"
                   >
                     Dashboard
                   </Link>
@@ -100,13 +101,13 @@ const MarketplaceNav = () => {
               <>
                 <Link
                   to="/brand/register"
-                  className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  className="marketplace-nav-item"
                 >
                   For Brands
                 </Link>
                 <Link
                   to="/creator/register"
-                  className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  className="marketplace-nav-item"
                 >
                   For Creators
                 </Link>
@@ -116,16 +117,27 @@ const MarketplaceNav = () => {
 
           {/* Right side - Auth buttons */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle size="sm" />
+            
             {user ? (
               <div className="flex items-center space-x-4">
 
                 <div className="hidden sm:flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
+                  <div className={`w-8 h-8 ${
+                    isDark 
+                      ? 'bg-gradient-to-r from-green-500 to-blue-600' 
+                      : 'bg-gradient-to-r from-green-100 to-blue-100 border border-gray-200'
+                  } rounded-full flex items-center justify-center`}>
+                    <span className={`text-sm font-medium ${
+                      isDark ? 'text-white' : 'text-gray-700'
+                    }`}>
                       {user.email?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-gray-300 text-sm hidden lg:block">
+                  <span className={`text-sm hidden lg:block ${
+                    isDark ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     {user.email}
                   </span>
                 </div>
@@ -135,7 +147,11 @@ const MarketplaceNav = () => {
                     localStorage.removeItem('token');
                     window.location.reload();
                   }}
-                  className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
+                  className={`text-sm font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   Sign Out
                 </button>
@@ -144,13 +160,13 @@ const MarketplaceNav = () => {
               <div className="flex items-center space-x-3">
                 <Link
                   to="/login"
-                  className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
+                  className="marketplace-button-secondary text-sm"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/creator/register"
-                  className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+                  className="marketplace-button text-sm"
                 >
                   Join as Creator
                 </Link>
@@ -160,7 +176,11 @@ const MarketplaceNav = () => {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              className={`md:hidden inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset ${
+                isDark 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700 focus:ring-white' 
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-500'
+              }`}
             >
               <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
@@ -180,13 +200,17 @@ const MarketplaceNav = () => {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-900 border-t border-gray-800">
+          <div className={`px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t ${
+            isDark 
+              ? 'bg-gray-900 border-gray-800' 
+              : 'bg-white border-gray-200'
+          }`}>
             <Link
               to="/marketplace"
               className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                 isActive('/marketplace') 
-                  ? 'text-green-400 bg-gray-800' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  ? (isDark ? 'text-green-400 bg-gray-800' : 'text-blue-600 bg-blue-50')
+                  : (isDark ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100')
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
@@ -196,8 +220,8 @@ const MarketplaceNav = () => {
               to="/"
               className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                 isActive('/') 
-                  ? 'text-green-400 bg-gray-800' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  ? (isDark ? 'text-green-400 bg-gray-800' : 'text-blue-600 bg-blue-50')
+                  : (isDark ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100')
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
@@ -209,7 +233,11 @@ const MarketplaceNav = () => {
                 {user.type === 'brand' && (
                   <Link
                     to="/brand/dashboard"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isDark 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
@@ -218,7 +246,11 @@ const MarketplaceNav = () => {
                 {user.type === 'creator' && (
                   <Link
                     to="/creator/dashboard"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isDark 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
@@ -230,7 +262,11 @@ const MarketplaceNav = () => {
                     window.location.reload();
                     setIsMenuOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                 >
                   Sign Out
                 </button>
@@ -239,21 +275,33 @@ const MarketplaceNav = () => {
               <>
                 <Link
                   to="/brand/register"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   For Brands
                 </Link>
                 <Link
                   to="/creator/register"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   For Creators
                 </Link>
                 <Link
                   to="/login"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sign In

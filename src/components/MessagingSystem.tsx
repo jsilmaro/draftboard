@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Message {
   id: string;
@@ -17,6 +18,8 @@ interface Message {
 interface User {
   id: string;
   name: string;
+  fullName?: string;
+  email?: string;
   type: 'brand' | 'creator';
   avatar?: string;
 }
@@ -55,6 +58,7 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
   embedded = false
 }) => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -355,7 +359,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                         )}
                       </p>
                       {conversation.lastMessage && (
-                        <p className="text-gray-500 text-xs truncate">
+                        <p className={`text-xs truncate ${
+                          isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
                           {conversation.lastMessage.type === 'file' 
                             ? `📎 ${conversation.lastMessage.fileName}`
                             : conversation.lastMessage.content

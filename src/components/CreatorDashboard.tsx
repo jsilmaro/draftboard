@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import CreatorWallet from './CreatorWallet';
@@ -9,7 +10,7 @@ import BriefDetailsModal from './BriefDetailsModal';
 
 import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
-import Logo from './Logo';
+// import Logo from './Logo';
 import MessagingSystem from './MessagingSystem';
 
 
@@ -104,6 +105,7 @@ interface SearchResult {
 
 const CreatorDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
@@ -125,6 +127,8 @@ const CreatorDashboard: React.FC = () => {
   const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Search functionality
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,7 +137,7 @@ const CreatorDashboard: React.FC = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   
   // Recent activity carousel
-  const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  // const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
 
   const [submissionDetails, setSubmissionDetails] = useState<{
     id: string;
@@ -245,7 +249,7 @@ const CreatorDashboard: React.FC = () => {
         setMarketplaceBriefs(data);
       }
     } catch (error) {
-      console.error('Error fetching marketplace briefs:', error);
+      // console.error('Error fetching marketplace briefs:', error);
     } finally {
       setMarketplaceLoading(false);
     }
@@ -289,14 +293,14 @@ const CreatorDashboard: React.FC = () => {
         setSearchResults(results);
       } else {
         // eslint-disable-next-line no-console
-        console.warn('API search failed, falling back to local search');
+        // console.warn('API search failed, falling back to local search');
         // Fallback: search locally in available data
         const localResults = searchLocally(searchQuery);
         setSearchResults(localResults);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Search error:', error);
+      // console.error('Search error:', error);
       // Fallback: search locally in available data
       const localResults = searchLocally(searchQuery);
       setSearchResults(localResults);
@@ -442,7 +446,7 @@ const CreatorDashboard: React.FC = () => {
 
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error fetching earnings:', error);
+      // console.error('Error fetching earnings:', error);
       setEarningsError(error instanceof Error ? error.message : 'Failed to fetch earnings');
       setEarnings([]); // Clear earnings on error
     } finally {
@@ -514,7 +518,7 @@ const CreatorDashboard: React.FC = () => {
 
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error fetching submissions:', error);
+      // console.error('Error fetching submissions:', error);
       setEarningsError(error instanceof Error ? error.message : 'Failed to fetch submissions');
       setEarnings([]);
     } finally {
@@ -523,15 +527,15 @@ const CreatorDashboard: React.FC = () => {
   };
 
   // Recent activity carousel
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentActivityIndex(prev => 
-        prev >= availableBriefs.length - 1 ? 0 : prev + 1
-      );
-    }, 3000); // Change every 3 seconds
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setCurrentActivityIndex(prev => 
+  //       prev >= availableBriefs.length - 1 ? 0 : prev + 1
+  //     );
+  //   }, 3000); // Change every 3 seconds
 
-    return () => clearInterval(interval);
-  }, [availableBriefs.length]);
+  //   return () => clearInterval(interval);
+  // }, [availableBriefs.length]);
 
   const getRecentActivities = () => {
     return availableBriefs.slice(0, 4).map((brief, _index) => ({
@@ -701,6 +705,24 @@ const CreatorDashboard: React.FC = () => {
     );
   };
 
+  // Enhanced sidebar functions
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSidebarSearch = (query: string) => {
+    setSidebarSearchQuery(query);
+  };
+
+
   // Helper function to get submission status for a brief
   const getSubmissionStatus = (briefId: string) => {
     const brief = availableBriefs.find(b => b.id === briefId);
@@ -718,16 +740,63 @@ const CreatorDashboard: React.FC = () => {
     return mySubmissions.find(s => s.briefTitle === brief.title);
   };
 
-  const navigation = [
-    { id: 'overview', label: 'Overview', icon: 'overview' },
-    { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
-    { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
-    { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
-    { id: 'messaging', label: 'Messages', icon: 'messaging' },
-    { id: 'earnings', label: 'Earnings', icon: 'payments' },
-    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
-    { id: 'profile', label: 'Profile', icon: 'profile' },
-  ];
+  // const navigation = [
+  //   { id: 'overview', label: 'Overview', icon: 'overview' },
+  //   { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
+  //   { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
+  //   { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
+  //   { id: 'messaging', label: 'Messages', icon: 'messaging' },
+  //   { id: 'earnings', label: 'Earnings', icon: 'payments' },
+  //   { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+  //   { id: 'profile', label: 'Profile', icon: 'profile' },
+  // ];
+
+  // Navigation groups for enhanced sidebar
+  const navigationGroups = useMemo(() => [
+    {
+      id: 'main',
+      title: 'Main',
+      isExpanded: true,
+      items: [
+        { id: 'overview', label: 'Overview', icon: 'overview' },
+        { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+        { id: 'messaging', label: 'Messages', icon: 'messaging' },
+      ]
+    },
+    {
+      id: 'creator-work',
+      title: 'Creator Work',
+      isExpanded: true,
+      items: [
+        { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
+        { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
+        { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
+      ]
+    },
+    {
+      id: 'earnings',
+      title: 'Earnings & Profile',
+      isExpanded: false,
+      items: [
+        { id: 'earnings', label: 'Earnings', icon: 'payments' },
+        { id: 'profile', label: 'Profile', icon: 'profile' },
+      ]
+    }
+  ], []);
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(navigationGroups.filter(group => group.isExpanded).map(group => group.id))
+  );
+
+  // Filter navigation groups based on search query
+  const filteredNavigationGroups = useMemo(() => {
+    return navigationGroups.map(group => ({
+      ...group,
+      items: group.items.filter(item =>
+        item.label.toLowerCase().includes(sidebarSearchQuery.toLowerCase())
+      )
+    })).filter(group => group.items.length > 0);
+  }, [navigationGroups, sidebarSearchQuery]);
 
   const accountNav = [
     { id: 'earnings', label: 'Earnings', icon: 'payments' },
@@ -736,187 +805,230 @@ const CreatorDashboard: React.FC = () => {
   ];
 
   const renderOverview = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Hero Section */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-4">
-            Connect with Amazing Brands
-          </h1>
-        <p className="text-lg text-gray-300">
-            Showcase your creativity and discover exciting opportunities with top brands worldwide.
-          </p>
+      <div className="text-center">
+        <h1 className={`text-4xl font-bold mb-4 ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>
+          Connect with Amazing Brands
+        </h1>
+        <p className={`text-lg ${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>
+          Showcase your creativity and discover exciting opportunities with top brands worldwide.
+        </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Total Earnings Card */}
-        <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-6 shadow-xl">
+        <div className="metric-card">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-400 rounded-xl flex items-center justify-center">
-              <img src="/icons/Green_icons/MoneyBag1.png" alt="Money" className="w-6 h-6" />
+            <div className="w-12 h-12 bg-green-50 border border-green-200 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
             </div>
           </div>
-          <div className="text-white">
-            <p className="text-3xl font-bold mb-2">${metrics.totalEarnings.toFixed(2)}</p>
-            <p className="text-sm opacity-90">Total Earnings</p>
+          <div>
+            <p className="metric-value">${metrics.totalEarnings.toFixed(2)}</p>
+            <p className="metric-label">Total Earnings</p>
           </div>
         </div>
 
         {/* Submissions This Week Card */}
-        <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+        <div className="metric-card">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-400 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📝</span>
+            <div className="w-12 h-12 bg-green-50 border border-green-200 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
             </div>
           </div>
-          <div className="text-white">
-            <p className="text-3xl font-bold mb-2">{mySubmissions.filter(s => new Date(s.submittedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</p>
-            <p className="text-sm opacity-90">Submissions This Week</p>
+          <div>
+            <p className="metric-value">{mySubmissions.filter(s => new Date(s.submittedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</p>
+            <p className="metric-label">Submissions This Week</p>
           </div>
         </div>
 
         {/* Active Briefs Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 shadow-xl">
+        <div className="metric-card">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-xl flex items-center justify-center">
-              <img src="/icons/Green_icons/Target1.png" alt="Target" className="w-6 h-6" />
+            <div className="w-12 h-12 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             </div>
           </div>
-          <div className="text-white">
-            <p className="text-3xl font-bold mb-2">{availableBriefs.length}</p>
-            <p className="text-sm opacity-90">Active Briefs</p>
+          <div>
+            <p className="metric-value">{availableBriefs.length}</p>
+            <p className="metric-label">Active Briefs</p>
           </div>
         </div>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Briefs Section */}
+        {/* Available Briefs */}
         <div className="lg:col-span-2">
-           <div className="glass-card rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Available Briefs</h2>
-              <span className="text-sm text-gray-400">{availableBriefs.length} available</span>
+          <div className="card">
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <h2 className="card-title">Available Briefs</h2>
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{availableBriefs.length} available</span>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {availableBriefs.slice(0, 4).map((brief, _index) => {
-                const briefForCard = {
-                  ...brief,
-                  brand: {
-                    id: brief.id,
-                    companyName: brief.brandName || 'Brand',
-                    logo: undefined
-                  }
-                };
-                
-                return (
-                  <div key={brief.id} className="relative">
-                    <BriefCard 
-                      brief={briefForCard} 
-                      onApplyClick={(brief) => {
-                        setSelectedBriefId(brief.id);
-                        setShowBriefDetailsModal(true);
-                      }}
-                    />
-                    {hasSubmittedToBrief(brief.id) && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
-                          getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-900/20 text-red-400' :
-                          'bg-yellow-900/20 text-yellow-400'
-                        }`}>
-                          {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
-                           getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
-                           'Pending Review'}
-                        </span>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availableBriefs.slice(0, 4).map((brief) => {
+                  return (
+                    <div key={brief.id} className="relative">
+                      <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className={`w-10 h-10 ${isDark ? 'bg-gray-600 border-gray-500' : 'bg-gray-100 border-gray-200'} border rounded-lg flex items-center justify-center`}>
+                            <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-700'}`}>
+                              {brief.brandName?.charAt(0) || 'B'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brandName || 'Brand'}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{brief.title}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              brief.status === 'published' 
+                                ? isDark 
+                                  ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
+                                  : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                : brief.status === 'draft' 
+                                ? isDark 
+                                  ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
+                                  : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                                : isDark 
+                                  ? 'bg-gray-700 text-gray-400 border border-gray-600' 
+                                  : 'bg-gray-50 text-gray-600 border border-gray-200'
+                            }`}>
+                              {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Reward: ${brief.reward}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setSelectedBriefId(brief.id);
+                              setShowBriefDetailsModal(true);
+                            }}
+                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                          >
+                            View Details →
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {availableBriefs.length > 4 && (
-              <div className="mt-6 text-center">
-              <button
-                  onClick={() => setActiveTab('briefs')}
-                  className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-              >
-                  View All Briefs →
-              </button>
-            </div>
+                      {hasSubmittedToBrief(brief.id) && (
+                        <div className="absolute top-4 right-4 z-10">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                            getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-50 text-red-600 border border-red-200' :
+                            'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                          }`}>
+                            {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
+                             getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
+                             'Pending Review'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {availableBriefs.length > 4 && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setActiveTab('briefs')}
+                    className="btn btn-outline"
+                  >
+                    View All Briefs
+                  </button>
+                </div>
             )}
           </div>
         </div>
 
-        {/* Live Activity Feed */}
-        <div className="lg:col-span-1">
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 h-fit">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-white">Live Activity</h3>
-                <p className="text-xs text-gray-400">Real-time brief updates</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-emerald-500 font-semibold">LIVE</span>
-              </div>
+        {/* Quick Actions */}
+        <div className="space-y-6">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Quick Actions</h3>
             </div>
-            
-            <div className="space-y-3">
-              {getRecentActivities().slice(0, 5).map((activity, index) => (
-                  <div 
-                    key={activity.id}
-                  className={`p-3 rounded-lg border border-gray-700 transition-all duration-300 ${
-                      index === currentActivityIndex 
-                      ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/50' 
-                      : 'bg-gray-800'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                        index === currentActivityIndex 
-                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
-                        : 'bg-gray-700 text-gray-300'
-                      }`}>
-                        {activity.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                          {activity.title}
-                        </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                          New brief from {activity.brand}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                      <span className="text-xs text-gray-500 font-medium">
-                          {activity.time}
-                        </span>
-                      </div>
-                    </div>
+            <div className="card-content space-y-3">
+              <button
+                onClick={() => setActiveTab('marketplace')}
+                className="btn btn-primary w-full"
+              >
+                Browse Marketplace
+              </button>
+              <button
+                onClick={() => setActiveTab('submissions')}
+                className="btn btn-secondary w-full"
+              >
+                View My Submissions
+              </button>
+              <button
+                onClick={() => setActiveTab('earnings')}
+                className="btn btn-outline w-full"
+              >
+                Check Earnings
+              </button>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Recent Activity</h3>
+            </div>
+            <div className="card-content">
+                {getRecentActivities().slice(0, 3).map((activity) => (
+                  <div key={activity.id} className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {activity.title}
+                    </span>
                   </div>
                 ))}
+                {getRecentActivities().length === 0 && (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      No recent activity
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-
     </div>
   );
 
   const renderBriefs = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Available Briefs</h2>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Available Briefs</h2>
         <div className="flex space-x-2">
           <button 
             onClick={fetchDashboardData}
-            className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700 transition-colors"
+            className="btn btn-outline"
           >
             Refresh
           </button>
-          <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          <button className="btn btn-secondary">
             Sort by Reward
           </button>
         </div>
@@ -925,13 +1037,13 @@ const CreatorDashboard: React.FC = () => {
       {availableBriefs.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📄</div>
-          <h3 className="text-xl font-semibold text-white mb-2">No available briefs</h3>
-          <p className="text-gray-300 mb-6">
+          <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>No available briefs</h3>
+          <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             There are currently no active briefs available. Check back later for new opportunities!
           </p>
           <button 
             onClick={fetchDashboardData}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn btn-primary"
           >
             Refresh
           </button>
@@ -1105,7 +1217,9 @@ const CreatorDashboard: React.FC = () => {
                   placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-xs mt-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   Paste a link to your content (Google Drive, YouTube, Instagram, etc.)
                 </p>
               </div>
@@ -1147,55 +1261,55 @@ const CreatorDashboard: React.FC = () => {
 
   const renderSubmissions = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">My Submissions</h2>
-      <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-white/20 dark:border-gray-600/30 overflow-hidden">
+      <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>My Submissions</h2>
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-700/30 backdrop-blur-sm">
+          <table className="table">
+            <thead className="table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Brief</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="table-header-cell">Brief</th>
+                <th className="table-header-cell">Amount</th>
+                <th className="table-header-cell">Status</th>
+                <th className="table-header-cell">Submitted</th>
+                <th className="table-header-cell">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white/5 dark:bg-gray-800/10 divide-y divide-white/10 dark:divide-gray-700/30">
+            <tbody>
               {mySubmissions.map((submission) => (
                 <tr key={submission.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="table-cell">
                     <div className="flex items-center">
                       <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" className="mr-3" />
-                      <span className="text-sm font-medium text-white">{submission.briefTitle}</span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.briefTitle}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${submission.amount}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="table-cell">${submission.amount}</td>
+                  <td className="table-cell">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
-                      submission.status === 'rejected' ? 'bg-red-900/20 text-red-400' :
-                      'bg-yellow-900/20 text-yellow-400'
+                      submission.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                      submission.status === 'rejected' ? 'bg-red-50 text-red-600 border border-red-200' :
+                      'bg-yellow-50 text-yellow-600 border border-yellow-200'
                     }`}>
                       {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <td className="table-cell">
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="table-cell">
                     <button 
                       onClick={() => handleViewSubmission(submission)}
-                      className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mr-3"
+                      className="text-green-600 hover:text-green-800 text-sm font-medium mr-3"
                     >
                       View
                     </button>
                     <button 
                       onClick={() => handleDeleteSubmission(submission)}
                       disabled={submission.status === 'approved' || submission.status === 'rejected'}
-                      className={`${
+                      className={`text-sm font-medium ${
                         submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                          : 'text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300'
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-red-600 hover:text-red-800'
                       }`}
                       title={
                         submission.status === 'approved' || submission.status === 'rejected'
@@ -1260,12 +1374,12 @@ const CreatorDashboard: React.FC = () => {
     return (
     <div className="space-y-6">
         <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold text-white">Earnings</h2>
+      <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Earnings</h2>
           <div className="flex space-x-2">
             <button
               onClick={() => fetchEarningsData()}
               disabled={earningsLoading}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-500 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="btn btn-outline flex items-center space-x-2"
             >
               <svg className={`w-4 h-4 ${earningsLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1278,7 +1392,7 @@ const CreatorDashboard: React.FC = () => {
                 downloadCSV(csvContent, 'earnings.csv');
               }}
               disabled={earnings.length === 0}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="btn btn-secondary flex items-center space-x-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1287,7 +1401,7 @@ const CreatorDashboard: React.FC = () => {
             </button>
             <button
               onClick={() => fetchAllSubmissions()}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="btn btn-primary flex items-center space-x-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1299,65 +1413,73 @@ const CreatorDashboard: React.FC = () => {
         
         {/* Enhanced Earnings Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-emerald-600 to-green-600 rounded-2xl p-6 shadow-xl">
+          <div className="metric-card">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-400 rounded-xl flex items-center justify-center">
-                <img src="/icons/Green_icons/MoneyBag1.png" alt="Total Earnings" className="w-6 h-6" />
-        </div>
-        </div>
-            <div className="text-white">
-              <p className="text-3xl font-bold mb-2">${metrics.totalEarnings.toFixed(2)}</p>
-              <p className="text-sm opacity-90">Total Earnings</p>
-        </div>
+              <div className="w-12 h-12 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">${metrics.totalEarnings.toFixed(2)}</p>
+              <p className="metric-label">Total Earnings</p>
+            </div>
       </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
+          <div className="metric-card">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">💰</span>
+              <div className="w-12 h-12 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
             </div>
-            <div className="text-white">
-              <p className="text-3xl font-bold mb-2">${metrics.paidEarnings.toFixed(2)}</p>
-              <p className="text-sm opacity-90">Paid</p>
+            <div>
+              <p className="metric-value">${metrics.paidEarnings.toFixed(2)}</p>
+              <p className="metric-label">Paid</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-600 to-orange-600 rounded-2xl p-6 shadow-xl">
+          <div className="metric-card">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">⏳</span>
+              <div className="w-12 h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
             </div>
-            <div className="text-white">
-              <p className="text-3xl font-bold mb-2">${metrics.pendingEarnings.toFixed(2)}</p>
-              <p className="text-sm opacity-90">Pending</p>
+            <div>
+              <p className="metric-value">${metrics.pendingEarnings.toFixed(2)}</p>
+              <p className="metric-label">Pending</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 shadow-xl">
+          <div className="metric-card">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">📊</span>
+              <div className="w-12 h-12 bg-green-50 border border-green-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
               </div>
             </div>
-            <div className="text-white">
-              <p className="text-3xl font-bold mb-2">${metrics.thisMonthEarnings.toFixed(2)}</p>
-              <p className="text-sm opacity-90">This Month</p>
+            <div>
+              <p className="metric-value">${metrics.thisMonthEarnings.toFixed(2)}</p>
+              <p className="metric-label">This Month</p>
             </div>
           </div>
         </div>
 
         {/* Filters and Sorting */}
-        <div className="bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-600/30 p-4">
+        <div className="card">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-300">Filter:</label>
+                <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Filter:</label>
                 <select
                   value={earningsFilter}
                   onChange={(e) => setEarningsFilter(e.target.value as 'all' | 'paid' | 'pending' | 'processing')}
-                  className="px-3 py-1 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input text-sm"
                 >
                   <option value="all">All</option>
                   <option value="paid">Paid</option>
@@ -1883,7 +2005,9 @@ const CreatorDashboard: React.FC = () => {
           <div className="text-gray-400 text-lg mb-4">
             No marketplace briefs available
           </div>
-          <p className="text-gray-500">
+          <p className={`${
+            isDark ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             Check back later for new opportunities
           </p>
         </div>
@@ -2030,51 +2154,207 @@ const CreatorDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Enhanced Sidebar - Fixed Position */}
-       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full lg:w-72 glass-nav border-r border-white/20 text-white lg:min-h-screen shadow-2xl lg:fixed lg:left-0 lg:top-0 lg:z-40`}>
-        <div className="p-4 lg:p-6">
+      {/* Modern Sidebar */}
+      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
+        sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
+      } ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
+        <div className="p-4 flex flex-col h-full">
           
-          {/* Logo Section */}
-          <div className="flex items-center justify-start mb-6 lg:mb-8">
-            <div className="relative">
-              <Logo size="md" className="drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-            </div>
-          </div>
-
-          {/* Main Navigation */}
+          {/* Header with User Profile */}
           <div className="mb-6">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Discover</h3>
-            <nav className="space-y-2">
-              {navigation.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
-                    activeTab === item.id
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+            <div className="flex items-center justify-between mb-4">
+              {!sidebarCollapsed && (
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">
+                      {user?.userName?.charAt(0) || 'C'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {user?.userName || 'Creator'}
+                    </h3>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Creator Account
+                    </p>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark 
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {sidebarCollapsed ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  )}
+                </svg>
+              </button>
+            </div>
+            
+            {/* Search Bar */}
+            {!sidebarCollapsed && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={sidebarSearchQuery}
+                  onChange={(e) => handleSidebarSearch(e.target.value)}
+                  className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border transition-colors ${
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                      : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500'
                   }`}
-                  title={item.label}
-                >
-                  <span className={`mr-3 transition-all duration-200 ${
-                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>
-                    <img 
-                      src={`/icons/${item.icon}.png`} 
-                      alt={item.label}
-                      className="w-5 h-5"
-                    />
-                  </span>
-                  <span className="text-sm font-normal">{item.label}</span>
-                </button>
-              ))}
-            </nav>
+                />
+              </div>
+            )}
           </div>
 
-          {/* Manage Section */}
-          <div className="pt-6 border-t border-gray-800">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Manage</h3>
-            <nav className="space-y-2">
+          {/* Navigation Groups */}
+          <nav className="space-y-1 flex-1">
+            {filteredNavigationGroups.map((group) => {
+              const isExpanded = expandedGroups.has(group.id);
+              
+              return (
+                <div key={group.id} className="space-y-1">
+                  {!sidebarCollapsed && (
+                    <button
+                      onClick={() => toggleGroup(group.id)}
+                      className={`flex w-full items-center justify-between text-xs font-semibold px-3 py-2 rounded-lg transition-colors uppercase tracking-wider ${
+                        isDark
+                          ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                      aria-expanded={isExpanded}
+                      aria-controls={`nav-group-${group.id}`}
+                    >
+                      {group.title}
+                      <svg 
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-90' : 'rotate-0'
+                        }`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  {/* Show icons when collapsed - only for expanded groups */}
+                  {sidebarCollapsed && isExpanded && (
+                    <div className="space-y-1">
+                      {group.items.map((item) => (
+                        <button
+                          key={`collapsed-${item.id}`}
+                          onClick={() => setActiveTab(item.id)}
+                          className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                            activeTab === item.id
+                              ? isDark
+                                ? 'bg-green-500 text-white shadow-lg'
+                                : 'bg-green-500 text-white shadow-lg'
+                              : isDark
+                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                          title={item.label}
+                        >
+                          {item.icon === 'overview' && (
+                            <img src="/icons/overview.png" alt="Overview" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'marketplace' && (
+                            <img src="/icons/Green_icons/Megaphone1.png" alt="Marketplace" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'briefs' && (
+                            <img src="/icons/briefs.png" alt="Briefs" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'submissions' && (
+                            <img src="/icons/submissions.png" alt="Submissions" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'earnings' && (
+                            <img src="/icons/payments.png" alt="Earnings" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'wallet' && (
+                            <img src="/icons/wallet.png" alt="Wallet" className="w-5 h-5" />
+                          )}
+                          {item.icon === 'profile' && (
+                            <img src="/icons/profile.png" alt="Profile" className="w-5 h-5" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {isExpanded && !sidebarCollapsed && (
+                    <div 
+                      id={`nav-group-${group.id}`}
+                      className="space-y-1"
+                    >
+                      {group.items.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => setActiveTab(item.id)}
+                          className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                            activeTab === item.id
+                              ? isDark
+                                ? 'bg-green-500 text-white shadow-lg'
+                                : 'bg-green-500 text-white shadow-lg'
+                              : isDark
+                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                          title={sidebarCollapsed ? item.label : ''}
+                        >
+                          {item.icon === 'overview' && (
+                            <img src="/icons/overview.png" alt="Overview" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'marketplace' && (
+                            <img src="/icons/Green_icons/Megaphone1.png" alt="Marketplace" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'briefs' && (
+                            <img src="/icons/briefs.png" alt="Briefs" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'submissions' && (
+                            <img src="/icons/submissions.png" alt="Submissions" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'earnings' && (
+                            <img src="/icons/payments.png" alt="Earnings" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'wallet' && (
+                            <img src="/icons/wallet.png" alt="Wallet" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {item.icon === 'profile' && (
+                            <img src="/icons/profile.png" alt="Profile" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                          )}
+                          {!sidebarCollapsed && (
+                            <span className="font-medium">{item.label}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-2">
               {accountNav.map((item) => (
                 <button
                   key={item.id}
@@ -2085,65 +2365,53 @@ const CreatorDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-normal transition-all duration-200 group ${
-                    activeTab === item.id
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2'} rounded-lg text-sm transition-colors ${
+                    isDark
+                      ? 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
-                  title={item.label}
+                  title={sidebarCollapsed ? item.label : ''}
                 >
-                  <div className="flex items-center">
-                  <span className={`mr-3 transition-all duration-200 ${
-                    activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`}>
-                      {item.id === 'settings' ? (
-                        // Settings gear icon
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      ) : item.id === 'logout' ? (
-                        // Logout icon
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                      ) : (
-                    <img 
-                      src={`/icons/${item.icon}.png`} 
-                      alt={item.label}
-                      className="w-5 h-5"
-                    />
-                      )}
-                  </span>
-                  <span className="text-sm font-normal">{item.label}</span>
-                  </div>
-                  {item.id === 'settings' && (
-                    <span className="text-gray-400 group-hover:text-white">
+                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                    {item.id === 'settings' ? (
+                      <img src="/icons/settings.png" alt="Settings" className="w-4 h-4" />
+                    ) : item.id === 'logout' ? (
+                      <img src="/icons/logout.png" alt="Logout" className="w-4 h-4" />
+                    ) : (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
-                    </span>
-                  )}
+                    )}
+                  </span>
+                  {!sidebarCollapsed && <span className="font-medium">{item.label}</span>}
                 </button>
               ))}
-            </nav>
-          </div>
-
-          {/* User Info Section */}
-          <div className="mt-8 pt-6 border-t border-gray-800">
-            <div className="flex items-center px-3 py-3 rounded-lg bg-gray-800">
-              <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-3">
-                <span className="text-white font-medium text-sm">
-                  {user?.fullName?.charAt(0) || user?.userName?.charAt(0) || 'C'}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {user?.fullName || user?.userName || 'Creator Account'}
-                </p>
-                <p className="text-xs text-gray-400 truncate">
-                  {user?.email || 'creator@example.com'}
-                </p>
+            </div>
+            {/* Theme Toggle */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+                {!sidebarCollapsed && (
+                  <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {isDark ? 'Light Mode' : 'Dark Mode'}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    // Toggle theme logic would go here
+                    const event = new CustomEvent('toggleTheme');
+                    window.dispatchEvent(event);
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isDark ? 'bg-green-500' : 'bg-gray-200'
+                  }`}
+                  title={sidebarCollapsed ? (isDark ? 'Light Mode' : 'Dark Mode') : ''}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isDark ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           </div>
@@ -2151,12 +2419,14 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-       <div className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm lg:ml-72">
+       <div className={`flex-1 overflow-auto transition-all duration-300 ${
+         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+       } ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
         {/* Desktop Header */}
-        <div className="hidden lg:block glass-nav border-b border-white/20 px-8 py-4">
+        <div className={`hidden lg:block border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} px-8 py-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {activeTab === 'overview' ? 'Dashboard' : 
                  activeTab === 'marketplace' ? 'Marketplace' :
                  activeTab === 'briefs' ? 'Available Briefs' :
@@ -2284,14 +2554,67 @@ const CreatorDashboard: React.FC = () => {
       )}
 
       {/* Brief Details Modal */}
-      <BriefDetailsModal
-        briefId={selectedBriefId}
-        isOpen={showBriefDetailsModal}
-        onClose={() => {
-          setShowBriefDetailsModal(false);
-          setSelectedBriefId(null);
-        }}
-      />
+      {selectedBriefId && (
+        <BriefDetailsModal
+          brief={(() => {
+            const foundBrief = availableBriefs.find(b => b.id === selectedBriefId);
+            if (foundBrief) {
+              // Convert CreatorDashboard Brief to BriefDetailsModal format
+              return {
+                id: foundBrief.id,
+                title: foundBrief.title,
+                description: foundBrief.description,
+                requirements: '',
+                reward: foundBrief.reward,
+                amountOfWinners: foundBrief.amountOfWinners,
+                totalRewardsPaid: foundBrief.totalRewardsPaid,
+                deadline: foundBrief.deadline,
+                status: foundBrief.status,
+                isPrivate: false,
+                location: foundBrief.location || 'Anywhere',
+                additionalFields: {},
+                rewardTiers: [],
+                winnerRewards: [],
+                submissions: [],
+                brand: foundBrief.brand
+              };
+            } else {
+              // Fallback brief object
+              return {
+                id: selectedBriefId,
+                title: 'Brief Not Found',
+                description: 'This brief could not be found.',
+                requirements: '',
+                reward: 0,
+                amountOfWinners: 1,
+                totalRewardsPaid: 0,
+                deadline: new Date().toISOString(),
+                status: 'unknown',
+                isPrivate: false,
+                location: 'Unknown',
+                additionalFields: {},
+                rewardTiers: [],
+                winnerRewards: [],
+                submissions: [],
+                brand: {
+                  id: 'unknown',
+                  companyName: 'Unknown Brand',
+                  logo: undefined,
+                  socialInstagram: undefined,
+                  socialTwitter: undefined,
+                  socialLinkedIn: undefined,
+                  socialWebsite: undefined
+                }
+              };
+            }
+          })()}
+          isOpen={showBriefDetailsModal}
+          onClose={() => {
+            setShowBriefDetailsModal(false);
+            setSelectedBriefId(null);
+          }}
+        />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import CreatorStripeOnboarding from './CreatorStripeOnboarding';
 
 interface WalletData {
@@ -29,6 +30,7 @@ interface WithdrawalRequest {
 
 const CreatorWallet: React.FC = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const token = localStorage.getItem('token') || '';
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
@@ -342,7 +344,9 @@ const CreatorWallet: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-400">No transactions yet</p>
-              <p className="text-gray-500 text-sm">Start submitting to briefs to earn rewards!</p>
+              <p className={`text-sm ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>Start submitting to briefs to earn rewards!</p>
             </div>
           )}
         </div>
@@ -385,7 +389,9 @@ const CreatorWallet: React.FC = () => {
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Enter amount"
                 />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className={`text-sm mt-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   Available: ${walletData?.balance.toFixed(2) || '0.00'} • Minimum: $10.00
                 </p>
               </div>
