@@ -868,6 +868,54 @@ const CreatorDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Marketplace Section */}
+      <div className="card">
+        <div className="card-header">
+          <div className="flex items-center justify-between">
+            <h2 className="card-title">Discover Opportunities</h2>
+            <button
+              onClick={() => setActiveTab('marketplace')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isDark 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+            >
+              View All
+            </button>
+          </div>
+        </div>
+        <div className="card-content">
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+            Find briefs that match your skills and start earning
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableBriefs.slice(0, 2).map((brief) => (
+              <div key={brief.id} className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 hover:shadow-md transition-all duration-200`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className={`w-10 h-10 ${isDark ? 'bg-gray-800' : 'bg-white'} border rounded-lg flex items-center justify-center`}>
+                    <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-700'}`}>
+                      {brief.brandName?.charAt(0) || 'B'}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brandName || 'Brand'}</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{brief.title}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${brief.reward}</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Reward</p>
+                  </div>
+                </div>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'} line-clamp-2`}>
+                  {brief.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Available Briefs */}
@@ -884,9 +932,9 @@ const CreatorDashboard: React.FC = () => {
                 {availableBriefs.slice(0, 4).map((brief) => {
                   return (
                     <div key={brief.id} className="relative">
-                      <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
+                      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
                         <div className="flex items-center space-x-3 mb-3">
-                          <div className={`w-10 h-10 ${isDark ? 'bg-gray-600 border-gray-500' : 'bg-gray-100 border-gray-200'} border rounded-lg flex items-center justify-center`}>
+                          <div className={`w-12 h-12 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl flex items-center justify-center`}>
                             <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-700'}`}>
                               {brief.brandName?.charAt(0) || 'B'}
                             </span>
@@ -906,7 +954,7 @@ const CreatorDashboard: React.FC = () => {
                                   ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
                                   : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
                                 : isDark 
-                                  ? 'bg-gray-700 text-gray-400 border border-gray-600' 
+                                  ? 'bg-gray-900 text-gray-400 border border-gray-800' 
                                   : 'bg-gray-50 text-gray-600 border border-gray-200'
                             }`}>
                               {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
@@ -1101,7 +1149,7 @@ const CreatorDashboard: React.FC = () => {
       {/* View Brief Modal */}
       {showViewModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-gray-950 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">{selectedBrief.title}</h3>
               <button
@@ -1136,7 +1184,7 @@ const CreatorDashboard: React.FC = () => {
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   selectedBrief.status === 'published' ? 'bg-emerald-900/20 text-emerald-400' :
                                       selectedBrief.status === 'draft' ? 'bg-yellow-900/20 text-yellow-400' :
-                    'bg-gray-700 text-gray-300'
+                    'bg-gray-900 text-gray-300'
                 }`}>
                   {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
                 </span>
@@ -1152,7 +1200,7 @@ const CreatorDashboard: React.FC = () => {
                 </h4>
                 <div className="space-y-3">
                   {selectedBrief.winnerRewards.map((reward, index) => (
-                    <div key={index} className="bg-gray-800/20 p-3 rounded-lg">
+                    <div key={index} className="bg-gray-950/20 p-3 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-white">
                                               {reward.position === 1 ? '🥇 1st Spot' :
@@ -1180,7 +1228,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
               >
                 Close
               </button>
@@ -1192,7 +1240,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Apply Modal */}
       {showApplyModal && selectedBrief && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-gray-950 rounded-lg p-6 max-w-2xl w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">
                 {hasSubmittedToBrief(selectedBrief.id) ? 'Edit Submission' : 'Apply to'} {selectedBrief.title}
@@ -1213,7 +1261,7 @@ const CreatorDashboard: React.FC = () => {
                   type="url"
                   value={applyFormData.contentUrl}
                   onChange={(e) => setApplyFormData(prev => ({ ...prev, contentUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-900 text-white placeholder-gray-400"
                   placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
                   required
                 />
@@ -1224,7 +1272,7 @@ const CreatorDashboard: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-gray-700 p-4 rounded-lg">
+              <div className="bg-gray-900 p-4 rounded-lg">
                 <h4 className="font-medium text-white mb-2">Brief Summary</h4>
                 <div className="space-y-2 text-sm text-gray-300">
                   <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
@@ -1241,7 +1289,7 @@ const CreatorDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
+                  className="px-4 py-2 border border-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
                 >
                   Cancel
                 </button>
@@ -1331,11 +1379,7 @@ const CreatorDashboard: React.FC = () => {
 
   const renderMessaging = () => (
     <div className="h-full">
-      <MessagingSystem
-        isOpen={true}
-        onClose={() => {}}
-        embedded={true}
-      />
+      <MessagingSystem />
     </div>
   );
 
@@ -1493,7 +1537,7 @@ const CreatorDashboard: React.FC = () => {
                 <select
                   value={earningsSortBy}
                   onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
-                  className="px-3 py-1 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-1 bg-gray-900 border border-gray-800 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="date">Date</option>
                   <option value="amount">Amount</option>
@@ -1503,7 +1547,7 @@ const CreatorDashboard: React.FC = () => {
               
               <button
                 onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-md text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                className="px-3 py-1 bg-gray-900 hover:bg-gray-600 border border-gray-800 rounded-md text-white text-sm transition-colors duration-200 flex items-center space-x-1"
               >
                 <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
                 <span>{earningsSortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
@@ -1533,10 +1577,10 @@ const CreatorDashboard: React.FC = () => {
         )}
 
         {/* Enhanced Earnings Table */}
-      <div className="bg-gray-800/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-600/30 overflow-hidden">
+      <div className="bg-gray-950/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-800/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-700/30 backdrop-blur-sm">
+            <thead className="bg-gray-900/30 backdrop-blur-sm">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
@@ -1547,7 +1591,7 @@ const CreatorDashboard: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-gray-800/10 divide-y divide-gray-700/30">
+            <tbody className="bg-gray-950/10 divide-y divide-gray-700/30">
                 {earningsLoading ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
@@ -1577,7 +1621,7 @@ const CreatorDashboard: React.FC = () => {
                   </tr>
                 ) : (
                   sortedEarnings.map((earning) => (
-                    <tr key={earning.id} className="hover:bg-gray-700/20 transition-colors duration-200">
+                    <tr key={earning.id} className="hover:bg-gray-900/20 transition-colors duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">{earning.briefTitle}</div>
                         {earning.position && (
@@ -1666,15 +1710,15 @@ const CreatorDashboard: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300">Full Name</label>
-                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">Username</label>
-                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
             </div>
           </div>
@@ -1684,15 +1728,15 @@ const CreatorDashboard: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300">Instagram</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">TikTok</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300">YouTube</label>
-                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-600 rounded-md px-3 py-2 bg-gray-700 text-white placeholder-gray-400" />
+                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
               </div>
             </div>
           </div>
@@ -1719,7 +1763,7 @@ const CreatorDashboard: React.FC = () => {
         </div>
         <button
           onClick={clearSearch}
-          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          className="px-4 py-2 bg-gray-900 hover:bg-gray-600 text-white rounded-lg transition-colors"
         >
           Clear Search
         </button>
@@ -1736,7 +1780,7 @@ const CreatorDashboard: React.FC = () => {
       {/* No Results */}
       {!isSearching && searchResults.length === 0 && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gray-950 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -1822,7 +1866,7 @@ const CreatorDashboard: React.FC = () => {
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-700">
+              <div className="mt-4 pt-4 border-t border-gray-900">
                 <button
                   onClick={() => {
                     if (result.type === 'brief') {
@@ -1858,26 +1902,26 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-600/50 p-6 mb-8">
+      <div className="bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-800/50 p-6 mb-8">
         <div className="flex flex-wrap gap-4">
           <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
             Marketplace
           </button>
           <Link 
             to="/community" 
-            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+            className="px-6 py-3 bg-gray-900 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
           >
             Community
           </Link>
           <Link 
             to="/events" 
-            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+            className="px-6 py-3 bg-gray-900 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
           >
             Events
           </Link>
           <Link 
             to="/success-stories" 
-            className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
+            className="px-6 py-3 bg-gray-900 text-gray-300 rounded-lg font-medium hover:bg-gray-600 hover:text-white transition-colors"
           >
             Success Stories
           </Link>
@@ -1968,7 +2012,7 @@ const CreatorDashboard: React.FC = () => {
                       {daysRemaining < 0 ? 'Expired' : `${daysRemaining} days left`}
                     </span>
                   </div>
-                  <div className="bg-gray-800 rounded-full h-2">
+                  <div className="bg-gray-950 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${daysRemaining < 0 ? 'bg-red-500' : 'bg-green-500'}`} 
                       style={{ width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%` }} 
@@ -2157,46 +2201,57 @@ const CreatorDashboard: React.FC = () => {
       {/* Modern Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
+      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
         <div className="p-4 flex flex-col h-full">
           
-          {/* Header with User Profile */}
-          <div className="mb-6">
+          {/* Header with Logo */}
+            <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              {!sidebarCollapsed && (
+              {!sidebarCollapsed ? (
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-green-800 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {user?.userName?.charAt(0) || 'C'}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {user?.userName || 'Creator'}
-                    </h3>
-                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Creator Account
-                    </p>
-                  </div>
+                  <img 
+                    src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+                    alt="DraftBoard" 
+                    className="w-20 h-6"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center space-y-3 w-full">
+                  <img 
+                    src="/icons/draftboard-logo.svg" 
+                    alt="DraftBoard" 
+                    className="w-10 h-10"
+                  />
+                  <button
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDark 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-950' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    title="Expand sidebar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDark 
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {sidebarCollapsed ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  ) : (
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark 
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-950' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  title="Collapse sidebar"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  )}
-                </svg>
-              </button>
+                  </svg>
+                </button>
+              )}
             </div>
             
             {/* Search Bar */}
@@ -2214,7 +2269,7 @@ const CreatorDashboard: React.FC = () => {
                   onChange={(e) => handleSidebarSearch(e.target.value)}
                   className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border transition-colors ${
                     isDark
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                      ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
                       : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500'
                   }`}
                 />
@@ -2223,7 +2278,7 @@ const CreatorDashboard: React.FC = () => {
           </div>
 
           {/* Navigation Groups */}
-          <nav className="space-y-1 flex-1">
+          <nav className="space-y-3 flex-1">
             {filteredNavigationGroups.map((group) => {
               const isExpanded = expandedGroups.has(group.id);
               
@@ -2234,7 +2289,7 @@ const CreatorDashboard: React.FC = () => {
                       onClick={() => toggleGroup(group.id)}
                       className={`flex w-full items-center justify-between text-xs font-semibold px-3 py-2 rounded-lg transition-colors uppercase tracking-wider ${
                         isDark
-                          ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                          ? 'text-gray-400 hover:text-white hover:bg-gray-900'
                           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                       aria-expanded={isExpanded}
@@ -2262,13 +2317,13 @@ const CreatorDashboard: React.FC = () => {
                         <button
                           key={`collapsed-${item.id}`}
                           onClick={() => setActiveTab(item.id)}
-                          className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                          className={`w-full flex items-center justify-center p-4 rounded-lg transition-all duration-200 ${
                             activeTab === item.id
                               ? isDark
                                 ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                                 : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                               : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                           }`}
                           title={item.label}
@@ -2308,37 +2363,52 @@ const CreatorDashboard: React.FC = () => {
                         <button
                           key={item.id}
                           onClick={() => setActiveTab(item.id)}
-                          className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                          className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all duration-200 ${
                             activeTab === item.id
                               ? isDark
                                 ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                                 : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                               : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                           }`}
                           title={sidebarCollapsed ? item.label : ''}
                         >
                           {item.icon === 'overview' && (
-                            <img src="/icons/overview.png" alt="Overview" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+                            </svg>
                           )}
                           {item.icon === 'marketplace' && (
-                            <img src="/icons/Green_icons/Megaphone1.png" alt="Marketplace" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                            </svg>
                           )}
                           {item.icon === 'briefs' && (
-                            <img src="/icons/briefs.png" alt="Briefs" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                           )}
                           {item.icon === 'submissions' && (
-                            <img src="/icons/submissions.png" alt="Submissions" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
                           )}
                           {item.icon === 'earnings' && (
-                            <img src="/icons/payments.png" alt="Earnings" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
                           )}
                           {item.icon === 'wallet' && (
-                            <img src="/icons/wallet.png" alt="Wallet" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
                           )}
                           {item.icon === 'profile' && (
-                            <img src="/icons/profile.png" alt="Profile" className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} />
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
                           )}
                           {!sidebarCollapsed && (
                             <span className="font-medium">{item.label}</span>
@@ -2353,7 +2423,7 @@ const CreatorDashboard: React.FC = () => {
           </nav>
 
           {/* Footer */}
-          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-900">
             <div className="space-y-2">
               {accountNav.map((item) => (
                 <button
@@ -2365,9 +2435,9 @@ const CreatorDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2'} rounded-lg text-sm transition-colors ${
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-colors ${
                     isDark
-                      ? 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                      ? 'text-gray-400 hover:bg-gray-900 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                   title={sidebarCollapsed ? item.label : ''}
@@ -2388,7 +2458,7 @@ const CreatorDashboard: React.FC = () => {
               ))}
             </div>
             {/* Theme Toggle */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-4 pt-6 border-t border-gray-200 dark:border-gray-900">
               <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
                 {!sidebarCollapsed && (
                   <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -2421,9 +2491,9 @@ const CreatorDashboard: React.FC = () => {
       {/* Main Content */}
        <div className={`flex-1 overflow-auto transition-all duration-300 ${
          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-       } ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+       } ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
         {/* Desktop Header */}
-        <div className={`hidden lg:block border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} px-8 py-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`hidden lg:block border-b ${isDark ? 'border-gray-900' : 'border-gray-200'} px-8 py-4 ${isDark ? 'bg-black' : 'bg-white'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -2494,7 +2564,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Submission View Modal */}
       {showSubmissionViewModal && selectedSubmission && submissionDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+                  <div className="bg-gray-950 rounded-lg p-6 max-w-2xl w-full mx-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-white">Submission Details</h3>
             <button
@@ -2506,7 +2576,7 @@ const CreatorDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="bg-gray-700 p-4 rounded-lg">
+            <div className="bg-gray-900 p-4 rounded-lg">
               <h4 className="font-medium text-white mb-2">Brief Information</h4>
               <div className="space-y-2 text-sm text-gray-300">
                 <p><strong>Brief Title:</strong> {selectedSubmission.briefTitle}</p>
@@ -2527,7 +2597,7 @@ const CreatorDashboard: React.FC = () => {
             {submissionDetails.files && (
               <div>
                 <h4 className="font-medium text-white mb-2">Content Submission Link</h4>
-                <div className="bg-gray-700 p-3 rounded border border-gray-600">
+                <div className="bg-gray-900 p-3 rounded border border-gray-800">
                   <a 
                     href={submissionDetails.files} 
                     target="_blank" 
@@ -2543,7 +2613,7 @@ const CreatorDashboard: React.FC = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowSubmissionViewModal(false)}
-                className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
               >
                 Close
               </button>
@@ -2625,7 +2695,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Earnings Details Modal */}
       {showEarningDetails && selectedEarning && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-950 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-white">Earning Details</h3>
@@ -2664,7 +2734,7 @@ const CreatorDashboard: React.FC = () => {
 
                 {/* Detailed Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-700/30 rounded-lg p-4">
+                  <div className="bg-gray-900/30 rounded-lg p-4">
                     <h5 className="text-sm font-medium text-gray-300 mb-3">Reward Information</h5>
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -2688,7 +2758,7 @@ const CreatorDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-gray-700/30 rounded-lg p-4">
+                  <div className="bg-gray-900/30 rounded-lg p-4">
                     <h5 className="text-sm font-medium text-gray-300 mb-3">Timeline</h5>
                     <div className="space-y-2">
                       {selectedEarning.submittedAt && (
@@ -2721,7 +2791,7 @@ const CreatorDashboard: React.FC = () => {
 
                 {/* Additional Details */}
                 {(selectedEarning.briefId || selectedEarning.transactionId) && (
-                  <div className="bg-gray-700/30 rounded-lg p-4">
+                  <div className="bg-gray-900/30 rounded-lg p-4">
                     <h5 className="text-sm font-medium text-gray-300 mb-3">Reference Information</h5>
                     <div className="space-y-2">
                       {selectedEarning.briefId && (
@@ -2741,7 +2811,7 @@ const CreatorDashboard: React.FC = () => {
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-600">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-800">
                   <button
                     onClick={() => setShowEarningDetails(false)}
                     className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors duration-200"

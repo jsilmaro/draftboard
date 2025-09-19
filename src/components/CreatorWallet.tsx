@@ -212,58 +212,62 @@ const CreatorWallet: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white/5 dark:bg-gray-800/10 backdrop-blur-sm border border-white/10 dark:border-gray-700/30 rounded-lg shadow-xl p-6">
-        <h2 className="text-2xl font-bold text-gray-200 mb-6">Creator Wallet</h2>
+      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl shadow-sm p-6`}>
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Creator Wallet</h2>
 
         {/* Wallet Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
-            <h3 className="text-sm font-medium opacity-90">Available Balance</h3>
-            <p className="text-2xl font-bold">${walletData?.balance.toFixed(2) || '0.00'}</p>
+          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-blue-50 border-blue-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-blue-600'} mb-2`}>Available Balance</h3>
+            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>${walletData?.balance.toFixed(2) || '0.00'}</p>
             <button
               onClick={() => setShowWithdrawModal(true)}
               disabled={false}
-              className="mt-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                isDark 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
-              Withdraw Funds (Balance: ${walletData?.balance || '0.00'})
+              Withdraw Funds
             </button>
           </div>
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
-            <h3 className="text-sm font-medium opacity-90">Total Earnings</h3>
-            <p className="text-2xl font-bold">${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
+          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-green-50 border-green-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-green-600'} mb-2`}>Total Earnings</h3>
+            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
           </div>
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600Cannot find name 'hasContent'. text-white p-4 rounded-lg">
-            <h3 className="text-sm font-medium opacity-90">Pending Requests</h3>
-            <p className="text-2xl font-bold">{pendingWithdrawals.length}</p>
+          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-purple-50 border-purple-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-purple-600'} mb-2`}>Pending Requests</h3>
+            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{pendingWithdrawals.length}</p>
           </div>
         </div>
 
         {/* Withdrawal Requests */}
         {withdrawalRequests.length > 0 && (
-          <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Withdrawal History</h3>
+          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl p-6 shadow-sm mb-6`}>
+            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Withdrawal History</h3>
             
             <div className="space-y-3">
               {withdrawalRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-3 bg-white/5 dark:bg-gray-600/20 rounded-lg">
+                <div key={request.id} className={`flex items-center justify-between p-4 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-sm hover:shadow-md transition-all duration-200`}>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={`w-10 h-10 ${isDark ? 'bg-purple-600' : 'bg-purple-100'} rounded-xl flex items-center justify-center`}>
+                      <svg className={`w-5 h-5 ${isDark ? 'text-white' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-white font-medium">Withdrawal Request</p>
-                      <p className="text-gray-400 text-sm">
+                      <p className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>Withdrawal Request</p>
+                      <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
                         {new Date(request.requestedAt).toLocaleDateString()}
                       </p>
                       {request.reason && (
-                        <p className="text-red-400 text-sm">Reason: {request.reason}</p>
+                        <p className={`${isDark ? 'text-red-400' : 'text-red-600'} text-sm`}>Reason: {request.reason}</p>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-white">
+                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       ${request.amount.toFixed(2)}
                     </p>
                     <span className={getStatusBadge(request.status)}>

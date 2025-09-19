@@ -172,18 +172,18 @@ const Marketplace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'} ${isDark ? 'text-white' : 'text-gray-900'}`}>
       <MarketplaceNav />
       
       {/* Header */}
-      <div className="bg-background-secondary border-b border-card-border">
+      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Marketplace
               </h1>
-              <p className="text-foreground-secondary mt-2">
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-2`}>
                 Discover creative opportunities from top brands
               </p>
             </div>
@@ -283,32 +283,32 @@ const Marketplace = () => {
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="mt-4 pt-4 border-t border-card-border">
+            <div className={`mt-4 pt-4 border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Budget Range */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground-secondary mb-2">Budget Range</label>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Budget Range</label>
                   <div className="flex space-x-2">
                     <input
                       type="number"
                       placeholder="Min $"
                       value={budgetRange.min}
                       onChange={(e) => setBudgetRange({...budgetRange, min: e.target.value})}
-                      className="marketplace-input text-sm"
+                      className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
                     />
                     <input
                       type="number"
                       placeholder="Max $"
                       value={budgetRange.max}
                       onChange={(e) => setBudgetRange({...budgetRange, max: e.target.value})}
-                      className="marketplace-input text-sm"
+                      className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
                     />
                   </div>
                 </div>
 
                 {/* Deadline Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground-secondary mb-2">Deadline</label>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Deadline</label>
                   <select
                     value={deadlineFilter}
                     onChange={(e) => setDeadlineFilter(e.target.value)}
@@ -339,13 +339,13 @@ const Marketplace = () => {
                 className="product-card"
               >
                 {/* Brand Header */}
-                <div className="product-card-content border-b border-card-border">
+                <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
                   <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 ${
+                    <div className={`w-12 h-12 ${
                       isDark 
-                        ? 'bg-gradient-to-r from-green-500 to-blue-600' 
-                        : 'bg-gradient-to-r from-green-100 to-blue-100 border border-gray-200'
-                    } rounded-lg flex items-center justify-center`}>
+                        ? 'bg-gray-900 border-gray-800' 
+                        : 'bg-gray-50 border-gray-200'
+                    } border rounded-xl flex items-center justify-center`}>
                       {brief.brand.logo ? (
                         <img
                           src={brief.brand.logo}
@@ -361,18 +361,18 @@ const Marketplace = () => {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-medium text-foreground">{brief.brand.companyName}</h3>
-                      <p className="text-sm text-foreground-muted">{formatDate(brief.createdAt)}</p>
+                      <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brand.companyName}</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(brief.createdAt)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Brief Content */}
                 <div className="p-4">
-                  <h2 className="product-card-title mb-2 group-hover:text-accent-green transition-colors">
+                  <h2 className={`${isDark ? 'text-white' : 'text-gray-900'} text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors`}>
                     {brief.title}
                   </h2>
-                  <p className="text-foreground-muted text-sm mb-4 line-clamp-3">
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-4 line-clamp-3`}>
                     {brief.description}
                   </p>
 

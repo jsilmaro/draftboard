@@ -120,6 +120,7 @@ const BrandDashboard: React.FC = () => {
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBriefDetails, setShowBriefDetails] = useState(false);
+  const [showCreateBriefModal, setShowCreateBriefModal] = useState(false);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   // const [showMessaging, setShowMessaging] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -402,6 +403,72 @@ const BrandDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Marketplace Section */}
+      <div className="card">
+        <div className="card-header">
+          <div className="flex items-center justify-between">
+            <h2 className="card-title">Discover Creators</h2>
+            <button
+              onClick={() => setActiveTab('creators')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isDark 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+            >
+              View All
+            </button>
+          </div>
+        </div>
+        <div className="card-content">
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+            Find talented creators to bring your brand vision to life
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 hover:shadow-md transition-all duration-200`}>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className={`w-10 h-10 ${isDark ? 'bg-gray-800' : 'bg-white'} border rounded-lg flex items-center justify-center`}>
+                  <svg className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Content Creators</h3>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Find creators for your campaigns</p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>500+</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Available</p>
+                </div>
+              </div>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Connect with talented content creators who can bring your brand vision to life.
+              </p>
+            </div>
+            <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 hover:shadow-md transition-all duration-200`}>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className={`w-10 h-10 ${isDark ? 'bg-gray-800' : 'bg-white'} border rounded-lg flex items-center justify-center`}>
+                  <svg className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Analytics</h3>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Track campaign performance</p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Real-time</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Insights</p>
+                </div>
+              </div>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Monitor your campaign performance with detailed analytics and insights.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Submissions */}
@@ -418,13 +485,13 @@ const BrandDashboard: React.FC = () => {
                 {submissions.slice(0, 4).map((submission) => (
                   <div key={submission.id} className={`rounded-lg p-4 border ${
                     isDark 
-                      ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                      ? 'bg-gray-950 border-gray-900 hover:bg-gray-900' 
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   } transition-colors`}>
                     <div className="flex items-center space-x-3 mb-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${
                         isDark 
-                          ? 'bg-gray-700 border-gray-600' 
+                          ? 'bg-gray-900 border-gray-800' 
                           : 'bg-gray-100 border-gray-200'
                       }`}>
                         <img src="/icons/profile.png" alt="User" className="w-9 h-9" />
@@ -496,24 +563,24 @@ const BrandDashboard: React.FC = () => {
               <h3 className="card-title">Quick Actions</h3>
             </div>
             <div className="card-content space-y-3">
-              <Link
-                to="/brand/create-brief"
+              <button
+                onClick={() => setShowCreateBriefModal(true)}
                 className="btn btn-primary w-full"
               >
                 Create New Brief
-              </Link>
+              </button>
               <button
-                onClick={() => setShowWinnerModal(true)}
+                onClick={() => handleTabChange('payments')}
                 className="btn btn-secondary w-full"
               >
                 Select Winners
               </button>
-              <Link
-                to="/brand/analytics"
+              <button
+                onClick={() => handleTabChange('analytics')}
                 className="btn btn-outline w-full"
               >
                 View Analytics
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -571,15 +638,21 @@ const BrandDashboard: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+        <div className={`flex space-x-1 p-1 rounded-lg ${
+          isDark ? 'bg-gray-950' : 'bg-gray-100'
+        }`}>
           {['all', 'published', 'draft', 'archived'].map((filter) => (
             <button
               key={filter}
               onClick={() => setBriefsFilter(filter)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 briefsFilter === filter
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? isDark
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
+                  : isDark
+                    ? 'text-gray-400 hover:text-white'
+                    : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -703,7 +776,7 @@ const BrandDashboard: React.FC = () => {
 
         {/* Filter Tabs */}
         <div className={`flex space-x-1 p-1 rounded-lg ${
-          isDark ? 'bg-gray-800' : 'bg-gray-100'
+          isDark ? 'bg-gray-950' : 'bg-gray-100'
         }`}>
           {['all', 'pending', 'approved', 'rejected'].map((filter) => (
             <button
@@ -712,7 +785,7 @@ const BrandDashboard: React.FC = () => {
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 submissionsFilter === filter
                   ? isDark
-                    ? 'bg-gray-700 text-white shadow-sm'
+                    ? 'bg-gray-900 text-white shadow-sm'
                     : 'bg-white text-gray-900 shadow-sm'
                   : isDark
                     ? 'text-gray-400 hover:text-white'
@@ -728,14 +801,14 @@ const BrandDashboard: React.FC = () => {
         <div className="space-y-4">
           {filteredSubmissions.map((submission) => (
             <div key={submission.id} className={`card ${
-              isDark ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white border-gray-200 hover:bg-gray-50'
+              isDark ? 'bg-gray-900 border-gray-800 hover:bg-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'
             } transition-colors`}>
               <div className="card-content">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${
                       isDark 
-                        ? 'bg-gray-700 border-gray-600' 
+                        ? 'bg-gray-900 border-gray-800' 
                         : 'bg-gray-100 border-gray-200'
                     }`}>
                       <img src="/icons/profile.png" alt="User" className="w-10 h-10" />
@@ -986,10 +1059,10 @@ const BrandDashboard: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
+      isDark ? 'bg-black' : 'bg-gray-50'
     }`}>
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl border-b border-white/20 dark:border-gray-600/30 px-4 py-3">
+      <div className="lg:hidden bg-white/10 dark:bg-gray-950/20 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/30 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Logo />
@@ -1023,46 +1096,57 @@ const BrandDashboard: React.FC = () => {
       {/* Modern Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
+      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
         <div className="p-4 flex flex-col h-full">
           
-          {/* Header with User Profile */}
-          <div className="mb-6">
+          {/* Header with Logo */}
+            <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              {!sidebarCollapsed && (
+              {!sidebarCollapsed ? (
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-green-800 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {user?.companyName?.charAt(0) || 'B'}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {user?.companyName || 'Brand'}
-                    </h3>
-                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Brand Account
-                    </p>
-                  </div>
+                  <img 
+                    src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+                    alt="DraftBoard" 
+                    className="w-20 h-6"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center space-y-3 w-full">
+                  <img 
+                    src="/icons/draftboard-logo.svg" 
+                    alt="DraftBoard" 
+                    className="w-10 h-10"
+                  />
+                  <button
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDark 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-950' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    title="Expand sidebar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDark 
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {sidebarCollapsed ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  ) : (
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark 
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-950' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  title="Collapse sidebar"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  )}
-                </svg>
-              </button>
+                  </svg>
+                </button>
+              )}
             </div>
             
             {/* Search Bar */}
@@ -1080,7 +1164,7 @@ const BrandDashboard: React.FC = () => {
                   onChange={(e) => handleSidebarSearch(e.target.value)}
                   className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border transition-colors ${
                     isDark
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                      ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
                       : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500'
                   }`}
                 />
@@ -1089,7 +1173,7 @@ const BrandDashboard: React.FC = () => {
           </div>
 
           {/* Navigation Groups */}
-          <nav className="space-y-1 flex-1">
+          <nav className="space-y-3 flex-1">
             {filteredNavigationGroups.map((group) => {
               const isExpanded = expandedGroups.has(group.id);
               
@@ -1100,7 +1184,7 @@ const BrandDashboard: React.FC = () => {
                     onClick={() => toggleGroup(group.id)}
                       className={`flex w-full items-center justify-between text-xs font-semibold px-3 py-2 rounded-lg transition-colors uppercase tracking-wider ${
                       isDark
-                          ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                          ? 'text-gray-400 hover:text-white hover:bg-gray-950'
                           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                     aria-expanded={isExpanded}
@@ -1108,7 +1192,7 @@ const BrandDashboard: React.FC = () => {
                   >
                       {group.title}
                       <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${
+                        className={`w-5 h-5 transition-transform duration-200 ${
                           isExpanded ? 'rotate-90' : 'rotate-0'
                         }`}
                         viewBox="0 0 24 24"
@@ -1134,65 +1218,65 @@ const BrandDashboard: React.FC = () => {
                               handleTabChange(item.id);
                             }
                           }}
-                          className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                          className={`w-full flex items-center justify-center p-4 rounded-lg transition-all duration-200 ${
                             activeTab === item.id
                               ? isDark
                                 ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                                 : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                               : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                           }`}
                           title={item.label}
                         >
                           {item.icon === 'overview' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                             </svg>
                           )}
                           {item.icon === 'wallet' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
                           )}
                           {item.icon === 'messaging' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                           )}
                           {item.icon === 'create' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
                           )}
                           {item.icon === 'briefs' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                           )}
                           {item.icon === 'submissions' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                           )}
                           {item.icon === 'creators' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                             </svg>
                           )}
                           {item.icon === 'statistics' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                           )}
                           {item.icon === 'payments' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                           )}
                           {item.icon === 'rewards-payments' && (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     )}
@@ -1216,65 +1300,65 @@ const BrandDashboard: React.FC = () => {
                               handleTabChange(item.id);
                               }
                             }}
-                          className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                          className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all duration-200 ${
                               activeTab === item.id
                                 ? isDark
                                 ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                                 : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
                                 : isDark
-                                ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                           }`}
                             title={sidebarCollapsed ? item.label : ''}
                           >
                           {item.icon === 'overview' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                             </svg>
                           )}
                           {item.icon === 'wallet' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
                           )}
                           {item.icon === 'messaging' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                           )}
                           {item.icon === 'create' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
                           )}
                           {item.icon === 'briefs' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                           )}
                           {item.icon === 'submissions' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                           )}
                           {item.icon === 'creators' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                             </svg>
                           )}
                           {item.icon === 'statistics' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                           )}
                           {item.icon === 'payments' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                           )}
                           {item.icon === 'rewards-payments' && (
-                            <svg className={`${sidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-4 h-4 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                             </svg>
                           )}
@@ -1291,31 +1375,31 @@ const BrandDashboard: React.FC = () => {
           </nav>
 
           {/* Footer */}
-          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
             <div className="space-y-1">
               {accountNav.map((item) => (
                 <button
                   key={item.id}
                   onClick={item.action}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2'} rounded-lg text-sm transition-colors ${
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-colors ${
                     isDark
-                      ? 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                      ? 'text-gray-400 hover:bg-gray-900 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                   title={sidebarCollapsed ? item.label : ''}
                 >
                   <span className={sidebarCollapsed ? '' : 'mr-3'}>
                     {item.id === 'settings' ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     ) : item.icon === 'logout' ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     )}
@@ -1359,7 +1443,7 @@ const BrandDashboard: React.FC = () => {
       {/* Main Content */}
       <div className={`flex-1 overflow-auto transition-all duration-300 ${
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      } ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      } ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
         {/* Desktop Header */}
         <div className="hidden lg:block border-b border-gray-200 dark:border-gray-700 px-8 py-4">
           <div className="flex items-center justify-between">
@@ -1396,7 +1480,7 @@ const BrandDashboard: React.FC = () => {
       {selectedSubmission && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`max-w-2xl w-full ${
-            isDark ? 'bg-gray-800' : 'bg-white'
+            isDark ? 'bg-gray-950' : 'bg-white'
           } rounded-lg shadow-xl`}>
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1425,41 +1509,41 @@ const BrandDashboard: React.FC = () => {
                 
                 {selectedSubmission.content && (
                   <div>
-                    <h4 className={`font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Content:</h4>
-                    <div className={`p-4 rounded-lg border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Creator&apos;s Submission:</h4>
+                    <div className={`p-4 rounded-lg border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
                       {(() => {
-                        try {
-                          // Try to parse as JSON first
-                          const parsedContent = JSON.parse(selectedSubmission.content);
-                          if (parsedContent.originalContent) {
-                            return (
-                              <div className="space-y-3">
-                                <div>
-                                  <h5 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Submission Content:</h5>
-                                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{parsedContent.originalContent}</p>
-                                </div>
-                                {parsedContent.briefTitle && (
-                                  <div>
-                                    <h5 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Brief:</h5>
-                                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{parsedContent.briefTitle}</p>
-                                  </div>
-                                )}
-                                {parsedContent.approvedAt && (
-                                  <div>
-                                    <h5 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Approved At:</h5>
-                                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                      {new Date(parsedContent.approvedAt).toLocaleString()}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          return <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{JSON.stringify(parsedContent, null, 2)}</p>;
-                        } catch {
-                          // If not JSON, display as plain text
-                          return <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{selectedSubmission.content}</p>;
+                        const content = selectedSubmission.content;
+                        
+                        // Check if it's a direct link
+                        if (content.startsWith('http://') || content.startsWith('https://')) {
+                          return (
+                            <div>
+                              <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Creator submitted the following link:
+                              </p>
+                              <a 
+                                href={content} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`text-blue-500 hover:text-blue-600 underline break-all ${
+                                  isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                                }`}
+                              >
+                                {content}
+                              </a>
+                            </div>
+                          );
                         }
+                        
+                        // If not a link, display as plain text
+                        return (
+                          <div>
+                            <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Creator submitted the following content:
+                            </p>
+                            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
+                          </div>
+                        );
                       })()}
                     </div>
                   </div>
@@ -1558,6 +1642,38 @@ const BrandDashboard: React.FC = () => {
             setSelectedBrief(null);
           }}
         />
+      )}
+
+      {/* Create Brief Side Modal */}
+      {showCreateBriefModal && (
+        <div className={`fixed inset-0 z-50 flex ${
+          isDark ? 'bg-black bg-opacity-50' : 'bg-gray-900 bg-opacity-50'
+        }`}>
+          <div className="ml-auto w-full max-w-4xl h-full bg-white dark:bg-black shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className={`text-xl font-semibold ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                Create New Brief
+              </h2>
+              <button
+                onClick={() => setShowCreateBriefModal(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark 
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-950'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="h-full overflow-y-auto">
+              <CreateBrief />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

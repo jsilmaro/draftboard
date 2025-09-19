@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface BrandBriefCardProps {
   brief: {
@@ -44,6 +45,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   onViewSubmissionsClick,
   onDeleteClick
 }) => {
+  const { isDark } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
 
   // Calculate submissions count
@@ -86,7 +88,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
       case 'completed':
         return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400`;
       default:
-        return `${baseClasses} bg-gray-900/20 text-gray-400`;
+        return `${baseClasses} bg-black/20 text-gray-400`;
     }
   };
 
@@ -96,8 +98,14 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
   return (
     <div
-      className={`bg-gray-900/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-500/80 overflow-hidden transition-all duration-300 group ${
-        isHovered ? 'shadow-2xl transform -translate-y-1 bg-gray-800/95 border-gray-400/90 shadow-green-500/20' : 'hover:shadow-xl hover:bg-gray-850/95 hover:border-gray-400/70'
+      className={`backdrop-blur-md rounded-xl sm:rounded-2xl shadow-2xl border-2 overflow-hidden transition-all duration-300 group ${
+        isDark 
+          ? `bg-black/95 border-gray-700/80 ${
+              isHovered ? 'shadow-2xl transform -translate-y-1 bg-gray-950/95 border-gray-600/90 shadow-green-500/20' : 'hover:shadow-xl hover:bg-gray-950/95 hover:border-gray-600/70'
+            }`
+          : `bg-white border-gray-200 ${
+              isHovered ? 'shadow-2xl transform -translate-y-1 bg-gray-50 border-gray-300 shadow-blue-500/20' : 'hover:shadow-xl hover:bg-gray-50 hover:border-gray-300'
+            }`
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -120,7 +128,9 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white text-xs sm:text-sm truncate">
+              <h3 className={`font-semibold text-xs sm:text-sm truncate ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 {brief.brand?.companyName || 'Your Brand'}
               </h3>
             </div>
@@ -134,11 +144,15 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Brief Title and Description */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-base sm:text-lg font-bold text-white mb-2 line-clamp-2">
+          <h2 className={`text-base sm:text-lg font-bold mb-2 line-clamp-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             {brief.title}
           </h2>
           {brief.description && (
-            <p className="text-xs sm:text-sm text-gray-300 line-clamp-2">
+            <p className={`text-xs sm:text-sm line-clamp-2 ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               {brief.description}
             </p>
           )}
@@ -146,15 +160,27 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-          <div className="bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
-            <div className="text-xs text-gray-400 mb-1">Target</div>
-            <div className="text-sm sm:text-lg font-bold text-white">
+          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 ${
+            isDark ? 'bg-gray-900/50' : 'bg-gray-100'
+          }`}>
+            <div className={`text-xs mb-1 ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>Target</div>
+            <div className={`text-sm sm:text-lg font-bold ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               {brief.amountOfWinners || 1}
             </div>
           </div>
-          <div className="bg-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
-            <div className="text-xs text-gray-400 mb-1">Applied</div>
-            <div className="text-sm sm:text-lg font-bold text-white">
+          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 ${
+            isDark ? 'bg-gray-900/50' : 'bg-gray-100'
+          }`}>
+            <div className={`text-xs mb-1 ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>Applied</div>
+            <div className={`text-sm sm:text-lg font-bold ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               {submissionsCount}
             </div>
           </div>
@@ -164,11 +190,15 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
           {/* Submissions Progress */}
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+            <div className={`flex items-center justify-between text-xs mb-1 ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               <span>Submissions Progress</span>
               <span>{submissionsProgress.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-gray-600 rounded-full h-2">
+            <div className={`w-full rounded-full h-2 ${
+              isDark ? 'bg-gray-600' : 'bg-gray-200'
+            }`}>
               <div 
                 className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${submissionsProgress}%` }}
@@ -178,11 +208,15 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
           {/* Rewards Progress */}
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+            <div className={`flex items-center justify-between text-xs mb-1 ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               <span>Rewards Progress</span>
               <span>{rewardsProgress.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-gray-600 rounded-full h-2">
+            <div className={`w-full rounded-full h-2 ${
+              isDark ? 'bg-gray-600' : 'bg-gray-200'
+            }`}>
               <div 
                 className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${rewardsProgress}%` }}
@@ -193,9 +227,15 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
         {/* Total Value */}
         {totalRewardValue > 0 && (
-          <div className="bg-green-900/20 rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4">
-            <div className="text-xs text-green-400 mb-1">Total Value</div>
-            <div className="text-sm sm:text-lg font-bold text-green-300">
+          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4 ${
+            isDark ? 'bg-green-900/20' : 'bg-green-50'
+          }`}>
+            <div className={`text-xs mb-1 ${
+              isDark ? 'text-green-400' : 'text-green-700'
+            }`}>Total Value</div>
+            <div className={`text-sm sm:text-lg font-bold ${
+              isDark ? 'text-green-300' : 'text-green-800'
+            }`}>
               ${totalRewardValue.toLocaleString()}
             </div>
           </div>
@@ -205,7 +245,11 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={() => onViewClick?.(brief)}
-            className="px-3 py-2 bg-gray-700 text-gray-300 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-600 transition-colors"
+            className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl transition-colors ${
+              isDark 
+                ? 'bg-gray-900 text-gray-300 hover:bg-gray-800'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             View
           </button>

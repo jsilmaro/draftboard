@@ -386,7 +386,7 @@ const CreateBrief: React.FC = () => {
                     ? 'border-blue-500 bg-blue-900/20'
                     : 'border-blue-500 bg-blue-50'
                   : isDark
-                    ? 'border-gray-700/50 bg-gray-900/20 backdrop-blur-sm hover:border-blue-600/50'
+                    ? 'border-gray-900/50 bg-black/20 backdrop-blur-sm hover:border-blue-600/50'
                     : 'border-gray-300 bg-white hover:border-blue-300/50'
               }`}
               onClick={() => handleTemplateSelect('scratch')}
@@ -416,7 +416,7 @@ const CreateBrief: React.FC = () => {
                       ? 'border-blue-500 bg-blue-900/20'
                       : 'border-blue-500 bg-blue-50'
                     : isDark
-                      ? 'border-gray-700/50 bg-gray-900/20 backdrop-blur-sm hover:border-blue-600/50'
+                      ? 'border-gray-900/50 bg-black/20 backdrop-blur-sm hover:border-blue-600/50'
                       : 'border-gray-300 bg-white hover:border-blue-300/50'
                 }`}
                 onClick={() => handleTemplateSelect(template.id)}
@@ -462,7 +462,7 @@ const CreateBrief: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         <div className={`backdrop-blur-xl rounded-lg shadow-sm border p-8 ${
           isDark 
-            ? 'bg-gray-900/20 border-white/20'
+            ? 'bg-black/20 border-white/20'
             : 'bg-white border-gray-200'
         }`}>
           <div className="flex justify-between items-center mb-6">
@@ -505,7 +505,7 @@ const CreateBrief: React.FC = () => {
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       isDark 
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                        ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="Enter brief title"
@@ -525,7 +525,7 @@ const CreateBrief: React.FC = () => {
                     onChange={(e) => handleInputChange('deadline', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       isDark 
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                        ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
                     required
@@ -597,7 +597,7 @@ const CreateBrief: React.FC = () => {
                     onChange={(e) => handleInputChange('reward', parseFloat(e.target.value))}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       isDark 
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                        ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="Total reward amount"
@@ -617,7 +617,7 @@ const CreateBrief: React.FC = () => {
                     onChange={(e) => handleAmountOfWinnersChange(parseInt(e.target.value))}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       isDark 
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                        ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="How many creators can win?"
@@ -638,7 +638,7 @@ const CreateBrief: React.FC = () => {
                   {formData.rewardTiers.map((tier, _index) => (
                     <div key={tier.position} className={`border rounded-lg p-4 ${
                       isDark 
-                        ? 'border-gray-700 bg-gray-800/50'
+                        ? 'border-gray-900 bg-gray-950/50'
                         : 'border-gray-300 bg-gray-50'
                     }`}>
                       <h5 className={`font-medium mb-3 ${
@@ -660,7 +660,7 @@ const CreateBrief: React.FC = () => {
                             onChange={(e) => handleRewardTierChange(tier.position, 'cashAmount', parseFloat(e.target.value) || 0)}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               isDark 
-                                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                             }`}
                           />
@@ -678,7 +678,7 @@ const CreateBrief: React.FC = () => {
                             onChange={(e) => handleRewardTierChange(tier.position, 'creditAmount', parseFloat(e.target.value) || 0)}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               isDark 
-                                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                             }`}
                           />
@@ -695,7 +695,7 @@ const CreateBrief: React.FC = () => {
                             onChange={(e) => handleRewardTierChange(tier.position, 'prizeDescription', e.target.value)}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               isDark 
-                                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                             }`}
                             placeholder="e.g., Product, Gift Card, etc."
@@ -743,7 +743,7 @@ const CreateBrief: React.FC = () => {
                             onChange={(e) => handleAdditionalFieldChange(key, [e.target.value])}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               isDark 
-                                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                             }`}
                           >
@@ -771,7 +771,7 @@ const CreateBrief: React.FC = () => {
                           onChange={(e) => handleAdditionalFieldChange(key, e.target.value)}
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                             isDark 
-                              ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                              ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                           placeholder={`Enter ${fieldName.toLowerCase()}`}
@@ -813,7 +813,7 @@ const CreateBrief: React.FC = () => {
                 onClick={() => setCurrentStep(1)}
                 className={`px-6 py-2 border rounded-md transition-colors ${
                   isDark 
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                    ? 'border-gray-800 text-gray-300 hover:bg-gray-900'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -837,7 +837,7 @@ const CreateBrief: React.FC = () => {
         }`}>
           <div className={`backdrop-blur-xl rounded-lg p-6 max-w-md w-full mx-4 border ${
             isDark 
-              ? 'bg-gray-900/20 border-white/20'
+              ? 'bg-black/20 border-white/20'
               : 'bg-white border-gray-200'
           }`}>
             <h3 className={`text-lg font-semibold mb-4 ${
