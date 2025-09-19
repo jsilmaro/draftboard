@@ -36,7 +36,12 @@ interface FormData {
   additionalFields: Record<string, string | string[]>;
 }
 
-const CreateBrief: React.FC = () => {
+interface CreateBriefProps {
+  isSideModal?: boolean;
+  onClose?: () => void;
+}
+
+const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDark } = useTheme();
@@ -349,20 +354,22 @@ const CreateBrief: React.FC = () => {
         isDark ? 'bg-black' : 'bg-gray-50'
       }`}>
         <div className="max-w-4xl mx-auto px-4">
-          {/* Back Button */}
-          <div className="mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className={`flex items-center transition-colors ${
-                isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </button>
-          </div>
+          {/* Back Button - Only show when not in side modal */}
+          {!isSideModal && (
+            <div className="mb-6">
+              <button
+                onClick={() => navigate(-1)}
+                className={`flex items-center transition-colors ${
+                  isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+            </div>
+          )}
           
           <div className="text-center mb-8">
             <h1 className={`text-3xl font-bold mb-4 ${
@@ -471,16 +478,18 @@ const CreateBrief: React.FC = () => {
             }`}>
               Create Brief
             </h1>
-            <button
-              onClick={() => setCurrentStep(1)}
-              className={`${
-                isDark 
-                  ? 'text-gray-400 hover:text-gray-200'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              ← Back to Templates
-            </button>
+            {!isSideModal && (
+              <button
+                onClick={() => setCurrentStep(1)}
+                className={`${
+                  isDark 
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                ← Back to Templates
+              </button>
+            )}
           </div>
 
           <form key={formKey} onSubmit={handleSubmit} className="space-y-6">
@@ -870,7 +879,12 @@ const CreateBrief: React.FC = () => {
             </div>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setShowShareModal(false)}
+                onClick={() => {
+                  setShowShareModal(false);
+                  if (isSideModal && onClose) {
+                    onClose();
+                  }
+                }}
                 className={`px-4 py-2 transition-colors ${
                   isDark 
                     ? 'text-gray-300 hover:text-gray-100'
@@ -880,10 +894,16 @@ const CreateBrief: React.FC = () => {
                 Close
               </button>
               <button
-                onClick={() => navigate('/brand/dashboard')}
+                onClick={() => {
+                  if (isSideModal && onClose) {
+                    onClose();
+                  } else {
+                    navigate('/brand/dashboard');
+                  }
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                Go to Dashboard
+                {isSideModal ? 'Done' : 'Go to Dashboard'}
               </button>
             </div>
           </div>

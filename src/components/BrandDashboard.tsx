@@ -121,6 +121,7 @@ const BrandDashboard: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showBriefDetails, setShowBriefDetails] = useState(false);
   const [showCreateBriefModal, setShowCreateBriefModal] = useState(false);
+  const [previousTab, setPreviousTab] = useState<string>('overview');
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   // const [showMessaging, setShowMessaging] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -156,6 +157,10 @@ const BrandDashboard: React.FC = () => {
   const handleTabChange = (tab: string) => {
     if (tab !== 'submissions') {
       setSelectedBriefForSubmissions(null);
+    }
+    // Store the current tab as previous tab before switching
+    if (tab !== 'create-brief') {
+      setPreviousTab(activeTab);
     }
     setActiveTab(tab);
   };
@@ -997,16 +1002,31 @@ const BrandDashboard: React.FC = () => {
     );
   };
 
-  const renderCreateBrief = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className={`text-2xl font-bold ${
-          isDark ? 'text-white' : 'text-gray-900'
-        }`}>Create Brief</h2>
+  const renderCreateBrief = () => {
+    // Open the side modal when this tab is active
+    if (!showCreateBriefModal) {
+      setShowCreateBriefModal(true);
+    }
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className={`text-2xl font-bold ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>Create Brief</h2>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">📝</div>
+          <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Create Brief Panel
+          </h3>
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+            The Create Brief panel should be opening on the side...
+          </p>
+        </div>
       </div>
-      <CreateBrief />
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1657,7 +1677,10 @@ const BrandDashboard: React.FC = () => {
                 Create New Brief
               </h2>
               <button
-                onClick={() => setShowCreateBriefModal(false)}
+                onClick={() => {
+                  setShowCreateBriefModal(false);
+                  setActiveTab(previousTab);
+                }}
                 className={`p-2 rounded-lg transition-colors ${
                   isDark 
                     ? 'text-gray-400 hover:text-white hover:bg-gray-950'
@@ -1670,7 +1693,10 @@ const BrandDashboard: React.FC = () => {
               </button>
             </div>
             <div className="h-full overflow-y-auto">
-              <CreateBrief />
+              <CreateBrief isSideModal={true} onClose={() => {
+                setShowCreateBriefModal(false);
+                setActiveTab(previousTab);
+              }} />
             </div>
           </div>
         </div>
