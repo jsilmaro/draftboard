@@ -45,15 +45,11 @@ interface Conversation {
 }
 
 interface MessagingSystemProps {
-  isOpen: boolean;
-  onClose: () => void;
   initialConversationId?: string;
   embedded?: boolean;
 }
 
 const MessagingSystem: React.FC<MessagingSystemProps> = ({ 
-  isOpen, 
-  onClose, 
   initialConversationId,
   embedded = false
 }) => {
@@ -108,10 +104,8 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
   }, [markMessagesAsRead]);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchConversations();
-    }
-  }, [isOpen]);
+    fetchConversations();
+  }, []);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -289,32 +283,28 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
     return conversation.participant1.id === user?.id ? conversation.participant2 : conversation.participant1;
   };
 
-  if (!isOpen) return null;
-
   const containerClass = embedded 
     ? "w-full h-full flex" 
-    : "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+    : "w-full h-full flex";
   
   const contentClass = embedded
-    ? "bg-gray-900 w-full h-full flex"
-    : "bg-gray-900 rounded-lg shadow-2xl w-full max-w-6xl h-[80vh] flex";
+    ? `${isDark ? 'bg-gray-900' : 'bg-white'} w-full h-full flex`
+    : `${isDark ? 'bg-gray-900' : 'bg-white'} w-full h-full flex`;
 
   return (
     <div className={containerClass}>
       <div className={contentClass}>
         {/* Conversations Sidebar */}
-        <div className="w-1/3 border-r border-gray-700 flex flex-col">
-          <div className="p-4 border-b border-gray-700">
+        <div className={`w-1/3 border-r flex flex-col ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        }`}>
+          <div className={`p-4 border-b ${
+            isDark ? 'border-gray-700' : 'border-gray-200'
+          }`}>
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-xl font-bold text-white">Messages</h2>
-              {!embedded && (
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              )}
+              <h2 className={`text-xl font-bold ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Messages</h2>
             </div>
             <button
               onClick={() => {
@@ -334,8 +324,10 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                 <div
                   key={conversation.id}
                   onClick={() => setSelectedConversation(conversation)}
-                  className={`p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-800 ${
-                    selectedConversation?.id === conversation.id ? 'bg-gray-800' : ''
+                  className={`p-4 border-b cursor-pointer ${
+                    isDark 
+                      ? `border-gray-700 hover:bg-gray-800 ${selectedConversation?.id === conversation.id ? 'bg-gray-800' : ''}`
+                      : `border-gray-200 hover:bg-gray-50 ${selectedConversation?.id === conversation.id ? 'bg-gray-50' : ''}`
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -344,7 +336,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <p className="text-white font-medium truncate">
+                        <p className={`font-medium truncate ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}>
                           {otherParticipant.name}
                         </p>
                         {conversation.unreadCount > 0 && (
@@ -353,7 +347,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-400 text-sm truncate">
+                      <p className={`text-sm truncate ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                         {conversation.briefTitle && (
                           <span className="text-blue-400">📋 {conversation.briefTitle}</span>
                         )}
@@ -381,16 +377,22 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="p-4 border-b border-gray-700">
+              <div className={`p-4 border-b ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {getOtherParticipant(selectedConversation).name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-white font-medium">
+                    <h3 className={`font-medium ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {getOtherParticipant(selectedConversation).name}
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className={`text-sm ${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       {getOtherParticipant(selectedConversation).type === 'brand' ? '🏢 Brand' : '👤 Creator'}
                     </p>
                   </div>
@@ -401,7 +403,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-full">
-                    <div className="text-gray-400">Loading messages...</div>
+                    <div className={`${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Loading messages...</div>
                   </div>
                 ) : (
                   messages.map((message) => (
@@ -413,7 +417,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           message.senderId === user?.id
                             ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white'
-                            : 'bg-gray-700 text-white'
+                            : isDark 
+                              ? 'bg-gray-700 text-white'
+                              : 'bg-gray-200 text-gray-900'
                         }`}
                       >
                         {message.type === 'file' ? (
@@ -450,7 +456,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
               </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t border-gray-700">
+              <div className={`p-4 border-t ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}>
                 <div className="flex space-x-2">
                   <input
                     type="file"
@@ -461,7 +469,11 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    className={`px-3 py-2 rounded-lg transition-colors ${
+                      isDark 
+                        ? 'bg-gray-700 text-white hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                     title="Attach file"
                   >
                     📎
@@ -472,7 +484,11 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                     placeholder="Type a message..."
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={`flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
                   />
                   <button
                     onClick={sendMessage}
@@ -486,7 +502,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-gray-400">
+              <div className={`text-center ${
+                isDark ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 <div className="text-4xl mb-4">💬</div>
                 <p>Select a conversation to start messaging</p>
               </div>
@@ -497,11 +515,17 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
 
       {/* Start Chat Modal */}
       {showStartChat && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100]">
-          <div className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-md mx-4">
+        <div className={`fixed inset-0 flex items-center justify-center z-[100] ${
+          isDark ? 'bg-black bg-opacity-75' : 'bg-gray-900 bg-opacity-50'
+        }`}>
+          <div className={`rounded-lg shadow-2xl w-full max-w-md mx-4 ${
+            isDark ? 'bg-gray-900' : 'bg-white'
+          }`}>
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white">Start New Chat</h3>
+                <h3 className={`text-xl font-bold ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>Start New Chat</h3>
                 <button
                   onClick={() => {
                     setShowStartChat(false);
@@ -509,7 +533,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                     setInitialMessage('');
                     setSearchQuery('');
                   }}
-                  className="text-gray-400 hover:text-white"
+                  className={`${
+                    isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   ✕
                 </button>
@@ -517,7 +543,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
 
               {/* Search Users */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Search Users
                 </label>
                 <input
@@ -525,7 +553,11 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name or email..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={`w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
                 />
               </div>
 
@@ -544,7 +576,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
                         selectedUser?.id === availableUser.id 
                           ? 'bg-green-600/20 border border-green-500' 
-                          : 'bg-gray-800 hover:bg-gray-700'
+                          : isDark 
+                            ? 'bg-gray-800 hover:bg-gray-700'
+                            : 'bg-gray-50 hover:bg-gray-100'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
@@ -552,8 +586,12 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                           {availableUser.fullName?.charAt(0).toUpperCase() || availableUser.email?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-white font-medium">{availableUser.fullName || 'Unknown'}</p>
-                          <p className="text-gray-400 text-sm">{availableUser.email}</p>
+                          <p className={`font-medium ${
+                            isDark ? 'text-white' : 'text-gray-900'
+                          }`}>{availableUser.fullName || 'Unknown'}</p>
+                          <p className={`text-sm ${
+                            isDark ? 'text-gray-400' : 'text-gray-600'
+                          }`}>{availableUser.email}</p>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             availableUser.type === 'brand' 
                               ? 'bg-blue-900/20 text-blue-400' 
@@ -569,7 +607,9 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
 
               {/* Initial Message */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Initial Message
                 </label>
                 <textarea
@@ -577,7 +617,11 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                   onChange={(e) => setInitialMessage(e.target.value)}
                   placeholder="Type your first message..."
                   rows={3}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  className={`w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
                 />
               </div>
 
@@ -591,7 +635,11 @@ const MessagingSystem: React.FC<MessagingSystemProps> = ({
                     setInitialMessage('');
                     setSearchQuery('');
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+                  className={`flex-1 px-4 py-2 border rounded-lg transition-colors ${
+                    isDark 
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-800'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   Cancel
                 </button>

@@ -974,7 +974,7 @@ const BrandDashboard: React.FC = () => {
           </Suspense>
         );
       case 'messaging':
-        return <MessagingSystem isOpen={true} onClose={() => handleTabChange('overview')} />;
+        return <MessagingSystem />;
       default:
         return renderOverview();
     }
