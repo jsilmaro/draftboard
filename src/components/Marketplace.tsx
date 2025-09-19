@@ -218,7 +218,7 @@ const Marketplace = () => {
 
       {/* Filters and Search */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="marketplace-card p-6 mb-8">
+        <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 mb-8 shadow-sm`}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
@@ -227,7 +227,7 @@ const Marketplace = () => {
                 placeholder="Search briefs, brands, or keywords..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="marketplace-search w-full"
+                className={`${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'} border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-green-500`}
               />
             </div>
 
@@ -236,7 +236,7 @@ const Marketplace = () => {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="marketplace-input"
+                className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500`}
               >
                 <option value="all">All Templates</option>
                 <option value="creative">Social Media Campaign</option>
@@ -256,7 +256,7 @@ const Marketplace = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="marketplace-input"
+                className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500`}
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -271,12 +271,12 @@ const Marketplace = () => {
           <div className="mt-4 flex justify-between items-center">
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="text-accent-green hover:text-accent-green/80 text-sm font-medium flex items-center"
+              className={`${isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'} text-sm font-medium flex items-center transition-colors`}
             >
               {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
               <span className="ml-1">{showAdvancedFilters ? '▲' : '▼'}</span>
             </button>
-            <span className="text-foreground-muted text-sm">
+            <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
               {filteredBriefs.length} briefs found
             </span>
           </div>
@@ -385,21 +385,21 @@ const Marketplace = () => {
                           : formatCurrency(brief.reward)
                         }
                       </div>
-                      <div className="text-xs text-foreground-muted">
+                      <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
                       </div>
                       {brief.winnerRewards && brief.winnerRewards.length > 0 && (
-                        <div className="text-xs text-accent-blue">
+                        <div className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                           Calculated amounts
                         </div>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-foreground-muted">
+                      <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {brief.submissions.length} submissions
                       </div>
                       {brief.amountOfWinners > 1 && (
-                        <div className="text-xs text-accent-blue">
+                        <div className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                           Tiered rewards
                         </div>
                       )}
@@ -409,7 +409,7 @@ const Marketplace = () => {
                   {/* Deadline */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground-muted">Deadline</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</span>
                       <span className={`text-sm font-medium ${
                         isExpired 
                           ? (isDark ? 'text-red-400' : 'text-red-600')
@@ -437,10 +437,9 @@ const Marketplace = () => {
                   {/* Brief Type Badge */}
                   <div className="mb-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getBriefType(brief) === 'creative' ? 'badge-light' :
-                      getBriefType(brief) === 'technical' ? 'badge-light' :
-                      getBriefType(brief) === 'business' ? 'badge-light' :
-                      'badge-light'
+                      isDark 
+                        ? 'bg-gray-800 text-gray-300 border border-gray-700' 
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
                     }`}>
                       {getBriefType(brief).charAt(0).toUpperCase() + getBriefType(brief).slice(1)}
                     </span>
@@ -449,7 +448,11 @@ const Marketplace = () => {
                   {/* Action Button */}
                   <Link
                     to={`/brief/${brief.id}`}
-                    className="marketplace-button w-full text-center"
+                    className={`w-full text-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isDark 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
                   >
                     View Details
                   </Link>
@@ -462,7 +465,7 @@ const Marketplace = () => {
         {/* Empty State */}
         {filteredBriefs.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-foreground-muted text-lg mb-4">
+            <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-lg mb-4`}>
               No briefs found matching your criteria
             </div>
             <button
@@ -471,7 +474,7 @@ const Marketplace = () => {
                 setFilterType('all');
                 setSortBy('newest');
               }}
-              className="text-accent-green hover:text-accent-green/80 transition-colors"
+              className={`${isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'} transition-colors`}
             >
               Clear filters
             </button>
