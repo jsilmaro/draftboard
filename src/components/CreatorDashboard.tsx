@@ -1310,54 +1310,69 @@ const CreatorDashboard: React.FC = () => {
   const renderSubmissions = () => (
     <div className="space-y-6">
       <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>My Submissions</h2>
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th className="table-header-cell">Brief</th>
-                <th className="table-header-cell">Amount</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell">Submitted</th>
-                <th className="table-header-cell">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mySubmissions.map((submission) => (
-                <tr key={submission.id}>
-                  <td className="table-cell">
-                    <div className="flex items-center">
-                      <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" className="mr-3" />
-                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.briefTitle}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell">${submission.amount}</td>
-                  <td className="table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
-                      submission.status === 'rejected' ? 'bg-red-50 text-red-600 border border-red-200' :
-                      'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                    }`}>
-                      {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="table-cell">
-                    {new Date(submission.submittedAt).toLocaleDateString()}
-                  </td>
-                  <td className="table-cell">
+      
+      {/* Submissions List */}
+      <div className="space-y-4">
+        {mySubmissions.map((submission) => (
+          <div key={submission.id} className={`card ${
+            isDark ? 'bg-gray-900 border-gray-800 hover:bg-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'
+          } transition-colors`}>
+            <div className="card-content">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${
+                    isDark 
+                      ? 'bg-gray-900 border-gray-800' 
+                      : 'bg-gray-100 border-gray-200'
+                  }`}>
+                    <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" />
+                  </div>
+                  <div>
+                    <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.briefTitle}</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Submitted by you</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {new Date(submission.submittedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${submission.amount}</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Reward</p>
+                  </div>
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                    submission.status === 'approved' 
+                      ? isDark 
+                        ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
+                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      : submission.status === 'rejected' 
+                      ? isDark 
+                        ? 'bg-red-900/30 text-red-400 border border-red-700' 
+                        : 'bg-red-50 text-red-600 border border-red-200'
+                      : isDark 
+                        ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
+                        : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                  }`}>
+                    {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                  </span>
+                  <div className="flex space-x-2">
                     <button 
                       onClick={() => handleViewSubmission(submission)}
-                      className="text-green-600 hover:text-green-800 text-sm font-medium mr-3"
+                      className="btn btn-outline"
                     >
                       View
                     </button>
                     <button 
                       onClick={() => handleDeleteSubmission(submission)}
                       disabled={submission.status === 'approved' || submission.status === 'rejected'}
-                      className={`text-sm font-medium ${
+                      className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                         submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-red-600 hover:text-red-800'
+                          ? isDark 
+                            ? 'text-gray-500 cursor-not-allowed bg-gray-800'
+                            : 'text-gray-400 cursor-not-allowed bg-gray-100'
+                          : isDark 
+                            ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20'
+                            : 'text-red-600 hover:text-red-700 hover:bg-red-50'
                       }`}
                       title={
                         submission.status === 'approved' || submission.status === 'rejected'
@@ -1367,13 +1382,23 @@ const CreatorDashboard: React.FC = () => {
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {mySubmissions.length === 0 && (
+        <div className="text-center py-12">
+          <p className={`text-lg ${
+            isDark ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            No submissions found.
+          </p>
+        </div>
+      )}
     </div>
   );
 
