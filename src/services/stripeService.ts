@@ -1,4 +1,4 @@
-import { STRIPE_CONFIG, getStripeConfig, isStripeLive, isStripeMock } from '../config/stripe';
+import { STRIPE_CONFIG, getStripeConfig, isStripeLive } from '../config/stripe';
 
 // Types for Stripe operations
 export interface StripeConnectAccount {
@@ -321,6 +321,6 @@ export const createStripeService = () => {
 export const stripeService = createStripeService();
 
 // Export types and utilities
-export { STRIPE_CONFIG, isStripeLive, isStripeMock };
+export { STRIPE_CONFIG, isStripeLive };
 export default stripeService;
 

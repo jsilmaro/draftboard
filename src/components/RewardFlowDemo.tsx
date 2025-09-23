@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import RewardFlowManager from './RewardFlowManager';
-import { useToast } from '../contexts/ToastContext';
+// import RewardFlowManager from './RewardFlowManager'; // Component not found
+// import { useToast } from '../contexts/ToastContext';
 
 // Mock data for demonstration
 const mockBrief = {
@@ -99,12 +99,12 @@ const mockSubmissions = [
 
 const RewardFlowDemo: React.FC = () => {
   const [showFlow, setShowFlow] = useState(false);
-  const { showSuccessToast } = useToast();
+  // const { showSuccessToast } = useToast();
 
-  const handleFlowComplete = () => {
-    showSuccessToast('Reward flow completed successfully! 🎉');
-    setShowFlow(false);
-  };
+  // const handleFlowComplete = () => {
+  //   showSuccessToast('Reward flow completed successfully! 🎉');
+  //   setShowFlow(false);
+  // };
 
   return (
     <div className="min-h-screen bg-black py-8">
@@ -209,11 +209,14 @@ const RewardFlowDemo: React.FC = () => {
               </button>
             </div>
 
-            <RewardFlowManager
-              brief={mockBrief}
-              submissions={mockSubmissions}
-              onComplete={handleFlowComplete}
-            />
+            <div className="bg-gray-100 dark:bg-gray-700 p-8 rounded-lg text-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Reward Flow Manager
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Component temporarily unavailable - RewardFlowManager not found
+              </p>
+            </div>
           </div>
         )}
       </div>

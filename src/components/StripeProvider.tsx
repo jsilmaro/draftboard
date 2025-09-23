@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { STRIPE_CONFIG, isStripeLive } from '../config/stripe';
 

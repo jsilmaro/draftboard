@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 // import DefaultAvatar from './DefaultAvatar';
 import WinnerSelectionModal from './WinnerSelectionModal';
 import { useToast } from '../contexts/ToastContext';
@@ -103,6 +103,7 @@ const BrandDashboard: React.FC = () => {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const { showSuccessToast, showErrorToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   // const navigate = useNavigate();
 
   // State management
@@ -136,6 +137,26 @@ const BrandDashboard: React.FC = () => {
     conversionRate: 0
   });
 
+  // Handle URL parameters on component mount
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const stripeParam = searchParams.get('stripe');
+
+    // Set active tab from URL parameter
+    if (tabParam && ['overview', 'briefs', 'submissions', 'creators', 'analytics', 'payments', 'rewards', 'wallet', 'messaging'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    // Handle Stripe success parameter
+    if (stripeParam === 'success') {
+      showSuccessToast('Payment completed successfully! Your wallet has been updated.');
+      // Clean up the URL parameter after showing the message
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('stripe');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, showSuccessToast]);
+
   // Enhanced sidebar functions
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
@@ -163,6 +184,11 @@ const BrandDashboard: React.FC = () => {
       setPreviousTab(activeTab);
     }
     setActiveTab(tab);
+    
+    // Update URL parameter to reflect the active tab
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('tab', tab);
+    setSearchParams(newSearchParams, { replace: true });
   };
 
 

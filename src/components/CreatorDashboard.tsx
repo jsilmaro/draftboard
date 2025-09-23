@@ -7,6 +7,7 @@ import AnimatedNotification from './AnimatedNotification';
 import CreatorWallet from './CreatorWallet';
 import BriefCard from './BriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
+// StripeConnectButton and PaymentStatusCard now handled by CreatorWallet component
 
 import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
@@ -399,7 +400,7 @@ const CreatorDashboard: React.FC = () => {
   };
 
 
-  // Dedicated function to fetch earnings data from database
+  // Dedicated function to fetch earnings data from database (updated for Stripe Connect)
   const fetchEarningsData = async () => {
     try {
       setEarningsLoading(true);
@@ -410,16 +411,28 @@ const CreatorDashboard: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('/api/creators/earnings', {
+      // Updated to use new Stripe Connect payout endpoint
+      const response = await fetch('/api/creators/payouts', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch earnings: ${response.status}`);
+        throw new Error(`Failed to fetch payouts: ${response.status}`);
       }
 
-      const earningsData = await response.json();
-      setEarnings(earningsData || []);
+      const payoutsData = await response.json();
+      // Transform payouts data to match earnings format
+      const earningsData = payoutsData.data?.map((payout: { id: string; brief: { title: string; brand: { companyName: string } }; netAmount: number; status: string; createdAt: string }) => ({
+        id: payout.id,
+        briefTitle: payout.brief.title,
+        brandName: payout.brief.brand.companyName,
+        amount: payout.netAmount,
+        rewardType: 'CASH', // Stripe Connect always pays cash
+        status: payout.status === 'paid' ? 'paid' : 'pending',
+        submittedAt: payout.createdAt,
+        paidAt: payout.paidAt
+      })) || [];
+      setEarnings(earningsData);
 
       // Calculate detailed metrics from wallet transactions
       const totalEarnings = (earningsData || []).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
@@ -1661,12 +1674,12 @@ const CreatorDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          earning.rewardType === 'CASH' ? 'bg-green-900/20 text-green-400' :
-                          earning.rewardType === 'CREDIT' ? 'bg-blue-900/20 text-blue-400' :
-                          earning.rewardType === 'PRIZES' ? 'bg-purple-900/20 text-purple-400' :
+                          earning.status === 'paid' ? 'bg-green-900/20 text-green-400' :
+                          earning.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400' :
                           'bg-gray-900/20 text-gray-400'
                         }`}>
-                          {earning.rewardType || 'Cash'}
+                          {earning.status === 'paid' ? 'Paid' : 
+                           earning.status === 'pending' ? 'Pending' : 'Processing'}
                         </span>
                       </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -2619,16 +2632,44 @@ const CreatorDashboard: React.FC = () => {
 
             {submissionDetails.files && (
               <div>
-                <h4 className="font-medium text-white mb-2">Content Submission Link</h4>
-                <div className="bg-gray-900 p-3 rounded border border-gray-800">
-                  <a 
-                    href={submissionDetails.files} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm break-all"
-                  >
-                    {submissionDetails.files}
-                  </a>
+                <h4 className="font-medium text-white mb-2">Creator&apos;s Submitted Content</h4>
+                <div className="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-300 mb-2 block">Submitted File Link:</label>
+                      <a 
+                        href={submissionDetails.files.startsWith('http') ? submissionDetails.files : `${window.location.origin}${submissionDetails.files}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        View Submitted Content
+                      </a>
+                    </div>
+                    
+                    {submissionDetails.content && submissionDetails.content.trim() && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-300 mb-2 block">Additional Content:</label>
+                        <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                          <p className="text-gray-200 text-sm whitespace-pre-wrap">{submissionDetails.content}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!submissionDetails.files && (
+              <div className="bg-yellow-900/20 border border-yellow-600/30 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className="text-yellow-200 text-sm">No file submission found for this application.</p>
                 </div>
               </div>
             )}

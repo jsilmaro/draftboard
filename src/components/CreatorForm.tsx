@@ -176,8 +176,8 @@ const CreatorForm: React.FC = () => {
             key={step}
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step <= currentStep
-                ? 'bg-teal-600 text-white'
-                : 'bg-gray-700 text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-300 text-gray-600'
             }`}
           >
             {step}
@@ -518,13 +518,13 @@ const CreatorForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-gray-900/20 backdrop-blur-xl py-6 sm:py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-white/20 dark:border-gray-600/30">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-6 sm:py-8 px-4 sm:px-10">
           {renderStepIndicator()}
           
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded fade-in">
+            <div className="mb-6 px-4 py-3 rounded bg-red-50 border border-red-200 text-red-600">
               {error}
             </div>
           )}

@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

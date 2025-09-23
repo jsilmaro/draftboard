@@ -39,9 +39,10 @@ interface FormData {
 interface CreateBriefProps {
   isSideModal?: boolean;
   onClose?: () => void;
+  onSuccess?: (brief: { id: string; title: string; [key: string]: unknown }) => void;
 }
 
-const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose }) => {
+const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose, onSuccess }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDark } = useTheme();
@@ -328,6 +329,11 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose 
         const result = await response.json();
         setBriefId(result.id);
         setShowShareModal(true);
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess(result);
+        }
       } else {
         const error = await response.json();
         alert(error.message || 'Failed to create brief');

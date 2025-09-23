@@ -5,26 +5,51 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
-// Initialize Stripe only if API key is provided
-const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+// Dynamic Stripe initialization based on mode
+const getStripeInstance = () => {
+  const mode = process.env.STRIPE_MODE || 'test';
+  
+  if (mode === 'live') {
+    const secretKey = process.env.STRIPE_SECRET_KEY_LIVE;
+    if (!secretKey) {
+      console.log('⚠️ STRIPE_SECRET_KEY_LIVE not found, Stripe disabled');
+      return null;
+    }
+    console.log('🔴 Server using Stripe LIVE mode');
+    return require('stripe')(secretKey);
+  } else {
+    const secretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      console.log('⚠️ STRIPE_SECRET_KEY_TEST not found, Stripe disabled');
+      return null;
+    }
+    console.log('🟡 Server using Stripe TEST mode');
+    return require('stripe')(secretKey);
+  }
+};
+
+const stripe = getStripeInstance();
 
 // Import shared Prisma client
-const prisma = require('./prisma');
+const { prisma } = require('./prisma');
 
 // Import new routes
 const paymentRoutes = require('./routes/payments');
-const rewardRoutes = require('./routes/rewards');
+// rewardRoutes removed - replaced with Stripe Connect functionality
 const adminRoutes = require('./routes/admin');
+const creatorRoutes = require('./routes/creators');
 const searchRoutes = require('./routes/search');
 const messagingRoutes = require('./routes/messaging');
 const communityRoutes = require('./routes/community');
 const eventsRoutes = require('./routes/events');
 const successStoriesRoutes = require('./routes/success-stories');
 const notificationsRoutes = require('./routes/notifications');
+const stripeConnectRoutes = require('./routes/stripeConnect');
+const stripeWebhookRoutes = require('./routes/stripeWebhooks');
 
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
-const rewardsRoutes = require('./rewards');
+// rewardsRoutes removed - replaced with Stripe Connect functionality
 const mockStripe = require('./mockStripe');
 const mockStripeRoutes = mockStripe.router;
 
@@ -345,10 +370,11 @@ app.get('/api', (req, res) => {
   });
 });
 
-// New Payment and Reward Routes
+// New Payment and Stripe Connect Routes
 app.use('/api/payments', paymentRoutes);
-app.use('/api/rewards', rewardRoutes);
+// /api/rewards removed - replaced with Stripe Connect functionality
 app.use('/api/admin', adminRoutes);
+app.use('/api/creators', creatorRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messagingRoutes);
 app.use('/api/forums', communityRoutes);
@@ -356,10 +382,14 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/success-stories', successStoriesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
+// Stripe Connect routes
+app.use('/api', stripeConnectRoutes);
+app.use('/api', stripeWebhookRoutes);
+
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/mock-stripe', mockStripeRoutes);
-app.use('/api/rewards-system', rewardsRoutes);
+// app.use('/api/rewards-system', rewardsRoutes); // Removed - replaced with Stripe Connect
 
 // Test endpoint to create a brief with past deadline for testing
 app.post('/api/test/create-expired-brief', authenticateToken, async (req, res) => {
@@ -2093,7 +2123,8 @@ app.get('/api/brands/submissions', authenticateToken, async (req, res) => {
       briefTitle: sub.brief.title,
       status: sub.status,
       submittedAt: sub.submittedAt,
-      content: sub.content || 'No content provided',
+      content: sub.files || sub.content || 'No content provided', // Prioritize files over content
+      files: sub.files, // Include the files field
       briefId: sub.briefId,
       creator: {
         fullName: sub.creator.fullName,
@@ -2237,6 +2268,140 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
     res.json(creators);
   } catch (error) {
     console.error('Error fetching creators:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get rewards analytics for a brand
+app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const brandId = req.user.id;
+
+    // Get analytics data
+    const [
+      totalBriefs,
+      totalSubmissions,
+      approvedSubmissions,
+      totalRewards,
+      totalRewardsPaid,
+      pendingRewards,
+      completedRewards
+    ] = await Promise.all([
+      // Total briefs created by this brand
+      prisma.brief.count({
+        where: { brandId }
+      }),
+      
+      // Total submissions to brand's briefs
+      prisma.submission.count({
+        where: {
+          brief: { brandId }
+        }
+      }),
+      
+      // Approved submissions
+      prisma.submission.count({
+        where: {
+          brief: { brandId },
+          status: 'approved'
+        }
+      }),
+      
+      // Total rewards created
+      prisma.globalPayout.count({
+        where: {
+          brief: { brandId }
+        }
+      }),
+      
+      // Total rewards paid (completed)
+      prisma.globalPayout.aggregate({
+        where: {
+          brief: { brandId },
+          status: 'completed'
+        },
+        _sum: { amount: true }
+      }),
+      
+      // Pending rewards
+      prisma.globalPayout.count({
+        where: {
+          brief: { brandId },
+          status: 'pending'
+        }
+      }),
+      
+      // Completed rewards
+      prisma.globalPayout.count({
+        where: {
+          brief: { brandId },
+          status: 'completed'
+        }
+      })
+    ]);
+
+    // Get recent activity (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentActivity = await prisma.globalPayout.count({
+      where: {
+        brief: { brandId },
+        createdAt: {
+          gte: thirtyDaysAgo
+        }
+      }
+    });
+
+    // Get top performing briefs (by reward amount)
+    const topBriefs = await prisma.brief.findMany({
+      where: { brandId },
+      include: {
+        _count: {
+          select: {
+            submissions: true,
+            globalPayouts: true
+          }
+        },
+        globalPayouts: {
+          where: { status: 'completed' },
+          _sum: { amount: true }
+        }
+      },
+      orderBy: {
+        globalPayouts: {
+          _sum: { amount: 'desc' }
+        }
+      },
+      take: 5
+    });
+
+    const formattedTopBriefs = topBriefs.map(brief => ({
+      id: brief.id,
+      title: brief.title,
+      submissionsCount: brief._count.submissions,
+      rewardsCount: brief._count.globalPayouts,
+      totalRewarded: brief.globalPayouts._sum.amount || 0
+    }));
+
+    res.json({
+      totalBriefs,
+      totalSubmissions,
+      approvedSubmissions,
+      totalRewards,
+      totalRewardsPaid: totalRewardsPaid._sum.amount || 0,
+      pendingRewards,
+      completedRewards,
+      recentActivity,
+      topBriefs: formattedTopBriefs
+    });
+
+  } catch (error) {
+    console.error('Error fetching rewards analytics:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -4691,121 +4856,8 @@ app.get('/api/brands/winners', authenticateToken, async (req, res) => {
   }
 });
 
-// Process payment to winner
-app.post('/api/brands/payments/process', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const { winnerId, paymentMethod, amount } = req.body;
-
-    const winner = await prisma.winner.findFirst({
-      where: {
-        id: winnerId,
-        brief: { brandId: req.user.id }
-      },
-      include: {
-        creator: true,
-        reward: true
-      }
-    });
-
-    if (!winner) {
-      return res.status(404).json({ error: 'Winner not found' });
-    }
-
-    try {
-      // Check if payment already exists
-      const existingPayment = await prisma.payment.findUnique({
-        where: { winnerId: winner.id }
-      });
-
-      if (existingPayment) {
-        return res.status(400).json({ error: 'Payment already processed for this winner' });
-      }
-
-      // Process payment in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        // Create payment record
-        const payment = await tx.payment.create({
-          data: {
-            winnerId: winner.id,
-            amount: amount,
-            paymentMethod: paymentMethod,
-            status: 'processing'
-          }
-        });
-
-        // If payment method is credits, credit the creator's wallet
-        if (paymentMethod === 'credits') {
-          let creatorWallet = await tx.creatorWallet.findUnique({
-            where: { creatorId: winner.creatorId }
-          });
-
-          if (!creatorWallet) {
-            creatorWallet = await tx.creatorWallet.create({
-              data: {
-                creatorId: winner.creatorId,
-                balance: 0,
-                totalEarned: 0,
-                totalWithdrawn: 0
-              }
-            });
-          }
-
-          // Update creator wallet
-          const updatedCreatorWallet = await tx.creatorWallet.update({
-            where: { creatorId: winner.creatorId },
-            data: {
-              balance: { increment: amount },
-              totalEarned: { increment: amount }
-            }
-          });
-
-          // Create transaction record
-          await tx.walletTransaction.create({
-            data: {
-              walletId: creatorWallet.id,
-              type: 'credit',
-              amount: amount,
-              description: `Payment for winning ${winner.brief.title}`,
-              referenceId: payment.id,
-              balanceBefore: creatorWallet.balance,
-              balanceAfter: updatedCreatorWallet.balance
-            }
-          });
-
-          // Update payment status
-          await tx.payment.update({
-            where: { id: payment.id },
-            data: { status: 'completed', paidAt: new Date() }
-          });
-        }
-
-        return payment;
-      });
-
-      res.json({ message: 'Payment processed successfully', data: result });
-    } catch (tableError) {
-      // If payment tables don't exist, simulate successful payment
-      console.log('Payment tables not available, simulating payment');
-      res.json({ 
-        message: 'Payment processed successfully (simulated)', 
-        data: { 
-          id: 'temp-payment',
-          winnerId: winner.id,
-          amount: amount,
-          paymentMethod: paymentMethod,
-          status: 'completed'
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error processing payment:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// OLD PAYMENT PROCESSING ENDPOINT REMOVED - Replaced with Stripe Connect
+// This functionality has been moved to /api/briefs/:id/reward endpoint
 
 // ==================== STRIPE PAYMENT ROUTES ====================
 

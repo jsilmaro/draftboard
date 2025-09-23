@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const { prisma } = require('./prisma');
 
 /**
  * Mock Stripe Implementation
@@ -578,8 +576,6 @@ router.post('/webhook', async (req, res) => {
       const amount = session.amount_total / 100; // Convert from cents
 
       try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
 
         // Find or create wallet
         let wallet = await prisma.brandWallet.findUnique({

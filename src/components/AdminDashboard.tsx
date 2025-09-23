@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import WithdrawalManagement from './WithdrawalManagement';
+import AdminFinancialDashboard from './AdminFinancialDashboard';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -519,6 +520,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'submissions', label: 'Submissions', icon: '/icons/Green_icons/Task1.png' },
     { id: 'withdrawals', label: 'Withdrawals', icon: '/icons/Green_icons/Withdrawal1.png' },
     { id: 'payouts', label: 'Payouts', icon: '/icons/Green_icons/MoneyBag1.png' },
+    { id: 'financial', label: 'Financial Dashboard', icon: '/icons/Green_icons/MoneyBag1.png' },
     { id: 'analytics', label: 'Analytics', icon: '/icons/Green_icons/Statistic1.png' },
   ];
 
@@ -1458,6 +1460,8 @@ const AdminDashboard: React.FC = () => {
         return <WithdrawalManagement />;
       case 'payouts':
         return renderPayouts();
+      case 'financial':
+        return <AdminFinancialDashboard />;
       case 'analytics':
         return renderAnalytics();
       default:

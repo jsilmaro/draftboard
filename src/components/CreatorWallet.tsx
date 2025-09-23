@@ -1,476 +1,266 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import CreatorStripeOnboarding from './CreatorStripeOnboarding';
+import React, { useState, useEffect } from 'react';
+// import { useAuth } from '../contexts/AuthContext';
+// import { useTheme } from '../contexts/ThemeContext';
+import StripeConnectButton from './StripeConnectButton';
+import PaymentStatusCard from './PaymentStatusCard';
 
-interface WalletData {
-  balance: number;
-  totalEarnings: number;
-  recentTransactions: Transaction[];
-}
-
-interface Transaction {
+interface StripeAccountStatus {
   id: string;
-  type: string;
-  amount: number;
-  status: string;
-  createdAt: string;
-}
-
-interface WithdrawalRequest {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  reason?: string;
-  adminNotes?: string;
-  requestedAt: string;
-  processedAt?: string;
+  status: 'pending' | 'restricted' | 'active';
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  requirements?: {
+    currently_due: string[];
+    eventually_due: string[];
+    past_due: string[];
+    pending_verification: string[];
+  };
+  country?: string;
+  default_currency?: string;
+  business_type?: string;
+  email?: string;
 }
 
 const CreatorWallet: React.FC = () => {
-  const { user } = useAuth();
-  const { isDark } = useTheme();
-  const token = localStorage.getItem('token') || '';
-  const [walletData, setWalletData] = useState<WalletData | null>(null);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  // Auth and theme context available if needed
+  // const { user } = useAuth();
+  // const { isDark } = useTheme();
+  const [stripeAccountStatus, setStripeAccountStatus] = useState<StripeAccountStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showStripeOnboarding, setShowStripeOnboarding] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [withdrawing, setWithdrawing] = useState(false);
 
-  const fetchWalletData = useCallback(async () => {
+  const fetchStripeAccountStatus = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [walletResponse, earningsResponse, withdrawalResponse] = await Promise.all([
-        fetch('/api/creators/wallet', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch('/api/creators/earnings', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch('/api/creators/withdrawal-requests', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
-
-      const walletData = walletResponse.ok ? await walletResponse.json() : { balance: 0, transactions: [] };
-      const earningsData = earningsResponse.ok ? await earningsResponse.json() : [];
-      const withdrawalData = withdrawalResponse.ok ? await withdrawalResponse.json() : [];
-
-      // Calculate total earnings from the earnings data
-      const totalEarnings = earningsData.reduce((sum: number, earning: { amount?: number }) => sum + (earning.amount || 0), 0);
-
-      // Use wallet transactions if available, otherwise use earnings data
-      let recentTransactions = [];
-      
-      if (walletData.transactions && walletData.transactions.length > 0) {
-        // Use actual wallet transactions
-        recentTransactions = walletData.transactions.map((transaction: { id: string; type: string; amount: number; description: string; createdAt: string }) => ({
-          id: transaction.id,
-          type: transaction.type,
-          amount: transaction.amount,
-          description: transaction.description,
-          createdAt: transaction.createdAt
-        }));
-      } else {
-        // Fallback to earnings data
-        recentTransactions = earningsData.map((earning: { id: string; amount: number; briefTitle: string; paidAt: string }) => ({
-          id: earning.id,
-          type: 'reward',
-          amount: earning.amount,
-          description: `Reward from: ${earning.briefTitle}`,
-          createdAt: earning.paidAt
-        }));
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
 
-      setWalletData({
-        balance: walletData.balance || 0,
-        totalEarnings: totalEarnings,
-        recentTransactions: recentTransactions
+      const response = await fetch('/api/creators/onboard/status', {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
-      setWithdrawalRequests(withdrawalData);
-
+      if (response.ok) {
+        const data = await response.json();
+        setStripeAccountStatus(data.data);
+      } else if (response.status === 404) {
+        // If no Stripe account exists, that's fine - user can create one
+        setStripeAccountStatus(null);
+      } else {
+        throw new Error('Failed to fetch account status');
+      }
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching wallet data:', err);
-      setError('Failed to load wallet data');
+      setError('Failed to load Stripe account status');
     } finally {
       setLoading(false);
     }
-  }, [token]);
-
-  useEffect(() => {
-    if (user && token) {
-      fetchWalletData();
-    }
-  }, [user, token, fetchWalletData]);
-
-  const handleStripeOnboardingSuccess = () => {
-    setShowStripeOnboarding(false);
-    fetchWalletData();
   };
 
-  const handleWithdrawal = async () => {
-    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    if (parseFloat(withdrawAmount) < 10) {
-      setError('Minimum withdrawal amount is $10.00');
-      return;
-    }
-
-    if (parseFloat(withdrawAmount) > (walletData?.balance || 0)) {
-      setError('Insufficient balance');
-      return;
-    }
-
-    setWithdrawing(true);
-    setError(null);
-
+  const recheckAccountStatus = async () => {
     try {
-      const response = await fetch('/api/creators/wallet/withdraw', {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/creators/onboard/recheck', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount: parseFloat(withdrawAmount),
-          paymentMethod: 'stripe'
-        })
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-      const result = await response.json();
-
       if (response.ok) {
-        setShowWithdrawModal(false);
-        setWithdrawAmount('');
-        fetchWalletData(); // Refresh data
-        // Show success message
-        alert('Withdrawal request submitted successfully! You will be notified when it is processed.');
+        const data = await response.json();
+        setStripeAccountStatus(data.data);
       } else {
-        setError(result.error || 'Failed to submit withdrawal request');
+        throw new Error('Failed to recheck account status');
       }
     } catch (err) {
-      setError('Failed to submit withdrawal request');
+      setError('Failed to recheck account status');
     } finally {
-      setWithdrawing(false);
+      setLoading(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const baseClasses = "text-xs px-2 py-1 rounded-full font-medium";
-    switch (status) {
-      case 'pending':
-        return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400`;
-      case 'approved':
-        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400`;
-      case 'rejected':
-        return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400`;
-      case 'completed':
-        return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400`;
-    }
-  };
+  useEffect(() => {
+    fetchStripeAccountStatus();
+  }, []); // Only run once on mount
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
-    );
-  }
-
-  if (error && !walletData) {
-    return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <p className="text-red-700 dark:text-red-400">{error}</p>
+        </div>
       </div>
     );
   }
 
-  const pendingWithdrawals = withdrawalRequests.filter(req => req.status === 'pending');
-  const hasPendingWithdrawals = pendingWithdrawals.length > 0;
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl shadow-sm p-6`}>
-        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Creator Wallet</h2>
-
-        {/* Wallet Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-blue-50 border-blue-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-blue-600'} mb-2`}>Available Balance</h3>
-            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>${walletData?.balance.toFixed(2) || '0.00'}</p>
-            <button
-              onClick={() => setShowWithdrawModal(true)}
-              disabled={false}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                isDark 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              Withdraw Funds
-            </button>
-          </div>
-          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-green-50 border-green-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-green-600'} mb-2`}>Total Earnings</h3>
-            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${walletData?.totalEarnings.toFixed(2) || '0.00'}</p>
-          </div>
-          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-purple-50 border-purple-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-purple-600'} mb-2`}>Pending Requests</h3>
-            <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{pendingWithdrawals.length}</p>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Creator Wallet
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Manage your Stripe Connect account and track your earnings
+          </p>
         </div>
 
-        {/* Withdrawal Requests */}
-        {withdrawalRequests.length > 0 && (
-          <div className={`${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl p-6 shadow-sm mb-6`}>
-            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Withdrawal History</h3>
-            
-            <div className="space-y-3">
-              {withdrawalRequests.map((request) => (
-                <div key={request.id} className={`flex items-center justify-between p-4 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-sm hover:shadow-md transition-all duration-200`}>
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 ${isDark ? 'bg-purple-600' : 'bg-purple-100'} rounded-xl flex items-center justify-center`}>
-                      <svg className={`w-5 h-5 ${isDark ? 'text-white' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <div>
-                      <p className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>Withdrawal Request</p>
-                      <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
-                        {new Date(request.requestedAt).toLocaleDateString()}
-                      </p>
-                      {request.reason && (
-                        <p className={`${isDark ? 'text-red-400' : 'text-red-600'} text-sm`}>Reason: {request.reason}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      ${request.amount.toFixed(2)}
-                    </p>
-                    <span className={getStatusBadge(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                  </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                  Error
+                </h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                  {error}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Stripe Integration Section */}
-        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Payment Account</h3>
-            <button
-              onClick={() => setShowStripeOnboarding(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-            >
-              Connect Stripe
-            </button>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Stripe Connect Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Stripe Connect
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Connect your Stripe account to receive payments directly when you win briefs.
+            </p>
+            
+            {stripeAccountStatus ? (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    stripeAccountStatus.status === 'active' 
+                      ? 'bg-green-500' 
+                      : stripeAccountStatus.status === 'restricted'
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {stripeAccountStatus.status === 'active' 
+                      ? 'Stripe Connected – Payouts Enabled' 
+                      : stripeAccountStatus.status === 'restricted'
+                      ? 'Account Connected but More Info Required'
+                      : 'Setup Incomplete'}
+                  </span>
+                </div>
+
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <p>Charges: {stripeAccountStatus.chargesEnabled ? 'Enabled' : 'Disabled'}</p>
+                  <p>Payouts: {stripeAccountStatus.payoutsEnabled ? 'Enabled' : 'Disabled'}</p>
+                  {stripeAccountStatus.requirements?.currently_due && stripeAccountStatus.requirements.currently_due.length > 0 && (
+                    <p className="text-yellow-600 dark:text-yellow-400 mt-2">
+                      Missing: {stripeAccountStatus.requirements.currently_due.join(', ')}
+                    </p>
+                  )}
+                </div>
+
+                {stripeAccountStatus.status === 'restricted' && (
+                  <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      Your account is connected but needs additional verification to enable payouts.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                No Stripe account connected
+              </div>
+            )}
+            
+            <div className="mt-4 space-y-2">
+              <StripeConnectButton 
+                accountStatus={stripeAccountStatus}
+                onStatusChange={setStripeAccountStatus}
+              />
+              {stripeAccountStatus && (
+                <button
+                  onClick={recheckAccountStatus}
+                  disabled={loading}
+                  className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50"
+                >
+                  {loading ? 'Checking...' : 'Re-check Account Status'}
+                </button>
+              )}
+              
+              {/* Test mode simulation button */}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      const response = await fetch('/api/creators/onboard/simulate-verified', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      if (response.ok) {
+                        await fetchStripeAccountStatus();
+                      }
+                    } catch (err) {
+                      // Handle simulation error silently
+                    }
+                  }}
+                  className="w-full text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
+                >
+                  🧪 Simulate Fully Verified Account (Test Mode)
+                </button>
+              )}
+            </div>
           </div>
-          
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+
+          {/* Payment Status Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <PaymentStatusCard />
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
             </div>
-            <p className="text-gray-400 mb-4">Connect your Stripe account to receive cash rewards</p>
-            <button
-              onClick={() => setShowStripeOnboarding(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-            >
-              Connect Now
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Transactions */}
-        <div className="bg-white/5 dark:bg-gray-700/30 backdrop-blur-sm p-6 rounded-lg border border-white/10 dark:border-gray-600/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Transactions</h3>
-          
-          {walletData?.recentTransactions.length ? (
-            <div className="space-y-3">
-              {walletData.recentTransactions.map((transaction: Transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 bg-white/5 dark:bg-gray-600/20 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white font-medium capitalize">{transaction.type}</p>
-                      <p className="text-gray-400 text-sm">
-                        {new Date(transaction.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green-400">
-                      +${transaction.amount.toFixed(2)}
-                    </p>
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      {transaction.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                How Stripe Connect Works
+                </h3>
+              <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Connect your Stripe account to receive direct payments</li>
+                  <li>When you win a brief, funds are automatically transferred to your account</li>
+                  <li>No manual withdrawal requests needed</li>
+                  <li>Professional payment processing with industry-standard security</li>
+                </ul>
               </div>
-              <p className="text-gray-400">No transactions yet</p>
-              <p className={`text-sm ${
-                isDark ? 'text-gray-400' : 'text-gray-500'
-              }`}>Start submitting to briefs to earn rewards!</p>
             </div>
-          )}
+          </div>
         </div>
       </div>
-
-      {/* Withdrawal Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Request Withdrawal
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowWithdrawModal(false);
-                    setWithdrawAmount('');
-                    setError(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Amount (USD)
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  max={walletData?.balance || 0}
-                  step="0.01"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter amount"
-                />
-                <p className={`text-sm mt-1 ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Available: ${walletData?.balance.toFixed(2) || '0.00'} • Minimum: $10.00
-                </p>
-              </div>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-
-              {hasPendingWithdrawals && (
-                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                  <p className="text-yellow-700 dark:text-yellow-400 text-sm">
-                    ⚠️ You have {pendingWithdrawals.length} pending withdrawal request{pendingWithdrawals.length !== 1 ? 's' : ''}. 
-                    You can submit additional requests while waiting.
-                  </p>
-                </div>
-              )}
-              
-                              <div className="mb-4 p-3 bg-blue-900/20 border border-blue-800 rounded-lg">
-                            <p className="text-blue-400 text-sm">
-              Your withdrawal request will be reviewed by our admin team. You will be notified once it&apos;s processed.
-            </p>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    setShowWithdrawModal(false);
-                    setWithdrawAmount('');
-                    setError(null);
-                  }}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleWithdrawal}
-                  disabled={withdrawing || !withdrawAmount || parseFloat(withdrawAmount) < 10}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200"
-                >
-                  {withdrawing ? 'Submitting...' : 'Submit Request'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stripe Onboarding Modal */}
-      {showStripeOnboarding && user && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Connect Payment Account
-                </h3>
-                <button
-                  onClick={() => setShowStripeOnboarding(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <CreatorStripeOnboarding
-                onComplete={handleStripeOnboardingSuccess}
-                onCancel={() => setShowStripeOnboarding(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

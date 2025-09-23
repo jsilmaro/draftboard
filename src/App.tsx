@@ -11,7 +11,7 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminLogin from './components/AdminLogin'
 import CreateBrief from './components/CreateBrief'
 import PublicBrandBriefs from './components/PublicBrandBriefs'
-import RewardsPaymentPage from './components/RewardsPaymentPage'
+// RewardsPaymentPage removed - replaced with Stripe Connect functionality in BrandDashboard
 import PaymentSuccess from './components/PaymentSuccess'
 import PaymentCancel from './components/PaymentCancel'
 
@@ -82,14 +82,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/rewards-payments" 
-                element={
-                  <ProtectedRoute requiredUserType="brand">
-                    <RewardsPaymentPage />
-                  </ProtectedRoute>
-                } 
-              />
+              {/* Old rewards-payments route removed - now handled by Stripe Connect in BrandDashboard */}
 
               {/* Protected Creator Routes */}
               <Route 
