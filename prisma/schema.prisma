@@ -106,6 +106,8 @@ model Brief {
   winnersSelected  Boolean          @default(false)
   location         String?
   totalRewardsPaid Float            @default(0)
+  isFunded         Boolean          @default(false)
+  fundedAt         DateTime?
   archivedAt       DateTime?
   awardDrafts      AwardDraft[]
   brand            Brand            @relation(fields: [brandId], references: [id])

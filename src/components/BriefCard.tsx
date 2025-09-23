@@ -11,6 +11,8 @@ interface BriefCardProps {
     totalRewardsPaid: number;
     deadline: string;
     status: string;
+    isFunded?: boolean;
+    fundedAt?: string;
 
     brand: {
       id: string;
@@ -113,7 +115,19 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
               </h3>
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
+          <div className="text-right flex-shrink-0 space-y-1">
+            {/* Funding Status */}
+            {brief.isFunded && (
+              <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                isDark 
+                  ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+              }`}>
+                💰 Funded
+              </div>
+            )}
+            
+            {/* Time Remaining */}
             <div className={`text-xs font-medium px-2 py-1 rounded-full ${
               isDark 
                 ? (daysRemaining < 0 ? 'bg-red-900/20 text-red-400' :
@@ -189,12 +203,12 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
           onClick={handleApplyClick}
           className={`w-full font-semibold py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
             isDark 
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 hover:border-blue-700'
+              ? (brief.isFunded ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white')
+              : (brief.isFunded ? 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 hover:border-emerald-700' : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 hover:border-blue-700')
           }`}
           disabled={daysRemaining < 0}
         >
-          {daysRemaining < 0 ? 'Expired' : 'Apply Now'}
+          {daysRemaining < 0 ? 'Expired' : brief.isFunded ? 'Apply to Funded Brief' : 'Apply Now'}
         </button>
       </div>
     </div>

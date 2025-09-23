@@ -46,6 +46,7 @@ const successStoriesRoutes = require('./routes/success-stories');
 const notificationsRoutes = require('./routes/notifications');
 const stripeConnectRoutes = require('./routes/stripeConnect');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
+const webhookRoutes = require('./routes/webhooks');
 
 // Import Stripe integration routes
 const stripeRoutes = require('./stripe');
@@ -385,6 +386,7 @@ app.use('/api/notifications', notificationsRoutes);
 // Stripe Connect routes
 app.use('/api', stripeConnectRoutes);
 app.use('/api', stripeWebhookRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Stripe integration routes
 app.use('/api/stripe', stripeRoutes);
@@ -2312,23 +2314,23 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       }),
       
       // Total rewards created
-      prisma.globalPayout.count({
+      prisma.creatorPayout.count({
         where: {
           brief: { brandId }
         }
       }),
       
       // Total rewards paid (completed)
-      prisma.globalPayout.aggregate({
+      prisma.creatorPayout.aggregate({
         where: {
           brief: { brandId },
-          status: 'completed'
+          status: 'paid'
         },
         _sum: { amount: true }
       }),
       
       // Pending rewards
-      prisma.globalPayout.count({
+      prisma.creatorPayout.count({
         where: {
           brief: { brandId },
           status: 'pending'
@@ -2336,10 +2338,10 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       }),
       
       // Completed rewards
-      prisma.globalPayout.count({
+      prisma.creatorPayout.count({
         where: {
           brief: { brandId },
-          status: 'completed'
+          status: 'paid'
         }
       })
     ]);
@@ -2348,7 +2350,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const recentActivity = await prisma.globalPayout.count({
+    const recentActivity = await prisma.creatorPayout.count({
       where: {
         brief: { brandId },
         createdAt: {
@@ -2363,29 +2365,31 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       include: {
         _count: {
           select: {
-            submissions: true,
-            globalPayouts: true
+            submissions: true
           }
-        },
-        globalPayouts: {
-          where: { status: 'completed' },
-          _sum: { amount: true }
-        }
-      },
-      orderBy: {
-        globalPayouts: {
-          _sum: { amount: 'desc' }
         }
       },
       take: 5
     });
 
-    const formattedTopBriefs = topBriefs.map(brief => ({
-      id: brief.id,
-      title: brief.title,
-      submissionsCount: brief._count.submissions,
-      rewardsCount: brief._count.globalPayouts,
-      totalRewarded: brief.globalPayouts._sum.amount || 0
+    // Get payout counts and amounts for each brief
+    const formattedTopBriefs = await Promise.all(topBriefs.map(async (brief) => {
+      const payoutStats = await prisma.creatorPayout.aggregate({
+        where: {
+          briefId: brief.id,
+          status: 'paid'
+        },
+        _sum: { amount: true },
+        _count: true
+      });
+
+      return {
+        id: brief.id,
+        title: brief.title,
+        submissionsCount: brief._count.submissions,
+        rewardsCount: payoutStats._count,
+        totalRewarded: payoutStats._sum.amount || 0
+      };
     }));
 
     res.json({
@@ -3950,7 +3954,7 @@ app.post('/api/brands/invite-creator', authenticateToken, async (req, res) => {
 });
 
 // Reject a submission
-app.put('/api/brands/submissions/:id/reject', authenticateToken, async (req, res) => {
+app.post('/api/brands/submissions/:id/reject', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can reject submissions' });
@@ -4029,7 +4033,7 @@ app.put('/api/brands/submissions/:id/reject', authenticateToken, async (req, res
 });
 
 // Approve a submission (add to shortlist)
-app.put('/api/brands/submissions/:id/approve', authenticateToken, async (req, res) => {
+app.post('/api/brands/submissions/:id/approve', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can approve submissions' });
@@ -5400,261 +5404,7 @@ app.post('/api/payments/process-reward', authenticateToken, async (req, res) => 
   }
 });
 
-// Stripe webhook handler
-app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
-  // Check if Stripe is configured
-  if (!stripe) {
-    return res.status(400).json({ error: 'Stripe is not configured' });
-  }
-
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        
-        // Check if this is a wallet funding session
-        if (session.metadata && session.metadata.type === 'wallet_funding') {
-          const brandId = session.metadata.brandId;
-          const amount = session.amount_total / 100; // Convert from cents
-
-          // Find or create wallet
-          let wallet = await prisma.brandWallet.findUnique({
-            where: { brandId: brandId }
-          });
-
-          if (!wallet) {
-            // Create wallet if it doesn't exist
-            wallet = await prisma.brandWallet.create({
-              data: {
-                brandId: brandId,
-                balance: 0,
-                totalSpent: 0,
-                totalDeposited: 0
-              }
-            });
-          }
-
-          await prisma.$transaction(async (tx) => {
-            // Update wallet balance
-            const updatedWallet = await tx.brandWallet.update({
-              where: { brandId: brandId },
-              data: {
-                balance: { increment: amount },
-                totalDeposited: { increment: amount }
-              }
-            });
-
-            // Create transaction record
-            await tx.brandWalletTransaction.create({
-              data: {
-                walletId: wallet.id,
-                type: 'deposit',
-                amount: amount,
-                description: `Wallet funding via Stripe Checkout`,
-                balanceBefore: wallet.balance,
-                balanceAfter: updatedWallet.balance,
-                referenceId: session.id
-              }
-            });
-          });
-
-          console.log(`✅ Wallet funding successful: $${amount} added to brand ${brandId} wallet`);
-
-          // Notify brand about successful top-up
-          try {
-            await createNotification(
-              brandId,
-              'brand',
-              'Wallet Top-Up Successful! 💰',
-              `Your wallet has been topped up with $${amount.toFixed(2)}.`,
-              'wallet'
-            );
-          } catch (notificationError) {
-            console.error('Failed to send notification:', notificationError);
-          }
-        } else {
-          console.log('Non-wallet funding checkout session completed');
-        }
-        break;
-      }
-      
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        
-        // Handle regular payment to winners (existing logic)
-        const payment = await prisma.payment.findUnique({
-          where: { stripePaymentIntentId: paymentIntent.id },
-          include: { 
-            winner: {
-              include: {
-                brief: true,
-                creator: true
-              }
-            }
-          }
-        });
-
-        if (payment) {
-          // Payment found, process it
-          console.log('Processing existing payment:', payment.id);
-        } else {
-          // Handle regular payment to winners
-          const payment = await prisma.payment.findUnique({
-            where: { stripePaymentIntentId: paymentIntent.id },
-            include: { 
-              winner: {
-                include: {
-                  brief: true,
-                  creator: true
-                }
-              }
-            }
-          });
-
-          if (payment) {
-            await prisma.$transaction(async (tx) => {
-              // Update payment status
-              await tx.payment.update({
-                where: { stripePaymentIntentId: paymentIntent.id },
-                data: {
-                  status: 'completed',
-                  paidAt: new Date()
-                }
-              });
-
-              // Update winner reward
-              if (payment.winner.rewardId) {
-                await tx.winnerReward.update({
-                  where: { id: payment.winner.rewardId },
-                  data: {
-                    isPaid: true,
-                    paidAt: new Date()
-                  }
-                });
-              }
-
-              // Update brief total rewards paid
-              await tx.brief.update({
-                where: { id: payment.winner.briefId },
-                data: {
-                  totalRewardsPaid: {
-                    increment: payment.amount
-                  }
-                }
-              });
-
-              // Update brand wallet (deduct from balance)
-              const brandWallet = await tx.brandWallet.findUnique({
-                where: { brandId: payment.winner.brief.brandId }
-              });
-
-              if (brandWallet) {
-                await tx.brandWallet.update({
-                  where: { brandId: payment.winner.brief.brandId },
-                  data: {
-                    balance: { decrement: payment.amount },
-                    totalSpent: { increment: payment.amount }
-                  }
-                });
-
-                        // Create wallet transaction record
-        await tx.brandWalletTransaction.create({
-          data: {
-            walletId: brandWallet.id,
-            type: 'payment',
-            amount: payment.amount,
-            description: `Payment to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
-            balanceBefore: brandWallet.balance,
-            balanceAfter: brandWallet.balance - payment.amount,
-            referenceId: payment.id
-          }
-        });
-              }
-            });
-
-            // Notify creator about successful payment
-            await createNotification(
-              payment.winner.creatorId,
-              'creator',
-              'Payment Received! 💰',
-              `You received $${payment.amount} for winning "${payment.winner.brief.title}"`,
-              'payment'
-            );
-
-            // Notify brand about successful payment
-            await createNotification(
-              payment.winner.brief.brandId,
-              'brand',
-              'Payment Completed Successfully',
-              `Payment of $${payment.amount} sent to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}"`,
-              'payment'
-            );
-          }
-        }
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const failedPaymentIntent = event.data.object;
-        
-        const payment = await prisma.payment.findUnique({
-          where: { stripePaymentIntentId: failedPaymentIntent.id },
-          include: { 
-            winner: {
-              include: {
-                brief: { include: { brand: true } },
-                creator: true
-              }
-            }
-          }
-        });
-
-        await prisma.payment.update({
-          where: { stripePaymentIntentId: failedPaymentIntent.id },
-          data: { status: 'failed' }
-        });
-
-        if (payment) {
-          // Notify brand about failed payment
-          await createNotification(
-            payment.winner.brief.brandId,
-            'brand',
-            'Payment Failed ❌',
-            `Payment of $${payment.amount} to ${payment.winner.creator.fullName} for "${payment.winner.brief.title}" failed. Please try again.`,
-            'payment'
-          );
-
-          // Notify creator about failed payment
-          await createNotification(
-            payment.winner.creatorId,
-            'creator',
-            'Payment Processing Issue',
-            `Payment for "${payment.winner.brief.title}" encountered an issue. The brand will retry the payment.`,
-            'payment'
-          );
-        }
-        break;
-      }
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
-});
+// Note: Webhook handling moved to /api/webhooks/stripe (see webhookRoutes)
 
 // Get payment status
 app.get('/api/payments/:paymentId/status', authenticateToken, async (req, res) => {

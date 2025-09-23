@@ -151,7 +151,7 @@ const CreatorWallet: React.FC = () => {
             {stripeAccountStatus ? (
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${
+                  <div className={`w-3 h-3 rounded-full ${
                     stripeAccountStatus.status === 'active' 
                       ? 'bg-green-500' 
                       : stripeAccountStatus.status === 'restricted'
@@ -160,20 +160,53 @@ const CreatorWallet: React.FC = () => {
                   }`}></div>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {stripeAccountStatus.status === 'active' 
-                      ? 'Stripe Connected – Payouts Enabled' 
+                      ? '✅ Stripe Connected – Ready for Payouts' 
                       : stripeAccountStatus.status === 'restricted'
-                      ? 'Account Connected but More Info Required'
-                      : 'Setup Incomplete'}
+                      ? '⚠️ Account Connected but Verification Required'
+                      : '❌ Setup Incomplete'}
                   </span>
                 </div>
 
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  <p>Charges: {stripeAccountStatus.chargesEnabled ? 'Enabled' : 'Disabled'}</p>
-                  <p>Payouts: {stripeAccountStatus.payoutsEnabled ? 'Enabled' : 'Disabled'}</p>
+                <div className={`text-xs p-3 rounded-lg ${
+                  stripeAccountStatus.status === 'active' 
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                    : stripeAccountStatus.status === 'restricted'
+                    ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                }`}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-1">
+                      <span className="font-medium">Charges:</span>
+                      <span className={stripeAccountStatus.chargesEnabled ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                        {stripeAccountStatus.chargesEnabled ? '✅ Enabled' : '❌ Disabled'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="font-medium">Payouts:</span>
+                      <span className={stripeAccountStatus.payoutsEnabled ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                        {stripeAccountStatus.payoutsEnabled ? '✅ Enabled' : '❌ Disabled'}
+                      </span>
+                    </div>
+                  </div>
+                  
                   {stripeAccountStatus.requirements?.currently_due && stripeAccountStatus.requirements.currently_due.length > 0 && (
-                    <p className="text-yellow-600 dark:text-yellow-400 mt-2">
-                      Missing: {stripeAccountStatus.requirements.currently_due.join(', ')}
-                    </p>
+                    <div className="mt-2 pt-2 border-t border-current/20">
+                      <p className="font-medium">⚠️ Missing Requirements:</p>
+                      <ul className="mt-1 list-disc list-inside">
+                        {stripeAccountStatus.requirements.currently_due.map((requirement, index) => (
+                          <li key={index} className="capitalize">{requirement.replace(/_/g, ' ')}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {stripeAccountStatus.country && (
+                    <div className="mt-2 pt-2 border-t border-current/20">
+                      <p><span className="font-medium">Country:</span> {stripeAccountStatus.country.toUpperCase()}</p>
+                      {stripeAccountStatus.default_currency && (
+                        <p><span className="font-medium">Currency:</span> {stripeAccountStatus.default_currency.toUpperCase()}</p>
+                      )}
+                    </div>
                   )}
                 </div>
 

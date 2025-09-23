@@ -79,10 +79,7 @@ const PaymentStatusCard: React.FC<PaymentStatusCardProps> = ({ className = '', p
   }, [showErrorToast]);
 
   // Create a stable reference to propPayouts to prevent infinite loops
-  const stablePropPayouts = useMemo(() => propPayouts, [
-    propPayouts.length,
-    propPayouts.map(p => `${p.id}-${p.status}-${p.amount}`).join(',')
-  ]);
+  const stablePropPayouts = useMemo(() => propPayouts, [propPayouts]);
 
   // Initialize with prop payouts if provided, otherwise show empty state
   useEffect(() => {

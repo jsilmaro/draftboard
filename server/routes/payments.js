@@ -6,7 +6,7 @@ const stripe = stripeKey ? require('stripe')(stripeKey) : null;
 const auth = require('../middleware/auth');
 
 // Use shared Prisma client
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 // Check if we should use mock mode (only if no Stripe key is provided or key is invalid)
 const useMockMode = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.length < 100;
