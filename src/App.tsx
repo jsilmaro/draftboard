@@ -14,6 +14,7 @@ import PublicBrandBriefs from './components/PublicBrandBriefs'
 // RewardsPaymentPage removed - replaced with Stripe Connect functionality in BrandDashboard
 import PaymentSuccess from './components/PaymentSuccess'
 import PaymentCancel from './components/PaymentCancel'
+import BriefFundingSuccess from './components/BriefFundingSuccess'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
@@ -115,6 +116,8 @@ function App() {
               {/* Payment Routes */}
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel" element={<PaymentCancel />} />
+              <Route path="/briefs/:briefId/funding/success" element={<BriefFundingSuccess />} />
+              <Route path="/briefs/:briefId/funding/cancel" element={<PaymentCancel />} />
 
               {/* Notification Routes */}
               <Route 

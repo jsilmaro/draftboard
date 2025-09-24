@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 const jwt = require('jsonwebtoken');
 
 // Middleware to verify JWT token

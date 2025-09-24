@@ -2,7 +2,16 @@ const express = require('express');
 const router = express.Router();
 const stripeConnectService = require('../services/stripeConnectService');
 const authenticateToken = require('../middleware/auth');
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
+
+// Get Stripe instance function
+const getStripeInstance = () => {
+  const secretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return null;
+  }
+  return require('stripe')(secretKey);
+};
 
 /**
  * Stripe Connect API Routes
@@ -187,10 +196,19 @@ router.post('/briefs/:id/fund', authenticateToken, async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error creating funding session:', error);
+    console.error('❌ Error creating funding session:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      briefId: req.params.id,
+      totalAmount: req.body.totalAmount,
+      brandId: req.user.id
+    });
+    
     res.status(500).json({ 
       error: 'Failed to create funding session',
-      message: error.message 
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -201,12 +219,53 @@ router.post('/briefs/:id/fund', authenticateToken, async (req, res) => {
  */
 router.post('/briefs/:id/fund/confirm', authenticateToken, async (req, res) => {
   try {
+    console.log('🔧 Confirmation endpoint called');
     const { sessionId } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({ error: 'sessionId is required' });
     }
 
+    console.log('🔧 Session ID:', sessionId);
+
+    // Check if funding already exists by session ID
+    const existingFunding = await prisma.briefFunding.findFirst({
+      where: { stripeCheckoutSessionId: sessionId }
+    });
+
+    if (existingFunding) {
+      console.log('🔧 Funding already exists by session ID:', existingFunding.id);
+      return res.json({
+        success: true,
+        message: 'Brief funding already confirmed',
+        data: {
+          fundingId: existingFunding.id,
+          amount: existingFunding.totalAmount,
+          netAmount: existingFunding.netAmount
+        }
+      });
+    }
+
+    // Also check if funding exists by brief ID (in case of duplicate calls)
+    const { id: briefId } = req.params;
+    const existingBriefFunding = await prisma.briefFunding.findUnique({
+      where: { briefId: briefId }
+    });
+
+    if (existingBriefFunding) {
+      console.log('🔧 Brief already funded:', existingBriefFunding.id);
+      return res.json({
+        success: true,
+        message: 'Brief is already funded',
+        data: {
+          fundingId: existingBriefFunding.id,
+          amount: existingBriefFunding.totalAmount,
+          netAmount: existingBriefFunding.netAmount
+        }
+      });
+    }
+
+    console.log('🔧 Processing new funding...');
     const result = await stripeConnectService.processBriefFunding(sessionId);
 
     res.json({
@@ -215,7 +274,8 @@ router.post('/briefs/:id/fund/confirm', authenticateToken, async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error confirming funding:', error);
+    console.error('❌ Error confirming funding:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Failed to confirm funding',
       message: error.message 
@@ -369,6 +429,43 @@ router.get('/briefs/:id/funding/status', authenticateToken, async (req, res) => 
     console.error('Error getting funding status:', error);
     res.status(500).json({ 
       error: 'Failed to get funding status',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/briefs/:id/fund/webhook-trigger
+ * Manually trigger webhook processing for development
+ */
+router.post('/briefs/:id/fund/webhook-trigger', authenticateToken, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required' });
+    }
+
+    // Get the session from Stripe
+    const stripeInstance = getStripeInstance();
+    const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
+    
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ error: 'Payment not completed' });
+    }
+
+    // Process the funding
+    const result = await stripeConnectService.processBriefFunding(sessionId);
+
+    res.json({
+      success: true,
+      message: 'Webhook processing completed',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error triggering webhook:', error);
+    res.status(500).json({ 
+      error: 'Failed to trigger webhook',
       message: error.message 
     });
   }

@@ -34,22 +34,6 @@ const BriefFundingModal: React.FC<BriefFundingModalProps> = ({
   const [netAmount, setNetAmount] = useState(0);
   const { showErrorToast } = useToast();
 
-  useEffect(() => {
-    if (isOpen) {
-      checkFundingStatus();
-    }
-  }, [isOpen, checkFundingStatus]);
-
-  useEffect(() => {
-    if (amount) {
-      const total = parseFloat(amount);
-      const fee = Math.max((total * 0.05), 0.50); // 5% platform fee, minimum $0.50
-      const net = total - fee;
-      setPlatformFee(fee);
-      setNetAmount(net);
-    }
-  }, [amount]);
-
   const checkFundingStatus = useCallback(async () => {
     try {
       setCheckingStatus(true);
@@ -72,6 +56,22 @@ const BriefFundingModal: React.FC<BriefFundingModalProps> = ({
     }
   }, [briefId]);
 
+  useEffect(() => {
+    if (isOpen) {
+      checkFundingStatus();
+    }
+  }, [isOpen, checkFundingStatus]);
+
+  useEffect(() => {
+    if (amount) {
+      const total = parseFloat(amount);
+      const fee = Math.max((total * 0.05), 0.50); // 5% platform fee, minimum $0.50
+      const net = total - fee;
+      setPlatformFee(fee);
+      setNetAmount(net);
+    }
+  }, [amount]);
+
   const handleFundBrief = async () => {
     if (!amount || parseFloat(amount) < 1) {
       showErrorToast('Please enter a valid amount (minimum $1)');
@@ -82,22 +82,25 @@ const BriefFundingModal: React.FC<BriefFundingModalProps> = ({
       setLoading(true);
       const token = localStorage.getItem('token');
       
+      // Use the correct API endpoint for brief funding
       const response = await fetch(`/api/briefs/${briefId}/fund`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ totalAmount: parseFloat(amount) })
+        body: JSON.stringify({ 
+          totalAmount: parseFloat(amount)
+        })
       });
 
       if (response.ok) {
-        const data = await response.json();
-        // Redirect to Stripe Checkout
-        window.location.href = data.data.url;
+        const result = await response.json();
+        // Redirect to Stripe Checkout using the correct data structure
+        window.location.href = result.data.url;
       } else {
         const errorData = await response.json();
-        showErrorToast(errorData.message || 'Failed to create funding session');
+        showErrorToast(errorData.error || 'Failed to create funding session');
       }
     } catch (error) {
       showErrorToast('Failed to fund brief');

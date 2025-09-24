@@ -22,11 +22,34 @@ interface StripeAccountStatus {
   email?: string;
 }
 
+interface Payout {
+  id: string;
+  amount: number;
+  platformFee: number;
+  netAmount: number;
+  status: string;
+  paidAt?: string;
+  createdAt: string;
+  brief: {
+    id: string;
+    title: string;
+    brand: {
+      id: string;
+      name: string;
+    };
+  };
+  submission: {
+    id: string;
+    title: string;
+  };
+}
+
 const CreatorWallet: React.FC = () => {
   // Auth and theme context available if needed
   // const { user } = useAuth();
   // const { isDark } = useTheme();
   const [stripeAccountStatus, setStripeAccountStatus] = useState<StripeAccountStatus | null>(null);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,12 +63,14 @@ const CreatorWallet: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('/api/creators/onboard/status', {
+      // Get user ID from token or context
+      const userId = localStorage.getItem('userId') || 'current'; // This should come from auth context
+      const response = await fetch(`/api/stripe/account/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
         const data = await response.json();
-        setStripeAccountStatus(data.data);
+        setStripeAccountStatus(data);
       } else if (response.status === 404) {
         // If no Stripe account exists, that's fine - user can create one
         setStripeAccountStatus(null);
@@ -87,8 +112,28 @@ const CreatorWallet: React.FC = () => {
     }
   };
 
+  const fetchPayouts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const userId = localStorage.getItem('userId') || 'current';
+      const response = await fetch(`/api/stripe/payouts/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPayouts(data);
+      }
+    } catch (error) {
+      // Error fetching payouts
+    }
+  };
+
   useEffect(() => {
     fetchStripeAccountStatus();
+    fetchPayouts();
   }, []); // Only run once on mount
 
   if (loading) {
@@ -268,6 +313,75 @@ const CreatorWallet: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <PaymentStatusCard />
           </div>
+        </div>
+
+        {/* Payout History */}
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Payout History
+          </h3>
+          
+          {payouts.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400">
+                No payouts yet. Win some briefs to see your earnings here!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {payouts.map((payout) => (
+                <div key={payout.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {payout.brief.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Brand: {payout.brief.brand.name}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Submission: {payout.submission.title}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        ${payout.netAmount.toFixed(2)}
+                      </p>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        payout.status === 'paid'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : payout.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {payout.status}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <div>
+                      <span>Gross: ${payout.amount.toFixed(2)}</span>
+                      <span className="mx-2">•</span>
+                      <span>Fee: ${payout.platformFee.toFixed(2)}</span>
+                    </div>
+                    <div>
+                      {payout.paidAt ? (
+                        <span>Paid: {new Date(payout.paidAt).toLocaleDateString()}</span>
+                      ) : (
+                        <span>Created: {new Date(payout.createdAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Additional Information */}

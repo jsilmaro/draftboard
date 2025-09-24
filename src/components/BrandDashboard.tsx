@@ -14,6 +14,7 @@ import SettingsModal from './SettingsModal';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import CreateBrief from './CreateBrief';
+import BriefManagementPage from './BriefManagementPage';
 
 // Lazy load Stripe-dependent components
 const PaymentManagement = lazy(() => import('./PaymentManagement'));
@@ -47,6 +48,8 @@ interface Brief {
   location?: string;
   additionalFields?: Record<string, unknown>;
   totalRewardsPaid?: number;
+  isFunded?: boolean;
+  fundedAt?: string;
   rewardTiers?: Array<{
     position: number;
     cashAmount: number;
@@ -143,7 +146,7 @@ const BrandDashboard: React.FC = () => {
     const stripeParam = searchParams.get('stripe');
 
     // Set active tab from URL parameter
-    if (tabParam && ['overview', 'briefs', 'submissions', 'creators', 'analytics', 'payments', 'rewards', 'wallet', 'messaging'].includes(tabParam)) {
+    if (tabParam && ['overview', 'briefs', 'funded-briefs', 'create-brief', 'submissions', 'creators', 'analytics', 'payments', 'rewards', 'wallet', 'messaging'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -292,6 +295,7 @@ const BrandDashboard: React.FC = () => {
       items: [
         { id: 'create-brief', label: 'Create Brief', icon: 'create' },
         { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
+        { id: 'funded-briefs', label: 'Brief Management', icon: 'rewards-payments' },
         { id: 'submissions', label: 'Submissions', icon: 'submissions' },
         { id: 'creators', label: 'Creators', icon: 'creators' },
       ]
@@ -649,6 +653,8 @@ const BrandDashboard: React.FC = () => {
         return brief.status === 'draft';
       } else if (briefsFilter === 'archived') {
         return brief.status === 'archived';
+      } else if (briefsFilter === 'funded') {
+        return brief.isFunded === true;
       } else {
         return true; // 'all' shows everything
       }
@@ -672,7 +678,7 @@ const BrandDashboard: React.FC = () => {
         <div className={`flex space-x-1 p-1 rounded-lg ${
           isDark ? 'bg-gray-950' : 'bg-gray-100'
         }`}>
-          {['all', 'published', 'draft', 'archived'].map((filter) => (
+          {['all', 'published', 'draft', 'archived', 'funded'].map((filter) => (
             <button
               key={filter}
               onClick={() => setBriefsFilter(filter)}
@@ -1060,6 +1066,8 @@ const BrandDashboard: React.FC = () => {
         return renderCreateBrief();
       case 'briefs':
         return renderBriefs();
+      case 'funded-briefs':
+        return <BriefManagementPage />;
       case 'submissions':
         return renderSubmissions();
       case 'creators':
@@ -1115,6 +1123,7 @@ const BrandDashboard: React.FC = () => {
             <h1 className="text-lg font-semibold text-white">
               {activeTab === 'overview' ? 'Dashboard' : 
                activeTab === 'briefs' ? 'My Briefs' :
+               activeTab === 'funded-briefs' ? 'Brief Management' :
                activeTab === 'submissions' ? 'Submissions' :
                activeTab === 'creators' ? 'Creators' :
                activeTab === 'analytics' ? 'Analytics' :
@@ -1499,6 +1508,7 @@ const BrandDashboard: React.FC = () => {
               }`}>
                 {activeTab === 'overview' ? 'Dashboard' : 
                  activeTab === 'briefs' ? 'My Briefs' :
+                 activeTab === 'funded-briefs' ? 'Brief Management' :
                  activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
                  activeTab === 'analytics' ? 'Analytics' :

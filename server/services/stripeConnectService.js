@@ -1,30 +1,35 @@
-// Dynamic Stripe initialization based on mode
+const { prisma } = require('../prisma');
+
+// Lazy initialization of Stripe instance
+let stripe = null;
+
 const getStripeInstance = () => {
-  const mode = process.env.STRIPE_MODE || 'test';
-  
-  if (mode === 'live') {
-    const secretKey = process.env.STRIPE_SECRET_KEY_LIVE;
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY_LIVE is required for live mode');
-    }
-    console.log('🔴 Server using Stripe LIVE mode');
-    return require('stripe')(secretKey);
-  } else {
+  if (!stripe) {
     const secretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
+    console.log('🔧 Environment check:');
+    console.log('  - STRIPE_SECRET_KEY_TEST:', process.env.STRIPE_SECRET_KEY_TEST ? 'Set' : 'Not set');
+    console.log('  - STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Set' : 'Not set');
+    console.log('  - Selected key:', secretKey ? 'Found' : 'Not found');
+    
     if (!secretKey) {
       console.log('⚠️ STRIPE_SECRET_KEY not found, Stripe disabled');
       return null;
     }
-    console.log('🟡 Server using Stripe TEST mode');
-    return require('stripe')(secretKey);
+    console.log('🔧 Initializing Stripe instance...');
+    stripe = require('stripe')(secretKey);
+    console.log('🔧 Stripe instance created:', typeof stripe);
   }
+  console.log('🔧 Returning Stripe instance:', typeof stripe);
+  return stripe;
 };
 
-const stripe = getStripeInstance();
-const prisma = require('../prisma');
-
 // Check if Stripe is available
-const isStripeAvailable = () => stripe !== null;
+const isStripeAvailable = () => {
+  const stripeInstance = getStripeInstance();
+  const available = stripeInstance !== null && stripeInstance !== undefined;
+  console.log(`🔍 Stripe availability check: ${available}, stripe object:`, typeof stripeInstance);
+  return available;
+};
 
 /**
  * Stripe Connect Service
@@ -35,6 +40,8 @@ class StripeConnectService {
   constructor() {
     this.platformFeePercentage = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE || '5'); // 5% default
     this.minimumFee = parseFloat(process.env.MINIMUM_PLATFORM_FEE || '0.50'); // $0.50 minimum
+    
+    console.log(`🔧 StripeConnectService initialized. Stripe available: ${isStripeAvailable()}`);
   }
 
   /**
@@ -70,7 +77,8 @@ class StripeConnectService {
       const { email, country = 'US' } = creatorData;
 
       // Create Stripe Connect Express account
-      const account = await stripe.accounts.create({
+      const stripeInstance = getStripeInstance();
+      const account = await stripeInstance.accounts.create({
         type: 'express',
         country: country,
         email: email,
@@ -123,7 +131,8 @@ class StripeConnectService {
    */
   async createAccountLink(accountId, returnUrl, refreshUrl) {
     try {
-      const accountLink = await stripe.accountLinks.create({
+      const stripeInstance = getStripeInstance();
+      const accountLink = await stripeInstance.accountLinks.create({
         account: accountId,
         return_url: returnUrl,
         refresh_url: refreshUrl,
@@ -148,7 +157,8 @@ class StripeConnectService {
    */
   async getAccountStatus(accountId) {
     try {
-      const account = await stripe.accounts.retrieve(accountId);
+      const stripeInstance = getStripeInstance();
+      const account = await stripeInstance.accounts.retrieve(accountId);
       
       // Update database with current status
       await prisma.stripeConnectAccount.update({
@@ -185,22 +195,40 @@ class StripeConnectService {
    */
   async createBriefFundingSession(briefId, brandId, totalAmount, briefTitle) {
     try {
+      console.log(`🔧 Starting createBriefFundingSession for brief ${briefId}`);
+      
+      // Get Stripe instance
+      const stripeInstance = getStripeInstance();
+      
+      console.log(`🔧 Stripe object type: ${typeof stripeInstance}`);
+      console.log(`🔧 Stripe has checkout property: ${stripeInstance && stripeInstance.checkout ? 'yes' : 'no'}`);
+      
+      // Check if Stripe is available
+      if (!isStripeAvailable()) {
+        console.error('❌ Stripe is not available:', { stripe: typeof stripeInstance, isNull: stripeInstance === null });
+        throw new Error('Stripe is not configured. Please check your environment variables.');
+      }
+
+      // Additional safety check
+      if (!stripeInstance || !stripeInstance.checkout || !stripeInstance.checkout.sessions) {
+        console.error('❌ Stripe instance is invalid:', {
+          stripeInstance: typeof stripeInstance,
+          hasCheckout: stripeInstance && stripeInstance.checkout ? 'yes' : 'no',
+          hasSessions: stripeInstance && stripeInstance.checkout && stripeInstance.checkout.sessions ? 'yes' : 'no'
+        });
+        throw new Error('Stripe instance is not properly initialized.');
+      }
+
+
       const { platformFee, netAmount } = this.calculatePlatformFee(totalAmount);
       
-      // Create brief funding record
-      const funding = await prisma.briefFunding.create({
-        data: {
-          briefId: briefId,
-          brandId: brandId,
-          totalAmount: totalAmount,
-          platformFee: platformFee,
-          netAmount: netAmount,
-          status: 'pending'
-        }
-      });
+      console.log(`🔧 Creating Stripe checkout session for brief ${briefId} with amount $${totalAmount}`);
+      console.log(`🔧 stripeInstance type: ${typeof stripeInstance}`);
+      console.log(`🔧 stripeInstance.checkout: ${stripeInstance?.checkout ? 'exists' : 'undefined'}`);
+      console.log(`🔧 stripeInstance.checkout.sessions: ${stripeInstance?.checkout?.sessions ? 'exists' : 'undefined'}`);
 
-      // Create Stripe checkout session
-      const session = await stripe.checkout.sessions.create({
+      // Create Stripe checkout session (NO DATABASE RECORD YET!)
+      const session = await stripeInstance.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
           price_data: {
@@ -214,20 +242,16 @@ class StripeConnectService {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL}/briefs/${briefId}/funding/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/briefs/${briefId}/funding/cancel`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/briefs/${briefId}/funding/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/briefs/${briefId}/funding/cancel`,
         metadata: {
           briefId: briefId,
           brandId: brandId,
-          fundingId: funding.id,
+          totalAmount: totalAmount.toString(),
+          platformFee: platformFee.toString(),
+          netAmount: netAmount.toString(),
           type: 'brief_funding'
         }
-      });
-
-      // Update funding record with session ID
-      await prisma.briefFunding.update({
-        where: { id: funding.id },
-        data: { stripeCheckoutSessionId: session.id }
       });
 
       console.log(`✅ Brief funding session created: ${session.id} for $${totalAmount}`);
@@ -235,8 +259,7 @@ class StripeConnectService {
       return {
         success: true,
         sessionId: session.id,
-        url: session.url,
-        fundingId: funding.id
+        url: session.url
       };
     } catch (error) {
       console.error('Error creating brief funding session:', error);
@@ -251,28 +274,92 @@ class StripeConnectService {
    */
   async processBriefFunding(sessionId) {
     try {
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const stripeInstance = getStripeInstance();
+      const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
       
       if (session.payment_status !== 'paid') {
         throw new Error('Payment not completed');
       }
 
-      // Find funding record
-      const funding = await prisma.briefFunding.findFirst({
+      // Extract data from session metadata
+      const { briefId, brandId, totalAmount, platformFee, netAmount } = session.metadata;
+      
+      if (!briefId || !brandId) {
+        throw new Error('Missing brief or brand information in session metadata');
+      }
+
+      // Check if funding already exists
+      let funding = await prisma.briefFunding.findUnique({
+        where: { briefId: briefId }
+      });
+
+      if (funding) {
+        console.log(`✅ Brief funding already exists: ${funding.id} for $${funding.totalAmount}`);
+        return {
+          success: true,
+          fundingId: funding.id,
+          amount: funding.totalAmount,
+          netAmount: funding.netAmount
+        };
+      }
+
+      // Also check if funding exists by session ID (in case of race conditions)
+      const existingBySession = await prisma.briefFunding.findFirst({
         where: { stripeCheckoutSessionId: sessionId }
       });
 
-      if (!funding) {
-        throw new Error('Funding record not found');
+      if (existingBySession) {
+        console.log(`✅ Brief funding already exists by session: ${existingBySession.id} for $${existingBySession.totalAmount}`);
+        return {
+          success: true,
+          fundingId: existingBySession.id,
+          amount: existingBySession.totalAmount,
+          netAmount: existingBySession.netAmount
+        };
       }
 
-      // Update funding status
-      await prisma.briefFunding.update({
-        where: { id: funding.id },
+      // Create funding record NOW (after payment is confirmed)
+      try {
+        funding = await prisma.briefFunding.create({
+          data: {
+            briefId: briefId,
+            brandId: brandId,
+            totalAmount: parseFloat(totalAmount),
+            platformFee: parseFloat(platformFee),
+            netAmount: parseFloat(netAmount),
+            stripeCheckoutSessionId: sessionId,
+            stripePaymentIntentId: session.payment_intent,
+            status: 'completed',
+            fundedAt: new Date()
+          }
+        });
+      } catch (createError) {
+        // Handle race condition - if another request already created the funding
+        if (createError.code === 'P2002' && createError.meta?.target?.includes('briefId')) {
+          console.log('🔧 Race condition detected - funding already exists, fetching existing record');
+          funding = await prisma.briefFunding.findUnique({
+            where: { briefId: briefId }
+          });
+          
+          if (funding) {
+            console.log(`✅ Using existing funding record: ${funding.id} for $${funding.totalAmount}`);
+            return {
+              success: true,
+              fundingId: funding.id,
+              amount: funding.totalAmount,
+              netAmount: funding.netAmount
+            };
+          }
+        }
+        throw createError;
+      }
+
+      // Update brief as funded
+      await prisma.brief.update({
+        where: { id: briefId },
         data: {
-          status: 'completed',
-          fundedAt: new Date(),
-          stripePaymentIntentId: session.payment_intent
+          isFunded: true,
+          fundedAt: new Date()
         }
       });
 
@@ -338,7 +425,8 @@ class StripeConnectService {
           });
 
           // Create Stripe transfer
-          const transfer = await stripe.transfers.create({
+          const stripeInstance = getStripeInstance();
+          const transfer = await stripeInstance.transfers.create({
             amount: Math.round(netAmount * 100), // Convert to cents
             currency: 'usd',
             destination: connectAccount.stripeAccountId,
@@ -436,7 +524,8 @@ class StripeConnectService {
       });
 
       // Create Stripe refund
-      const stripeRefund = await stripe.refunds.create({
+      const stripeInstance = getStripeInstance();
+      const stripeRefund = await stripeInstance.refunds.create({
         payment_intent: funding.stripePaymentIntentId,
         amount: Math.round(remainingAmount * 100), // Convert to cents
         reason: 'requested_by_customer',

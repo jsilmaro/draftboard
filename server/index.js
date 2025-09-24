@@ -47,12 +47,11 @@ const notificationsRoutes = require('./routes/notifications');
 const stripeConnectRoutes = require('./routes/stripeConnect');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
 const webhookRoutes = require('./routes/webhooks');
+const stripeRoutes = require('./routes/stripe');
 
 // Import Stripe integration routes
-const stripeRoutes = require('./stripe');
 // rewardsRoutes removed - replaced with Stripe Connect functionality
-const mockStripe = require('./mockStripe');
-const mockStripeRoutes = mockStripe.router;
+// Mock Stripe removed - using live Stripe Connect
 
 // Debug environment variables
 console.log('🔧 Environment check:');
@@ -389,8 +388,8 @@ app.use('/api', stripeWebhookRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
 // Stripe integration routes
-app.use('/api/stripe', stripeRoutes);
-app.use('/api/mock-stripe', mockStripeRoutes);
+app.use('/api/stripe', authenticateToken, stripeRoutes);
+// Mock Stripe routes removed - using live Stripe Connect
 // app.use('/api/rewards-system', rewardsRoutes); // Removed - replaced with Stripe Connect
 
 // Test endpoint to create a brief with past deadline for testing
@@ -530,157 +529,7 @@ app.get('/api/admin/archived-briefs', authenticateToken, async (req, res) => {
   }
 });
 
-// Additional webhook route for local development (port 3000)
-app.post('/api/stripe/webhook-local', async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    
-    if (!sessionId) {
-      return res.status(400).json({ error: 'Missing session ID' });
-    }
-
-    // Check if we have a mock session
-    const mockCheckoutSessions = mockStripe.mockCheckoutSessions || new Map();
-    const session = mockCheckoutSessions.get(sessionId);
-    
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    // Simulate wallet funding for wallet_funding type
-    if (session.metadata && session.metadata.type === 'wallet_funding') {
-      const brandId = session.metadata.brandId;
-      const amount = session.amount_total / 100; // Convert from cents
-
-      try {
-        // Find or create wallet
-        let wallet = await prisma.brandWallet.findUnique({
-          where: { brandId: brandId }
-        });
-
-        if (!wallet) {
-          wallet = await prisma.brandWallet.create({
-            data: {
-              brandId: brandId,
-              balance: 0,
-              totalSpent: 0,
-              totalDeposited: 0
-            }
-          });
-        }
-
-        await prisma.$transaction(async (tx) => {
-          // Update wallet balance
-          const updatedWallet = await tx.brandWallet.update({
-            where: { brandId: brandId },
-            data: {
-              balance: { increment: amount },
-              totalDeposited: { increment: amount }
-            }
-          });
-
-          // Create transaction record
-          await tx.brandWalletTransaction.create({
-            data: {
-              walletId: wallet.id,
-              type: 'deposit',
-              amount: amount,
-              description: `Wallet funding via Stripe Checkout (Local)`,
-              balanceBefore: wallet.balance,
-              balanceAfter: updatedWallet.balance,
-              referenceId: session.id
-            }
-          });
-        });
-
-        console.log(`✅ Local webhook wallet funding successful: $${amount} added to brand ${brandId} wallet`);
-      } catch (dbError) {
-        console.log('Database error in local webhook:', dbError.message);
-      }
-    }
-
-    res.json({ received: true, source: 'local-webhook' });
-  } catch (error) {
-    console.error('Error processing local webhook:', error);
-    res.status(500).json({ error: 'Failed to process webhook' });
-  }
-});
-
-// Fallback webhook route for when Stripe is not configured
-app.post('/api/stripe/webhook', async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    
-    if (!sessionId) {
-      return res.status(400).json({ error: 'Missing session ID' });
-    }
-
-    // Check if we have a mock session
-    const mockCheckoutSessions = mockStripe.mockCheckoutSessions || new Map();
-    const session = mockCheckoutSessions.get(sessionId);
-    
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    // Simulate wallet funding for wallet_funding type
-    if (session.metadata && session.metadata.type === 'wallet_funding') {
-      const brandId = session.metadata.brandId;
-      const amount = session.amount_total / 100; // Convert from cents
-
-      try {
-        // Find or create wallet
-        let wallet = await prisma.brandWallet.findUnique({
-          where: { brandId: brandId }
-        });
-
-        if (!wallet) {
-          wallet = await prisma.brandWallet.create({
-            data: {
-              brandId: brandId,
-              balance: 0,
-              totalSpent: 0,
-              totalDeposited: 0
-            }
-          });
-        }
-
-        await prisma.$transaction(async (tx) => {
-          // Update wallet balance
-          const updatedWallet = await tx.brandWallet.update({
-            where: { brandId: brandId },
-            data: {
-              balance: { increment: amount },
-              totalDeposited: { increment: amount }
-            }
-          });
-
-          // Create transaction record
-          await tx.brandWalletTransaction.create({
-            data: {
-              walletId: wallet.id,
-              type: 'deposit',
-              amount: amount,
-              description: `Wallet funding via Stripe Checkout`,
-              balanceBefore: wallet.balance,
-              balanceAfter: updatedWallet.balance,
-              referenceId: session.id
-            }
-          });
-        });
-
-        console.log(`✅ Fallback wallet funding successful: $${amount} added to brand ${brandId} wallet`);
-      } catch (dbError) {
-        console.log('Database error in fallback webhook:', dbError.message);
-      }
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Error processing fallback webhook:', error);
-    res.status(500).json({ error: 'Failed to process webhook' });
-  }
-});
+// Development webhook endpoints removed - using live Stripe Connect webhooks
 
 // Test endpoint for debugging
 app.get('/api/debug', (req, res) => {
@@ -2010,60 +1859,27 @@ app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
 // Get briefs for a brand
 app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
   try {
+    console.log('📋 Fetching briefs for brand:', req.user.id);
+    
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    console.log('📋 Querying database for briefs...');
+    
+    // First try a simple query without complex includes
     const briefs = await prisma.brief.findMany({
       where: { brandId: req.user.id },
-      include: {
-        submissions: {
-          select: {
-            id: true,
-            creator: {
-              select: {
-                userName: true,
-                fullName: true
-              }
-            },
-            status: true,
-            submittedAt: true
-          }
-        },
-        publishedAwards: {
-          select: {
-            rewardTiers: true
-          }
-        },
-        winnerRewards: {
-          select: {
-            position: true,
-            cashAmount: true,
-            creditAmount: true,
-            prizeDescription: true
-          },
-          orderBy: { position: 'asc' }
-        }
-      },
       orderBy: { createdAt: 'desc' }
     });
+    
+    console.log('📋 Found briefs:', briefs.length);
 
     // Transform briefs to include calculated values
     const transformedBriefs = briefs.map(brief => {
-      // Parse reward tiers and calculate total value
-      let totalRewardValue = 0;
+      // For now, just use the basic reward field
+      let totalRewardValue = brief.reward || 0;
       let rewardTiers = [];
-      
-      if (brief.publishedAwards && brief.publishedAwards.length > 0) {
-        try {
-          rewardTiers = JSON.parse(brief.publishedAwards[0].rewardTiers);
-          totalRewardValue = rewardTiers.reduce((total, tier) => {
-            return total + (tier.cashAmount || 0) + (tier.creditAmount || 0);
-          }, 0);
-        } catch (error) {
-          console.error('Error parsing reward tiers:', error);
-        }
-      }
 
       // Extract country from location
       let country = '';
@@ -2077,13 +1893,15 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
         totalRewardValue,
         rewardTiers,
         displayLocation: country, // Show only country on cards
-        submissions: brief.submissions || []
+        submissions: [] // Empty array for now
       };
     });
 
+    console.log('📋 Successfully fetched and transformed briefs:', transformedBriefs.length);
     res.json(transformedBriefs);
   } catch (error) {
-    console.error('Error fetching brand briefs:', error);
+    console.error('❌ Error fetching brand briefs:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2283,6 +2101,13 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
 
     const brandId = req.user.id;
 
+    // First, get all brief IDs for this brand
+    const brandBriefs = await prisma.brief.findMany({
+      where: { brandId },
+      select: { id: true }
+    });
+    const briefIds = brandBriefs.map(b => b.id);
+
     // Get analytics data
     const [
       totalBriefs,
@@ -2316,14 +2141,14 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       // Total rewards created
       prisma.creatorPayout.count({
         where: {
-          brief: { brandId }
+          briefId: { in: briefIds }
         }
       }),
       
       // Total rewards paid (completed)
       prisma.creatorPayout.aggregate({
         where: {
-          brief: { brandId },
+          briefId: { in: briefIds },
           status: 'paid'
         },
         _sum: { amount: true }
@@ -2332,7 +2157,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       // Pending rewards
       prisma.creatorPayout.count({
         where: {
-          brief: { brandId },
+          briefId: { in: briefIds },
           status: 'pending'
         }
       }),
@@ -2340,7 +2165,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       // Completed rewards
       prisma.creatorPayout.count({
         where: {
-          brief: { brandId },
+          briefId: { in: briefIds },
           status: 'paid'
         }
       })
@@ -2352,7 +2177,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
 
     const recentActivity = await prisma.creatorPayout.count({
       where: {
-        brief: { brandId },
+        briefId: { in: briefIds },
         createdAt: {
           gte: thirtyDaysAgo
         }
@@ -3207,6 +3032,51 @@ app.get('/api/briefs/:briefId/public', async (req, res) => {
 });
 
 // ==================== PROTECTED ROUTES ====================
+
+// Get funding status for a specific brief (MUST come before /api/briefs/:id)
+app.get('/api/briefs/:id/funding/status', authenticateToken, async (req, res) => {
+  try {
+    const { id: briefId } = req.params;
+    
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Find the brief and verify ownership
+    const brief = await prisma.brief.findFirst({
+      where: {
+        id: briefId,
+        brandId: req.user.id
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    // Find funding record if it exists
+    const funding = await prisma.briefFunding.findUnique({
+      where: { briefId: briefId }
+    });
+
+    const fundingStatus = {
+      isFunded: brief.isFunded || false,
+      totalAmount: funding ? parseFloat(funding.totalAmount.toString()) : 0,
+      netAmount: funding ? parseFloat(funding.netAmount.toString()) : 0,
+      platformFee: funding ? parseFloat(funding.platformFee.toString()) : 0,
+      status: funding ? funding.status : 'not_funded',
+      fundedAt: funding ? funding.fundedAt : null
+    };
+
+    res.json({
+      success: true,
+      data: fundingStatus
+    });
+  } catch (error) {
+    console.error('Error fetching funding status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Get specific brief details for creators
 app.get('/api/briefs/:id', authenticateToken, async (req, res) => {

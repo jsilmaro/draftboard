@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {

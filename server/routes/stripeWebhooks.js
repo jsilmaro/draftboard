@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 // Initialize Stripe only if API key is available
 let stripe = null;
@@ -143,43 +143,60 @@ async function handleCheckoutSessionCompleted(session) {
       return;
     }
 
-    const funding = await prisma.briefFunding.findFirst({
-      where: { stripeCheckoutSessionId: session.id }
-    });
-
-    if (!funding) {
-      console.log(`⚠️ Funding record not found for session: ${session.id}`);
+    // Extract data from session metadata
+    const { briefId, brandId, totalAmount, platformFee, netAmount } = session.metadata;
+    
+    if (!briefId || !brandId) {
+      console.log(`⚠️ Missing brief or brand information in session metadata: ${session.id}`);
       return;
     }
 
-    // Update funding status
-    await prisma.briefFunding.update({
-      where: { id: funding.id },
-      data: {
-        status: 'completed',
-        fundedAt: new Date(),
-        stripePaymentIntentId: session.payment_intent
-      }
-    });
-
-    // Create notification for brand
-    await prisma.notification.create({
-      data: {
-        userId: funding.brandId,
-        userType: 'brand',
-        title: 'Brief Funding Successful',
-        message: `Your brief has been successfully funded with $${funding.totalAmount}. You can now start reviewing submissions!`,
-        type: 'payment',
-        category: 'brief',
-        metadata: {
-          briefId: funding.briefId,
-          amount: funding.totalAmount,
-          sessionId: session.id
+    // Create funding record and update brief status in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Create funding record (NOW after payment is confirmed)
+      await tx.briefFunding.create({
+        data: {
+          briefId: briefId,
+          brandId: brandId,
+          totalAmount: parseFloat(totalAmount),
+          platformFee: parseFloat(platformFee),
+          netAmount: parseFloat(netAmount),
+          stripeCheckoutSessionId: session.id,
+          stripePaymentIntentId: session.payment_intent,
+          status: 'completed',
+          fundedAt: new Date()
         }
-      }
+      });
+
+      // Update brief status to funded
+      await tx.brief.update({
+        where: { id: briefId },
+        data: {
+          isFunded: true,
+          fundedAt: new Date()
+        }
+      });
+
+      // Create notification for brand
+      await tx.notification.create({
+        data: {
+          userId: brandId,
+          userType: 'brand',
+          title: 'Brief Funding Successful',
+          message: `Your brief has been successfully funded with $${totalAmount}. You can now start reviewing submissions!`,
+          type: 'payment',
+          category: 'brief',
+          metadata: {
+            briefId: briefId,
+            amount: totalAmount,
+            sessionId: session.id
+          }
+        }
+      });
+
+      console.log(`✅ Brief funding completed: ${briefId} - $${totalAmount}`);
     });
 
-    console.log(`✅ Brief funding completed: ${funding.briefId} - $${funding.totalAmount}`);
   } catch (error) {
     console.error('Error handling checkout.session.completed:', error);
   }

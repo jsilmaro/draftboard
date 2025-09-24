@@ -80,6 +80,12 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
   const getStatusBadge = () => {
     const baseClasses = "px-3 py-1 text-xs rounded-full font-medium";
+    
+    // Show funding status if brief is funded
+    if (brief.isFunded) {
+      return `${baseClasses} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400`;
+    }
+    
     switch (brief.status) {
       case 'active':
         return `${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400`;
@@ -93,6 +99,9 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   };
 
   const getStatusText = () => {
+    if (brief.isFunded) {
+      return 'Funded';
+    }
     return brief.status.charAt(0).toUpperCase() + brief.status.slice(1);
   };
 
