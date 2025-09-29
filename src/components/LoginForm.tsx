@@ -61,87 +61,11 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${
+    <div className={`min-h-screen ${
       isDark 
-        ? 'bg-gradient-to-br from-green-950 via-black to-purple-950' 
+        ? 'bg-gray-900' 
         : 'bg-gray-50'
     }`}>
-      {/* Animated Background Elements - Only for dark mode */}
-      {isDark && (
-        <div className="absolute inset-0">
-          {/* Moving Green Wave */}
-          <div className="absolute inset-0 animate-pulse">
-            <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="none">
-              <defs>
-                <radialGradient id="greenGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#01D924" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#01D924" stopOpacity="0"/>
-                </radialGradient>
-                <radialGradient id="violetGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.4"/>
-                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0"/>
-                </radialGradient>
-              </defs>
-              
-              {/* Animated Green Wave */}
-              <path
-                d="M1200 800 Q900 600 600 700 Q300 800 0 600 L0 800 Z"
-                fill="url(#greenGlow)"
-                className="animate-pulse"
-              />
-              
-              {/* Animated Violet Wave */}
-              <path
-                d="M1200 800 Q1000 400 700 500 Q400 600 0 400 L0 800 Z"
-                fill="url(#violetGlow)"
-                className="animate-pulse"
-              />
-              
-              {/* Floating Green Particles */}
-              <circle cx="200" cy="200" r="3" fill="#01D924" opacity="0.6" className="animate-bounce">
-                <animate attributeName="cy" values="200;150;200" dur="4s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="800" cy="300" r="2" fill="#01D924" opacity="0.4" className="animate-bounce">
-                <animate attributeName="cy" values="300;250;300" dur="5s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.4;0.1;0.4" dur="5s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="400" cy="500" r="4" fill="#01D924" opacity="0.5" className="animate-bounce">
-                <animate attributeName="cy" values="500;450;500" dur="6s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.5;0.2;0.5" dur="6s" repeatCount="indefinite"/>
-              </circle>
-              
-              {/* Floating Violet Particles */}
-              <circle cx="600" cy="150" r="2" fill="#8B5CF6" opacity="0.5" className="animate-bounce">
-                <animate attributeName="cy" values="150;100;150" dur="7s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.5;0.2;0.5" dur="7s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="1000" cy="400" r="3" fill="#8B5CF6" opacity="0.3" className="animate-bounce">
-                <animate attributeName="cy" values="400;350;400" dur="8s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.3;0.1;0.3" dur="8s" repeatCount="indefinite"/>
-              </circle>
-              <circle cx="300" cy="600" r="2" fill="#8B5CF6" opacity="0.4" className="animate-bounce">
-                <animate attributeName="cy" values="600;550;600" dur="9s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.4;0.1;0.4" dur="9s" repeatCount="indefinite"/>
-              </circle>
-            </svg>
-          </div>
-          
-          {/* Moving Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-green-900/20 via-transparent to-purple-900/20 animate-pulse" />
-          
-          {/* Floating Shapes */}
-          <div className="absolute top-20 left-20 w-32 h-32 bg-green-500/10 rounded-full blur-xl animate-pulse">
-            <div className="w-full h-full bg-green-400/20 rounded-full animate-ping"></div>
-          </div>
-          <div className="absolute bottom-40 right-20 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse">
-            <div className="w-full h-full bg-purple-400/20 rounded-full animate-ping"></div>
-          </div>
-          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-green-500/10 rounded-full blur-xl animate-pulse">
-            <div className="w-full h-full bg-green-400/20 rounded-full animate-ping"></div>
-          </div>
-        </div>
-      )}
 
       <div className="relative z-10 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         {/* Theme Toggle */}
@@ -178,7 +102,7 @@ const LoginForm: React.FC = () => {
         <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className={`py-6 sm:py-8 px-4 sm:px-10 scale-in ${
             isDark 
-              ? 'bg-gray-800/80 backdrop-blur-sm shadow-xl sm:rounded-lg border border-gray-700/50'
+              ? 'bg-gray-800 border border-gray-700 rounded-lg shadow-sm'
               : 'bg-white border border-gray-200 rounded-lg shadow-sm'
           }`}>
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -209,7 +133,7 @@ const LoginForm: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm transition-all ${
                       isDark 
-                        ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-700/80 backdrop-blur-sm text-white'
+                        ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
                         : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
                     }`}
                     placeholder="admin@gmail.com"
@@ -234,7 +158,7 @@ const LoginForm: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm transition-all ${
                       isDark 
-                        ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-700/80 backdrop-blur-sm text-white'
+                        ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
                         : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
                     }`}
                     placeholder="••••••••"
@@ -248,12 +172,9 @@ const LoginForm: React.FC = () => {
                   disabled={isLoading}
                   className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${
                     isDark 
-                      ? 'text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+                      ? 'text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
                       : 'text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
                   }`}
-                  style={isDark ? {
-                    boxShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)'
-                  } : {}}
                 >
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </button>
@@ -278,7 +199,7 @@ const LoginForm: React.FC = () => {
                 <div className="relative flex justify-center text-sm">
                   <span className={`px-2 ${
                     isDark 
-                      ? 'bg-gray-800/80 backdrop-blur-sm text-gray-400'
+                      ? 'bg-gray-800 text-gray-400'
                       : 'bg-white text-gray-500'
                   }`}>New to the platform?</span>
                 </div>
@@ -289,7 +210,7 @@ const LoginForm: React.FC = () => {
                   to="/brand/register"
                   className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium transition-all duration-300 ${
                     isDark 
-                      ? 'border-gray-600 bg-gray-700/80 backdrop-blur-sm text-white hover:bg-gray-600/80'
+                      ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600'
                       : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
                   }`}
                 >
@@ -299,7 +220,7 @@ const LoginForm: React.FC = () => {
                   to="/creator/register"
                   className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium transition-all duration-300 ${
                     isDark 
-                      ? 'border-gray-600 bg-gray-700/80 backdrop-blur-sm text-white hover:bg-gray-600/80'
+                      ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600'
                       : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
                   }`}
                 >
