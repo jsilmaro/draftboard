@@ -54,6 +54,7 @@ const ManageRewardsPayments: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'review' | 'winners' | 'payments'>('review');
   const [selectedWinners, setSelectedWinners] = useState<Winner[]>([]);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [submissionsFilter, setSubmissionsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const { showErrorToast, showSuccessToast } = useToast();
 
   const fetchBriefs = useCallback(async () => {
@@ -68,12 +69,12 @@ const ManageRewardsPayments: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         
-        // Filter for funded briefs
-        const fundedBriefs = data.filter((brief: Brief) => {
-          return brief.isFunded;
+        // Show all briefs with submissions, not just funded ones
+        const briefsWithSubmissions = data.filter((brief: Brief) => {
+          return brief.submissions && brief.submissions.length > 0;
         });
         
-        setBriefs(fundedBriefs);
+        setBriefs(briefsWithSubmissions);
       }
     } catch (error) {
       showErrorToast('Failed to fetch briefs');
@@ -97,7 +98,7 @@ const ManageRewardsPayments: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`/api/submissions/${submissionId}/accept`, {
+      const response = await fetch(`/api/brands/submissions/${submissionId}/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -121,7 +122,7 @@ const ManageRewardsPayments: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`/api/submissions/${submissionId}/reject`, {
+      const response = await fetch(`/api/brands/submissions/${submissionId}/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -230,7 +231,24 @@ const ManageRewardsPayments: React.FC = () => {
 
   const getShortlistedSubmissions = () => {
     if (!selectedBrief) return [];
-    return selectedBrief.submissions.filter(sub => sub.status === 'accepted');
+    return selectedBrief.submissions.filter(sub => sub.status === 'approved');
+  };
+
+  const getFilteredSubmissions = () => {
+    if (!selectedBrief) return [];
+    
+    let filtered = selectedBrief.submissions;
+    
+    // Filter by status
+    if (submissionsFilter === 'pending') {
+      filtered = filtered.filter(sub => sub.status === 'pending');
+    } else if (submissionsFilter === 'approved') {
+      filtered = filtered.filter(sub => sub.status === 'approved');
+    } else if (submissionsFilter === 'rejected') {
+      filtered = filtered.filter(sub => sub.status === 'rejected');
+    }
+    
+    return filtered;
   };
 
   if (loading) {
@@ -272,15 +290,15 @@ const ManageRewardsPayments: React.FC = () => {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No Funded Briefs
+                No Briefs with Submissions
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 To see briefs here, you need to:
               </p>
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <p>1. Create and fund a brief</p>
+                <p>1. Create a brief</p>
                 <p>2. Wait for creators to submit work</p>
-                <p>3. Accept some submissions</p>
+                <p>3. Review and manage submissions</p>
               </div>
             </div>
           ) : (
@@ -312,7 +330,7 @@ const ManageRewardsPayments: React.FC = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Shortlisted:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {brief.submissions.filter(s => s.status === 'accepted').length}
+                      {brief.submissions.filter(s => s.status === 'approved').length}
                     </span>
                   </div>
                 </div>
@@ -399,70 +417,118 @@ const ManageRewardsPayments: React.FC = () => {
           {/* Section Content */}
           {activeSection === 'review' && (
             <div className="space-y-4">
+              <div className="flex justify-between items-center">
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Review Submissions
               </h4>
-              {selectedBrief.submissions.length === 0 ? (
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {getFilteredSubmissions().length} of {selectedBrief.submissions.length} submissions
+                </div>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                {['all', 'pending', 'approved', 'rejected'].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setSubmissionsFilter(filter as 'all' | 'pending' | 'approved' | 'rejected')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      submissionsFilter === filter
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {getFilteredSubmissions().length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-600 dark:text-gray-400">No submissions yet.</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {selectedBrief.submissions.length === 0 
+                      ? 'No submissions yet.' 
+                      : 'No submissions found for the selected filter.'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {selectedBrief.submissions.map((submission) => (
+                  {getFilteredSubmissions().map((submission) => (
                     <div
                       key={submission.id}
-                      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+                      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
                     >
                       <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-lg flex items-center justify-center border bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                            <img src="/icons/profile.png" alt="User" className="w-10 h-10" />
+                          </div>
                         <div>
                           <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Submission Content
+                              {submission.creator.fullName}
                           </h5>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            by {submission.creator.fullName} (@{submission.creator.userName})
+                              @{submission.creator.userName}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Submitted {new Date(submission.submittedAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          submission.status === 'accepted' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                        </div>
+                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                          submission.status === 'approved' 
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700'
                             : submission.status === 'rejected'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                            ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700'
+                            : 'bg-yellow-50 text-yellow-600 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-700'
                         }`}>
                           {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                         </span>
                       </div>
+                      
                       <div className="mb-4">
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <h6 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Submission Content:</h6>
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                           {submission.content}
                         </p>
                       </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
                       <div className="flex space-x-2">
                         {submission.status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleAcceptSubmission(submission.id)}
-                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                             >
-                              Accept & Shortlist
+                                ✓ Accept & Shortlist
                             </button>
                             <button
                               onClick={() => handleRejectSubmission(submission.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                             >
-                              Reject
+                                ✗ Reject
                             </button>
                           </>
                         )}
-                        {submission.status === 'accepted' && (
-                          <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                          {submission.status === 'approved' && (
+                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg">
                             ✓ Shortlisted
                           </span>
                         )}
                         {submission.status === 'rejected' && (
-                          <span className="text-red-600 dark:text-red-400 text-sm font-medium">
+                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
                             ✗ Rejected
                           </span>
+                          )}
+                        </div>
+                        
+                        {submission.status === 'pending' && (
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Awaiting review
+                          </div>
                         )}
                       </div>
                     </div>

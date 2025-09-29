@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// import { useAuth } from '../contexts/AuthContext';
-// import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import StripeConnectButton from './StripeConnectButton';
 
 interface StripeAccountStatus {
@@ -44,15 +45,17 @@ interface Payout {
 }
 
 const CreatorWallet: React.FC = () => {
-  // Auth and theme context available if needed
-  // const { user } = useAuth();
-  // const { isDark } = useTheme();
+  const { user } = useAuth();
+  const { isDark } = useTheme();
+  const { showSuccessToast, showErrorToast } = useToast();
   const [stripeAccountStatus, setStripeAccountStatus] = useState<StripeAccountStatus | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [totalEarned, setTotalEarned] = useState<number>(0);
 
-  const fetchStripeAccountStatus = async () => {
+  const fetchStripeAccountStatus = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,8 +65,12 @@ const CreatorWallet: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      // Get user ID from token or context
-      const userId = localStorage.getItem('userId') || 'current'; // This should come from auth context
+      // Use user ID from auth context
+      const userId = user?.id || localStorage.getItem('userId');
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
       const response = await fetch(`/api/stripe/account/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -81,7 +88,7 @@ const CreatorWallet: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const recheckAccountStatus = async () => {
     try {
@@ -101,15 +108,39 @@ const CreatorWallet: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setStripeAccountStatus(data.data);
+        showSuccessToast('Account status updated successfully');
       } else {
         throw new Error('Failed to recheck account status');
       }
     } catch (err) {
       setError('Failed to recheck account status');
+      showErrorToast('Failed to update account status');
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchWalletBalance = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const userId = user?.id || localStorage.getItem('userId');
+      if (!userId) return;
+
+      const response = await fetch(`/api/creators/wallet/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWalletBalance(data.balance || 0);
+        setTotalEarned(data.totalEarned || 0);
+      }
+    } catch (error) {
+      // Silently handle error - wallet balance will show as 0
+    }
+  }, [user?.id]);
 
   const fetchPayouts = async () => {
     try {
@@ -133,7 +164,8 @@ const CreatorWallet: React.FC = () => {
   useEffect(() => {
     fetchStripeAccountStatus();
     fetchPayouts();
-  }, []); // Only run once on mount
+    fetchWalletBalance();
+  }, [user?.id, fetchStripeAccountStatus, fetchWalletBalance]); // Run when user changes
 
   if (loading) {
     return (
@@ -181,14 +213,53 @@ const CreatorWallet: React.FC = () => {
           </div>
         )}
 
+        {/* Wallet Balance Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Current Balance
+                </p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  ${walletBalance.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Total Earned
+                </p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  ${totalEarned.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-full">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Stripe Connect Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Stripe Connect
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Connect your Stripe account to receive payments directly when you win briefs.
             </p>
             
@@ -202,7 +273,7 @@ const CreatorWallet: React.FC = () => {
                       ? 'bg-yellow-500'
                       : 'bg-red-500'
                   }`}></div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {stripeAccountStatus.status === 'active' 
                       ? '✅ Stripe Connected – Ready for Payouts' 
                       : stripeAccountStatus.status === 'restricted'
@@ -311,35 +382,39 @@ const CreatorWallet: React.FC = () => {
         </div>
 
         {/* Payout History */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className={`mt-8 p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Payout History
           </h3>
           
           {payouts.length === 0 ? (
             <div className="text-center py-8">
-              <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                isDark ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 No payouts yet. Win some briefs to see your earnings here!
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {payouts.map((payout) => (
-                <div key={payout.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div key={payout.id} className={`border rounded-lg p-4 ${
+                  isDark ? 'border-gray-700' : 'border-gray-200'
+                }`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
+                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {payout.brief.title}
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         Brand: {payout.brief.brand.name}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         Submission: {payout.submission.title}
                       </p>
                     </div>
@@ -359,7 +434,9 @@ const CreatorWallet: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <div className={`flex justify-between text-sm ${
+                    isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     <div>
                       <span>Gross: ${payout.amount.toFixed(2)}</span>
                       <span className="mx-2">•</span>
@@ -380,7 +457,11 @@ const CreatorWallet: React.FC = () => {
         </div>
 
         {/* Additional Information */}
-        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <div className={`mt-8 p-6 rounded-lg ${
+          isDark 
+            ? 'bg-blue-900/20 border border-blue-800' 
+            : 'bg-blue-50 border border-blue-200'
+        }`}>
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -388,10 +469,14 @@ const CreatorWallet: React.FC = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <h3 className={`text-sm font-medium ${
+                isDark ? 'text-blue-200' : 'text-blue-800'
+              }`}>
                 How Stripe Connect Works
-                </h3>
-              <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+              </h3>
+              <div className={`mt-2 text-sm ${
+                isDark ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Connect your Stripe account to receive direct payments</li>
                   <li>When you win a brief, funds are automatically transferred to your account</li>

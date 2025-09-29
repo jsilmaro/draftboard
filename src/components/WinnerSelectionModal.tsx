@@ -8,6 +8,12 @@ interface Submission {
   submittedAt: string;
   content: string;
   hasStripeAccount?: boolean;
+  stripeAccountStatus?: {
+    status: 'pending' | 'restricted' | 'active';
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    detailsSubmitted: boolean;
+  };
 }
 
 interface Winner {
@@ -230,9 +236,36 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
                           {submission.creatorName}
                         </h4>
                         <div className="flex items-center space-x-2">
-                          {submission.hasStripeAccount && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              ✓ Stripe Connected
+                          {submission.hasStripeAccount && submission.stripeAccountStatus ? (
+                            <div className="flex items-center space-x-1">
+                              <div className={`w-2 h-2 rounded-full ${
+                                submission.stripeAccountStatus.status === 'active' 
+                                  ? 'bg-green-500' 
+                                  : submission.stripeAccountStatus.status === 'restricted'
+                                  ? 'bg-yellow-500'
+                                  : 'bg-red-500'
+                              }`}></div>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                submission.stripeAccountStatus.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : submission.stripeAccountStatus.status === 'restricted'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              }`}>
+                                {submission.stripeAccountStatus.status === 'active' 
+                                  ? '✓ Ready for Payment' 
+                                  : submission.stripeAccountStatus.status === 'restricted'
+                                  ? '⚠️ Verification Required'
+                                  : '❌ Setup Incomplete'}
+                              </span>
+                            </div>
+                          ) : submission.hasStripeAccount ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              🔗 Stripe Connected
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                              ❌ No Stripe Account
                             </span>
                           )}
                           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -288,6 +321,31 @@ const WinnerSelectionModal: React.FC<WinnerSelectionModalProps> = ({
                                   min="0"
                                   placeholder="0.00"
                                 />
+                                
+                                {/* Stripe Account Warning for Cash Rewards */}
+                                {winnerData.rewardType === 'cash' && (
+                                  <div className="mt-2">
+                                    {!submission.hasStripeAccount ? (
+                                      <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                                        <p className="text-xs text-red-700 dark:text-red-400">
+                                          ⚠️ This creator doesn&apos;t have a Stripe account. Cash payments will be held until they connect their account.
+                                        </p>
+                                      </div>
+                                    ) : submission.stripeAccountStatus?.status !== 'active' ? (
+                                      <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                                        <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                                          ⚠️ This creator&apos;s Stripe account needs verification. Payments may be delayed.
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <div className="p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                                        <p className="text-xs text-green-700 dark:text-green-400">
+                                          ✅ This creator&apos;s Stripe account is ready for instant payments.
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
 

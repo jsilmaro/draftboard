@@ -153,7 +153,6 @@ const BrandDashboard: React.FC = () => {
     winnersSelected: 0
   });
   const [loading, setLoading] = useState(true);
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBriefDetails, setShowBriefDetails] = useState(false);
@@ -165,8 +164,6 @@ const BrandDashboard: React.FC = () => {
   // const [showMessaging, setShowMessaging] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [briefsFilter, setBriefsFilter] = useState('all');
-  const [submissionsFilter, setSubmissionsFilter] = useState('all');
-  const [selectedBriefForSubmissions, setSelectedBriefForSubmissions] = useState<string | null>(null);
   const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
   const [analytics, setAnalytics] = useState({
     totalSpent: 0,
@@ -209,7 +206,7 @@ const BrandDashboard: React.FC = () => {
     const stripeParam = searchParams.get('stripe');
 
     // Set active tab from URL parameter
-    if (tabParam && ['overview', 'briefs', 'create-brief', 'submissions', 'creators', 'analytics', 'wallet', 'messaging', 'manage-rewards'].includes(tabParam)) {
+    if (tabParam && ['overview', 'briefs', 'create-brief', 'creators', 'analytics', 'wallet', 'messaging', 'manage-rewards'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -231,9 +228,6 @@ const BrandDashboard: React.FC = () => {
 
   // Clear selected brief when switching away from submissions
   const handleTabChange = (tab: string) => {
-    if (tab !== 'submissions') {
-      setSelectedBriefForSubmissions(null);
-    }
     // Store the current tab as previous tab before switching
     if (tab !== 'create-brief') {
       setPreviousTab(activeTab);
@@ -336,7 +330,6 @@ const BrandDashboard: React.FC = () => {
     { id: 'create-brief', label: 'Create Brief', icon: 'create' },
     { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
     { id: 'manage-rewards', label: 'Manage Rewards & Payments', icon: 'rewards-payments' },
-    { id: 'submissions', label: 'Submissions', icon: 'submissions' },
     { id: 'creators', label: 'Creators', icon: 'creators' },
     { id: 'analytics', label: 'Analytics', icon: 'statistics' },
   ], []);
@@ -356,51 +349,6 @@ const BrandDashboard: React.FC = () => {
     }},
   ];
 
-  const handleReviewSubmission = (submission: Submission) => {
-    setSelectedSubmission(submission);
-  };
-
-  const handleApproveSubmission = async (submissionId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/brands/submissions/${submissionId}/approve`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        showSuccessToast('Submission approved successfully');
-        loadDashboardData();
-        setSelectedSubmission(null);
-      } else {
-        showErrorToast('Failed to approve submission');
-      }
-    } catch (error) {
-      // console.error('Error approving submission:', error);
-      showErrorToast('Failed to approve submission');
-    }
-  };
-
-  const handleRejectSubmission = async (submissionId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/brands/submissions/${submissionId}/reject`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        showSuccessToast('Submission rejected');
-        loadDashboardData();
-        setSelectedSubmission(null);
-      } else {
-        showErrorToast('Failed to reject submission');
-      }
-    } catch (error) {
-      // console.error('Error rejecting submission:', error);
-      showErrorToast('Failed to reject submission');
-    }
-  };
 
   // Brief management functions
   const handleDeleteBrief = async (briefId: string) => {
@@ -718,16 +666,11 @@ const BrandDashboard: React.FC = () => {
                       }`}>
                         {new Date(submission.submittedAt).toLocaleDateString()}
                       </span>
-                      <button
-                        onClick={() => handleReviewSubmission(submission)}
-                        className={`text-sm font-medium transition-colors ${
-                          isDark 
-                            ? 'text-blue-400 hover:text-blue-300' 
-                            : 'text-blue-600 hover:text-blue-800'
-                        }`}
-                      >
-                        Review →
-                      </button>
+                      <span className={`text-sm ${
+                        isDark ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        View in Manage Rewards & Payments
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -883,13 +826,12 @@ const BrandDashboard: React.FC = () => {
                 setSelectedBrief(briefForModal as Brief);
                 setShowBriefDetails(true);
               }}
-              onViewSubmissionsClick={(brief) => {
+              onViewSubmissionsClick={(_brief) => {
                 // Navigate to submissions for this brief
                 // console.log('View submissions for brief:', brief.id);
-                // Switch to submissions tab and filter by this brief
-                setSelectedBriefForSubmissions(brief.id);
-                handleTabChange('submissions');
-                showSuccessToast(`Viewing submissions for: ${brief.title}`);
+                // Switch to manage rewards tab to review submissions
+                handleTabChange('manage-rewards');
+                showSuccessToast(`View submissions in Manage Rewards & Payments`);
               }}
               onDeleteClick={handleDeleteBrief}
               onPublishClick={handlePublishBrief}
@@ -913,146 +855,6 @@ const BrandDashboard: React.FC = () => {
     );
   };
 
-  const renderSubmissions = () => {
-    const filteredSubmissions = submissions.filter(submission => {
-      // First filter by brief if a specific brief is selected
-      if (selectedBriefForSubmissions) {
-        const brief = briefs.find(b => b.id === selectedBriefForSubmissions);
-        if (brief && submission.briefTitle !== brief.title) {
-          return false;
-        }
-      }
-      
-      // Then filter by status
-      if (submissionsFilter === 'pending') {
-        return submission.status === 'pending';
-      } else if (submissionsFilter === 'approved') {
-        return submission.status === 'approved';
-      } else if (submissionsFilter === 'rejected') {
-        return submission.status === 'rejected';
-      } else {
-        return true; // 'all' shows everything
-      }
-    });
-
-    const selectedBrief = selectedBriefForSubmissions ? briefs.find(b => b.id === selectedBriefForSubmissions) : null;
-
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-          <h2 className={`text-2xl font-bold ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>Submissions</h2>
-            {selectedBrief && (
-              <div className="mt-2 flex items-center space-x-2">
-                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Filtered by brief:
-                </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  isDark ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {selectedBrief.title}
-                </span>
-                <button
-                  onClick={() => setSelectedBriefForSubmissions(null)}
-                  className={`text-sm ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                >
-                  ✕ Clear filter
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className={`flex space-x-1 p-1 rounded-lg ${
-          isDark ? 'bg-gray-950' : 'bg-gray-100'
-        }`}>
-          {['all', 'pending', 'approved', 'rejected'].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setSubmissionsFilter(filter)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                submissionsFilter === filter
-                  ? isDark
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'bg-white text-gray-900 shadow-sm'
-                  : isDark
-                    ? 'text-gray-400 hover:text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {filter.charAt(0).toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Submissions List */}
-        <div className="space-y-4">
-          {filteredSubmissions.map((submission) => (
-            <div key={submission.id} className={`card ${
-              isDark ? 'bg-gray-900 border-gray-800 hover:bg-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'
-            } transition-colors`}>
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${
-                      isDark 
-                        ? 'bg-gray-900 border-gray-800' 
-                        : 'bg-gray-100 border-gray-200'
-                    }`}>
-                      <img src="/icons/profile.png" alt="User" className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.creatorName}</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Applied to {submission.briefTitle}</p>
-                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                        {new Date(submission.submittedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                      submission.status === 'approved' 
-                        ? isDark 
-                          ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
-                          : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                        : submission.status === 'rejected' 
-                        ? isDark 
-                          ? 'bg-red-900/30 text-red-400 border border-red-700' 
-                          : 'bg-red-50 text-red-600 border border-red-200'
-                        : isDark 
-                          ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
-                          : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                    }`}>
-                      {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                    </span>
-                    <button
-                      onClick={() => handleReviewSubmission(submission)}
-                      className="btn btn-outline"
-                    >
-                      Review
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredSubmissions.length === 0 && (
-          <div className="text-center py-12">
-            <p className={`text-lg ${
-              isDark ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              No submissions found for the selected filter.
-            </p>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   const renderCreators = () => (
     <div className="space-y-6">
@@ -1361,8 +1163,6 @@ const BrandDashboard: React.FC = () => {
         return renderBriefs();
       case 'manage-rewards':
         return <ManageRewardsPayments />;
-      case 'submissions':
-        return renderSubmissions();
       case 'creators':
         return renderCreators();
       case 'analytics':
@@ -1399,7 +1199,6 @@ const BrandDashboard: React.FC = () => {
                activeTab === 'funded-briefs' ? 'Brief Management' :
                activeTab === 'winners' ? 'Select Winners' :
                activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
-               activeTab === 'submissions' ? 'Submissions' :
                activeTab === 'creators' ? 'Creators' :
                activeTab === 'analytics' ? 'Analytics' :
                activeTab === 'wallet' ? 'Wallet' :
@@ -1631,7 +1430,6 @@ const BrandDashboard: React.FC = () => {
                  activeTab === 'funded-briefs' ? 'Brief Management' :
                  activeTab === 'winners' ? 'Select Winners' :
                  activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
-                 activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
                  activeTab === 'analytics' ? 'Analytics' :
                  activeTab === 'wallet' ? 'Wallet' :
@@ -1653,97 +1451,6 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Modals */}
-      {selectedSubmission && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`max-w-2xl w-full ${
-            isDark ? 'bg-gray-950' : 'bg-white'
-          } rounded-lg shadow-xl`}>
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className={`text-lg font-semibold ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>
-                  Review Submission
-                </h3>
-                <button
-                  onClick={() => setSelectedSubmission(null)}
-                  className={`${
-                    isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{selectedSubmission.creatorName}</p>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Applied to {selectedSubmission.briefTitle}</p>
-                </div>
-                
-                {selectedSubmission.content && (
-                  <div>
-                    <h4 className={`font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Creator&apos;s Submission:</h4>
-                    <div className={`p-4 rounded-lg border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
-                      {(() => {
-                        const content = selectedSubmission.content;
-                        
-                        // Check if it's a direct link
-                        if (content.startsWith('http://') || content.startsWith('https://')) {
-                          return (
-                            <div>
-                              <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                Creator submitted the following link:
-                              </p>
-                              <a 
-                                href={content} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className={`text-blue-500 hover:text-blue-600 underline break-all ${
-                                  isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
-                                }`}
-                              >
-                                {content}
-                              </a>
-                            </div>
-                          );
-                        }
-                        
-                        // If not a link, display as plain text
-                        return (
-                          <div>
-                            <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              Creator submitted the following content:
-                            </p>
-                            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => handleRejectSubmission(selectedSubmission.id)}
-                    className="btn btn-outline"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => handleApproveSubmission(selectedSubmission.id)}
-                    className="btn btn-primary"
-                  >
-                    Approve
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showWinnerModal && (
         <WinnerSelectionModal

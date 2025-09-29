@@ -2028,9 +2028,33 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
   }
 });
 
+// Test database connection
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const briefCount = await prisma.brief.count();
+    res.json({ 
+      success: true, 
+      message: 'Database connection successful',
+      briefCount: briefCount
+    });
+  } catch (error) {
+    console.error('Database test error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Database connection failed',
+      message: error.message
+    });
+  }
+});
+
 // Update a brief (including publishing)
 app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
   try {
+    console.log('PUT /api/briefs/:id - Starting brief update');
+    console.log('User:', req.user);
+    console.log('Brief ID:', req.params.id);
+    console.log('Request body:', req.body);
+
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can update briefs' });
     }
@@ -2050,65 +2074,104 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
     } = req.body;
 
     // Find the brief and check ownership
+    console.log('Looking for brief with ID:', id);
     const brief = await prisma.brief.findUnique({ where: { id } });
-    if (!brief || brief.brandId !== req.user.id) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
+    console.log('Found brief:', brief ? { id: brief.id, title: brief.title, brandId: brief.brandId } : 'null');
+    
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+    
+    if (brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied - you can only update your own briefs' });
+    }
+
+    // Prepare update data
+    const updateData = {
+      title: title !== undefined ? title : brief.title,
+      description: description !== undefined ? description : brief.description,
+      requirements: requirements !== undefined ? requirements : brief.requirements,
+      reward: reward !== undefined ? parseFloat(reward) : brief.reward,
+      amountOfWinners: amountOfWinners !== undefined ? parseInt(amountOfWinners) : brief.amountOfWinners,
+      location: location !== undefined ? location : brief.location,
+      deadline: deadline !== undefined ? new Date(deadline) : brief.deadline,
+      isPrivate: isPrivate !== undefined ? isPrivate : brief.isPrivate,
+      status: status !== undefined ? status : brief.status
+    };
+
+    // Handle additionalFields safely
+    if (additionalFields !== undefined) {
+      try {
+        updateData.additionalFields = typeof additionalFields === 'string' 
+          ? additionalFields 
+          : JSON.stringify(additionalFields);
+      } catch (jsonError) {
+        console.error('Error stringifying additionalFields:', jsonError);
+        updateData.additionalFields = brief.additionalFields; // Keep existing value
+      }
+    } else {
+      updateData.additionalFields = brief.additionalFields;
+    }
+
+    console.log('Updating brief with data:', updateData);
+
+    // Check if Prisma is available
+    if (!prisma) {
+      throw new Error('Prisma client not initialized');
     }
 
     // Update the brief
     const updatedBrief = await prisma.brief.update({
       where: { id },
-      data: {
-        title: title !== undefined ? title : brief.title,
-        description: description !== undefined ? description : brief.description,
-        requirements: requirements !== undefined ? requirements : brief.requirements,
-        reward: reward !== undefined ? parseFloat(reward) : brief.reward,
-
-        amountOfWinners: amountOfWinners !== undefined ? parseInt(amountOfWinners) : brief.amountOfWinners,
-        location: location !== undefined ? location : brief.location,
-        deadline: deadline !== undefined ? new Date(deadline) : brief.deadline,
-        isPrivate: isPrivate !== undefined ? isPrivate : brief.isPrivate,
-        additionalFields: additionalFields !== undefined ? JSON.stringify(additionalFields) : brief.additionalFields,
-        status: status !== undefined ? status : brief.status
-      }
+      data: updateData
     });
 
+    console.log('Brief updated successfully:', updatedBrief.id);
+
     // Update reward tiers if provided
-    if (rewardTiers && Array.isArray(rewardTiers)) {
-      // Delete existing reward tiers from both tables
-      await prisma.winnerReward.deleteMany({
-        where: { briefId: id }
-      });
-      
-      await prisma.rewardTier.deleteMany({
-        where: { briefId: id }
-      });
-      
-      // Create new reward tiers in both tables
-      for (const tier of rewardTiers) {
-        // Create in winnerReward table
-        await prisma.winnerReward.create({
-          data: {
-            briefId: id,
-            position: tier.position,
-            cashAmount: tier.cashAmount || 0,
-            creditAmount: tier.creditAmount || 0,
-            prizeDescription: tier.prizeDescription || ''
-          }
+    if (rewardTiers && Array.isArray(rewardTiers) && rewardTiers.length > 0) {
+      try {
+        // Delete existing reward tiers from both tables
+        await prisma.winnerReward.deleteMany({
+          where: { briefId: id }
         });
         
-        // Create in rewardTier table
-        await prisma.rewardTier.create({
-          data: {
-            briefId: id,
-            position: tier.position,
-            tierNumber: tier.position,
-            name: `Reward ${tier.position}`,
-            amount: (tier.cashAmount || 0) + (tier.creditAmount || 0),
-            cashAmount: tier.cashAmount || 0,
-            creditAmount: tier.creditAmount || 0
-          }
+        await prisma.rewardTier.deleteMany({
+          where: { briefId: id }
         });
+        
+        // Create new reward tiers in both tables
+        for (const tier of rewardTiers) {
+          if (tier && typeof tier === 'object') {
+            // Create in winnerReward table
+            await prisma.winnerReward.create({
+              data: {
+                briefId: id,
+                position: tier.position || 1,
+                cashAmount: tier.cashAmount || 0,
+                creditAmount: tier.creditAmount || 0,
+                prizeDescription: tier.prizeDescription || ''
+              }
+            });
+            
+            // Create in rewardTier table
+            await prisma.rewardTier.create({
+              data: {
+                briefId: id,
+                position: tier.position || 1,
+                tierNumber: tier.position || 1,
+                name: `Reward ${tier.position || 1}`,
+                amount: (tier.cashAmount || 0) + (tier.creditAmount || 0),
+                cashAmount: tier.cashAmount || 0,
+                creditAmount: tier.creditAmount || 0
+              }
+            });
+          }
+        }
+      } catch (tierError) {
+        console.error('Error updating reward tiers:', tierError);
+        // Don't fail the entire update if reward tiers fail
+        // Just log the error and continue
       }
     }
 
@@ -2144,7 +2207,17 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating brief:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -4163,6 +4236,249 @@ app.post('/api/creators/wallet/withdraw', authenticateToken, async (req, res) =>
   } catch (error) {
     console.error('Error creating withdrawal request:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get creator wallet balance
+app.get('/api/creators/wallet/:creatorId', authenticateToken, async (req, res) => {
+  try {
+    const { creatorId } = req.params;
+    
+    // Verify the creator is accessing their own wallet
+    if (req.user.id !== creatorId && req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      // Get or create creator wallet
+      let wallet = await prisma.creatorWallet.findUnique({
+        where: { creatorId: creatorId }
+      });
+
+      if (!wallet) {
+        // Create wallet if it doesn't exist
+        wallet = await prisma.creatorWallet.create({
+          data: {
+            creatorId: creatorId,
+            balance: 0,
+            totalEarned: 0,
+            totalWithdrawn: 0
+          }
+        });
+      }
+
+      res.json({
+        balance: wallet.balance,
+        totalEarned: wallet.totalEarned,
+        totalWithdrawn: wallet.totalWithdrawn,
+        createdAt: wallet.createdAt,
+        updatedAt: wallet.updatedAt
+      });
+    } catch (tableError) {
+      // If table doesn't exist, return default values
+      console.log('CreatorWallet table not available, returning default values');
+      res.json({
+        balance: 0,
+        totalEarned: 0,
+        totalWithdrawn: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching creator wallet:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get Stripe account status for creator
+app.get('/api/stripe/account/:creatorId', authenticateToken, async (req, res) => {
+  try {
+    const { creatorId } = req.params;
+    
+    // Verify the creator is accessing their own account or admin access
+    if (req.user.id !== creatorId && req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      // Get Stripe Connect account
+      const stripeAccount = await prisma.creatorStripeAccount.findUnique({
+        where: { creatorId: creatorId }
+      });
+
+      if (!stripeAccount) {
+        return res.status(404).json({ error: 'No Stripe account found' });
+      }
+
+      // Return account status
+      res.json({
+        id: stripeAccount.stripeAccountId,
+        status: stripeAccount.status,
+        chargesEnabled: stripeAccount.chargesEnabled,
+        payoutsEnabled: stripeAccount.payoutsEnabled,
+        detailsSubmitted: stripeAccount.detailsSubmitted,
+        requirements: stripeAccount.requirements,
+        createdAt: stripeAccount.createdAt,
+        updatedAt: stripeAccount.updatedAt
+      });
+    } catch (tableError) {
+      // If table doesn't exist, return 404
+      console.log('CreatorStripeAccount table not available');
+      res.status(404).json({ error: 'Stripe Connect not configured' });
+    }
+  } catch (error) {
+    console.error('Error fetching Stripe account status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Process winner payouts with Stripe Connect
+app.post('/api/rewards/distribute-with-stripe', authenticateToken, async (req, res) => {
+  try {
+    const { briefId, winners } = req.body;
+
+    if (!briefId || !winners || !Array.isArray(winners)) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verify the user is a brand
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can distribute rewards' });
+    }
+
+    // Get brief and verify ownership
+    const brief = await prisma.brief.findUnique({
+      where: { id: briefId },
+      include: { brand: true }
+    });
+
+    if (!brief || brief.brandId !== req.user.id) {
+      return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      details: []
+    };
+
+    // Process each winner
+    for (const winner of winners) {
+      try {
+        // Get creator's Stripe account
+        const stripeAccount = await prisma.creatorStripeAccount.findUnique({
+          where: { creatorId: winner.creatorId }
+        });
+
+        if (!stripeAccount) {
+          results.failed++;
+          results.details.push(`Creator ${winner.creatorId} has no Stripe account`);
+          continue;
+        }
+
+        // Check if Stripe account is ready for payments
+        if (stripeAccount.status !== 'active' || !stripeAccount.payoutsEnabled) {
+          results.failed++;
+          results.details.push(`Creator ${winner.creatorId} Stripe account not ready for payments`);
+          continue;
+        }
+
+        // Create Stripe transfer for cash rewards
+        if (winner.rewardType === 'cash' && winner.amount > 0) {
+          const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY);
+          
+          const transfer = await stripe.transfers.create({
+            amount: Math.round(winner.amount * 100), // Convert to cents
+            currency: 'usd',
+            destination: stripeAccount.stripeAccountId,
+            description: `Payment for winning brief: ${brief.title}`,
+            metadata: {
+              briefId: briefId,
+              creatorId: winner.creatorId,
+              submissionId: winner.submissionId
+            }
+          });
+
+          // Create payout record
+          await prisma.creatorPayout.create({
+            data: {
+              creatorId: winner.creatorId,
+              briefId: briefId,
+              submissionId: winner.submissionId,
+              amount: winner.amount,
+              platformFee: 0, // No platform fee for direct transfers
+              netAmount: winner.amount,
+              stripeTransferId: transfer.id,
+              status: 'pending',
+              createdAt: new Date()
+            }
+          });
+
+          results.successful++;
+          results.details.push(`Cash payment of $${winner.amount} sent to creator ${winner.creatorId}`);
+        } else if (winner.rewardType === 'credit' && winner.amount > 0) {
+          // Handle credit rewards (in-app balance)
+          let creatorWallet = await prisma.creatorWallet.findUnique({
+            where: { creatorId: winner.creatorId }
+          });
+
+          if (!creatorWallet) {
+            creatorWallet = await prisma.creatorWallet.create({
+              data: {
+                creatorId: winner.creatorId,
+                balance: 0,
+                totalEarned: 0,
+                totalWithdrawn: 0
+              }
+            });
+          }
+
+          // Update wallet balance
+          await prisma.creatorWallet.update({
+            where: { id: creatorWallet.id },
+            data: {
+              balance: { increment: winner.amount },
+              totalEarned: { increment: winner.amount }
+            }
+          });
+
+          // Create wallet transaction
+          await prisma.walletTransaction.create({
+            data: {
+              walletId: creatorWallet.id,
+              type: 'credit',
+              amount: winner.amount,
+              description: `Credit earned for winning ${brief.title}`,
+              balanceBefore: creatorWallet.balance,
+              balanceAfter: creatorWallet.balance + winner.amount
+            }
+          });
+
+          results.successful++;
+          results.details.push(`Credit of $${winner.amount} added to creator ${winner.creatorId} wallet`);
+        } else if (winner.rewardType === 'prize') {
+          // Handle prize rewards (non-monetary)
+          results.successful++;
+          results.details.push(`Prize reward assigned to creator ${winner.creatorId}`);
+        }
+
+      } catch (error) {
+        console.error(`Error processing winner ${winner.creatorId}:`, error);
+        results.failed++;
+        results.details.push(`Failed to process reward for creator ${winner.creatorId}: ${error.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Reward distribution completed',
+      results: results
+    });
+
+  } catch (error) {
+    console.error('Error distributing rewards:', error);
+    res.status(500).json({ error: 'Failed to distribute rewards' });
   }
 });
 
