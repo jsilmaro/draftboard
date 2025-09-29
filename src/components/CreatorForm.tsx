@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from './ThemeToggle';
 
 
 interface CreatorFormData {
@@ -39,6 +41,7 @@ const CreatorForm: React.FC = () => {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const { showSuccessToast } = useToast();
+  const { isDark } = useTheme();
   
   const [formData, setFormData] = useState<CreatorFormData>({
     userName: '',
@@ -177,7 +180,9 @@ const CreatorForm: React.FC = () => {
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step <= currentStep
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-300 text-gray-600'
+                : isDark 
+                  ? 'bg-gray-600 text-gray-400'
+                  : 'bg-gray-300 text-gray-600'
             }`}
           >
             {step}
@@ -197,8 +202,12 @@ const CreatorForm: React.FC = () => {
             className="w-12 h-12"
           />
         </div>
-        <h2 className="text-2xl font-bold text-white">Basic Information</h2>
-        <p className="text-gray-300 dark:text-gray-400">Let&apos;s start with your personal details</p>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Basic Information</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Let&apos;s start with your personal details</p>
       </div>
 
       {/* Google Sign-In Option */}
@@ -216,66 +225,96 @@ const CreatorForm: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Username *
           </label>
           <input
             type="text"
             value={formData.userName}
             onChange={(e) => handleInputChange('userName', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Choose a unique username"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Full Name *
           </label>
           <input
             type="text"
             value={formData.fullName}
             onChange={(e) => handleInputChange('fullName', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Enter your full name"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Email Address *
           </label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Enter your email address"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Password *
           </label>
           <input
             type="password"
             value={formData.password}
             onChange={(e) => handleInputChange('password', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Create a strong password"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Confirm Password *
           </label>
           <input
             type="password"
             value={formData.confirmPassword}
             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Confirm your password"
           />
         </div>
@@ -286,20 +325,37 @@ const CreatorForm: React.FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Contact Information</h2>
-        <p className="text-gray-300">Provide your contact details</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Contact Information</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Provide your contact details</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Phone Number *
           </label>
           <div className="flex">
             <select
               value={formData.phoneCountry}
               onChange={(e) => handleInputChange('phoneCountry', e.target.value)}
-              className="w-24 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className={`w-24 px-3 py-2 border rounded-l-md transition-all ${
+                isDark 
+                  ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                  : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+              }`}
             >
               {countries.map(country => (
                 <option key={country.code} value={country.code}>
@@ -311,20 +367,30 @@ const CreatorForm: React.FC = () => {
               type="tel"
               value={formData.phoneNumber}
               onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-r-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className={`flex-1 px-3 py-2 border rounded-r-md transition-all ${
+                isDark 
+                  ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                  : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+              }`}
               placeholder="(555) 123-4567"
             />
           </div>
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Country *
           </label>
           <select
             value={formData.addressCountry}
             onChange={(e) => handleInputChange('addressCountry', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
           >
             <option value="United States">United States</option>
             <option value="United Kingdom">United Kingdom</option>
@@ -337,53 +403,77 @@ const CreatorForm: React.FC = () => {
         </div>
 
         <div className="form-field md:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Street Address *
           </label>
           <input
             type="text"
             value={formData.addressStreet}
             onChange={(e) => handleInputChange('addressStreet', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="123 Main Street"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             City *
           </label>
           <input
             type="text"
             value={formData.addressCity}
             onChange={(e) => handleInputChange('addressCity', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="New York"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             State/Province *
           </label>
           <input
             type="text"
             value={formData.addressState}
             onChange={(e) => handleInputChange('addressState', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="NY"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             ZIP/Postal Code *
           </label>
           <input
             type="text"
             value={formData.addressZip}
             onChange={(e) => handleInputChange('addressZip', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="10001"
           />
         </div>
@@ -394,72 +484,113 @@ const CreatorForm: React.FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Social Media</h2>
-        <p className="text-gray-300">Help brands discover your work</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Social Media</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Help brands discover your work</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Instagram
           </label>
           <input
             type="text"
             value={formData.socialInstagram}
             onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourusername"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Twitter
           </label>
           <input
             type="text"
             value={formData.socialTwitter}
             onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourusername"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             LinkedIn
           </label>
           <input
             type="text"
             value={formData.socialLinkedIn}
             onChange={(e) => handleInputChange('socialLinkedIn', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="in/yourprofile"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             TikTok
           </label>
           <input
             type="text"
             value={formData.socialTikTok}
             onChange={(e) => handleInputChange('socialTikTok', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourusername"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             YouTube
           </label>
           <input
             type="text"
             value={formData.socialYouTube}
             onChange={(e) => handleInputChange('socialYouTube', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourchannel"
           />
         </div>
@@ -470,13 +601,32 @@ const CreatorForm: React.FC = () => {
   const renderStep4 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Terms & Conditions</h2>
-        <p className="text-gray-300">Please review and accept our terms</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Terms & Conditions</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Please review and accept our terms</p>
       </div>
 
-      <div className="bg-gray-50 p-6 rounded-lg max-h-64 overflow-y-auto">
-        <h3 className="font-semibold text-white mb-4">Terms of Service</h3>
-        <div className="text-sm text-gray-300 space-y-3">
+      <div className={`p-6 rounded-lg max-h-64 overflow-y-auto ${
+        isDark 
+          ? 'bg-gray-700 border border-gray-600' 
+          : 'bg-gray-50 border border-gray-200'
+      }`}>
+        <h3 className={`font-semibold mb-4 ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Terms of Service</h3>
+        <div className={`text-sm space-y-3 ${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>
           <p>By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
           <p>You acknowledge that:</p>
           <ul className="list-disc list-inside space-y-1 ml-4">
@@ -499,7 +649,9 @@ const CreatorForm: React.FC = () => {
             onChange={(e) => handleInputChange('termsAccepted', e.target.checked)}
             className="mr-3"
           />
-          <span className="text-sm text-gray-300">
+          <span className={`text-sm ${
+            isDark ? 'text-gray-300' : 'text-gray-600'
+          }`}>
             I agree to the Terms of Service and Privacy Policy *
           </span>
         </label>
@@ -518,13 +670,30 @@ const CreatorForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen ${
+      isDark 
+        ? 'bg-gray-900' 
+        : 'bg-gray-50'
+    } flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8`}>
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle size="sm" />
+      </div>
+      
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-6 sm:py-8 px-4 sm:px-10">
+        <div className={`py-6 sm:py-8 px-4 sm:px-10 ${
+          isDark 
+            ? 'bg-gray-800 border border-gray-700 rounded-lg shadow-sm'
+            : 'bg-white border border-gray-200 rounded-lg shadow-sm'
+        }`}>
           {renderStepIndicator()}
           
           {error && (
-            <div className="mb-6 px-4 py-3 rounded bg-red-50 border border-red-200 text-red-600">
+            <div className={`mb-6 px-4 py-3 rounded ${
+              isDark 
+                ? 'bg-red-900/20 border border-red-800 text-red-400'
+                : 'bg-red-50 border border-red-200 text-red-600'
+            }`}>
               {error}
             </div>
           )}
@@ -537,7 +706,11 @@ const CreatorForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="w-full sm:w-auto px-6 py-2 border border-gray-600 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-50 transition-colors"
+                  className={`w-full sm:w-auto px-6 py-2 border rounded-md text-sm font-medium transition-colors ${
+                    isDark 
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   Previous
                 </button>
@@ -549,7 +722,7 @@ const CreatorForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="w-full sm:w-auto px-6 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors btn-primary"
+                  className="w-full sm:w-auto px-6 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
                 >
                   Next
                 </button>
@@ -557,7 +730,7 @@ const CreatorForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full sm:w-auto px-6 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors btn-primary disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Creator Account'}
                 </button>
@@ -566,9 +739,15 @@ const CreatorForm: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-300">
+            <p className={`text-sm ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-teal-600 hover:text-teal-500 nav-item">
+              <Link to="/login" className={`font-medium ${
+                isDark 
+                  ? 'text-blue-400 hover:text-blue-300' 
+                  : 'text-blue-600 hover:text-blue-500'
+              } nav-item`}>
                 Sign in here
               </Link>
             </p>

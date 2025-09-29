@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from './ThemeToggle';
 
 
 interface BrandFormData {
@@ -47,6 +49,7 @@ const BrandForm: React.FC = () => {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const { showSuccessToast } = useToast();
+  const { isDark } = useTheme();
   
   const [formData, setFormData] = useState<BrandFormData>({
     companyName: '',
@@ -217,7 +220,9 @@ const BrandForm: React.FC = () => {
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step <= currentStep
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-300 text-gray-600'
+                : isDark 
+                  ? 'bg-gray-600 text-gray-400'
+                  : 'bg-gray-300 text-gray-600'
             }`}
           >
             {step}
@@ -237,8 +242,12 @@ const BrandForm: React.FC = () => {
             className="w-12 h-12"
           />
         </div>
-        <h2 className="text-2xl font-bold text-white">Basic Information</h2>
-                    <p className="text-gray-400">Let&apos;s start with your company details</p>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Basic Information</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Let&apos;s start with your company details</p>
       </div>
 
       {/* Google Sign-In Option */}
@@ -256,66 +265,96 @@ const BrandForm: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Company Name *
           </label>
           <input
             type="text"
             value={formData.companyName}
             onChange={(e) => handleInputChange('companyName', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Enter your company name"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Contact Person Name *
           </label>
           <input
             type="text"
             value={formData.contactName}
             onChange={(e) => handleInputChange('contactName', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Enter the contact person's name"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Email Address *
           </label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Enter your email address"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Password *
           </label>
           <input
             type="password"
             value={formData.password}
             onChange={(e) => handleInputChange('password', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Create a strong password"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Confirm Password *
           </label>
           <input
             type="password"
             value={formData.confirmPassword}
             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="Confirm your password"
           />
         </div>
@@ -326,20 +365,37 @@ const BrandForm: React.FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Contact Information</h2>
-                    <p className="text-gray-400">Provide your business contact details</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Contact Information</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Provide your business contact details</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Phone Number *
           </label>
           <div className="flex">
             <select
               value={formData.phoneCountry}
               onChange={(e) => handleInputChange('phoneCountry', e.target.value)}
-              className="w-24 px-3 py-2 border border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className={`w-24 px-3 py-2 border rounded-l-md transition-all ${
+                isDark 
+                  ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                  : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+              }`}
             >
               {countries.map(country => (
                 <option key={country.code} value={country.code}>
@@ -351,20 +407,30 @@ const BrandForm: React.FC = () => {
               type="tel"
               value={formData.phoneNumber}
               onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-600 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className={`flex-1 px-3 py-2 border rounded-r-md transition-all ${
+                isDark 
+                  ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                  : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+              }`}
               placeholder="(555) 123-4567"
             />
           </div>
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Country *
           </label>
           <select
             value={formData.addressCountry}
             onChange={(e) => handleInputChange('addressCountry', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
           >
             <option value="United States">United States</option>
             <option value="United Kingdom">United Kingdom</option>
@@ -377,53 +443,77 @@ const BrandForm: React.FC = () => {
         </div>
 
         <div className="form-field md:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Street Address *
           </label>
           <input
             type="text"
             value={formData.addressStreet}
             onChange={(e) => handleInputChange('addressStreet', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="123 Business Street"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             City *
           </label>
           <input
             type="text"
             value={formData.addressCity}
             onChange={(e) => handleInputChange('addressCity', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="New York"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             State/Province *
           </label>
           <input
             type="text"
             value={formData.addressState}
             onChange={(e) => handleInputChange('addressState', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="NY"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             ZIP/Postal Code *
           </label>
           <input
             type="text"
             value={formData.addressZip}
             onChange={(e) => handleInputChange('addressZip', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="10001"
           />
         </div>
@@ -434,59 +524,94 @@ const BrandForm: React.FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Social Media (Optional)</h2>
-                    <p className="text-gray-400">Help creators discover your brand</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Social Media (Optional)</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Help creators discover your brand</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Instagram
           </label>
           <input
             type="text"
             value={formData.socialInstagram}
             onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourbrand"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Twitter
           </label>
           <input
             type="text"
             value={formData.socialTwitter}
             onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="@yourbrand"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             LinkedIn
           </label>
           <input
             type="text"
             value={formData.socialLinkedIn}
             onChange={(e) => handleInputChange('socialLinkedIn', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="company/yourbrand"
           />
         </div>
 
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Website
           </label>
           <input
             type="url"
             value={formData.socialWebsite}
             onChange={(e) => handleInputChange('socialWebsite', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 border rounded-md transition-all ${
+              isDark 
+                ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+            }`}
             placeholder="https://yourbrand.com"
           />
         </div>
@@ -497,13 +622,26 @@ const BrandForm: React.FC = () => {
   const renderStep4 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Payment Information</h2>
-                    <p className="text-gray-400">This information is required to process payments to creators</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Payment Information</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>This information is required to process payments to creators</p>
       </div>
 
       <div className="space-y-6">
         <div className="form-field">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
             Payment Method *
           </label>
           <div className="space-y-3">
@@ -516,7 +654,9 @@ const BrandForm: React.FC = () => {
                 onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
                 className="mr-3"
               />
-              <span>Credit Card</span>
+              <span className={`${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Credit Card</span>
             </label>
             <label className="flex items-center">
               <input
@@ -527,7 +667,9 @@ const BrandForm: React.FC = () => {
                 onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
                 className="mr-3"
               />
-              <span>Debit Card</span>
+              <span className={`${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Debit Card</span>
             </label>
             <label className="flex items-center">
               <input
@@ -538,7 +680,9 @@ const BrandForm: React.FC = () => {
                 onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
                 className="mr-3"
               />
-              <span>Bank Transfer</span>
+              <span className={`${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>Bank Transfer</span>
             </label>
           </div>
         </div>
@@ -546,27 +690,39 @@ const BrandForm: React.FC = () => {
         {(formData.paymentMethod === 'credit_card' || formData.paymentMethod === 'debit_card') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Card Number (Last 4 digits) *
               </label>
               <input
                 type="text"
                 value={formData.cardNumber}
                 onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
                 placeholder="**** **** **** 1234"
                 maxLength={19}
               />
             </div>
 
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Card Type *
               </label>
               <select
                 value={formData.cardType}
                 onChange={(e) => handleInputChange('cardType', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
               >
                 <option value="">Select card type</option>
                 {cardTypes.map(type => (
@@ -580,26 +736,38 @@ const BrandForm: React.FC = () => {
         {formData.paymentMethod === 'bank_transfer' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Bank Name *
               </label>
               <input
                 type="text"
                 value={formData.bankName}
                 onChange={(e) => handleInputChange('bankName', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
                 placeholder="Bank of America"
               />
             </div>
 
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Account Type *
               </label>
               <select
                 value={formData.bankAccountType}
                 onChange={(e) => handleInputChange('bankAccountType', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
               >
                 <option value="">Select account type</option>
                 {bankAccountTypes.map(type => (
@@ -609,27 +777,39 @@ const BrandForm: React.FC = () => {
             </div>
 
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Routing Number *
               </label>
               <input
                 type="text"
                 value={formData.bankRouting}
                 onChange={(e) => handleInputChange('bankRouting', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
                 placeholder="123456789"
               />
             </div>
 
             <div className="form-field">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
                 Account Number (Last 4 digits) *
               </label>
               <input
                 type="text"
                 value={formData.bankAccount}
                 onChange={(e) => handleInputChange('bankAccount', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className={`w-full px-3 py-2 border rounded-md transition-all ${
+                  isDark 
+                    ? 'border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white'
+                    : 'border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900'
+                }`}
                 placeholder="**** 5678"
                 maxLength={8}
               />
@@ -643,13 +823,32 @@ const BrandForm: React.FC = () => {
   const renderStep5 = () => (
     <div className="space-y-6 fade-in">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Terms & Conditions</h2>
-                    <p className="text-gray-400">Please review and accept our terms</p>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <img 
+            src="/icons/draftboard-logo.svg" 
+            alt="DraftBoard" 
+            className="w-12 h-12"
+          />
+        </div>
+        <h2 className={`text-2xl font-bold ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Terms & Conditions</h2>
+        <p className={`${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>Please review and accept our terms</p>
       </div>
 
-      <div className="bg-gray-50 p-6 rounded-lg max-h-64 overflow-y-auto">
-        <h3 className="font-semibold text-white mb-4">Terms of Service</h3>
-                  <div className="text-sm text-gray-400 space-y-3">
+      <div className={`p-6 rounded-lg max-h-64 overflow-y-auto ${
+        isDark 
+          ? 'bg-gray-700 border border-gray-600' 
+          : 'bg-gray-50 border border-gray-200'
+      }`}>
+        <h3 className={`font-semibold mb-4 ${
+          isDark ? 'text-white' : 'text-gray-900'
+        }`}>Terms of Service</h3>
+        <div className={`text-sm space-y-3 ${
+          isDark ? 'text-gray-300' : 'text-gray-600'
+        }`}>
           <p>By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
           <p>You acknowledge that:</p>
           <ul className="list-disc list-inside space-y-1 ml-4">
@@ -671,7 +870,9 @@ const BrandForm: React.FC = () => {
             onChange={(e) => handleInputChange('termsAccepted', e.target.checked)}
             className="mr-3"
           />
-          <span className="text-sm text-gray-300">
+          <span className={`text-sm ${
+            isDark ? 'text-gray-300' : 'text-gray-600'
+          }`}>
             I agree to the Terms of Service and Privacy Policy *
           </span>
         </label>
@@ -691,13 +892,30 @@ const BrandForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen ${
+      isDark 
+        ? 'bg-gray-900' 
+        : 'bg-gray-50'
+    } flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8`}>
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle size="sm" />
+      </div>
+      
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-6 sm:py-8 px-4 sm:px-10">
+        <div className={`py-6 sm:py-8 px-4 sm:px-10 ${
+          isDark 
+            ? 'bg-gray-800 border border-gray-700 rounded-lg shadow-sm'
+            : 'bg-white border border-gray-200 rounded-lg shadow-sm'
+        }`}>
           {renderStepIndicator()}
           
           {error && (
-            <div className="mb-6 px-4 py-3 rounded bg-red-50 border border-red-200 text-red-600">
+            <div className={`mb-6 px-4 py-3 rounded ${
+              isDark 
+                ? 'bg-red-900/20 border border-red-800 text-red-400'
+                : 'bg-red-50 border border-red-200 text-red-600'
+            }`}>
               {error}
             </div>
           )}
@@ -710,7 +928,11 @@ const BrandForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="w-full sm:w-auto px-6 py-2 border border-gray-600 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-50 transition-colors"
+                  className={`w-full sm:w-auto px-6 py-2 border rounded-md text-sm font-medium transition-colors ${
+                    isDark 
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   Previous
                 </button>
@@ -722,7 +944,7 @@ const BrandForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary"
+                  className="w-full sm:w-auto px-6 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
                 >
                   Next
                 </button>
@@ -730,7 +952,7 @@ const BrandForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors btn-primary disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Brand Account'}
                 </button>
@@ -739,9 +961,15 @@ const BrandForm: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-300">
+            <p className={`text-sm ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 nav-item">
+              <Link to="/login" className={`font-medium ${
+                isDark 
+                  ? 'text-blue-400 hover:text-blue-300' 
+                  : 'text-blue-600 hover:text-blue-500'
+              } nav-item`}>
                 Sign in here
               </Link>
             </p>
