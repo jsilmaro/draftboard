@@ -94,29 +94,50 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
     return null;
   }
 
+  const getToastStyles = () => {
+    switch (type) {
+      case 'success':
+        return 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300';
+      case 'error':
+        return 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
+      case 'warning':
+        return 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300';
+      case 'info':
+        return 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
+      default:
+        return 'bg-gray-50 border-gray-200 text-gray-800 dark:bg-gray-900/20 dark:border-gray-800 dark:text-gray-300';
+    }
+  };
+
   return (
-    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 transform ${
-      isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+    <div className={`fixed top-4 right-4 z-50 transition-all duration-500 transform ${
+      isVisible ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
     }`}>
-      <div className="flex flex-col gap-2 w-60 sm:w-72 text-[10px] sm:text-xs">
-        <div className="cursor-default flex items-center justify-between w-full h-12 sm:h-14 rounded-lg bg-[#232531] px-[10px]">
-          <div className="flex gap-2">
-            <div className="bg-white/5 backdrop-blur-xl p-1 rounded-lg">
-              {getIcon()}
+      <div className={`max-w-sm w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg backdrop-blur-sm ${getToastStyles()}`}>
+        <div className="p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 flex items-center justify-center">
+                {getIcon()}
+              </div>
             </div>
-            <div>
-              <p className="text-white">{displayTitle}</p>
-              {displayDescription && <p className="text-gray-500">{displayDescription}</p>}
+            <div className="ml-3 w-0 flex-1">
+              <p className="text-sm font-medium">{displayTitle}</p>
+              {displayDescription && (
+                <p className="mt-1 text-sm opacity-90">{displayDescription}</p>
+              )}
+            </div>
+            <div className="ml-4 flex-shrink-0 flex">
+              <button
+                onClick={handleClose}
+                className="inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md p-1"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
-          <button 
-            onClick={handleClose}
-            className="text-gray-600 hover:bg-white/5 p-1 rounded-md transition-colors ease-linear"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
       </div>
     </div>

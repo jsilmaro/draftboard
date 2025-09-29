@@ -2388,7 +2388,7 @@ const CreatorDashboard: React.FC = () => {
       {/* Modern Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
+      } ${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
         <div className="p-4 flex flex-col h-full">
           
           {/* Header with Logo */}
@@ -2454,10 +2454,10 @@ const CreatorDashboard: React.FC = () => {
                   placeholder="Search..."
                   value={sidebarSearchQuery}
                   onChange={(e) => handleSidebarSearch(e.target.value)}
-                  className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border transition-colors ${
+                  className={`w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border transition-all duration-200 ${
                     isDark
-                      ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
-                      : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                      ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-gray-800'
+                      : 'bg-gray-50/80 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white'
                   }`}
                 />
               </div>
@@ -2470,14 +2470,14 @@ const CreatorDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-all duration-200 ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm transition-all duration-300 group ${
                   activeTab === item.id
                     ? isDark
-                      ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                      : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25'
+                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25'
                     : isDark
-                      ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
                 }`}
                 title={sidebarCollapsed ? item.label : ''}
               >
@@ -2552,10 +2552,10 @@ const CreatorDashboard: React.FC = () => {
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-colors ${
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm transition-all duration-300 group ${
                     isDark
-                      ? 'text-gray-400 hover:bg-gray-900 hover:text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
                   }`}
                   title={sidebarCollapsed ? item.label : ''}
                 >

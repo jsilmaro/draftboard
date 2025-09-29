@@ -226,30 +226,40 @@ const NotificationBell: React.FC = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-gray-900 rounded-lg shadow-lg border border-gray-700 z-50">
-          <div className="p-4 border-b border-gray-700">
+        <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 backdrop-blur-xl">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold text-white">Notifications</h3>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                  {stats.unread > 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{stats.unread} unread</p>
+                  )}
+                </div>
                 {stats.unread > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full">
-                    {stats.unread} unread
+                  <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full animate-pulse">
+                    {stats.unread}
                   </span>
                 )}
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={handleCreateTestNotification}
-                  className="text-sm text-green-400 hover:text-green-300 p-1 rounded"
+                  className="p-2 rounded-lg text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/20 transition-all duration-200"
                   title="Create test notification"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </button>
                 <button
                   onClick={() => setShowPreferences(!showPreferences)}
-                  className="text-sm text-gray-400 hover:text-gray-300 p-1 rounded"
+                  className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-all duration-200"
                   title="Notification preferences"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +270,7 @@ const NotificationBell: React.FC = () => {
                 {stats.unread > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="text-sm text-blue-400 hover:text-blue-300 font-medium"
+                    className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-all duration-200 font-medium"
                   >
                     Mark all read
                   </button>
@@ -269,7 +279,7 @@ const NotificationBell: React.FC = () => {
             </div>
             
             {/* Filter Tabs */}
-            <div className="flex space-x-4 border-b border-gray-700">
+            <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
               {[
                 { key: 'all', label: 'All', count: stats.total },
                 { key: 'unread', label: 'Unread', count: stats.unread }
@@ -277,15 +287,19 @@ const NotificationBell: React.FC = () => {
                 <button
                   key={filter.key}
                   onClick={() => setActiveFilter(filter.key)}
-                  className={`pb-2 text-sm font-medium whitespace-nowrap flex items-center space-x-1 ${
+                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeFilter === filter.key
-                      ? 'text-blue-400 border-b-2 border-blue-400'
-                      : 'text-gray-400 hover:text-gray-300'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
                   }`}
                 >
                   <span>{filter.label}</span>
                   {filter.count > 0 && (
-                    <span className="bg-gray-700 text-gray-300 text-xs px-1.5 py-0.5 rounded-full">
+                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                      activeFilter === filter.key
+                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                    }`}>
                       {filter.count}
                     </span>
                   )}
@@ -320,45 +334,72 @@ const NotificationBell: React.FC = () => {
                 {filteredNotifications.map((notification: Notification) => (
                   <div
                     key={notification.id}
-                    className="w-full mb-3 last:mb-0"
+                    className="w-full mb-2 last:mb-0"
                   >
                     <div
-                      className="cursor-pointer flex items-center justify-between w-full min-h-[60px] rounded-lg bg-[#232531] px-3 py-2 hover:bg-[#2a2e3a] transition-colors duration-200"
+                      className={`cursor-pointer flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                        notification.isRead 
+                          ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700' 
+                          : 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-700 shadow-sm'
+                      }`}
                       onClick={() => handleNotificationClick(notification.id)}
                     >
-                      <div className="flex gap-3 flex-1 min-w-0">
-                        <div className="bg-white/5 backdrop-blur-xl p-2 rounded-lg flex-shrink-0">
-                          {getNotificationIcon(notification.category, notification.priority)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium leading-tight mb-1">{notification.title}</p>
-                          <p className="text-gray-500 text-xs leading-relaxed mb-1">{notification.message}</p>
-                          <p className="text-gray-400 text-xs">{formatTimeAgo(notification.createdAt)}</p>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        notification.priority === 'high' 
+                          ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                          : notification.priority === 'medium'
+                          ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
+                          : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {getNotificationIcon(notification.category, notification.priority)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold leading-tight mb-1 ${
+                              notification.isRead 
+                                ? 'text-gray-700 dark:text-gray-300' 
+                                : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {notification.title}
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-2 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-gray-500 dark:text-gray-500 text-xs">
+                                {formatTimeAgo(notification.createdAt)}
+                              </p>
+                              {!notification.isRead && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDismiss(notification.id);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ml-2"
+                            title="Dismiss notification"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18 18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDismiss(notification.id);
-                        }}
-                        className="text-gray-600 hover:text-white hover:bg-white/10 p-2 rounded-md transition-all duration-200 flex-shrink-0 ml-2"
-                        title="Dismiss notification"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                          stroke="currentColor"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18 18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -366,14 +407,14 @@ const NotificationBell: React.FC = () => {
             ) : (
               <div className="p-8 text-center">
                 <div className="mb-4 flex justify-center">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 5.5L9 10l-4.5 4.5L1 10l3.5-4.5z" />
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-5 5v-5zM4.5 5.5L9 10l-4.5 4.5L1 10l3.5-4.5z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-gray-400">No notifications yet</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <h3 className="text-gray-900 dark:text-white font-semibold mb-2">No notifications yet</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
                   We&apos;ll notify you about payments, applications, and updates
                 </p>
               </div>
@@ -382,61 +423,78 @@ const NotificationBell: React.FC = () => {
 
           {/* Preferences Panel */}
           {showPreferences && preferences && (
-            <div className="p-4 border-t border-gray-700 bg-gray-800">
-              <h4 className="text-sm font-medium text-white mb-3">Notification Preferences</h4>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={preferences.inAppNotifications}
-                    onChange={(e) => updatePreferences({
-                      ...preferences,
-                      inAppNotifications: e.target.checked
-                    })}
-                    className="rounded border-gray-600 bg-gray-700 text-blue-400 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-300">In-app notifications</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={preferences.emailNotifications}
-                    onChange={(e) => updatePreferences({
-                      ...preferences,
-                      emailNotifications: e.target.checked
-                    })}
-                    className="rounded border-gray-600 bg-gray-700 text-blue-400 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-300">Email notifications</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={preferences.pushNotifications}
-                    onChange={(e) => updatePreferences({
-                      ...preferences,
-                      pushNotifications: e.target.checked
-                    })}
-                    className="rounded border-gray-600 bg-gray-700 text-blue-400 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-300">Push notifications</span>
-                </label>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-gray-900 dark:text-white font-semibold">Notification Preferences</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">In-app notifications</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.inAppNotifications}
+                      onChange={(e) => updatePreferences({
+                        ...preferences,
+                        inAppNotifications: e.target.checked
+                      })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Email notifications</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.emailNotifications}
+                      onChange={(e) => updatePreferences({
+                        ...preferences,
+                        emailNotifications: e.target.checked
+                      })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Push notifications</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.pushNotifications}
+                      onChange={(e) => updatePreferences({
+                        ...preferences,
+                        pushNotifications: e.target.checked
+                      })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
               </div>
             </div>
           )}
 
           {filteredNotifications && filteredNotifications.length > 0 && (
-            <div className="p-4 border-t border-gray-700">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <div className="flex items-center justify-between">
                 <button
                   onClick={handleViewAllNotifications}
-                  className="text-sm text-blue-400 hover:text-blue-300 font-medium"
+                  className="px-4 py-2 text-sm bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-all duration-200 font-medium"
                 >
                   View all notifications
                 </button>
                 <button
                   onClick={() => dismiss()}
-                  className="text-sm text-gray-400 hover:text-gray-300 font-medium"
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
                 >
                   Dismiss all
                 </button>
