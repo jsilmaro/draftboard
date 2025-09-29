@@ -24,7 +24,7 @@ interface BriefFundingModalProps {
     deadline: string;
     location: string;
     isPrivate: boolean;
-    additionalFields?: any;
+    additionalFields?: Record<string, unknown>;
     rewardTiers: Array<{
       tierNumber: number;
       name: string;

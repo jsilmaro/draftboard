@@ -1611,33 +1611,6 @@ const BrandDashboard: React.FC = () => {
               ))}
             </div>
             
-            {/* Theme Toggle */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-                {!sidebarCollapsed && (
-                  <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {isDark ? 'Light Mode' : 'Dark Mode'}
-                  </span>
-                )}
-                <button
-                  onClick={() => {
-                    // Toggle theme logic would go here
-                    const event = new CustomEvent('toggleTheme');
-                    window.dispatchEvent(event);
-                  }}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isDark ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
-                  title={sidebarCollapsed ? (isDark ? 'Light Mode' : 'Dark Mode') : ''}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isDark ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
