@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 // import { useAuth } from '../contexts/AuthContext';
 // import { useTheme } from '../contexts/ThemeContext';
 import StripeConnectButton from './StripeConnectButton';
-import PaymentStatusCard from './PaymentStatusCard';
 
 interface StripeAccountStatus {
   id: string;
@@ -309,10 +308,6 @@ const CreatorWallet: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Status Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <PaymentStatusCard />
-          </div>
         </div>
 
         {/* Payout History */}

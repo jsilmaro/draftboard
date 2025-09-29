@@ -156,22 +156,31 @@ router.post('/briefs/:id/fund', authenticateToken, async (req, res) => {
     }
 
     const { id: briefId } = req.params;
-    const { totalAmount } = req.body;
 
-    if (!totalAmount || totalAmount <= 0) {
-      return res.status(400).json({ error: 'Valid totalAmount is required' });
-    }
-
-    // Verify brief exists and belongs to brand
+    // Verify brief exists and belongs to brand, include reward tiers
     const brief = await prisma.brief.findFirst({
       where: { 
         id: briefId,
         brandId: req.user.id 
+      },
+      include: {
+        rewardTiers: {
+          orderBy: { position: 'asc' }
+        }
       }
     });
 
     if (!brief) {
       return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    // Use totalBudget from reward tiers, fallback to legacy reward field
+    const totalAmount = brief.totalBudget || brief.reward;
+
+    if (!totalAmount || totalAmount <= 0) {
+      return res.status(400).json({ 
+        error: 'Brief must have reward tiers with valid amounts to be funded' 
+      });
     }
 
     // Check if brief is already funded

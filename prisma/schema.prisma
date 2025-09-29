@@ -85,6 +85,7 @@ model Creator {
   winners            Winner[]
   withdrawalRequests WithdrawalRequest[]
   payouts            CreatorPayout[]
+  rewardAssignments  RewardAssignment[]
 
   @@index([email])
   @@index([userName])
@@ -96,7 +97,7 @@ model Brief {
   title            String
   description      String
   requirements     String
-  reward           Float
+  reward           Float            // Legacy field - will be calculated from reward tiers
   deadline         DateTime
   status           String           @default("draft")
   isPrivate        Boolean          @default(false)
@@ -112,6 +113,11 @@ model Brief {
   isFunded         Boolean          @default(false)
   fundedAt         DateTime?
   archivedAt       DateTime?
+  // New reward tier system
+  totalBudget      Float?           // Calculated from reward tiers
+  rewardTiers      RewardTier[]
+  rewardAssignments RewardAssignment[]
+  briefStatuses    BriefStatus[]
   awardDrafts      AwardDraft[]
   brand            Brand            @relation(fields: [brandId], references: [id])
   publishedAwards  PublishedAward[]
@@ -140,6 +146,7 @@ model Submission {
   creator     Creator   @relation(fields: [creatorId], references: [id])
   winner      Winner?
   payouts     CreatorPayout[]
+  rewardAssignment RewardAssignment?
 }
 
 model AwardDraft {
@@ -551,7 +558,7 @@ model BriefRefund {
 
   // Relations
   brief         Brief        @relation("BriefRefunds", fields: [briefId], references: [id], map: "BriefRefund_brief_fkey")
-  brand         Brand        @relation(fields: [brandId], references: [id])
+  brand         Brand        @relation(fields: [brandId], references: [id], map: "BriefRefund_brand_fkey")
   briefFunding  BriefFunding @relation("BriefFundingRefunds", fields: [briefId], references: [briefId], map: "BriefRefund_briefFunding_fkey")
 
   @@index([briefId])
@@ -773,4 +780,70 @@ enum MessageType {
   FILE
   IMAGE
   VIDEO
+}
+
+// New Reward Tier System Models
+model RewardTier {
+  id          String   @id @default(cuid())
+  briefId     String
+  tierNumber  Int
+  name        String
+  description String?
+  amount      Decimal  @db.Decimal(10, 2)
+  position    Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  brief           Brief             @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  rewardAssignments RewardAssignment[]
+
+  @@unique([briefId, tierNumber])
+  @@index([briefId])
+  @@index([tierNumber])
+  @@index([position])
+}
+
+model RewardAssignment {
+  id              String    @id @default(cuid())
+  briefId         String
+  rewardTierId    String    @unique
+  creatorId       String
+  submissionId    String    @unique
+  assignedAt     DateTime  @default(now())
+  assignedBy     String
+  status          String    @default("assigned") // assigned, confirmed, completed
+  payoutStatus    String    @default("pending") // pending, processing, paid, failed
+  stripeTransferId String?
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  brief        Brief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  rewardTier   RewardTier @relation(fields: [rewardTierId], references: [id], onDelete: Cascade)
+  creator      Creator    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([briefId])
+  @@index([creatorId])
+  @@index([rewardTierId])
+  @@index([status])
+  @@index([payoutStatus])
+}
+
+model BriefStatus {
+  id        String   @id @default(cuid())
+  briefId   String
+  status    String   // draft, funded, winners_selected, payouts_completed, closed
+  updatedAt DateTime @default(now())
+  updatedBy String
+  notes     String?
+
+  // Relations
+  brief Brief @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  @@index([briefId])
+  @@index([status])
 }

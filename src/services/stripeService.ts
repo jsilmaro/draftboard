@@ -78,68 +78,7 @@ class BaseStripeService {
   }
 }
 
-// Mock Stripe Service Implementation
-class MockStripeService extends BaseStripeService {
-  async createConnectAccount(creatorData: {
-    creatorId: string;
-    email: string;
-    name: string;
-    country?: string;
-  }): Promise<{ accountId: string }> {
-    const result = await this.makeRequest('/create-connect-account', {
-      method: 'POST',
-      body: JSON.stringify(creatorData),
-    });
-    return { accountId: result.accountId };
-  }
-
-  async getConnectAccount(accountId: string): Promise<StripeConnectAccount> {
-    return this.makeRequest(`/connect-account/${accountId}`);
-  }
-
-  async updateAccountStatus(accountId: string, status: Partial<StripeConnectAccount>): Promise<void> {
-    return this.makeRequest('/update-account-status', {
-      method: 'POST',
-      body: JSON.stringify({ accountId, ...status }),
-    });
-  }
-
-  async createTransfer(transferData: {
-    amount: number;
-    currency: string;
-    destination: string;
-    description?: string;
-    metadata?: Record<string, string>;
-  }): Promise<StripeTransfer> {
-    return this.makeRequest('/create-transfer', {
-      method: 'POST',
-      body: JSON.stringify(transferData),
-    });
-  }
-
-  async createCheckoutSession(sessionData: {
-    briefId: string;
-    amount: number;
-    brandId: string;
-    briefTitle: string;
-  }): Promise<StripeCheckoutSession> {
-    return this.makeRequest('/create-checkout-session', {
-      method: 'POST',
-      body: JSON.stringify(sessionData),
-    });
-  }
-
-  async getPaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
-    return this.makeRequest(`/payment-intent/${paymentIntentId}`);
-  }
-
-  async confirmPayment(paymentIntentId: string, paymentMethodId: string): Promise<{ status: string }> {
-    return this.makeRequest('/confirm-payment', {
-      method: 'POST',
-      body: JSON.stringify({ paymentIntentId, paymentMethodId }),
-    });
-  }
-}
+// Mock Stripe Service Implementation - Removed as it's not being used
 
 // Live Stripe Service Implementation
 class LiveStripeService extends BaseStripeService {
@@ -313,7 +252,8 @@ export const createStripeService = () => {
   if (isStripeLive()) {
     return new LiveStripeService();
   } else {
-    return new MockStripeService();
+    // For test mode, use LiveStripeService with test keys
+    return new LiveStripeService();
   }
 };
 

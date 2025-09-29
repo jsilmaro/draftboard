@@ -5,13 +5,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import CreatorWallet from './CreatorWallet';
-import BriefCard from './BriefCard';
+import CreatorBriefCard from './CreatorBriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
+import CreatorApplicationForm from './CreatorApplicationForm';
 // StripeConnectButton and PaymentStatusCard now handled by CreatorWallet component
 
 import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
-// import Logo from './Logo';
 import MessagingSystem from './MessagingSystem';
 
 
@@ -158,6 +158,9 @@ const CreatorDashboard: React.FC = () => {
   const [applyFormData, setApplyFormData] = useState({
     contentUrl: ''
   });
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [selectedBriefForApplication, setSelectedBriefForApplication] = useState<Brief | null>(null);
+  const [isEditingApplication, setIsEditingApplication] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [successNotification, setSuccessNotification] = useState({
     title: '',
@@ -376,7 +379,7 @@ const CreatorDashboard: React.FC = () => {
     const rows = earningsData.map(earning => [
       earning.briefTitle,
       earning.brandName || 'Unknown Brand',
-      earning.amount.toFixed(2),
+      Number(earning.amount || 0).toFixed(2),
       earning.rewardType || 'Cash',
       earning.status,
       earning.submittedAt ? new Date(earning.submittedAt).toLocaleDateString() : '',
@@ -634,10 +637,8 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  const handleSubmitApplication = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedBrief) return;
+  const handleSubmitApplication = async (data: { contentUrl: string; additionalInfo?: string }) => {
+    if (!selectedBriefForApplication) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -647,10 +648,8 @@ const CreatorDashboard: React.FC = () => {
       }
 
       // Check if this is an edit or new application
-      const existingSubmission = getExistingSubmission(selectedBrief.id);
+      const existingSubmission = getExistingSubmission(selectedBriefForApplication.id);
       const isEdit = !!existingSubmission;
-
-
 
       let response;
       if (isEdit) {
@@ -662,32 +661,32 @@ const CreatorDashboard: React.FC = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            contentUrl: applyFormData.contentUrl
+            contentUrl: data.contentUrl,
+            additionalInfo: data.additionalInfo
           })
         });
       } else {
         // Create new submission
-        response = await fetch(`/api/briefs/${selectedBrief.id}/apply`, {
+        response = await fetch(`/api/briefs/${selectedBriefForApplication.id}/apply`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            contentUrl: applyFormData.contentUrl,
-            amount: selectedBrief.reward.toString()
+            contentUrl: data.contentUrl,
+            additionalInfo: data.additionalInfo,
+            amount: selectedBriefForApplication.reward.toString()
           })
         });
       }
 
-
-
       if (response.ok) {
         // Refresh data
         fetchDashboardData();
-        setShowApplyModal(false);
-        setSelectedBrief(null);
-        setApplyFormData({ contentUrl: '' });
+        setShowApplicationForm(false);
+        setSelectedBriefForApplication(null);
+        setIsEditingApplication(false);
         
         // Show animated success notification
         setSuccessNotification({
@@ -719,18 +718,6 @@ const CreatorDashboard: React.FC = () => {
   };
 
   // Enhanced sidebar functions
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupId)) {
-        newSet.delete(groupId);
-      } else {
-        newSet.add(groupId);
-      }
-      return newSet;
-    });
-  };
-
   const handleSidebarSearch = (query: string) => {
     setSidebarSearchQuery(query);
   };
@@ -764,52 +751,24 @@ const CreatorDashboard: React.FC = () => {
   //   { id: 'profile', label: 'Profile', icon: 'profile' },
   // ];
 
-  // Navigation groups for enhanced sidebar
-  const navigationGroups = useMemo(() => [
-    {
-      id: 'main',
-      title: 'Main',
-      isExpanded: true,
-      items: [
-        { id: 'overview', label: 'Overview', icon: 'overview' },
-        { id: 'wallet', label: 'Wallet', icon: 'wallet' },
-        { id: 'messaging', label: 'Messages', icon: 'messaging' },
-      ]
-    },
-    {
-      id: 'creator-work',
-      title: 'Creator Work',
-      isExpanded: true,
-      items: [
-        { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
-        { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
-        { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
-      ]
-    },
-    {
-      id: 'earnings',
-      title: 'Earnings & Profile',
-      isExpanded: false,
-      items: [
-        { id: 'earnings', label: 'Earnings', icon: 'payments' },
-        { id: 'profile', label: 'Profile', icon: 'profile' },
-      ]
-    }
+  // Navigation items (flattened without grouping) - matching BrandDashboard structure
+  const navigationItems = useMemo(() => [
+    { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+    { id: 'messaging', label: 'Messages', icon: 'messaging' },
+    { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
+    { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
+    { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
+    { id: 'earnings', label: 'Earnings', icon: 'payments' },
+    { id: 'profile', label: 'Profile', icon: 'profile' },
   ], []);
 
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(navigationGroups.filter(group => group.isExpanded).map(group => group.id))
-  );
-
-  // Filter navigation groups based on search query
-  const filteredNavigationGroups = useMemo(() => {
-    return navigationGroups.map(group => ({
-      ...group,
-      items: group.items.filter(item =>
-        item.label.toLowerCase().includes(sidebarSearchQuery.toLowerCase())
-      )
-    })).filter(group => group.items.length > 0);
-  }, [navigationGroups, sidebarSearchQuery]);
+  // Filter navigation items based on search query
+  const filteredNavigationItems = useMemo(() => {
+    return navigationItems.filter(item =>
+      item.label.toLowerCase().includes(sidebarSearchQuery.toLowerCase())
+    );
+  }, [navigationItems, sidebarSearchQuery]);
 
   const accountNav = [
     { id: 'earnings', label: 'Earnings', icon: 'payments' },
@@ -845,7 +804,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
           </div>
           <div>
-            <p className="metric-value">${metrics.totalEarnings.toFixed(2)}</p>
+            <p className="metric-value">${Number(metrics.totalEarnings || 0).toFixed(2)}</p>
             <p className="metric-label">Total Earnings</p>
           </div>
         </div>
@@ -1132,28 +1091,17 @@ const CreatorDashboard: React.FC = () => {
             };
             
             return (
-              <div key={brief.id} className="relative">
-                <BriefCard 
-                  brief={briefForCard} 
-                  onApplyClick={(brief) => {
-                    setSelectedBriefId(brief.id);
-                    setShowBriefDetailsModal(true);
-                  }}
-                />
-                {hasSubmittedToBrief(brief.id) && (
-                  <div className="absolute top-4 right-4 z-10">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-900/20 text-emerald-400' :
-                      getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-900/20 text-red-400' :
-                      'bg-yellow-900/20 text-yellow-400'
-                    }`}>
-                      {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
-                       getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
-                       'Pending Review'}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <CreatorBriefCard 
+                key={brief.id}
+                brief={briefForCard} 
+                onApplyClick={(brief) => {
+                  setSelectedBriefForApplication(brief);
+                  setIsEditingApplication(hasSubmittedToBrief(brief.id));
+                  setShowApplicationForm(true);
+                }}
+                hasApplied={hasSubmittedToBrief(brief.id)}
+                applicationStatus={getSubmissionStatus(brief.id)}
+              />
             );
           })}
         </div>
@@ -1216,18 +1164,15 @@ const CreatorDashboard: React.FC = () => {
                     <div key={index} className="bg-gray-950/20 p-3 rounded-lg">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-white">
-                                              {reward.position === 1 ? '🥇 1st Spot' :
-                      reward.position === 2 ? '🥈 2nd Spot' :
-                      reward.position === 3 ? '🥉 3rd Spot' :
-                      `${reward.position}th Spot`}
+                          Reward {reward.position}
                         </span>
                       </div>
                       <div className="space-y-1 text-sm text-white">
                         {reward.cashAmount > 0 && (
-                          <p>Cash: ${reward.cashAmount.toLocaleString()}</p>
+                          <p>Cash: ${(reward.cashAmount || 0).toLocaleString()}</p>
                         )}
                         {reward.creditAmount > 0 && (
-                          <p>🎫 Credits: {reward.creditAmount.toLocaleString()}</p>
+                          <p>🎫 Credits: {(reward.creditAmount || 0).toLocaleString()}</p>
                         )}
                         {reward.prizeDescription && (
                           <p>🎁 Prize: {reward.prizeDescription}</p>
@@ -1504,7 +1449,7 @@ const CreatorDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="metric-value">${metrics.totalEarnings.toFixed(2)}</p>
+              <p className="metric-value">${Number(metrics.totalEarnings || 0).toFixed(2)}</p>
               <p className="metric-label">Total Earnings</p>
             </div>
       </div>
@@ -1518,7 +1463,7 @@ const CreatorDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="metric-value">${metrics.paidEarnings.toFixed(2)}</p>
+              <p className="metric-value">${Number(metrics.paidEarnings || 0).toFixed(2)}</p>
               <p className="metric-label">Paid</p>
             </div>
           </div>
@@ -1532,7 +1477,7 @@ const CreatorDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="metric-value">${metrics.pendingEarnings.toFixed(2)}</p>
+              <p className="metric-value">${Number(metrics.pendingEarnings || 0).toFixed(2)}</p>
               <p className="metric-label">Pending</p>
             </div>
           </div>
@@ -1546,7 +1491,7 @@ const CreatorDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="metric-value">${metrics.thisMonthEarnings.toFixed(2)}</p>
+              <p className="metric-value">${Number(metrics.thisMonthEarnings || 0).toFixed(2)}</p>
               <p className="metric-label">This Month</p>
             </div>
           </div>
@@ -1670,7 +1615,7 @@ const CreatorDashboard: React.FC = () => {
                         {earning.brandName || 'Unknown Brand'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
-                        ${earning.amount.toFixed(2)}
+                        ${Number(earning.amount || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -2030,7 +1975,7 @@ const CreatorDashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-right">
                     <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                      ${brief.reward?.toLocaleString() || '0'}
+                      ${(brief.reward || 0).toLocaleString()}
                     </div>
                     <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {brief.amountOfWinners || 1} winner{(brief.amountOfWinners || 1) > 1 ? 's' : ''}
@@ -2313,154 +2258,74 @@ const CreatorDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Navigation Groups */}
-          <nav className="space-y-3 flex-1">
-            {filteredNavigationGroups.map((group) => {
-              const isExpanded = expandedGroups.has(group.id);
-              
-              return (
-                <div key={group.id} className="space-y-1">
-                  {!sidebarCollapsed && (
-                    <button
-                      onClick={() => toggleGroup(group.id)}
-                      className={`flex w-full items-center justify-between text-xs font-semibold px-3 py-2 rounded-lg transition-colors uppercase tracking-wider ${
-                        isDark
-                          ? 'text-gray-400 hover:text-white hover:bg-gray-900'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                      aria-expanded={isExpanded}
-                      aria-controls={`nav-group-${group.id}`}
-                    >
-                      {group.title}
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          isExpanded ? 'rotate-90' : 'rotate-0'
-                        }`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </button>
-                  )}
-                  
-                  {/* Show icons when collapsed - only for expanded groups */}
-                  {sidebarCollapsed && isExpanded && (
-                    <div className="space-y-1">
-                      {group.items.map((item) => (
-                        <button
-                          key={`collapsed-${item.id}`}
-                          onClick={() => setActiveTab(item.id)}
-                          className={`w-full flex items-center justify-center p-4 rounded-lg transition-all duration-200 ${
-                            activeTab === item.id
-                              ? isDark
-                                ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                                : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          }`}
-                          title={item.label}
-                        >
-                          {item.icon === 'overview' && (
-                            <img src="/icons/overview.png" alt="Overview" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'marketplace' && (
-                            <img src="/icons/Green_icons/Megaphone1.png" alt="Marketplace" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'briefs' && (
-                            <img src="/icons/briefs.png" alt="Briefs" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'submissions' && (
-                            <img src="/icons/submissions.png" alt="Submissions" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'earnings' && (
-                            <img src="/icons/payments.png" alt="Earnings" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'wallet' && (
-                            <img src="/icons/wallet.png" alt="Wallet" className="w-5 h-5" />
-                          )}
-                          {item.icon === 'profile' && (
-                            <img src="/icons/profile.png" alt="Profile" className="w-5 h-5" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {isExpanded && !sidebarCollapsed && (
-                    <div 
-                      id={`nav-group-${group.id}`}
-                      className="space-y-1"
-                    >
-                      {group.items.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setActiveTab(item.id)}
-                          className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all duration-200 ${
-                            activeTab === item.id
-                              ? isDark
-                                ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                                : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          }`}
-                          title={sidebarCollapsed ? item.label : ''}
-                        >
-                          {item.icon === 'overview' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
-                            </svg>
-                          )}
-                          {item.icon === 'marketplace' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                            </svg>
-                          )}
-                          {item.icon === 'briefs' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          )}
-                          {item.icon === 'submissions' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          )}
-                          {item.icon === 'earnings' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                          )}
-                          {item.icon === 'wallet' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                          )}
-                          {item.icon === 'profile' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          )}
-                          {!sidebarCollapsed && (
-                            <span className="font-medium">{item.label}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* Navigation Items */}
+          <nav className="space-y-1 flex-1">
+            {filteredNavigationItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-all duration-200 ${
+                  activeTab === item.id
+                    ? isDark
+                      ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
+                    : isDark
+                      ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+                title={sidebarCollapsed ? item.label : ''}
+              >
+                {item.icon === 'overview' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+                  </svg>
+                )}
+                {item.icon === 'wallet' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                )}
+                {item.icon === 'messaging' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                )}
+                {item.icon === 'marketplace' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                  </svg>
+                )}
+                {item.icon === 'briefs' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                {item.icon === 'submissions' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                )}
+                {item.icon === 'payments' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                )}
+                {item.icon === 'profile' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+                {!sidebarCollapsed && (
+                  <span className="font-medium">{item.label}</span>
+                )}
+              </button>
+            ))}
           </nav>
 
           {/* Footer */}
-          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-900">
-            <div className="space-y-2">
+          <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-1">
               {accountNav.map((item) => (
                 <button
                   key={item.id}
@@ -2480,11 +2345,16 @@ const CreatorDashboard: React.FC = () => {
                 >
                   <span className={sidebarCollapsed ? '' : 'mr-3'}>
                     {item.id === 'settings' ? (
-                      <img src="/icons/settings.png" alt="Settings" className="w-4 h-4" />
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
                     ) : item.id === 'logout' ? (
-                      <img src="/icons/logout.png" alt="Logout" className="w-4 h-4" />
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     )}
@@ -2493,8 +2363,9 @@ const CreatorDashboard: React.FC = () => {
                 </button>
               ))}
             </div>
+            
             {/* Theme Toggle */}
-            <div className="mt-4 pt-6 border-t border-gray-200 dark:border-gray-900">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
                 {!sidebarCollapsed && (
                   <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -2780,7 +2651,7 @@ const CreatorDashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-lg font-semibold mb-2">{selectedEarning.briefTitle}</h4>
-                      <p className="text-3xl font-bold">${selectedEarning.amount.toFixed(2)}</p>
+                      <p className="text-3xl font-bold">${Number(selectedEarning.amount || 0).toFixed(2)}</p>
                       <p className="text-sm opacity-90 mt-1">
                         {selectedEarning.brandName || 'Unknown Brand'}
                       </p>
@@ -2811,7 +2682,7 @@ const CreatorDashboard: React.FC = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-semibold">
-                          ${selectedEarning.amount.toFixed(2)}
+                          ${Number(selectedEarning.amount || 0).toFixed(2)}
                         </span>
                       </div>
                       {selectedEarning.position && (
@@ -2900,6 +2771,24 @@ const CreatorDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Creator Application Form Modal */}
+      {selectedBriefForApplication && (
+        <CreatorApplicationForm
+          brief={selectedBriefForApplication}
+          isOpen={showApplicationForm}
+          onClose={() => {
+            setShowApplicationForm(false);
+            setSelectedBriefForApplication(null);
+            setIsEditingApplication(false);
+          }}
+          onSubmit={async (data) => {
+            await handleSubmitApplication(data);
+          }}
+          isEdit={isEditingApplication}
+          existingSubmission={isEditingApplication ? getExistingSubmission(selectedBriefForApplication.id) : undefined}
+        />
       )}
 
       </div>

@@ -3,7 +3,7 @@
 
 export const STRIPE_CONFIG = {
   // Set to 'test' for development/testing with real Stripe test keys, 'live' for production
-  MODE: import.meta.env.VITE_STRIPE_MODE || 'test',
+  MODE: import.meta.env.VITE_STRIPE_MODE || import.meta.env.STRIPE_MODE || 'test',
   
   // Test Mode Configuration
   TEST: {
@@ -15,10 +15,10 @@ export const STRIPE_CONFIG = {
   
   // Live Mode Configuration
   LIVE: {
-    PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE || '',
-    SECRET_KEY: import.meta.env.VITE_STRIPE_SECRET_KEY_LIVE || '',
-    CONNECT_CLIENT_ID: import.meta.env.VITE_STRIPE_CONNECT_CLIENT_ID_LIVE || '',
-    WEBHOOK_SECRET: import.meta.env.VITE_STRIPE_WEBHOOK_SECRET_LIVE || '',
+    PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE || import.meta.env.STRIPE_PUBLISHABLE_KEY_LIVE || '',
+    SECRET_KEY: import.meta.env.VITE_STRIPE_SECRET_KEY_LIVE || import.meta.env.STRIPE_SECRET_KEY_LIVE || '',
+    CONNECT_CLIENT_ID: import.meta.env.VITE_STRIPE_CONNECT_CLIENT_ID_LIVE || import.meta.env.STRIPE_CONNECT_CLIENT_ID_LIVE || '',
+    WEBHOOK_SECRET: import.meta.env.VITE_STRIPE_WEBHOOK_SECRET_LIVE || import.meta.env.STRIPE_WEBHOOK_SECRET_LIVE || '',
   },
   
   // Common Configuration

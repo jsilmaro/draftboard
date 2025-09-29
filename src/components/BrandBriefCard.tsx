@@ -12,9 +12,9 @@ interface BrandBriefCardProps {
     status: string;
     submissions: number | Array<unknown>;
     totalRewardsPaid?: number;
-
+    isFunded?: boolean;
     reward?: number;
-    totalRewardValue?: number; // Calculated total from reward tiers
+    totalRewardValue?: number;
     rewardTiers?: Array<{
       position: number;
       cashAmount: number;
@@ -26,29 +26,36 @@ interface BrandBriefCardProps {
       companyName: string;
       logo?: string;
     };
+    requirements?: string;
+    location?: string;
+    additionalFields?: Record<string, unknown>;
   };
   onViewClick?: (brief: BrandBriefCardProps['brief']) => void;
   onEditClick?: (_brief: BrandBriefCardProps['brief']) => void;
   onEditRewardsClick?: (brief: BrandBriefCardProps['brief']) => void;
   onSelectWinnersClick?: (brief: BrandBriefCardProps['brief']) => void;
   onViewSubmissionsClick?: (brief: BrandBriefCardProps['brief']) => void;
-  onDeleteClick?: (brief: BrandBriefCardProps['brief']) => void;
-
+  onDeleteClick?: (briefId: string) => void;
+  onPublishClick?: (briefId: string) => void;
+  onDraftClick?: (briefId: string) => void;
+  onArchiveClick?: (briefId: string) => void;
 }
 
 const BrandBriefCard: React.FC<BrandBriefCardProps> = ({ 
   brief, 
   onViewClick, 
-  onEditClick: _onEditClick, 
+  onEditClick, 
   onEditRewardsClick: _onEditRewardsClick, 
   onSelectWinnersClick: _onSelectWinnersClick,
   onViewSubmissionsClick,
-  onDeleteClick
+  onDeleteClick,
+  onPublishClick,
+  onDraftClick,
+  onArchiveClick
 }) => {
   const { isDark } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Calculate submissions count
   const getSubmissionsCount = () => {
     try {
       if (typeof brief.submissions === 'number') {
@@ -73,10 +80,6 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const totalRewardValue = brief.totalRewardValue || 0;
   const rewardsPaid = brief.totalRewardsPaid || 0;
   const rewardsProgress = totalRewardValue > 0 ? (rewardsPaid / totalRewardValue) * 100 : 0;
-
-
-
-
 
   const getStatusBadge = () => {
     const baseClasses = "px-3 py-1 text-xs rounded-full font-medium";
@@ -167,49 +170,154 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
           )}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 ${
-            isDark ? 'bg-gray-900/50' : 'bg-gray-100'
-          }`}>
-            <div className={`text-xs mb-1 ${
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>Target</div>
-            <div className={`text-sm sm:text-lg font-bold ${
+        {/* Requirements Preview */}
+        {brief.requirements && (
+          <div className="mb-3 sm:mb-4">
+            <h4 className={`text-xs font-semibold mb-1 ${
+              isDark ? 'text-gray-200' : 'text-gray-700'
+            }`}>
+              Requirements Preview:
+            </h4>
+            <p className={`text-xs line-clamp-2 ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              {brief.requirements}
+            </p>
+          </div>
+        )}
+
+        {/* Location (if available) */}
+        {brief.location && (
+          <div className="mb-3 sm:mb-4">
+            <h4 className={`text-xs font-semibold mb-1 ${
+              isDark ? 'text-gray-200' : 'text-gray-700'
+            }`}>
+              Location:
+            </h4>
+            <p className={`text-xs ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              {brief.location}
+            </p>
+          </div>
+        )}
+
+        {/* Funding Status - Prominent for Creators */}
+        {brief.isFunded && (
+          <div className="mb-3 sm:mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className={`text-sm font-semibold ${
+                isDark ? 'text-green-400' : 'text-green-700'
+              }`}>
+                ✓ Fully Funded & Verified
+              </span>
+            </div>
+            <p className={`text-xs mt-1 ${
+              isDark ? 'text-green-300' : 'text-green-600'
+            }`}>
+              This brief is backed by real funding and ready for submissions
+            </p>
+          </div>
+        )}
+
+        {/* Reward Information */}
+        <div className="mb-3 sm:mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className={`text-xs font-semibold ${
+              isDark ? 'text-gray-200' : 'text-gray-700'
+            }`}>
+              Total Reward Pool:
+            </h4>
+            <span className={`text-sm font-bold ${
+              isDark ? 'text-green-400' : 'text-green-600'
+            }`}>
+              ${(totalRewardValue || 0).toLocaleString()}
+            </span>
+          </div>
+          
+          {/* Reward Structure */}
+          {brief.rewardTiers && brief.rewardTiers.length > 0 && (
+            <div className="space-y-1">
+              <h5 className={`text-xs font-medium ${
+                isDark ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                Reward Structure:
+              </h5>
+              {brief.rewardTiers.slice(0, 3).map((tier) => (
+                <div key={tier.position} className="flex justify-between items-center">
+                  <span className={`text-xs ${
+                    isDark ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    Reward {tier.position}
+                  </span>
+                  <span className={`text-xs font-medium ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {brief.rewardTiers.length > 3 && (
+                <p className={`text-xs ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  +{brief.rewardTiers.length - 3} more rewards
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="text-center">
+            <div className={`text-lg font-bold ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
+              {submissionsCount}
+            </div>
+            <div className={`text-xs ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              Submissions
+            </div>
+          </div>
+          <div className="text-center">
+            <div className={`text-lg font-bold ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>
               {brief.amountOfWinners || 1}
             </div>
-          </div>
-          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 ${
-            isDark ? 'bg-gray-900/50' : 'bg-gray-100'
-          }`}>
-            <div className={`text-xs mb-1 ${
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>Applied</div>
-            <div className={`text-sm sm:text-lg font-bold ${
-              isDark ? 'text-white' : 'text-gray-900'
+            <div className={`text-xs ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              {submissionsCount}
+              Winners
             </div>
           </div>
         </div>
 
         {/* Progress Bars */}
-        <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+        <div className="mb-4 space-y-2">
           {/* Submissions Progress */}
           <div>
-            <div className={`flex items-center justify-between text-xs mb-1 ${
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              <span>Submissions Progress</span>
-              <span>{submissionsProgress.toFixed(1)}%</span>
+            <div className="flex justify-between text-xs mb-1">
+              <span className={`${
+                isDark ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                Applications Progress
+              </span>
+              <span className={`font-medium ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                {submissionsCount}/{targetSubmissions}
+              </span>
             </div>
             <div className={`w-full rounded-full h-2 ${
-              isDark ? 'bg-gray-600' : 'bg-gray-200'
+              isDark ? 'bg-gray-700' : 'bg-gray-200'
             }`}>
               <div 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${submissionsProgress}%` }}
               />
             </div>
@@ -217,68 +325,103 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 
           {/* Rewards Progress */}
           <div>
-            <div className={`flex items-center justify-between text-xs mb-1 ${
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              <span>Rewards Progress</span>
-              <span>{rewardsProgress.toFixed(1)}%</span>
+            <div className="flex justify-between text-xs mb-1">
+              <span className={`${
+                isDark ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                Rewards Progress
+              </span>
+              <span className={`font-medium ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                ${(rewardsPaid || 0).toLocaleString()}/${(totalRewardValue || 0).toLocaleString()}
+              </span>
             </div>
             <div className={`w-full rounded-full h-2 ${
-              isDark ? 'bg-gray-600' : 'bg-gray-200'
+              isDark ? 'bg-gray-700' : 'bg-gray-200'
             }`}>
               <div 
-                className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-300"
+                className="bg-green-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${rewardsProgress}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Total Value */}
-        {totalRewardValue > 0 && (
-          <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 mb-3 sm:mb-4 ${
-            isDark ? 'bg-green-900/20' : 'bg-green-50'
+        {/* Deadline */}
+        <div className="mb-4">
+          <div className={`text-xs ${
+            isDark ? 'text-gray-300' : 'text-gray-600'
           }`}>
-            <div className={`text-xs mb-1 ${
-              isDark ? 'text-green-400' : 'text-green-700'
-            }`}>Total Value</div>
-            <div className={`text-sm sm:text-lg font-bold ${
-              isDark ? 'text-green-300' : 'text-green-800'
-            }`}>
-              ${totalRewardValue.toLocaleString()}
-            </div>
+            Deadline: {new Date(brief.deadline).toLocaleDateString()}
           </div>
-        )}
+        </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button
-            onClick={() => onViewClick?.(brief)}
-            className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl transition-colors ${
-              isDark 
-                ? 'bg-gray-900 text-gray-300 hover:bg-gray-800'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            View
-          </button>
-          <button
-            onClick={() => onViewSubmissionsClick?.(brief)}
-            className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
-          >
-            Submissions ({submissionsCount})
-          </button>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          {onViewClick && (
+            <button
+              onClick={() => onViewClick(brief)}
+              className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              👁️ View
+            </button>
+          )}
+          {onEditClick && (
+            <button
+              onClick={() => onEditClick(brief)}
+              className="px-3 py-2 bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-yellow-700 transition-colors"
+            >
+              ✏️ Edit
+            </button>
+          )}
+          {onPublishClick && brief.status === 'draft' && (
+            <button
+              onClick={() => onPublishClick(brief.id)}
+              className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"
+            >
+              📢 Publish
+            </button>
+          )}
+          {onDraftClick && brief.status === 'published' && (
+            <button
+              onClick={() => onDraftClick(brief.id)}
+              className="px-3 py-2 bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-700 transition-colors"
+            >
+              📝 Draft
+            </button>
+          )}
+          {onArchiveClick && (
+            <button
+              onClick={() => onArchiveClick(brief.id)}
+              className="px-3 py-2 bg-orange-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-orange-700 transition-colors"
+            >
+              📦 Archive
+            </button>
+          )}
+          {onViewSubmissionsClick && (
+            <button
+              onClick={() => onViewSubmissionsClick(brief)}
+              className="px-3 py-2 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-purple-700 transition-colors"
+            >
+              📋 Submissions
+            </button>
+          )}
         </div>
         
         {/* Additional Action Buttons */}
         <div className="grid grid-cols-1 gap-2 mt-2">
           <button
             onClick={() => {
-              const shareUrl = `${window.location.origin}/brand/${brief.brand?.id || 'unknown'}/briefs`;
-              window.open(shareUrl, '_blank');
+              // Get the current user ID from localStorage or use the brief's brandId
+              // const currentUserId = localStorage.getItem('userId') || brief.brand?.id || 'unknown';
+              const shareUrl = `${window.location.origin}/brief/${brief.id}`;
+              navigator.clipboard.writeText(shareUrl).then(() => {
+                alert('Brief link copied to clipboard!');
+              });
             }}
             className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"
-            title="Open shareable link"
+            title="Copy shareable link"
           >
             📤 Share
           </button>
@@ -286,7 +429,7 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
             <button
               onClick={() => {
                 if (window.confirm(`Are you sure you want to delete "${brief.title}"? This action cannot be undone.`)) {
-                  onDeleteClick(brief);
+                  onDeleteClick(brief.id);
                 }
               }}
               className="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-red-700 transition-colors"

@@ -48,6 +48,7 @@ const stripeConnectRoutes = require('./routes/stripeConnect');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
 const webhookRoutes = require('./routes/webhooks');
 const stripeRoutes = require('./routes/stripe');
+const rewardManagementRoutes = require('./routes/rewardManagement');
 
 // Import Stripe integration routes
 // rewardsRoutes removed - replaced with Stripe Connect functionality
@@ -387,8 +388,12 @@ app.use('/api', stripeConnectRoutes);
 app.use('/api', stripeWebhookRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
+// Reward Management routes
+app.use('/api', rewardManagementRoutes);
+
 // Stripe integration routes
-app.use('/api/stripe', authenticateToken, stripeRoutes);
+// Mount Stripe routes with selective authentication
+app.use('/api/stripe', stripeRoutes);
 // Mock Stripe routes removed - using live Stripe Connect
 // app.use('/api/rewards-system', rewardsRoutes); // Removed - replaced with Stripe Connect
 
@@ -1568,6 +1573,288 @@ app.get('/api/admin/submissions', authenticateToken, async (req, res) => {
   }
 });
 
+// Accept submission (shortlist)
+app.post('/api/submissions/:id/accept', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can accept submissions' });
+    }
+
+    const { id } = req.params;
+    const brandId = req.user.id;
+
+    // Verify submission exists and belongs to brand's brief
+    const submission = await prisma.submission.findFirst({
+      where: { id },
+      include: {
+        brief: {
+          where: { brandId }
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Update submission status
+    await prisma.submission.update({
+      where: { id },
+      data: { status: 'accepted' }
+    });
+
+    // Create notification for creator
+    await prisma.notification.create({
+      data: {
+        userId: submission.creatorId,
+        userType: 'creator',
+        title: 'Submission Accepted!',
+        message: `Your submission for "${submission.brief.title}" has been accepted and shortlisted!`,
+        type: 'submission'
+      }
+    });
+
+    res.json({ success: true, message: 'Submission accepted and shortlisted' });
+  } catch (error) {
+    console.error('Error accepting submission:', error);
+    res.status(500).json({ error: 'Failed to accept submission' });
+  }
+});
+
+// Reject submission
+app.post('/api/submissions/:id/reject', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can reject submissions' });
+    }
+
+    const { id } = req.params;
+    const brandId = req.user.id;
+
+    // Verify submission exists and belongs to brand's brief
+    const submission = await prisma.submission.findFirst({
+      where: { id },
+      include: {
+        brief: {
+          where: { brandId }
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Update submission status
+    await prisma.submission.update({
+      where: { id },
+      data: { status: 'rejected' }
+    });
+
+    // Create notification for creator
+    await prisma.notification.create({
+      data: {
+        userId: submission.creatorId,
+        userType: 'creator',
+        title: 'Submission Update',
+        message: `Your submission for "${submission.brief.title}" was not selected this time. Keep creating great content!`,
+        type: 'submission'
+      }
+    });
+
+    res.json({ success: true, message: 'Submission rejected' });
+  } catch (error) {
+    console.error('Error rejecting submission:', error);
+    res.status(500).json({ error: 'Failed to reject submission' });
+  }
+});
+
+// Get brand reward analytics
+app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const brandId = req.user.id;
+
+    // Get comprehensive analytics
+    const [
+      totalBriefs,
+      activeBriefs,
+      totalSubmissions,
+      totalRewardsPaid,
+      totalSpent,
+      briefsWithRewards,
+      recentBriefs,
+      topPerformingBriefs
+    ] = await Promise.all([
+      // Total briefs
+      prisma.brief.count({
+        where: { brandId }
+      }),
+      
+      // Active briefs (published)
+      prisma.brief.count({
+        where: { 
+          brandId,
+          status: 'published'
+        }
+      }),
+      
+      // Total submissions
+      prisma.submission.count({
+        where: {
+          brief: { brandId }
+        }
+      }),
+      
+      // Total rewards paid
+      prisma.brief.aggregate({
+        where: { brandId },
+        _sum: { totalRewardsPaid: true }
+      }),
+      
+      // Total spent (from brief funding)
+      prisma.briefFunding.aggregate({
+        where: { 
+          brief: { brandId }
+        },
+        _sum: { totalAmount: true }
+      }),
+      
+      // Briefs with reward tiers
+      prisma.brief.findMany({
+        where: { 
+          brandId,
+          rewardTiers: {
+            some: {}
+          }
+        },
+        include: {
+          rewardTiers: true,
+          submissions: true
+        }
+      }),
+      
+      // Recent briefs (last 30 days)
+      prisma.brief.findMany({
+        where: {
+          brandId,
+          createdAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      }),
+      
+      // Top performing briefs by submissions
+      prisma.brief.findMany({
+        where: { brandId },
+        include: {
+          submissions: true,
+          _count: {
+            select: { submissions: true }
+          }
+        },
+        orderBy: {
+          submissions: {
+            _count: 'desc'
+          }
+        },
+        take: 5
+      })
+    ]);
+
+    // Calculate conversion rate
+    const conversionRate = totalSubmissions > 0 ? 
+      ((briefsWithRewards.length / totalBriefs) * 100) : 0;
+
+    // Calculate total reward value from reward tiers
+    const totalRewardValue = briefsWithRewards.reduce((sum, brief) => {
+      return sum + brief.rewardTiers.reduce((tierSum, tier) => {
+        return tierSum + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+      }, 0);
+    }, 0);
+
+    // Calculate monthly trends
+    const monthlyData = [];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      
+      const monthBriefs = await prisma.brief.count({
+        where: {
+          brandId,
+          createdAt: {
+            gte: startOfMonth,
+            lte: endOfMonth
+          }
+        }
+      });
+      
+      const monthSubmissions = await prisma.submission.count({
+        where: {
+          brief: { brandId },
+          submittedAt: {
+            gte: startOfMonth,
+            lte: endOfMonth
+          }
+        }
+      });
+      
+      monthlyData.push({
+        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        briefs: monthBriefs,
+        submissions: monthSubmissions
+      });
+    }
+
+    res.json({
+      // Main metrics
+      totalSpent: totalSpent._sum.amount || 0,
+      totalRewards: totalRewardsPaid._sum.totalRewardsPaid || 0,
+      totalRewardValue,
+      activeCampaigns: activeBriefs,
+      conversionRate: Math.round(conversionRate),
+      
+      // Additional metrics
+      totalBriefs,
+      totalSubmissions,
+      averageReward: totalBriefs > 0 ? (totalRewardsPaid._sum.totalRewardsPaid || 0) / totalBriefs : 0,
+      
+      // Performance data
+      recentBriefs,
+      topPerformingBriefs: topPerformingBriefs.map(brief => ({
+        id: brief.id,
+        title: brief.title,
+        submissions: brief._count.submissions,
+        status: brief.status
+      })),
+      
+      // Chart data
+      monthlyTrends: monthlyData,
+      
+      // Brief performance breakdown
+      briefPerformance: briefsWithRewards.map(brief => ({
+        id: brief.id,
+        title: brief.title,
+        submissions: brief.submissions.length,
+        totalRewardValue: brief.rewardTiers.reduce((sum, tier) => 
+          sum + (tier.cashAmount || 0) + (tier.creditAmount || 0), 0
+        ),
+        status: brief.status
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching brand reward analytics:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get admin analytics
 app.get('/api/admin/analytics', authenticateToken, async (req, res) => {
   try {
@@ -1620,50 +1907,98 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
       deadline,
       isPrivate,
       additionalFields,
-      rewardTiers
+      rewardTiers,
+      isFunded,
+      status,
+      fundedAt
     } = req.body;
 
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can create briefs' });
     }
 
+    // Validate required fields
+    if (!title || !description || !requirements || !deadline) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['title', 'description', 'requirements', 'deadline'],
+        provided: { title: !!title, description: !!description, requirements: !!requirements, deadline: !!deadline }
+      });
+    }
+
+    // Calculate total budget from reward tiers
+    let totalBudget = 0;
+    if (rewardTiers && Array.isArray(rewardTiers) && rewardTiers.length > 0) {
+      totalBudget = rewardTiers.reduce((total, tier) => total + (tier.amount || 0), 0);
+    }
+
+    console.log('Creating brief with data:', {
+      title,
+      description,
+      requirements,
+      reward,
+      amountOfWinners,
+      deadline,
+      isFunded,
+      status,
+      fundedAt,
+      totalBudget
+    });
+
+    console.log('Attempting to create brief in database...');
+    
     const brief = await prisma.brief.create({
       data: {
         title,
         description,
         requirements,
-        reward: parseFloat(reward),
+        reward: parseFloat(reward), // Legacy field
+        totalBudget: totalBudget, // New field for reward tier system
         amountOfWinners: parseInt(amountOfWinners) || 1,
         location: location || '',
         deadline: new Date(deadline),
         isPrivate: isPrivate || false,
         additionalFields: additionalFields ? JSON.stringify(additionalFields) : null,
-        status: 'published', // Set status to published by default
+        status: status || 'published', // Use provided status or default to published
+        isFunded: isFunded || false, // Use provided isFunded or default to false
+        fundedAt: fundedAt ? new Date(fundedAt) : null, // Use provided fundedAt or null
         brandId: req.user.id
       }
     });
+    
+    console.log('Brief created successfully:', brief.id);
 
-    // Save reward tiers if provided
+    // Save new reward tier system
     if (rewardTiers && Array.isArray(rewardTiers) && rewardTiers.length > 0) {
-      // Create WinnerReward records
-      for (const tier of rewardTiers) {
-        await prisma.winnerReward.create({
+      console.log('Creating reward tiers:', rewardTiers.length);
+      
+      // Create RewardTier records
+      for (let i = 0; i < rewardTiers.length; i++) {
+        const tier = rewardTiers[i];
+        console.log(`Creating reward tier ${i + 1}:`, tier);
+        
+        await prisma.rewardTier.create({
           data: {
             briefId: brief.id,
-            position: tier.position,
-            cashAmount: tier.cashAmount || 0,
-            creditAmount: tier.creditAmount || 0,
-            prizeDescription: tier.prizeDescription || ''
+            tierNumber: tier.tierNumber || (i + 1), // Use provided tierNumber or default to position
+            name: tier.name || `Tier ${i + 1}`,
+            description: tier.description || '',
+            amount: parseFloat(tier.amount) || 0,
+            position: tier.position || (i + 1),
+            isActive: true
           }
         });
       }
       
-      // Also save to publishedAwards for backward compatibility
-      await prisma.publishedAward.create({
+      console.log('Reward tiers created successfully');
+
+      // Create initial brief status
+      await prisma.briefStatus.create({
         data: {
           briefId: brief.id,
-          brandId: req.user.id,
-          rewardTiers: JSON.stringify(rewardTiers)
+          status: status || 'draft',
+          updatedBy: req.user.id,
+          notes: isFunded ? 'Brief created and funded' : 'Brief created'
         }
       });
     }
@@ -1684,7 +2019,12 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating brief:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Request body:', req.body);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message,
+      stack: error.stack
+    });
   }
 });
 
@@ -1735,13 +2075,18 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
 
     // Update reward tiers if provided
     if (rewardTiers && Array.isArray(rewardTiers)) {
-      // Delete existing reward tiers
+      // Delete existing reward tiers from both tables
       await prisma.winnerReward.deleteMany({
         where: { briefId: id }
       });
       
-      // Create new reward tiers
+      await prisma.rewardTier.deleteMany({
+        where: { briefId: id }
+      });
+      
+      // Create new reward tiers in both tables
       for (const tier of rewardTiers) {
+        // Create in winnerReward table
         await prisma.winnerReward.create({
           data: {
             briefId: id,
@@ -1749,6 +2094,19 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
             cashAmount: tier.cashAmount || 0,
             creditAmount: tier.creditAmount || 0,
             prizeDescription: tier.prizeDescription || ''
+          }
+        });
+        
+        // Create in rewardTier table
+        await prisma.rewardTier.create({
+          data: {
+            briefId: id,
+            position: tier.position,
+            tierNumber: tier.position,
+            name: `Reward ${tier.position}`,
+            amount: (tier.cashAmount || 0) + (tier.creditAmount || 0),
+            cashAmount: tier.cashAmount || 0,
+            creditAmount: tier.creditAmount || 0
           }
         });
       }
@@ -1867,9 +2225,33 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
 
     console.log('📋 Querying database for briefs...');
     
-    // First try a simple query without complex includes
+    // Query briefs with essential data only
     const briefs = await prisma.brief.findMany({
       where: { brandId: req.user.id },
+      include: {
+        rewardTiers: {
+          orderBy: { position: 'asc' }
+        },
+        winnerRewards: {
+          orderBy: { position: 'asc' }
+        },
+        submissions: {
+          select: {
+            id: true,
+            content: true,
+            status: true,
+            submittedAt: true,
+            creator: {
+              select: {
+                id: true,
+                userName: true,
+                fullName: true,
+                email: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
     
@@ -1877,9 +2259,20 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
 
     // Transform briefs to include calculated values
     const transformedBriefs = briefs.map(brief => {
-      // For now, just use the basic reward field
-      let totalRewardValue = brief.reward || 0;
-      let rewardTiers = [];
+      // Use totalBudget from reward tiers, fallback to legacy reward field
+      let rewardTiers = (brief.rewardTiers && brief.rewardTiers.length > 0)
+        ? brief.rewardTiers
+        : (brief.winnerRewards || []).map(wr => ({
+            position: wr.position,
+            amount: (wr.cashAmount || 0) + (wr.creditAmount || 0),
+            cashAmount: wr.cashAmount || 0,
+            creditAmount: wr.creditAmount || 0
+          }));
+
+      const totalRewardValue = rewardTiers.reduce(
+        (sum, t) => sum + Number(t.cashAmount || 0) + Number(t.creditAmount || 0),
+        0
+      ) || brief.totalBudget || brief.reward || 0;
 
       // Extract country from location
       let country = '';
@@ -1893,7 +2286,7 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
         totalRewardValue,
         rewardTiers,
         displayLocation: country, // Show only country on cards
-        submissions: [] // Empty array for now
+        submissions: brief.submissions || []
       };
     });
 
@@ -1902,6 +2295,85 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching brand briefs:', error);
     console.error('❌ Error stack:', error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public brief view for shareable links
+app.get('/api/briefs/public/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const brief = await prisma.brief.findUnique({
+      where: { id },
+      include: {
+        brand: {
+          select: {
+            id: true,
+            companyName: true,
+            logo: true,
+            socialInstagram: true,
+            socialTwitter: true,
+            socialLinkedIn: true,
+            socialWebsite: true
+          }
+        },
+        submissions: {
+          select: {
+            id: true,
+            creator: {
+              select: {
+                userName: true
+              }
+            }
+          }
+        },
+        rewardTiers: {
+          select: {
+            position: true,
+            amount: true,
+            tierNumber: true,
+            name: true,
+            description: true,
+            isActive: true
+          },
+          orderBy: { position: 'asc' }
+        },
+        winnerRewards: {
+          select: {
+            position: true,
+            cashAmount: true,
+            creditAmount: true,
+            prizeDescription: true
+          },
+          orderBy: { position: 'asc' }
+        }
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+
+    // Only show published briefs publicly
+    if (brief.status !== 'published') {
+      return res.status(404).json({ error: 'Brief not available' });
+    }
+
+    // Calculate total reward value
+    const totalRewardValue = brief.rewardTiers?.reduce((sum, tier) => 
+      sum + (tier.cashAmount || 0) + (tier.creditAmount || 0), 0
+    ) || brief.totalBudget || brief.reward || 0;
+
+    const transformedBrief = {
+      ...brief,
+      totalRewardValue,
+      submissions: brief.submissions || []
+    };
+
+    res.json(transformedBrief);
+  } catch (error) {
+    console.error('❌ Error fetching public brief:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2092,405 +2564,9 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
   }
 });
 
-// Get rewards analytics for a brand
-app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
 
-    const brandId = req.user.id;
 
-    // First, get all brief IDs for this brand
-    const brandBriefs = await prisma.brief.findMany({
-      where: { brandId },
-      select: { id: true }
-    });
-    const briefIds = brandBriefs.map(b => b.id);
 
-    // Get analytics data
-    const [
-      totalBriefs,
-      totalSubmissions,
-      approvedSubmissions,
-      totalRewards,
-      totalRewardsPaid,
-      pendingRewards,
-      completedRewards
-    ] = await Promise.all([
-      // Total briefs created by this brand
-      prisma.brief.count({
-        where: { brandId }
-      }),
-      
-      // Total submissions to brand's briefs
-      prisma.submission.count({
-        where: {
-          brief: { brandId }
-        }
-      }),
-      
-      // Approved submissions
-      prisma.submission.count({
-        where: {
-          brief: { brandId },
-          status: 'approved'
-        }
-      }),
-      
-      // Total rewards created
-      prisma.creatorPayout.count({
-        where: {
-          briefId: { in: briefIds }
-        }
-      }),
-      
-      // Total rewards paid (completed)
-      prisma.creatorPayout.aggregate({
-        where: {
-          briefId: { in: briefIds },
-          status: 'paid'
-        },
-        _sum: { amount: true }
-      }),
-      
-      // Pending rewards
-      prisma.creatorPayout.count({
-        where: {
-          briefId: { in: briefIds },
-          status: 'pending'
-        }
-      }),
-      
-      // Completed rewards
-      prisma.creatorPayout.count({
-        where: {
-          briefId: { in: briefIds },
-          status: 'paid'
-        }
-      })
-    ]);
-
-    // Get recent activity (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentActivity = await prisma.creatorPayout.count({
-      where: {
-        briefId: { in: briefIds },
-        createdAt: {
-          gte: thirtyDaysAgo
-        }
-      }
-    });
-
-    // Get top performing briefs (by reward amount)
-    const topBriefs = await prisma.brief.findMany({
-      where: { brandId },
-      include: {
-        _count: {
-          select: {
-            submissions: true
-          }
-        }
-      },
-      take: 5
-    });
-
-    // Get payout counts and amounts for each brief
-    const formattedTopBriefs = await Promise.all(topBriefs.map(async (brief) => {
-      const payoutStats = await prisma.creatorPayout.aggregate({
-        where: {
-          briefId: brief.id,
-          status: 'paid'
-        },
-        _sum: { amount: true },
-        _count: true
-      });
-
-      return {
-        id: brief.id,
-        title: brief.title,
-        submissionsCount: brief._count.submissions,
-        rewardsCount: payoutStats._count,
-        totalRewarded: payoutStats._sum.amount || 0
-      };
-    }));
-
-    res.json({
-      totalBriefs,
-      totalSubmissions,
-      approvedSubmissions,
-      totalRewards,
-      totalRewardsPaid: totalRewardsPaid._sum.amount || 0,
-      pendingRewards,
-      completedRewards,
-      recentActivity,
-      topBriefs: formattedTopBriefs
-    });
-
-  } catch (error) {
-    console.error('Error fetching rewards analytics:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get rewards for a brand
-app.get('/api/brands/rewards', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    // For now, return empty arrays as rewards table doesn't exist yet
-    // In a real app, you would fetch from rewards and rewards_drafts tables
-    // const rewards = [];
-
-    // Fetch real drafts from database
-    const drafts = await prisma.awardDraft.findMany({
-      where: {
-        brandId: req.user.id
-      },
-      include: {
-        brief: {
-          select: {
-            id: true,
-            title: true
-          }
-        }
-      },
-      orderBy: {
-        savedAt: 'desc'
-      }
-    });
-
-    // Fetch published awards from database
-    const publishedAwards = await prisma.publishedAward.findMany({
-      where: {
-        brandId: req.user.id
-      },
-      include: {
-        brief: {
-          select: {
-            id: true,
-            title: true
-          }
-        }
-      },
-      orderBy: {
-        publishedAt: 'desc'
-      }
-    });
-
-    // Transform drafts to match expected format
-    const formattedDrafts = drafts.map(draft => ({
-      id: draft.id,
-      type: 'draft',
-      briefTitle: draft.brief.title,
-      briefId: draft.briefId,
-      rewardTiers: JSON.parse(draft.rewardTiers),
-      savedAt: draft.savedAt.toISOString(),
-      status: 'draft'
-    }));
-
-    // Transform published awards to match expected format
-    const formattedRewards = publishedAwards.map(award => ({
-      id: award.id,
-      type: 'published',
-      briefTitle: award.brief.title,
-      briefId: award.briefId,
-      rewardTiers: JSON.parse(award.rewardTiers),
-      publishedAt: award.publishedAt.toISOString(),
-      status: 'published'
-    }));
-
-    res.json({ rewards: formattedRewards, drafts: formattedDrafts });
-  } catch (error) {
-    console.error('Error fetching rewards:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Save awards as draft
-app.post('/api/brands/rewards/draft', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Only brands can save award drafts' });
-    }
-
-    const { briefId, briefTitle, rewardTiers, savedAt } = req.body;
-
-    // Validate that the brief belongs to this brand
-    const brief = await prisma.brief.findFirst({
-      where: {
-        id: briefId,
-        brandId: req.user.id
-      }
-    });
-
-    if (!brief) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
-    }
-
-    // Check if draft already exists for this brief
-    const existingDraft = await prisma.awardDraft.findFirst({
-      where: {
-        briefId: briefId,
-        brandId: req.user.id
-      }
-    });
-
-    const draftData = {
-      briefId: briefId,
-      brandId: req.user.id,
-      rewardTiers: JSON.stringify(rewardTiers),
-      savedAt: new Date(savedAt)
-    };
-
-    let draft;
-    if (existingDraft) {
-      // Update existing draft
-      draft = await prisma.awardDraft.update({
-        where: { id: existingDraft.id },
-        data: draftData
-      });
-    } else {
-      // Create new draft
-      draft = await prisma.awardDraft.create({
-        data: draftData
-      });
-    }
-
-    // Notify brand about draft save
-    await createNotification(
-      req.user.id,
-      'brand',
-      'Reward Draft Saved 💾',
-      `Reward draft for "${briefTitle}" has been saved successfully.`,
-      'reward'
-    );
-
-    res.json({
-      message: 'Awards draft saved successfully',
-      draftId: draft.id,
-      rewardTiers,
-      briefTitle
-    });
-  } catch (error) {
-    console.error('Error saving rewards draft:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Create awards for a brief
-app.post('/api/brands/rewards', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Only brands can create awards' });
-    }
-
-    const { briefId, briefTitle, rewardTiers, submittedAt } = req.body;
-
-    // Validate that the brief belongs to this brand
-    const brief = await prisma.brief.findFirst({
-      where: {
-        id: briefId,
-        brandId: req.user.id
-      }
-    });
-
-    if (!brief) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
-    }
-
-    // For now, we'll just log the awards data
-    // In a real app, you would save this to a rewards table
-    console.log('Awards created:', {
-      brandId: req.user.id,
-      briefId,
-      briefTitle,
-      rewardTiers,
-      submittedAt
-    });
-
-    // Update submissions to mark winners
-    for (const tier of rewardTiers) {
-      if (tier.winnerId) {
-        await prisma.submission.update({
-          where: { id: tier.winnerId },
-          data: { 
-            status: 'winner',
-            // Store reward info in content field for now
-            content: JSON.stringify({
-              originalContent: 'Winner submission',
-              rewardTier: tier.name,
-              rewardAmount: tier.amount,
-              rewardDescription: tier.description,
-              awardedAt: new Date().toISOString()
-            })
-          }
-        });
-      }
-    }
-
-    // Store the published awards
-    await prisma.publishedAward.create({
-      data: {
-        briefId: briefId,
-        brandId: req.user.id,
-        rewardTiers: JSON.stringify(rewardTiers),
-        publishedAt: new Date()
-      }
-    });
-
-    // Delete the draft since awards have been published
-    await prisma.awardDraft.deleteMany({
-      where: {
-        briefId: briefId,
-        brandId: req.user.id
-      }
-    });
-
-    // Notify brand about rewards published
-    await createNotification(
-      req.user.id,
-      'brand',
-      'Rewards Published Successfully! 🎉',
-      `Rewards for "${briefTitle}" have been published and winners have been notified.`,
-      'reward'
-    );
-
-    // Notify winners about their rewards
-    for (const tier of rewardTiers) {
-      if (tier.winnerId) {
-        // Get submission to find creator
-        const submission = await prisma.submission.findUnique({
-          where: { id: tier.winnerId },
-          include: { creator: true }
-        });
-        
-        if (submission) {
-          await createNotification(
-            submission.creatorId,
-            'creator',
-            'Congratulations! You Won a Reward! 🏆',
-            `You received "${tier.name}" (${tier.description}) for "${briefTitle}"! Check your wallet for the reward.`,
-            'reward'
-          );
-        }
-      }
-    }
-
-    res.json({
-      message: 'Awards created successfully',
-      rewardTiers,
-      briefTitle
-    });
-  } catch (error) {
-    console.error('Error creating rewards:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Close a brief
 app.put('/api/brands/briefs/:id/close', authenticateToken, async (req, res) => {
@@ -2761,13 +2837,19 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
 
     const briefs = await prisma.brief.findMany({
       where: { 
-        status: 'active',
+        status: 'published',
         isPrivate: false
       },
       include: {
         brand: {
           select: {
-            companyName: true
+            id: true,
+            companyName: true,
+            logo: true,
+            socialInstagram: true,
+            socialTwitter: true,
+            socialLinkedIn: true,
+            socialWebsite: true
           }
         },
         submissions: {
@@ -2782,6 +2864,17 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
             status: true,
             submittedAt: true
           }
+        },
+        rewardTiers: {
+          select: {
+            position: true,
+            amount: true,
+            tierNumber: true,
+            name: true,
+            description: true,
+            isActive: true
+          },
+          orderBy: { position: 'asc' }
         },
         winnerRewards: {
           select: {
@@ -2800,13 +2893,19 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
     const transformedBriefs = briefs.map(brief => ({
       id: brief.id,
       title: brief.title,
-      brandName: brief.brand.companyName,
+      description: brief.description,
+      requirements: brief.requirements,
       reward: brief.reward,
       amountOfWinners: brief.amountOfWinners,
       location: brief.location,
       deadline: brief.deadline,
       status: brief.status,
+      isFunded: brief.isFunded || false,
+      fundedAt: brief.fundedAt,
+      additionalFields: brief.additionalFields ? JSON.parse(brief.additionalFields) : null,
+      brand: brief.brand,
       submissions: brief.submissions || [],
+      rewardTiers: brief.rewardTiers || [],
       winnerRewards: brief.winnerRewards || []
     }));
 
@@ -2821,73 +2920,6 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
 
 // ==================== PUBLIC ROUTES ====================
 
-// Get all public briefs for marketplace (no authentication required)
-app.get('/api/briefs/public', async (req, res) => {
-  try {
-          const briefs = await prisma.brief.findMany({
-        where: { 
-          status: { in: ['published'] },
-          isPrivate: false
-        },
-        include: {
-          brand: {
-            select: {
-              id: true,
-              companyName: true,
-              logo: true
-            }
-          },
-          submissions: {
-            select: {
-              id: true,
-              status: true,
-              submittedAt: true
-            }
-          },
-          winners: {
-            select: {
-              id: true,
-              position: true
-            }
-          },
-          winnerRewards: {
-            select: {
-              position: true,
-              cashAmount: true,
-              creditAmount: true,
-              prizeDescription: true
-            },
-            orderBy: { position: 'asc' }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-    // Transform briefs for public view
-    const transformedBriefs = briefs.map(brief => ({
-      id: brief.id,
-      title: brief.title,
-      description: brief.description,
-      requirements: brief.requirements,
-      reward: brief.reward,
-      deadline: brief.deadline,
-      status: brief.status,
-      createdAt: brief.createdAt,
-      amountOfWinners: brief.amountOfWinners,
-      brand: brief.brand,
-      submissions: brief.submissions,
-      winners: brief.winners,
-      winnerRewards: brief.winnerRewards
-    }));
-
-    console.log(`✅ Fetched ${transformedBriefs.length} briefs from database`);
-    res.json(transformedBriefs);
-    
-  } catch (error) {
-    console.error('Error fetching public briefs:', error);
-    res.status(500).json({ error: 'Failed to fetch briefs from database' });
-  }
-});
 
 // Get public brief details (no authentication required)
 app.get('/api/briefs/:briefId/public', async (req, res) => {
@@ -3697,10 +3729,10 @@ app.post('/api/briefs/:id/apply', authenticateToken, async (req, res) => {
 
     console.log('🔍 Validating application data:', { contentUrl, amount });
 
-    // Check if brief exists and is active
+    // Check if brief exists and is published
     const brief = await prisma.brief.findUnique({ where: { id } });
-    if (!brief || brief.status !== 'active') {
-      console.log('❌ Brief not found or inactive:', { briefId: id, briefStatus: brief?.status });
+    if (!brief || brief.status !== 'published') {
+      console.log('❌ Brief not found or not published:', { briefId: id, briefStatus: brief?.status });
       return res.status(404).json({ error: 'Brief not found or not available for applications' });
     }
 

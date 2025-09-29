@@ -15,6 +15,7 @@ import PublicBrandBriefs from './components/PublicBrandBriefs'
 import PaymentSuccess from './components/PaymentSuccess'
 import PaymentCancel from './components/PaymentCancel'
 import BriefFundingSuccess from './components/BriefFundingSuccess'
+import RewardManagementPage from './components/RewardManagementPage'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
@@ -25,7 +26,6 @@ import EventsPage from './components/EventsPage'
 import SuccessStoriesPage from './components/SuccessStoriesPage'
 import NotificationsPage from './pages/NotificationsPage'
 import NotificationDetailPage from './pages/NotificationDetailPage'
-import ThemeDemo from './components/ThemeDemo'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -83,6 +83,14 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/brand/reward-management" 
+                element={
+                  <ProtectedRoute requiredUserType="brand">
+                    <RewardManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
               {/* Old rewards-payments route removed - now handled by Stripe Connect in BrandDashboard */}
 
               {/* Protected Creator Routes */}
@@ -137,8 +145,6 @@ function App() {
                 } 
               />
 
-              {/* Demo Routes */}
-              <Route path="/theme-demo" element={<ThemeDemo />} />
 
             </Routes>
             </div>

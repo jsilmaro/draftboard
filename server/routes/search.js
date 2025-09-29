@@ -354,7 +354,7 @@ router.get('/briefs', async (req, res) => {
       // Search available briefs for creators
       briefs = await prisma.brief.findMany({
         where: {
-          status: 'active',
+          status: 'published',
           OR: [
             { title: { contains: searchTerm, mode: 'insensitive' } },
             { description: { contains: searchTerm, mode: 'insensitive' } },

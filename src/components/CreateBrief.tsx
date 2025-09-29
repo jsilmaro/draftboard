@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import RewardTierManager from './RewardTierManager';
+import BriefFundingModal from './BriefFundingModal';
 
 interface BriefTemplate {
   id: string;
@@ -19,10 +21,13 @@ interface BriefTemplate {
 }
 
 interface RewardTier {
+  id?: string;
+  tierNumber: number;
+  name: string;
+  description: string;
+  amount: number;
   position: number;
-  cashAmount: number;
-  creditAmount: number;
-  prizeDescription: string;
+  isActive: boolean;
 }
 
 interface FormData {
@@ -62,6 +67,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
   const [showShareModal, setShowShareModal] = useState(false);
   const [briefId, setBriefId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const [showFundingModal, setShowFundingModal] = useState(false);
 
   // Ensure form is always empty on mount
   useEffect(() => {
@@ -196,8 +202,8 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
           const template = templates.find(t => t.id === templateId);
           if (template) {
             const emptyAdditionalFields: Record<string, string | string[]> = {};
-            Object.keys(template.fields.additionalFields).forEach(key => {
-              if (Array.isArray(template.fields.additionalFields[key])) {
+            Object.keys(template.fields.additionalFields || {}).forEach(key => {
+              if (Array.isArray(template.fields.additionalFields?.[key])) {
                 emptyAdditionalFields[key] = [];
               } else {
                 emptyAdditionalFields[key] = '';
@@ -229,7 +235,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
     setFormData(prev => ({
       ...prev,
       additionalFields: {
-        ...prev.additionalFields,
+        ...(prev.additionalFields || {}),
         [field]: value
       }
     }));
@@ -245,10 +251,13 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
       
       for (let i = 1; i <= amount; i++) {
         newRewardTiers.push({
+          id: `tier_${i}`,
+          tierNumber: i,
+          name: `Reward ${i}`,
+          description: `Equal share ($${rewardPerWinner.toFixed(2)})`,
+          amount: rewardPerWinner,
           position: i,
-          cashAmount: rewardPerWinner,
-          creditAmount: 0,
-          prizeDescription: `Reward ${i} - Equal share ($${rewardPerWinner.toFixed(2)})`
+          isActive: true
         });
       }
       return {
@@ -259,20 +268,20 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
     });
   };
 
-  const handleRewardTierChange = (position: number, field: keyof RewardTier, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      rewardTiers: prev.rewardTiers.map(tier => 
-        tier.position === position 
-          ? { ...tier, [field]: value }
-          : tier
-      )
-    }));
-  };
+  // const handleRewardTierChange = (position: number, field: keyof RewardTier, value: string | number) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     rewardTiers: prev.rewardTiers.map(tier => 
+  //       tier.position === position 
+  //         ? { ...tier, [field]: value }
+  //         : tier
+  //     )
+  //   }));
+  // };
 
   const calculateTotalReward = () => {
     return formData.rewardTiers.reduce((total, tier) => {
-      return total + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+      return total + (tier.amount || 0);
     }, 0);
   };
 
@@ -312,34 +321,48 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
       return;
     }
 
-    try {
-      const response = await fetch('/api/briefs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...formData,
-          rewardTiers: formData.rewardTiers
-        })
-      });
+    // Show funding modal instead of creating brief directly
+    setShowFundingModal(true);
+  };
 
-      if (response.ok) {
-        const result = await response.json();
-        setBriefId(result.id);
-        setShowShareModal(true);
-        
-        // Call onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess(result);
-        }
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to create brief');
-      }
-    } catch (error) {
-      alert('Failed to create brief. Please try again.');
+  const handleFundingSuccess = (briefId: string) => {
+    setBriefId(briefId);
+    setShowFundingModal(false);
+    
+    // Call onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess({ id: briefId, title: formData.title });
+    }
+    
+    // Show success message
+    alert('Brief created and funded successfully! Your brief is now active and visible to creators.');
+    
+    // Reset form
+    setFormData({
+      title: '',
+      description: '',
+      requirements: '',
+      reward: 0,
+      deadline: '',
+      rewardTiers: [{ 
+        position: 1, 
+        amount: 0, 
+        description: '',
+        tierNumber: 1,
+        name: 'Tier 1',
+        isActive: true
+      }],
+      amountOfWinners: 1,
+      additionalFields: {} as Record<string, string | string[]>
+    });
+    setCurrentStep(1);
+    setFormKey(prev => prev + 1);
+    
+    // Close modal if it's a side modal
+    if (isSideModal && onClose) {
+      onClose();
+    } else {
+      navigate('/brand-dashboard?tab=briefs');
     }
   };
 
@@ -353,6 +376,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
       alert('Failed to copy link');
     }
   };
+
 
   if (currentStep === 1) {
     return (
@@ -640,101 +664,17 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
                 </div>
               </div>
 
-              {formData.rewardTiers.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className={`text-md font-medium ${
-                    isDark ? 'text-gray-300' : 'text-gray-700'
-                  }`}>Reward Tiers (Auto-Calculated)</h4>
-                  <div className={`text-sm mb-3 ${
-                    isDark ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    Rewards are automatically distributed: 1st (40%), 2nd (30%), 3rd (20%), 4th+ (10%)
-                  </div>
-                  {formData.rewardTiers.map((tier, _index) => (
-                    <div key={tier.position} className={`border rounded-lg p-4 ${
-                      isDark 
-                        ? 'border-gray-900 bg-gray-950/50'
-                        : 'border-gray-300 bg-gray-50'
-                    }`}>
-                      <h5 className={`font-medium mb-3 ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        Reward {tier.position}
-                      </h5>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className={`block text-sm mb-1 ${
-                            isDark ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
-                            Cash Amount ($)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={tier.cashAmount}
-                            onChange={(e) => handleRewardTierChange(tier.position, 'cashAmount', parseFloat(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                              isDark 
-                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-sm mb-1 ${
-                            isDark ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
-                            Credit Amount ($)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={tier.creditAmount}
-                            onChange={(e) => handleRewardTierChange(tier.position, 'creditAmount', parseFloat(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                              isDark 
-                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-sm mb-1 ${
-                            isDark ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
-                            Prize Description
-                          </label>
-                          <input
-                            type="text"
-                            value={tier.prizeDescription}
-                            onChange={(e) => handleRewardTierChange(tier.position, 'prizeDescription', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                              isDark 
-                                ? 'bg-gray-950 border-gray-800 text-white placeholder-gray-400'
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                            placeholder="e.g., Product, Gift Card, etc."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <div className={`p-4 rounded-lg ${
-                    isDark ? 'bg-blue-900/20' : 'bg-blue-50'
-                  }`}>
-                    <p className={`text-sm ${
-                      isDark ? 'text-blue-200' : 'text-blue-800'
-                    }`}>
-                      <strong>Total Reward Value:</strong> ${calculateTotalReward().toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <RewardTierManager
+                tiers={formData.rewardTiers}
+                onTiersChange={(tiers) => setFormData(prev => ({ ...prev, rewardTiers: tiers }))}
+                isDark={isDark}
+                totalRewardAmount={formData.reward}
+                amountOfWinners={formData.amountOfWinners}
+              />
             </div>
 
             {/* Additional Fields from Template */}
-            {Object.keys(formData.additionalFields).length > 0 && (
+            {formData.additionalFields && Object.keys(formData.additionalFields).length > 0 && (
               <div>
                 <h3 className={`text-lg font-semibold mb-4 ${
                   isDark ? 'text-white' : 'text-gray-900'
@@ -754,7 +694,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
                             {fieldName}
                           </label>
                           <select
-                            value={Array.isArray(formData.additionalFields[key]) ? (formData.additionalFields[key] as string[])[0] || '' : ''}
+                            value={Array.isArray(formData.additionalFields?.[key]) ? (formData.additionalFields[key] as string[])[0] || '' : ''}
                             onChange={(e) => handleAdditionalFieldChange(key, [e.target.value])}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               isDark 
@@ -782,7 +722,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
                         </label>
                         <input
                           type="text"
-                          value={formData.additionalFields[key] as string}
+                          value={(formData.additionalFields?.[key] as string) || ''}
                           onChange={(e) => handleAdditionalFieldChange(key, e.target.value)}
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                             isDark 
@@ -845,7 +785,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
         </div>
       </div>
 
-      {/* Share Modal */}
+
       {showShareModal && (
         <div className={`fixed inset-0 flex items-center justify-center z-50 ${
           isDark ? 'bg-black bg-opacity-50' : 'bg-gray-900 bg-opacity-50'
@@ -915,6 +855,25 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
           </div>
         </div>
       )}
+
+      {/* Brief Funding Modal */}
+      <BriefFundingModal
+        isOpen={showFundingModal}
+        onClose={() => setShowFundingModal(false)}
+        onSuccess={handleFundingSuccess}
+        briefData={{
+          title: formData.title,
+          description: formData.description,
+          requirements: formData.requirements,
+          reward: calculateTotalReward(),
+          amountOfWinners: formData.amountOfWinners,
+          deadline: formData.deadline,
+          location: '',
+          isPrivate: false,
+          additionalFields: formData.additionalFields,
+          rewardTiers: formData.rewardTiers
+        }}
+      />
     </div>
   );
 };

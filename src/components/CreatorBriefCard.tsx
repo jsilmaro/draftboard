@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-interface BriefCardProps {
+interface CreatorBriefCardProps {
   brief: {
     id: string;
     title: string;
@@ -39,20 +39,25 @@ interface BriefCardProps {
       };
     }>;
   };
-  onApplyClick?: (brief: BriefCardProps['brief']) => void;
+  onApplyClick?: (brief: CreatorBriefCardProps['brief']) => void;
+  hasApplied?: boolean;
+  applicationStatus?: 'pending' | 'approved' | 'rejected';
 }
 
-const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
+const CreatorBriefCard: React.FC<CreatorBriefCardProps> = ({ 
+  brief, 
+  onApplyClick, 
+  hasApplied = false, 
+  applicationStatus 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const { isDark } = useTheme();
 
-  // Calculate progress percentage for rewards given
+  // Calculate total reward value
   const totalRewardValue = brief.reward * brief.amountOfWinners;
-  const rewardsProgress = totalRewardValue > 0 ? (brief.totalRewardsPaid / totalRewardValue) * 100 : 0;
 
   // Calculate submissions count
   const submissionsCount = brief.submissions?.length || 0;
-  const submissionsProgress = Math.min((submissionsCount / brief.amountOfWinners) * 100, 100);
 
   // Calculate time remaining
   const deadlineDate = new Date(brief.deadline);
@@ -78,6 +83,18 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
     if (onApplyClick) {
       onApplyClick(brief);
     }
+  };
+
+  const getStatusColor = () => {
+    if (applicationStatus === 'approved') return 'bg-emerald-900/20 text-emerald-400';
+    if (applicationStatus === 'rejected') return 'bg-red-900/20 text-red-400';
+    return 'bg-yellow-900/20 text-yellow-400';
+  };
+
+  const getStatusText = () => {
+    if (applicationStatus === 'approved') return 'Approved';
+    if (applicationStatus === 'rejected') return 'Rejected';
+    return 'Pending Review';
   };
 
   return (
@@ -249,7 +266,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
               <div className={`text-xs ${
                 isDark ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                Submissions
+                Applications
               </div>
             </div>
           </div>
@@ -271,57 +288,6 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
           </div>
         </div>
 
-        {/* Progress Bars */}
-        <div className="mb-4 space-y-2">
-          {/* Submissions Progress */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className={`${
-                isDark ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Applications Progress
-              </span>
-              <span className={`font-medium ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
-                {submissionsCount}/{brief.amountOfWinners}
-              </span>
-            </div>
-            <div className={`w-full rounded-full h-2 ${
-              isDark ? 'bg-gray-700' : 'bg-gray-200'
-            }`}>
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${submissionsProgress}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Rewards Progress */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className={`${
-                isDark ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Rewards Progress
-              </span>
-              <span className={`font-medium ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
-                ${(brief.totalRewardsPaid || 0).toLocaleString()}/${totalRewardValue.toLocaleString()}
-              </span>
-            </div>
-            <div className={`w-full rounded-full h-2 ${
-              isDark ? 'bg-gray-700' : 'bg-gray-200'
-            }`}>
-              <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${rewardsProgress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Deadline */}
         <div className="mb-4">
           <div className={`text-xs ${
@@ -336,28 +302,44 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
           </div>
         </div>
 
-        {/* Apply Button */}
+        {/* Application Status or Apply Button */}
         <div className="text-center">
-        <button
-          onClick={handleApplyClick}
-            disabled={brief.status !== 'published' || daysRemaining < 0}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-sm transition-colors ${
-              brief.status !== 'published' || daysRemaining < 0
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            {brief.status !== 'published' 
-              ? 'Not Available' 
-              : daysRemaining < 0 
-              ? 'Expired' 
-              : 'Apply to This Brief'
-            }
-        </button>
+          {hasApplied ? (
+            <div className="space-y-2">
+              <div className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor()}`}>
+                {getStatusText()}
+              </div>
+              <div>
+                <button
+                  onClick={handleApplyClick}
+                  className="w-full py-2 px-4 rounded-lg font-medium text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  View/Update Application
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleApplyClick}
+              disabled={brief.status !== 'published' || daysRemaining < 0}
+              className={`w-full py-3 px-4 rounded-lg font-semibold text-sm transition-colors ${
+                brief.status !== 'published' || daysRemaining < 0
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {brief.status !== 'published' 
+                ? 'Not Available' 
+                : daysRemaining < 0 
+                ? 'Expired' 
+                : 'Apply to This Brief'
+              }
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default BriefCard;
+export default CreatorBriefCard;

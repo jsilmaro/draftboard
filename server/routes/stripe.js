@@ -1,12 +1,112 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY);
 const { prisma } = require('../prisma');
-// We'll use the authenticateToken middleware from the main server
-// const auth = require('../middleware/auth');
+
+// Import authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+};
+
+// Create Payment Intent for test payments (no auth required for testing)
+router.post('/create-payment-intent', async (req, res) => {
+  try {
+    const { amount, currency = 'usd', metadata = {} } = req.body;
+
+    if (!amount || amount < 50) {
+      return res.status(400).json({ error: 'Amount must be at least 50 cents' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount),
+      currency: currency,
+      metadata: {
+        ...metadata,
+        test: 'true',
+        created_at: new Date().toISOString()
+      }
+    });
+
+    res.json({
+      client_secret: paymentIntent.client_secret,
+      id: paymentIntent.id,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency,
+      status: paymentIntent.status
+    });
+
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+});
+
+// Test checkout session creation (no auth required for testing)
+router.post('/test-checkout-session', async (req, res) => {
+  try {
+    const { briefId, amount, briefTitle, brandId } = req.body;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: briefTitle || 'Test Brief Payment',
+              description: `Payment for brief: ${briefId}`,
+            },
+            unit_amount: Math.round(amount),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/brand/dashboard?payment=success`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/brand/dashboard?payment=canceled`,
+      metadata: {
+        type: 'brief_funding',
+        briefId: briefId || 'test_brief_123',
+        brandId: brandId || 'test_brand_123',
+        totalAmount: (amount / 100).toString(), // Convert from cents to dollars
+        platformFee: '0.00',
+        netAmount: (amount / 100).toString()
+      }
+    });
+
+    res.json({
+      sessionId: session.id,
+      url: session.url,
+      briefId: briefId,
+      amount: amount
+    });
+
+  } catch (error) {
+    console.error('Error creating test checkout session:', error);
+    res.status(500).json({ error: 'Failed to create test checkout session' });
+  }
+});
 
 // Create Stripe Checkout Session for Brief Funding
-router.post('/create-checkout-session', async (req, res) => {
+router.post('/create-checkout-session', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can create checkout sessions' });
@@ -110,7 +210,7 @@ router.post('/create-checkout-session', async (req, res) => {
 });
 
 // Transfer funds to Creator's connected account
-router.post('/transfer', async (req, res) => {
+router.post('/transfer', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can initiate transfers' });
@@ -221,7 +321,7 @@ router.post('/transfer', async (req, res) => {
 });
 
 // Get Creator's Stripe Connect account details
-router.get('/account/:creatorId', async (req, res) => {
+router.get('/account/:creatorId', authenticateToken, async (req, res) => {
   try {
     const { creatorId } = req.params;
 
@@ -260,7 +360,7 @@ router.get('/account/:creatorId', async (req, res) => {
 });
 
 // Get all funded briefs for brand
-router.get('/funded-briefs', async (req, res) => {
+router.get('/funded-briefs', authenticateToken, async (req, res) => {
   try {
     if (req.user.type !== 'brand') {
       return res.status(403).json({ error: 'Only brands can view funded briefs' });
@@ -307,7 +407,7 @@ router.get('/funded-briefs', async (req, res) => {
 });
 
 // Get creator payout history
-router.get('/payouts/:creatorId', async (req, res) => {
+router.get('/payouts/:creatorId', authenticateToken, async (req, res) => {
   try {
     const { creatorId } = req.params;
 
@@ -348,6 +448,192 @@ router.get('/payouts/:creatorId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching payouts:', error);
     res.status(500).json({ error: 'Failed to fetch payouts' });
+  }
+});
+
+// Create setup intent for saving payment methods
+router.post('/create-setup-intent', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    // Get or create Stripe customer
+    let customer;
+    try {
+      // First, try to find existing customer by email
+      const existingCustomers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1
+      });
+
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+      } else {
+        // Create new customer if none exists
+        customer = await stripe.customers.create({
+          email: userEmail,
+          name: req.user.fullName || req.user.userName,
+          metadata: {
+            userId: userId,
+            userType: req.user.type
+          }
+        });
+      }
+    } catch (stripeError) {
+      console.error('Error with Stripe customer:', stripeError);
+      return res.status(500).json({ error: 'Failed to create or retrieve customer' });
+    }
+
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customer.id,
+      payment_method_types: ['card'],
+      usage: 'off_session',
+    });
+
+    res.json({ client_secret: setupIntent.client_secret });
+
+  } catch (error) {
+    console.error('Error creating setup intent:', error);
+    res.status(500).json({ error: 'Failed to create setup intent' });
+  }
+});
+
+// Get payment methods for a customer
+router.get('/payment-methods', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    // Get or create Stripe customer
+    let customer;
+    try {
+      // First, try to find existing customer by email
+      const existingCustomers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1
+      });
+
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+      } else {
+        // Create new customer if none exists
+        customer = await stripe.customers.create({
+          email: userEmail,
+          name: req.user.fullName || req.user.userName,
+          metadata: {
+            userId: userId,
+            userType: req.user.type
+          }
+        });
+      }
+    } catch (stripeError) {
+      console.error('Error with Stripe customer:', stripeError);
+      return res.status(500).json({ error: 'Failed to create or retrieve customer' });
+    }
+    
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customer.id,
+      type: 'card',
+    });
+
+    res.json(paymentMethods.data);
+
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({ error: 'Failed to fetch payment methods' });
+  }
+});
+
+// Delete a payment method
+router.delete('/payment-methods/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await stripe.paymentMethods.detach(id);
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Error deleting payment method:', error);
+    res.status(500).json({ error: 'Failed to delete payment method' });
+  }
+});
+
+// Set default payment method
+router.post('/payment-methods/:id/default', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    // Get or create Stripe customer
+    let customer;
+    try {
+      // First, try to find existing customer by email
+      const existingCustomers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1
+      });
+
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+      } else {
+        // Create new customer if none exists
+        customer = await stripe.customers.create({
+          email: userEmail,
+          name: req.user.fullName || req.user.userName,
+          metadata: {
+            userId: userId,
+            userType: req.user.type
+          }
+        });
+      }
+    } catch (stripeError) {
+      console.error('Error with Stripe customer:', stripeError);
+      return res.status(500).json({ error: 'Failed to create or retrieve customer' });
+    }
+    
+    await stripe.customers.update(customer.id, {
+      invoice_settings: {
+        default_payment_method: id,
+      },
+    });
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Error setting default payment method:', error);
+    res.status(500).json({ error: 'Failed to set default payment method' });
+  }
+});
+
+// Create reward payment for winners
+router.post('/create-reward-payment', authenticateToken, async (req, res) => {
+  try {
+    const { briefId, winners } = req.body;
+
+    if (!winners || winners.length === 0) {
+      return res.status(400).json({ error: 'No winners specified' });
+    }
+
+    const totalAmount = winners.reduce((sum, winner) => sum + winner.amount, 0);
+
+    // Create payment intent for the total amount
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100), // Convert to cents
+      currency: 'usd',
+      metadata: {
+        briefId,
+        type: 'reward_payment',
+        winner_count: winners.length,
+        test: 'true'
+      }
+    });
+
+    res.json({ client_secret: paymentIntent.client_secret });
+
+  } catch (error) {
+    console.error('Error creating reward payment:', error);
+    res.status(500).json({ error: 'Failed to create reward payment' });
   }
 });
 

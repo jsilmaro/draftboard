@@ -1,8 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Link, useSearchParams } from 'react-router-dom';
-// import DefaultAvatar from './DefaultAvatar';
 import WinnerSelectionModal from './WinnerSelectionModal';
 import { useToast } from '../contexts/ToastContext';
 import BrandBriefCard from './BrandBriefCard';
@@ -14,18 +12,53 @@ import SettingsModal from './SettingsModal';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import CreateBrief from './CreateBrief';
-import BriefManagementPage from './BriefManagementPage';
+import ManageRewardsPayments from './ManageRewardsPayments';
+import EditBrief from './EditBrief';
 
 // Lazy load Stripe-dependent components
-const PaymentManagement = lazy(() => import('./PaymentManagement'));
-const RewardManagement = lazy(() => import('./RewardManagement'));
 const BrandWallet = lazy(() => import('./BrandWallet'));
+
+interface BrandBriefCardProps {
+  brief: {
+    id: string;
+    title: string;
+    description?: string;
+    rewardType?: string;
+    amountOfWinners?: number;
+    deadline: string;
+    status: string;
+    submissions: number | Array<unknown>;
+    totalRewardsPaid?: number;
+    reward?: number;
+    totalRewardValue?: number;
+    rewardTiers?: Array<{
+      position: number;
+      cashAmount: number;
+      creditAmount: number;
+      prizeDescription: string;
+    }>;
+    brand?: {
+      id: string;
+      companyName: string;
+      logo?: string;
+    };
+  };
+  onViewClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onEditClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onEditRewardsClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onSelectWinnersClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onViewSubmissionsClick?: (brief: BrandBriefCardProps['brief']) => void;
+  onDeleteClick?: (briefId: string) => void;
+  onPublishClick?: (briefId: string) => void;
+  onDraftClick?: (briefId: string) => void;
+  onArchiveClick?: (briefId: string) => void;
+}
 
 interface Brief {
   id: string;
   title: string;
-  description?: string;
-  requirements?: string;
+  description: string;
+  requirements: string;
   status: 'draft' | 'published' | 'archived' | string;
   submissions: number | Array<{
     id: string;
@@ -39,18 +72,18 @@ interface Brief {
   deadline: string;
   reward: number;
   rewardType?: string;
-  amountOfWinners?: number;
+  amountOfWinners: number;
   winnersSelected?: boolean;
   createdAt?: string;
   updatedAt?: string;
   archivedAt?: string;
-  isPrivate?: boolean;
+  isPrivate: boolean;
   location?: string;
-  additionalFields?: Record<string, unknown>;
+  additionalFields?: Record<string, string | string[]>;
   totalRewardsPaid?: number;
   isFunded?: boolean;
   fundedAt?: string;
-  rewardTiers?: Array<{
+  rewardTiers: Array<{
     position: number;
     cashAmount: number;
     creditAmount: number;
@@ -103,7 +136,7 @@ interface Metrics {
 }
 
 const BrandDashboard: React.FC = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { isDark } = useTheme();
   const { showSuccessToast, showErrorToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -125,6 +158,8 @@ const BrandDashboard: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showBriefDetails, setShowBriefDetails] = useState(false);
   const [showCreateBriefModal, setShowCreateBriefModal] = useState(false);
+  const [showEditBriefModal, setShowEditBriefModal] = useState(false);
+  const [editingBrief, setEditingBrief] = useState<Brief | null>(null);
   const [previousTab, setPreviousTab] = useState<string>('overview');
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   // const [showMessaging, setShowMessaging] = useState(false);
@@ -136,8 +171,36 @@ const BrandDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState({
     totalSpent: 0,
     totalRewards: 0,
+    totalRewardValue: 0,
     activeCampaigns: 0,
-    conversionRate: 0
+    conversionRate: 0,
+    totalBriefs: 0,
+    totalSubmissions: 0,
+    averageReward: 0,
+    recentBriefs: [] as Array<{
+      id: string;
+      title: string;
+      status: string;
+      createdAt: string;
+    }>,
+    topPerformingBriefs: [] as Array<{
+      id: string;
+      title: string;
+      submissions: number;
+      status: string;
+    }>,
+    monthlyTrends: [] as Array<{
+      month: string;
+      briefs: number;
+      submissions: number;
+    }>,
+    briefPerformance: [] as Array<{
+      id: string;
+      title: string;
+      submissions: number;
+      totalRewardValue: number;
+      status: string;
+    }>
   });
 
   // Handle URL parameters on component mount
@@ -146,7 +209,7 @@ const BrandDashboard: React.FC = () => {
     const stripeParam = searchParams.get('stripe');
 
     // Set active tab from URL parameter
-    if (tabParam && ['overview', 'briefs', 'funded-briefs', 'create-brief', 'submissions', 'creators', 'analytics', 'payments', 'rewards', 'wallet', 'messaging'].includes(tabParam)) {
+    if (tabParam && ['overview', 'briefs', 'create-brief', 'submissions', 'creators', 'analytics', 'wallet', 'messaging', 'manage-rewards'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -161,17 +224,6 @@ const BrandDashboard: React.FC = () => {
   }, [searchParams, setSearchParams, showSuccessToast]);
 
   // Enhanced sidebar functions
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupId)) {
-        newSet.delete(groupId);
-      } else {
-        newSet.add(groupId);
-      }
-      return newSet;
-    });
-  };
 
   const handleSidebarSearch = (query: string) => {
     setSidebarSearchQuery(query);
@@ -276,55 +328,25 @@ const BrandDashboard: React.FC = () => {
   //   { id: 'messaging', label: 'Messages', icon: 'messaging' },
   // ];
 
-  // Navigation groups for enhanced sidebar
-  const navigationGroups = useMemo(() => [
-    {
-      id: 'main',
-      title: 'Main',
-      isExpanded: true,
-      items: [
-        { id: 'overview', label: 'Overview', icon: 'overview' },
-        { id: 'wallet', label: 'Wallet', icon: 'wallet' },
-        { id: 'messaging', label: 'Messages', icon: 'messaging' },
-      ]
-    },
-    {
-      id: 'brand-management',
-      title: 'Brand Management',
-      isExpanded: true,
-      items: [
-        { id: 'create-brief', label: 'Create Brief', icon: 'create' },
-        { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
-        { id: 'funded-briefs', label: 'Brief Management', icon: 'rewards-payments' },
-        { id: 'submissions', label: 'Submissions', icon: 'submissions' },
-        { id: 'creators', label: 'Creators', icon: 'creators' },
-      ]
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics & Payments',
-      isExpanded: false,
-      items: [
-        { id: 'analytics', label: 'Analytics', icon: 'statistics' },
-        { id: 'payments', label: 'Payments', icon: 'payments' },
-        { id: 'rewards', label: 'Rewards', icon: 'rewards-payments' },
-      ]
-    }
+  // Navigation items (flattened without grouping)
+  const navigationItems = useMemo(() => [
+    { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+    { id: 'messaging', label: 'Messages', icon: 'messaging' },
+    { id: 'create-brief', label: 'Create Brief', icon: 'create' },
+    { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
+    { id: 'manage-rewards', label: 'Manage Rewards & Payments', icon: 'rewards-payments' },
+    { id: 'submissions', label: 'Submissions', icon: 'submissions' },
+    { id: 'creators', label: 'Creators', icon: 'creators' },
+    { id: 'analytics', label: 'Analytics', icon: 'statistics' },
   ], []);
 
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(navigationGroups.filter(group => group.isExpanded).map(group => group.id))
-  );
-
-  // Filter navigation groups based on search query
-  const filteredNavigationGroups = useMemo(() => {
-    return navigationGroups.map(group => ({
-      ...group,
-      items: group.items.filter(item =>
-        item.label.toLowerCase().includes(sidebarSearchQuery.toLowerCase())
-      )
-    })).filter(group => group.items.length > 0);
-  }, [navigationGroups, sidebarSearchQuery]);
+  // Filter navigation items based on search query
+  const filteredNavigationItems = useMemo(() => {
+    return navigationItems.filter(item =>
+      item.label.toLowerCase().includes(sidebarSearchQuery.toLowerCase())
+    );
+  }, [navigationItems, sidebarSearchQuery]);
 
   const accountNav = [
     { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettings(true) },
@@ -378,6 +400,139 @@ const BrandDashboard: React.FC = () => {
       // console.error('Error rejecting submission:', error);
       showErrorToast('Failed to reject submission');
     }
+  };
+
+  // Brief management functions
+  const handleDeleteBrief = async (briefId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/briefs/${briefId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        showSuccessToast('Brief deleted successfully');
+        loadDashboardData();
+      } else {
+        showErrorToast('Failed to delete brief');
+      }
+    } catch (error) {
+      showErrorToast('Failed to delete brief');
+    }
+  };
+
+  const handlePublishBrief = async (briefId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/briefs/${briefId}`, {
+        method: 'PUT',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'published' })
+      });
+
+      if (response.ok) {
+        showSuccessToast('Brief published successfully');
+        loadDashboardData();
+      } else {
+        showErrorToast('Failed to publish brief');
+      }
+    } catch (error) {
+      showErrorToast('Failed to publish brief');
+    }
+  };
+
+  const handleDraftBrief = async (briefId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/briefs/${briefId}`, {
+        method: 'PUT',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'draft' })
+      });
+
+      if (response.ok) {
+        showSuccessToast('Brief moved to draft');
+        loadDashboardData();
+      } else {
+        showErrorToast('Failed to move brief to draft');
+      }
+    } catch (error) {
+      showErrorToast('Failed to move brief to draft');
+    }
+  };
+
+  const handleArchiveBrief = async (briefId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/briefs/${briefId}`, {
+        method: 'PUT',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'archived' })
+      });
+
+      if (response.ok) {
+        showSuccessToast('Brief archived successfully');
+        loadDashboardData();
+      } else {
+        showErrorToast('Failed to archive brief');
+      }
+    } catch (error) {
+      showErrorToast('Failed to archive brief');
+    }
+  };
+
+  const handleEditBrief = (brief: BrandBriefCardProps['brief']) => {
+    // Convert to the format expected by EditBrief
+    const briefForEdit: Brief = {
+      id: brief.id,
+      title: brief.title,
+      description: brief.description || '',
+      requirements: (brief as { requirements?: string }).requirements || '',
+      reward: brief.reward || 0,
+      deadline: brief.deadline,
+      amountOfWinners: brief.amountOfWinners || 1,
+      status: brief.status,
+      isPrivate: (brief as { isPrivate?: boolean }).isPrivate || false,
+      submissions: Array.isArray(brief.submissions) ? brief.submissions as Array<{
+        id: string;
+        creator: {
+          userName: string;
+          fullName: string;
+        };
+        status: string;
+        submittedAt: string;
+      }> : [],
+      brand: brief.brand || {
+        id: brief.id,
+        companyName: 'Your Brand',
+        logo: undefined,
+        socialInstagram: undefined,
+        socialTwitter: undefined,
+        socialLinkedIn: undefined,
+        socialWebsite: undefined
+      },
+      rewardTiers: brief.rewardTiers || [],
+      additionalFields: (brief as { additionalFields?: Record<string, string | string[]> }).additionalFields || {}
+    };
+    setEditingBrief(briefForEdit);
+    setShowEditBriefModal(true);
+  };
+
+  const handleEditBriefSuccess = (_updatedBrief: Brief) => {
+    showSuccessToast('Brief updated successfully');
+    loadDashboardData();
+    setShowEditBriefModal(false);
+    setEditingBrief(null);
   };
 
   const renderOverview = () => (
@@ -605,12 +760,6 @@ const BrandDashboard: React.FC = () => {
                 Create New Brief
               </button>
               <button
-                onClick={() => handleTabChange('payments')}
-                className="btn btn-secondary w-full"
-              >
-                Select Winners
-              </button>
-              <button
                 onClick={() => handleTabChange('analytics')}
                 className="btn btn-outline w-full"
               >
@@ -742,6 +891,11 @@ const BrandDashboard: React.FC = () => {
                 handleTabChange('submissions');
                 showSuccessToast(`Viewing submissions for: ${brief.title}`);
               }}
+              onDeleteClick={handleDeleteBrief}
+              onPublishClick={handlePublishBrief}
+              onDraftClick={handleDraftBrief}
+              onArchiveClick={handleArchiveBrief}
+              onEditClick={handleEditBrief}
             />
           ))}
         </div>
@@ -943,8 +1097,16 @@ const BrandDashboard: React.FC = () => {
     const safeAnalytics = {
       totalSpent: analytics?.totalSpent || 0,
       totalRewards: analytics?.totalRewards || 0,
+      totalRewardValue: analytics?.totalRewardValue || 0,
       activeCampaigns: analytics?.activeCampaigns || 0,
-      conversionRate: analytics?.conversionRate || 0
+      conversionRate: analytics?.conversionRate || 0,
+      totalBriefs: analytics?.totalBriefs || 0,
+      totalSubmissions: analytics?.totalSubmissions || 0,
+      averageReward: analytics?.averageReward || 0,
+      recentBriefs: analytics?.recentBriefs || [],
+      topPerformingBriefs: analytics?.topPerformingBriefs || [],
+      monthlyTrends: analytics?.monthlyTrends || [],
+      briefPerformance: analytics?.briefPerformance || []
     };
 
     return (
@@ -976,8 +1138,8 @@ const BrandDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="metric-value">${safeAnalytics.totalRewards.toLocaleString()}</p>
-              <p className="metric-label">Total Rewards</p>
+              <p className="metric-value">${safeAnalytics.totalRewardValue.toLocaleString()}</p>
+              <p className="metric-label">Total Reward Value</p>
             </div>
           </div>
 
@@ -1006,31 +1168,162 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
 
-      {/* Analytics Charts Placeholder */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Campaign Performance</h3>
+        {/* Additional Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/Brief1.png" alt="Total Briefs" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">{safeAnalytics.totalBriefs}</p>
+              <p className="metric-label">Total Briefs</p>
+            </div>
           </div>
-          <div className="card-content">
-            <div className={`h-64 flex items-center justify-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Chart placeholder - Campaign performance over time
+
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/Submissions1.png" alt="Total Submissions" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">{safeAnalytics.totalSubmissions}</p>
+              <p className="metric-label">Total Submissions</p>
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/MoneyBag1.png" alt="Average Reward" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">${safeAnalytics.averageReward.toLocaleString()}</p>
+              <p className="metric-label">Average Reward</p>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Creator Engagement</h3>
+        {/* Performance Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Monthly Trends</h3>
+            </div>
+            <div className="card-content">
+              <div className="space-y-4">
+                {safeAnalytics.monthlyTrends.slice(-6).map((trend, _index) => (
+                  <div key={_index} className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {trend.month}
+                    </span>
+                    <div className="flex space-x-4">
+                      <span className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                        {trend.briefs} briefs
+                      </span>
+                      <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                        {trend.submissions} submissions
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="card-content">
-            <div className={`h-64 flex items-center justify-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Chart placeholder - Creator engagement metrics
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Top Performing Briefs</h3>
+            </div>
+            <div className="card-content">
+              <div className="space-y-3">
+                {safeAnalytics.topPerformingBriefs.slice(0, 5).map((brief, _index) => (
+                  <div key={brief.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {brief.title}
+                      </p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {brief.submissions} submissions
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 text-xs rounded-full ${
+                      brief.status === 'published' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                    }`}>
+                      {brief.status}
+                    </div>
+                  </div>
+                ))}
+                {safeAnalytics.topPerformingBriefs.length === 0 && (
+                  <p className={`text-center py-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    No briefs yet
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Brief Performance Breakdown */}
+        {safeAnalytics.briefPerformance.length > 0 && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Brief Performance Breakdown</h3>
+            </div>
+            <div className="card-content">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <th className={`text-left py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Brief Title
+                      </th>
+                      <th className={`text-left py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Submissions
+                      </th>
+                      <th className={`text-left py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Reward Value
+                      </th>
+                      <th className={`text-left py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {safeAnalytics.briefPerformance.map((brief) => (
+                      <tr key={brief.id} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <td className={`py-3 px-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {brief.title}
+                        </td>
+                        <td className={`py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {brief.submissions}
+                        </td>
+                        <td className={`py-3 px-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                          ${brief.totalRewardValue.toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            brief.status === 'published' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                          }`}>
+                            {brief.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
     );
   };
 
@@ -1066,34 +1359,14 @@ const BrandDashboard: React.FC = () => {
         return renderCreateBrief();
       case 'briefs':
         return renderBriefs();
-      case 'funded-briefs':
-        return <BriefManagementPage />;
+      case 'manage-rewards':
+        return <ManageRewardsPayments />;
       case 'submissions':
         return renderSubmissions();
       case 'creators':
         return renderCreators();
       case 'analytics':
         return renderAnalytics();
-      case 'payments':
-        return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <PaymentManagement 
-              userType="brand"
-              userId={user?.id || ''}
-              token={localStorage.getItem('token') || ''}
-            />
-          </Suspense>
-        );
-      case 'rewards':
-        return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <RewardManagement 
-              userType="brand"
-              userId={user?.id || ''}
-              token={localStorage.getItem('token') || ''}
-            />
-          </Suspense>
-        );
       case 'wallet':
         return (
           <Suspense fallback={<LoadingSpinner />}>
@@ -1124,11 +1397,11 @@ const BrandDashboard: React.FC = () => {
               {activeTab === 'overview' ? 'Dashboard' : 
                activeTab === 'briefs' ? 'My Briefs' :
                activeTab === 'funded-briefs' ? 'Brief Management' :
+               activeTab === 'winners' ? 'Select Winners' :
+               activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
                activeTab === 'submissions' ? 'Submissions' :
                activeTab === 'creators' ? 'Creators' :
                activeTab === 'analytics' ? 'Analytics' :
-               activeTab === 'payments' ? 'Payments' :
-               activeTab === 'rewards' ? 'Rewards' :
                activeTab === 'wallet' ? 'Wallet' :
                activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
             </h1>
@@ -1227,206 +1500,80 @@ const BrandDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Navigation Groups */}
-          <nav className="space-y-3 flex-1">
-            {filteredNavigationGroups.map((group) => {
-              const isExpanded = expandedGroups.has(group.id);
-              
-              return (
-                <div key={group.id} className="space-y-1">
-                  {!sidebarCollapsed && (
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                      className={`flex w-full items-center justify-between text-xs font-semibold px-3 py-2 rounded-lg transition-colors uppercase tracking-wider ${
-                      isDark
-                          ? 'text-gray-400 hover:text-white hover:bg-gray-950'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    aria-expanded={isExpanded}
-                    aria-controls={`nav-group-${group.id}`}
-                  >
-                      {group.title}
-                      <svg 
-                        className={`w-5 h-5 transition-transform duration-200 ${
-                          isExpanded ? 'rotate-90' : 'rotate-0'
-                        }`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </button>
-                  )}
-                  
-                  {/* Show icons when collapsed - only for expanded groups */}
-                  {sidebarCollapsed && isExpanded && (
-                    <div className="space-y-1">
-                      {group.items.map((item) => (
-                        <button
-                          key={`collapsed-${item.id}`}
-                          onClick={() => {
-                            if (item.id === 'messaging') {
-                              handleTabChange('messaging');
-                            } else {
-                              handleTabChange(item.id);
-                            }
-                          }}
-                          className={`w-full flex items-center justify-center p-4 rounded-lg transition-all duration-200 ${
-                            activeTab === item.id
-                              ? isDark
-                                ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                                : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          }`}
-                          title={item.label}
-                        >
-                          {item.icon === 'overview' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
-                            </svg>
-                          )}
-                          {item.icon === 'wallet' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                          )}
-                          {item.icon === 'messaging' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
-                          )}
-                          {item.icon === 'create' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                          )}
-                          {item.icon === 'briefs' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          )}
-                          {item.icon === 'submissions' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          )}
-                          {item.icon === 'creators' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                          )}
-                          {item.icon === 'statistics' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                          )}
-                          {item.icon === 'payments' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                          )}
-                          {item.icon === 'rewards-payments' && (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      </svg>
-                    )}
-                  </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {isExpanded && !sidebarCollapsed && (
-                    <div 
-                      id={`nav-group-${group.id}`}
-                      className="space-y-1"
-                    >
-                      {group.items.map((item) => (
-                          <button
-                          key={item.id}
-                            onClick={() => {
-                              if (item.id === 'messaging') {
-                              handleTabChange('messaging');
-                              } else {
-                              handleTabChange(item.id);
-                              }
-                            }}
-                          className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all duration-200 ${
-                              activeTab === item.id
-                                ? isDark
-                                ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                                : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
-                                : isDark
-                                ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          }`}
-                            title={sidebarCollapsed ? item.label : ''}
-                          >
-                          {item.icon === 'overview' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
-                            </svg>
-                          )}
-                          {item.icon === 'wallet' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                          )}
-                          {item.icon === 'messaging' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
-                          )}
-                          {item.icon === 'create' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                          )}
-                          {item.icon === 'briefs' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          )}
-                          {item.icon === 'submissions' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          )}
-                          {item.icon === 'creators' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                          )}
-                          {item.icon === 'statistics' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                          )}
-                          {item.icon === 'payments' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                          )}
-                          {item.icon === 'rewards-payments' && (
-                            <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                            </svg>
-                          )}
-                          {!sidebarCollapsed && (
-                            <span className="font-medium">{item.label}</span>
-                          )}
-                          </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* Navigation Items */}
+          <nav className="space-y-1 flex-1">
+            {filteredNavigationItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (item.id === 'messaging') {
+                    handleTabChange('messaging');
+                  } else {
+                    handleTabChange(item.id);
+                  }
+                }}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-all duration-200 ${
+                  activeTab === item.id
+                    ? isDark
+                      ? 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg'
+                    : isDark
+                      ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+                title={sidebarCollapsed ? item.label : ''}
+              >
+                {item.icon === 'overview' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+                  </svg>
+                )}
+                {item.icon === 'wallet' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                )}
+                {item.icon === 'messaging' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                )}
+                {item.icon === 'create' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
+                {item.icon === 'briefs' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                {item.icon === 'submissions' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                )}
+                {item.icon === 'creators' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                )}
+                {item.icon === 'statistics' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                )}
+                {item.icon === 'rewards-payments' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                )}
+                {!sidebarCollapsed && (
+                  <span className="font-medium">{item.label}</span>
+                )}
+              </button>
+            ))}
           </nav>
 
           {/* Footer */}
@@ -1509,11 +1656,11 @@ const BrandDashboard: React.FC = () => {
                 {activeTab === 'overview' ? 'Dashboard' : 
                  activeTab === 'briefs' ? 'My Briefs' :
                  activeTab === 'funded-briefs' ? 'Brief Management' :
+                 activeTab === 'winners' ? 'Select Winners' :
+                 activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
                  activeTab === 'submissions' ? 'Submissions' :
                  activeTab === 'creators' ? 'Creators' :
                  activeTab === 'analytics' ? 'Analytics' :
-                 activeTab === 'payments' ? 'Payments' :
-                 activeTab === 'rewards' ? 'Rewards' :
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
               </h1>
@@ -1736,6 +1883,19 @@ const BrandDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Brief Modal */}
+      {showEditBriefModal && editingBrief && (
+        <EditBrief
+          brief={editingBrief}
+          isOpen={showEditBriefModal}
+          onClose={() => {
+            setShowEditBriefModal(false);
+            setEditingBrief(null);
+          }}
+          onSuccess={handleEditBriefSuccess}
+        />
       )}
     </div>
   );

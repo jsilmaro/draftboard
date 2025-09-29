@@ -13,7 +13,8 @@ interface BriefDetailsModalProps {
   deadline: string;
   status: string;
   isPrivate: boolean;
-  location?: string;
+  isFunded?: boolean;
+  fundedAt?: string;
   additionalFields?: Record<string, unknown>;
     rewardTiers?: Array<{
       position: number;
@@ -317,18 +318,6 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                       <span className={`text-sm font-medium ${
                         isDark ? 'text-gray-400' : 'text-gray-600'
                       }`}>
-                        Location:
-                      </span>
-                      <p className={`text-lg font-bold ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {brief.location || 'Anywhere'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className={`text-sm font-medium ${
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
                         Visibility:
                       </span>
                       <p className={`text-lg font-bold ${
@@ -337,11 +326,34 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                         {brief.isPrivate ? 'Private' : 'Public'}
                       </p>
                     </div>
+                    <div>
+                      <span className={`text-sm font-medium ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        Funding Status:
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          brief.isFunded 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}>
+                          {brief.isFunded ? 'Funded' : 'Not Funded'}
+                        </span>
+                        {brief.fundedAt && (
+                          <span className={`text-sm ${
+                            isDark ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
+                            {formatDate(brief.fundedAt)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                     </div>
                     
                 {/* Reward Tiers */}
-                {brief.rewardTiers && brief.rewardTiers.length > 0 && (
+                {(brief.rewardTiers && brief.rewardTiers.length > 0 || (brief as { winnerRewards?: Array<unknown> }).winnerRewards?.length > 0) && (
                   <div className={`p-4 rounded-lg ${
                     isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
                   }`}>
@@ -351,23 +363,26 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
                       Reward Distribution
                     </h3>
                     <div className="space-y-3">
-                      {brief.rewardTiers.map((tier) => (
+                      {(brief.rewardTiers && brief.rewardTiers.length > 0 ? brief.rewardTiers : (brief as { winnerRewards?: Array<unknown> }).winnerRewards).map((tier: Record<string, unknown>) => {
+                        const totalTierValue =
+                          Number(tier.cashAmount || 0) +
+                          Number(tier.creditAmount || 0) ||
+                          Number(tier.amount || 0) || 0;
+                        return (
                         <div key={tier.position} className="flex justify-between items-center">
                           <span className={`text-sm ${
                             isDark ? 'text-gray-300' : 'text-gray-700'
                           }`}>
-                            {tier.position === 1 ? '🥇 1st Place' : 
-                             tier.position === 2 ? '🥈 2nd Place' : 
-                             tier.position === 3 ? '🥉 3rd Place' : 
-                             `${tier.position}th Place`}
+                            {`Reward ${tier.position}`}
                               </span>
                           <span className={`font-bold ${
                             isDark ? 'text-white' : 'text-gray-900'
                           }`}>
-                            ${tier.cashAmount.toLocaleString()}
+                            ${Number(totalTierValue).toLocaleString()}
                               </span>
                             </div>
-                          ))}
+                          );
+                        })}
                         </div>
                       </div>
                     )}

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import WalletManagement from './WalletManagement';
 
 interface BrandWalletProps {
   analytics?: {
@@ -12,6 +13,7 @@ interface BrandWalletProps {
 
 const BrandWallet: React.FC<BrandWalletProps> = ({ analytics }) => {
   const { isDark } = useTheme();
+  const [showWalletManagement, setShowWalletManagement] = useState(false);
 
   const walletData = {
     totalSpent: analytics?.totalSpent || 0,
@@ -127,7 +129,10 @@ const BrandWallet: React.FC<BrandWalletProps> = ({ analytics }) => {
                 Manage your payment methods and billing information
               </p>
             </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={() => setShowWalletManagement(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               Manage
             </button>
           </div>
@@ -157,6 +162,12 @@ const BrandWallet: React.FC<BrandWalletProps> = ({ analytics }) => {
           </p>
         </div>
       </div>
+
+      {/* Wallet Management Modal */}
+      <WalletManagement
+        isOpen={showWalletManagement}
+        onClose={() => setShowWalletManagement(false)}
+      />
     </div>
   );
 };
