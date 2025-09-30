@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface WithdrawalRequest {
   id: string;
@@ -20,6 +21,7 @@ interface WithdrawalRequest {
 }
 
 const WithdrawalManagement: React.FC = () => {
+  const { isDark } = useTheme();
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -147,11 +149,11 @@ const WithdrawalManagement: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-              <div className="bg-gray-800/10 backdrop-blur-sm border border-gray-700/30 rounded-lg shadow-xl p-6">
+      <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-sm p-6`}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-200">Withdrawal Management</h2>
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Withdrawal Management</h2>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-400">
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               {pendingCount} pending request{pendingCount !== 1 ? 's' : ''}
             </span>
             <button
@@ -186,20 +188,28 @@ const WithdrawalManagement: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-1 mb-6">
+        <div className={`flex space-x-1 mb-6 ${isDark ? 'bg-gray-700' : 'bg-gray-100'} p-1 rounded-xl w-fit`}>
           {['all', 'pending', 'approved', 'rejected'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  ? isDark
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
+                  : isDark
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-600/50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
               {status !== 'all' && (
-                <span className="ml-2 bg-white/20 px-2 py-1 rounded-full text-xs">
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                  filter === status 
+                    ? 'bg-gray-900/20' 
+                    : isDark ? 'bg-white/20' : 'bg-gray-900/10'
+                }`}>
                   {withdrawalRequests.filter(req => req.status === status).length}
                 </span>
               )}
@@ -208,41 +218,41 @@ const WithdrawalManagement: React.FC = () => {
         </div>
 
         {/* Withdrawal Requests Table */}
-        <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg border border-gray-600/20 overflow-hidden">
+        <div className={`${isDark ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg border overflow-hidden`}>
           {filteredRequests.length === 0 ? (
             <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-16 h-16 ${isDark ? 'bg-gray-600' : 'bg-gray-200'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                <svg className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
-              <p className="text-gray-400">No withdrawal requests found</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No withdrawal requests found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-800/50">
+                <thead className={`${isDark ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Creator</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Requested</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>Creator</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>Amount</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>Status</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>Requested</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10 dark:divide-gray-700/30">
+                <tbody className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200'}`}>
                   {filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-600/20">
+                    <tr key={request.id} className={`${isDark ? 'hover:bg-gray-600/20' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-white">{request.creator.fullName}</div>
-                          <div className="text-sm text-gray-400">@{request.creator.userName}</div>
-                          <div className="text-xs text-gray-500">{request.creator.email}</div>
+                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{request.creator.fullName}</div>
+                          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>@{request.creator.userName}</div>
+                          <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{request.creator.email}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-white">${request.amount.toFixed(2)}</div>
-                        <div className="text-xs text-gray-400">{request.currency}</div>
+                        <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${request.amount.toFixed(2)}</div>
+                        <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{request.currency}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={getStatusBadge(request.status)}>
@@ -254,7 +264,7 @@ const WithdrawalManagement: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         {new Date(request.requestedAt).toLocaleDateString()}
                         {request.processedAt && (
                           <div className="text-xs">
@@ -267,19 +277,19 @@ const WithdrawalManagement: React.FC = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => openActionModal(request, 'approve')}
-                              className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
+                              className="text-emerald-500 hover:text-emerald-700 font-medium"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => openActionModal(request, 'reject')}
-                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-medium"
+                              className="text-red-600 hover:text-red-900 font-medium"
                             >
                               Reject
                             </button>
                           </div>
                         ) : (
-                          <span className="text-gray-500">
+                          <span className={`${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                             {request.status === 'approved' ? 'Approved' : 'Completed'}
                           </span>
                         )}
@@ -296,10 +306,10 @@ const WithdrawalManagement: React.FC = () => {
       {/* Action Modal */}
       {showActionModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg max-w-md w-full">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg max-w-md w-full`}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {actionType === 'approve' ? 'Approve' : 'Reject'} Withdrawal Request
                 </h3>
                 <button
@@ -309,7 +319,7 @@ const WithdrawalManagement: React.FC = () => {
                     setActionReason('');
                     setAdminNotes('');
                   }}
-                  className="text-gray-400 hover:text-gray-300"
+                  className={`${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'}`}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -317,27 +327,31 @@ const WithdrawalManagement: React.FC = () => {
                 </button>
               </div>
 
-              <div className="mb-4 p-4 bg-gray-700 rounded-lg">
-                <p className="text-sm text-gray-300">
+              <div className={`mb-4 p-4 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   <strong>Creator:</strong> {selectedRequest.creator.fullName} (@{selectedRequest.creator.userName})
                 </p>
-                <p className="text-sm text-gray-300">
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   <strong>Amount:</strong> ${selectedRequest.amount.toFixed(2)}
                 </p>
-                <p className="text-sm text-gray-300">
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   <strong>Requested:</strong> {new Date(selectedRequest.requestedAt).toLocaleDateString()}
                 </p>
               </div>
 
               {actionType === 'reject' && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     Rejection Reason *
                   </label>
                   <textarea
                     value={actionReason}
                     onChange={(e) => setActionReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      isDark 
+                        ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400' 
+                        : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                    }`}
                     rows={3}
                     placeholder="Enter reason for rejection..."
                     required
@@ -346,13 +360,17 @@ const WithdrawalManagement: React.FC = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                   Admin Notes (Optional)
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                  }`}
                   rows={2}
                   placeholder="Internal notes..."
                 />
@@ -366,7 +384,11 @@ const WithdrawalManagement: React.FC = () => {
                     setActionReason('');
                     setAdminNotes('');
                   }}
-                  className="flex-1 px-4 py-2 text-gray-300 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                    isDark 
+                      ? 'text-gray-300 bg-gray-600 hover:bg-gray-700' 
+                      : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                  }`}
                 >
                   Cancel
                 </button>

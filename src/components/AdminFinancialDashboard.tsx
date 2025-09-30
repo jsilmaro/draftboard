@@ -44,28 +44,6 @@ const AdminFinancialDashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setMetrics(data.data);
-      } else {
-        // Fallback to mock data if endpoint doesn't exist yet
-        setMetrics({
-          totalFundsCollected: 12500.00,
-          totalFundsPaidOut: 11875.00,
-          totalPlatformFees: 625.00,
-          totalRefundsProcessed: 0.00,
-          activeBriefs: 12,
-          completedPayouts: 45,
-          pendingPayouts: 3,
-          recentTransactions: [
-            {
-              id: '1',
-              type: 'funding',
-              amount: 1000.00,
-              briefTitle: 'Social Media Campaign',
-              brandName: 'TechCorp',
-              status: 'completed',
-              createdAt: new Date().toISOString()
-            }
-          ]
-        });
       }
     } catch (error) {
       // Handle error silently or show toast notification

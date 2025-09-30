@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface Notification {
   id: string;
@@ -26,6 +28,7 @@ interface Notification {
 const NotificationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [notification, setNotification] = useState<Notification | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,54 +184,117 @@ const NotificationDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black/20 backdrop-blur-sm">
-      {/* Header */}
-      <div className="glass-nav border-b border-white/20 px-8 py-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/notifications')}
-              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
+      {/* Sidebar */}
+      <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r w-64 min-h-screen fixed left-0 top-0 z-40 flex flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z" />
               </svg>
-              <span>Back to Notifications</span>
-            </button>
-            <div className="flex items-center space-x-4">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                notification.type === 'success' ? 'bg-green-500/20 text-green-400' :
-                notification.type === 'error' ? 'bg-red-500/20 text-red-400' :
-                notification.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
-                'bg-blue-500/20 text-blue-400'
-              }`}>
-                {notification.type}
-              </span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                notification.isRead 
-                  ? 'bg-gray-500/20 text-gray-400' 
-                  : 'bg-blue-500/20 text-blue-400'
-              }`}>
-                {notification.isRead ? 'Read' : 'Unread'}
-              </span>
+            </div>
+            <div>
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notification</h2>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Detail view</p>
             </div>
           </div>
         </div>
+
+        {/* Navigation Items */}
+        <div className="flex-1 p-4 space-y-2">
+          <button
+            onClick={() => navigate('/notifications')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="font-medium">Back to Notifications</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/creator/dashboard')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Dashboard</span>
+          </button>
+        </div>
+
+        {/* Account Navigation */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <button
+            onClick={() => navigate('/')}
+            className="w-full flex items-center px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-200"
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Home</span>
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-8 py-8">
-        <div className="bg-[#232531] rounded-xl p-8">
+      {/* Main Content */}
+      <div className="flex-1 ml-64">
+        {/* Header */}
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b sticky top-0 z-30`}>
+          <div className="px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notification Details</h1>
+                {notification && (
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      notification.type === 'success' ? 'bg-green-500/20 text-green-400' :
+                      notification.type === 'error' ? 'bg-red-500/20 text-red-400' :
+                      notification.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {notification.type}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      notification.isRead 
+                        ? 'bg-gray-500/20 text-gray-400' 
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {notification.isRead ? 'Read' : 'Unread'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center space-x-4">
+                <ThemeToggle size="md" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl border ${isDark ? 'border-gray-700' : 'border-gray-200'} shadow-sm p-8`}>
           {/* Notification Header */}
           <div className="flex items-start space-x-6 mb-8">
-            <div className="bg-white/5 backdrop-blur-xl p-4 rounded-xl flex-shrink-0">
+            <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} p-4 rounded-xl flex-shrink-0`}>
               {getIcon(notification.type)}
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-4 leading-tight">
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 leading-tight`}>
                 {notification.title}
               </h1>
-              <div className="flex items-center space-x-6 text-gray-400">
+              <div className={`flex items-center space-x-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center space-x-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -245,35 +311,40 @@ const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Notification Content */}
-          <div className="border-t border-gray-700 pt-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Description</h2>
-            <div className="prose prose-invert max-w-none">
-              <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
-                {notification.message}
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="border-t border-gray-700 pt-8 mt-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => navigate('/notifications')}
-                  className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  All Notifications
-                </button>
-                <button
-                  onClick={() => navigate(-1)}
-                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Back
-                </button>
+            {/* Notification Content */}
+            <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-8`}>
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Description</h2>
+              <div className="prose prose-invert max-w-none">
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg leading-relaxed whitespace-pre-wrap`}>
+                  {notification.message}
+                </p>
               </div>
-              <div className="text-sm text-gray-500">
-                Notification ID: {notification.id}
+            </div>
+
+            {/* Action Buttons */}
+            <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-8 mt-8`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => navigate('/notifications')}
+                    className={`px-6 py-3 rounded-lg transition-colors ${
+                      isDark 
+                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    All Notifications
+                  </button>
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Back
+                  </button>
+                </div>
+                <div className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  Notification ID: {notification.id}
+                </div>
               </div>
             </div>
           </div>

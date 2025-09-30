@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface Notification {
   id: string;
@@ -29,6 +31,7 @@ const NotificationsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     fetchNotifications();
@@ -153,95 +156,170 @@ const NotificationsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black/20 backdrop-blur-sm">
-      {/* Header */}
-      <div className="glass-nav border-b border-white/20 px-8 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Notifications</h1>
-              <p className="text-gray-400">
-                {notifications.length} total notifications
-              </p>
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
+      {/* Sidebar */}
+      <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r w-64 min-h-screen fixed left-0 top-0 z-40 flex flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z" />
+              </svg>
             </div>
-            <button
-              onClick={() => navigate(-1)}
-              className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              Back
-            </button>
+            <div>
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notifications</h2>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Stay updated</p>
+            </div>
           </div>
+        </div>
+
+        {/* Navigation Items */}
+        <div className="flex-1 p-4 space-y-2">
+          <button
+            onClick={() => navigate('/creator/dashboard')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Dashboard</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/brand/dashboard')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className="font-medium">Brand Dashboard</span>
+          </button>
+        </div>
+
+        {/* Account Navigation */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <button
+            onClick={() => navigate('/')}
+            className="w-full flex items-center px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-200"
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Home</span>
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        {/* Filter Tabs */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg w-fit">
+      {/* Main Content */}
+      <div className="flex-1 ml-64">
+        {/* Header */}
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b sticky top-0 z-30`}>
+          <div className="px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notifications</h1>
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {notifications.length} total notifications
+                </span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <ThemeToggle size="md" />
+                <button
+                  onClick={() => navigate(-1)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    isDark 
+                      ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Filter Tabs */}
+          <div className="mb-8">
+            <div className={`flex space-x-1 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} p-1 rounded-xl w-fit`}>
               {[
                 { key: 'all', label: 'All', count: notifications.length },
                 { key: 'unread', label: 'Unread', count: notifications.filter(n => !n.isRead).length },
                 { key: 'read', label: 'Read', count: notifications.filter(n => n.isRead).length }
               ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key as 'all' | 'unread' | 'read')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filter === tab.key
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Notifications List */}
-        <div className="space-y-4">
-          {filteredNotifications.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 5.5L9 10l-4.5 4.5L1 10l3.5-4.5z" />
-                </svg>
-              </div>
-              <p className="text-gray-400 text-lg">No notifications found</p>
-              <p className="text-gray-500 text-sm mt-2">
-                {filter === 'all' 
-                  ? "You don't have any notifications yet"
-                  : `No ${filter} notifications`
-                }
-              </p>
+                <button
+                  key={tab.key}
+                  onClick={() => setFilter(tab.key as 'all' | 'unread' | 'read')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    filter === tab.key
+                      ? isDark
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'bg-white text-gray-900 shadow-sm'
+                      : isDark
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
             </div>
-          ) : (
-            filteredNotifications.map((notification) => (
-              <div
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification.id)}
-                className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
-                  !notification.isRead ? 'ring-2 ring-blue-500/50' : ''
-                }`}
-              >
-                <div className="w-full mb-3">
-                  <div
-                    className="cursor-default flex items-center justify-between w-full min-h-[80px] rounded-lg bg-[#232531] px-4 py-3 hover:bg-[#2a2e3a] transition-colors duration-200"
-                  >
+          </div>
+
+          {/* Notifications List */}
+          <div className="space-y-4">
+            {filteredNotifications.length === 0 ? (
+              <div className="text-center py-12">
+                <div className={`w-16 h-16 ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                  <svg className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 5.5L9 10l-4.5 4.5L1 10l3.5-4.5z" />
+                  </svg>
+                </div>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-lg`}>No notifications found</p>
+                <p className={`${isDark ? 'text-gray-500' : 'text-gray-500'} text-sm mt-2`}>
+                  {filter === 'all' 
+                    ? "You don't have any notifications yet"
+                    : `No ${filter} notifications`
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification.id)}
+                  className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                    !notification.isRead ? 'ring-2 ring-blue-500/50' : ''
+                  }`}
+                >
+                  <div className={`w-full mb-3 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl border ${isDark ? 'border-gray-700' : 'border-gray-200'} shadow-sm hover:shadow-md transition-all duration-200`}>
+                    <div
+                      className={`cursor-default flex items-center justify-between w-full min-h-[80px] rounded-xl ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} px-4 py-3 transition-colors duration-200`}
+                    >
                     <div className="flex gap-4 flex-1 min-w-0">
-                      <div className="bg-white/5 backdrop-blur-xl p-3 rounded-lg flex-shrink-0">
+                      <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} p-3 rounded-lg flex-shrink-0`}>
                         {getIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className={`text-white text-lg font-medium leading-tight mb-2 ${
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} text-lg font-medium leading-tight mb-2 ${
                               !notification.isRead ? 'font-semibold' : ''
                             }`}>
                               {notification.title}
                             </h3>
-                            <p className="text-gray-400 text-sm leading-relaxed mb-3 line-clamp-2">
+                            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm leading-relaxed mb-3 line-clamp-2`}>
                               {notification.message}
                             </p>
                             <div className="flex items-center justify-between">
@@ -254,7 +332,7 @@ const NotificationsPage: React.FC = () => {
                                 }`}>
                                   {notification.type}
                                 </span>
-                                <p className="text-gray-500 text-xs">
+                                <p className={`${isDark ? 'text-gray-500' : 'text-gray-500'} text-xs`}>
                                   {formatTimeAgo(notification.createdAt)}
                                 </p>
                               </div>
@@ -271,6 +349,7 @@ const NotificationsPage: React.FC = () => {
               </div>
             ))
           )}
+          </div>
         </div>
       </div>
     </div>

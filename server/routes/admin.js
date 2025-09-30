@@ -1233,4 +1233,173 @@ router.put('/notifications/:id/read', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Get financial metrics from real database data
+router.get('/financial-metrics', authenticateAdmin, async (req, res) => {
+  try {
+    const { timeRange = '30d' } = req.query;
+    
+    // Calculate date range
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (timeRange) {
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(now.getDate() - 90);
+        break;
+      case 'all':
+      default:
+        startDate = new Date(0); // Beginning of time
+        break;
+    }
+
+    // Get total funds collected from BriefFunding
+    const totalFundsCollected = await prisma.briefFunding.aggregate({
+      where: {
+        status: 'completed',
+        createdAt: {
+          gte: startDate
+        }
+      },
+      _sum: {
+        totalAmount: true,
+        platformFee: true
+      }
+    });
+
+    // Get total funds paid out from WinnerReward
+    const totalFundsPaidOut = await prisma.winnerReward.aggregate({
+      where: {
+        createdAt: {
+          gte: startDate
+        }
+      },
+      _sum: {
+        cashAmount: true
+      }
+    });
+
+    // Get platform fees from actual data
+    const totalPlatformFees = totalFundsCollected._sum.platformFee || 0;
+
+    // Get total refunds (if any refund system exists)
+    const totalRefundsProcessed = 0; // Implement when refund system is added
+
+    // Count active briefs
+    const activeBriefs = await prisma.brief.count({
+      where: {
+        status: 'published',
+        isFunded: true
+      }
+    });
+
+    // Count completed payouts
+    const completedPayouts = await prisma.winnerReward.count({
+      where: {
+        createdAt: {
+          gte: startDate
+        }
+      }
+    });
+
+    // Count pending payouts (approved submissions without winner rewards)
+    const approvedSubmissions = await prisma.submission.count({
+      where: {
+        status: 'approved'
+      }
+    });
+
+    const paidSubmissions = await prisma.winnerReward.count();
+    const pendingPayouts = Math.max(0, approvedSubmissions - paidSubmissions);
+
+    // Get recent transactions
+    const recentFundings = await prisma.briefFunding.findMany({
+      where: {
+        createdAt: {
+          gte: startDate
+        }
+      },
+      include: {
+        brief: {
+          include: {
+            brand: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 10
+    });
+
+    const recentPayouts = await prisma.winnerReward.findMany({
+      where: {
+        createdAt: {
+          gte: startDate
+        }
+      },
+      include: {
+        winner: {
+          include: {
+            submission: {
+              include: {
+                creator: true
+              }
+            },
+            brief: true
+          }
+        },
+        brief: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 10
+    });
+
+    // Combine and format recent transactions
+    const recentTransactions = [
+      ...recentFundings.map(funding => ({
+        id: funding.id,
+        type: 'funding',
+        amount: parseFloat(funding.totalAmount.toString()),
+        briefTitle: funding.brief.title,
+        brandName: funding.brief.brand?.companyName || 'Unknown Brand',
+        status: funding.status,
+        createdAt: funding.createdAt.toISOString()
+      })),
+      ...recentPayouts.map(payout => ({
+        id: payout.id,
+        type: 'payout',
+        amount: payout.cashAmount,
+        briefTitle: payout.brief?.title || payout.winner?.brief?.title || 'Unknown Brief',
+        creatorName: payout.winner?.submission?.creator?.fullName || payout.winner?.submission?.creator?.userName || 'Unknown Creator',
+        status: 'completed',
+        createdAt: payout.createdAt.toISOString()
+      }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
+
+    const metrics = {
+      totalFundsCollected: parseFloat((totalFundsCollected._sum.totalAmount || 0).toString()),
+      totalFundsPaidOut: parseFloat((totalFundsPaidOut._sum.cashAmount || 0).toString()),
+      totalPlatformFees: parseFloat(totalPlatformFees.toString()),
+      totalRefundsProcessed,
+      activeBriefs,
+      completedPayouts,
+      pendingPayouts,
+      recentTransactions
+    };
+
+    res.json({ data: metrics });
+  } catch (error) {
+    console.error('Error fetching financial metrics:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

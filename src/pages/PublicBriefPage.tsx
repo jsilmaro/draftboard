@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface Brief {
   id: string;
@@ -109,10 +110,98 @@ const PublicBriefPage: React.FC = () => {
   const submissionsProgress = Math.min((submissionsCount / brief.amountOfWinners) * 100, 100);
 
   return (
-    <div className={`min-h-screen py-8 ${
-      isDark ? 'bg-black' : 'bg-gray-50'
-    }`}>
-      <div className="max-w-4xl mx-auto px-4">
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
+      {/* Sidebar */}
+      <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r w-64 min-h-screen fixed left-0 top-0 z-40 flex flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Brief Details</h2>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>View brief information</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Items */}
+        <div className="flex-1 p-4 space-y-2">
+          <button
+            onClick={() => navigate('/creator/dashboard')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Dashboard</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/brand/dashboard')}
+            className={`w-full flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 group ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-800/50 hover:text-white hover:shadow-md'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className="font-medium">Brand Dashboard</span>
+          </button>
+        </div>
+
+        {/* Account Navigation */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <button
+            onClick={() => navigate('/')}
+            className="w-full flex items-center px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-200"
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Home</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 ml-64">
+        {/* Header */}
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b sticky top-0 z-30`}>
+          <div className="px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Brief Details</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <ThemeToggle size="md" />
+                <button
+                  onClick={() => navigate(-1)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    isDark 
+                      ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
         <div className="h-auto w-full">
           <div className={`h-auto w-full rounded-2xl p-8 ${
             isDark ? 'bg-neutral-900 text-white' : 'bg-white text-gray-900'
@@ -241,6 +330,8 @@ const PublicBriefPage: React.FC = () => {
                 You need to be logged in as a creator to apply
               </p>
             </div>
+          </div>
+        </div>
           </div>
         </div>
       </div>
