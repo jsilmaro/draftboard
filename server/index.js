@@ -2331,7 +2331,12 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
     const transformedBriefs = briefs.map(brief => {
       // Use totalBudget from reward tiers, fallback to legacy reward field
       let rewardTiers = (brief.rewardTiers && brief.rewardTiers.length > 0)
-        ? brief.rewardTiers
+        ? brief.rewardTiers.map(tier => ({
+            position: tier.position,
+            amount: parseFloat(tier.amount.toString()) || 0,
+            cashAmount: parseFloat(tier.amount.toString()) || 0, // For now, treat all as cash
+            creditAmount: 0 // Future: separate cash/credit in RewardTier
+          }))
         : (brief.winnerRewards || []).map(wr => ({
             position: wr.position,
             amount: (wr.cashAmount || 0) + (wr.creditAmount || 0),

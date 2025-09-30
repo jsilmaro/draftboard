@@ -30,6 +30,12 @@ interface Brief {
   status: string;
   createdAt: string;
   submissions: Submission[];
+  rewardTiers?: Array<{
+    position: number;
+    cashAmount: number;
+    creditAmount: number;
+    amount: number;
+  }>;
   _count?: {
     submissions: number;
   };
@@ -148,22 +154,51 @@ const ManageRewardsPayments: React.FC = () => {
     if (existingWinner) {
       setSelectedWinners(prev => prev.filter(w => w.submissionId !== submission.id));
     } else {
+      // Find the next available position (first unclaimed position)
+      const claimedPositions = selectedWinners.map(w => {
+        // Extract position from description if it exists
+        const match = w.description.match(/Reward (\d+)/);
+        return match ? parseInt(match[1]) : 0;
+      });
+      
+      let nextPosition = 1;
+      while (claimedPositions.includes(nextPosition)) {
+        nextPosition++;
+      }
+      
+      // Get the reward tier for this position
+      const rewardTier = selectedBrief?.rewardTiers?.find(tier => tier.position === nextPosition);
+      
+      // Calculate the total amount (cash + credit) from the tier
+      const tierAmount = rewardTier 
+        ? (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0)
+        : 0;
+      
       const newWinner: Winner = {
         submissionId: submission.id,
         creatorId: submission.creator.id,
         rewardType: 'cash',
-        amount: 0,
-        description: `Reward for winning brief: ${selectedBrief?.title}`
+        amount: tierAmount, // Automatically set from reward tier
+        description: `Reward ${nextPosition} for ${selectedBrief?.title || 'brief'}`
       };
       setSelectedWinners(prev => [...prev, newWinner]);
     }
   };
 
-  const updateWinner = (submissionId: string, updates: Partial<Winner>) => {
+  const handlePositionChange = (submissionId: string, newPosition: number) => {
+    const rewardTier = selectedBrief?.rewardTiers?.find(tier => tier.position === newPosition);
+    const tierAmount = rewardTier 
+      ? (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0)
+      : 0;
+
     setSelectedWinners(prev => 
       prev.map(winner => 
         winner.submissionId === submissionId 
-          ? { ...winner, ...updates }
+          ? { 
+              ...winner, 
+              amount: tierAmount,
+              description: `Reward ${newPosition} for ${selectedBrief?.title || 'brief'}`
+            }
           : winner
       )
     );
@@ -601,16 +636,43 @@ const ManageRewardsPayments: React.FC = () => {
                           </div>
                         </div>
                         {selectedWinners.some(w => w.submissionId === submission.id) && (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Reward:</span>
-                            <input
-                              type="number"
-                              value={selectedWinners.find(w => w.submissionId === submission.id)?.amount || 0}
-                              onChange={(e) => updateWinner(submission.id, { amount: parseFloat(e.target.value) || 0 })}
-                              className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
-                              placeholder="0.00"
-                            />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">USD</span>
+                          <div className="flex items-center space-x-3">
+                            {(() => {
+                              const winner = selectedWinners.find(w => w.submissionId === submission.id);
+                              const positionMatch = winner?.description.match(/Reward (\d+)/);
+                              const position = positionMatch ? parseInt(positionMatch[1]) : 1;
+                              
+                              // Get all available positions from reward tiers
+                              const availablePositions = selectedBrief?.rewardTiers?.map(tier => tier.position) || [];
+                              
+                              return (
+                                <>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Position:</span>
+                                    <select
+                                      value={position}
+                                      onChange={(e) => handlePositionChange(submission.id, parseInt(e.target.value))}
+                                      className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                      {availablePositions.map(pos => {
+                                        const tier = selectedBrief?.rewardTiers?.find(t => t.position === pos);
+                                        const emoji = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏅';
+                                        return (
+                                          <option key={pos} value={pos}>
+                                            {emoji} Reward {pos} (${((tier?.cashAmount || 0) + (tier?.creditAmount || 0)).toFixed(2)})
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                  </div>
+                                  <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-700">
+                                    <span className="text-sm text-green-700 dark:text-green-300 font-semibold">
+                                      ${winner?.amount?.toFixed(2) || '0.00'}
+                                    </span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
