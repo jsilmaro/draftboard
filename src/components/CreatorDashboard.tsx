@@ -56,6 +56,7 @@ interface Brief {
 
 interface Submission {
   id: string;
+  briefId: string;
   briefTitle: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
@@ -735,10 +736,8 @@ const CreatorDashboard: React.FC = () => {
 
   // Helper function to get existing submission data for a brief
   const getExistingSubmission = (briefId: string) => {
-    const brief = availableBriefs.find(b => b.id === briefId);
-    if (!brief) return null;
-    
-    return mySubmissions.find(s => s.briefTitle === brief.title);
+    // Find submission by briefId, not by title (titles can be duplicated)
+    return mySubmissions.find(s => s.briefId === briefId);
   };
 
   // const navigation = [

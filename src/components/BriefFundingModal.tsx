@@ -44,6 +44,7 @@ const PaymentForm: React.FC<{
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [paymentStep, setPaymentStep] = useState<'ready' | 'processing' | 'creating' | 'success'>('ready');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -54,6 +55,7 @@ const PaymentForm: React.FC<{
 
     setLoading(true);
     setMessage(null);
+    setPaymentStep('processing');
 
     try {
       const token = localStorage.getItem('token');
@@ -62,6 +64,7 @@ const PaymentForm: React.FC<{
       }
 
       // Create payment intent for brief funding
+      setPaymentStep('creating');
       const response = await fetch('/api/payments/create-payment-intent', {
         method: 'POST',
         headers: {
@@ -106,6 +109,7 @@ const PaymentForm: React.FC<{
       }
 
       if (paymentIntent.status === 'succeeded') {
+        setPaymentStep('success');
         // Create the brief with funding
         const briefPayload = {
           ...briefData,
@@ -132,6 +136,7 @@ const PaymentForm: React.FC<{
         }
       }
     } catch (error) {
+      setPaymentStep('ready');
       setMessage(`Error: ${error instanceof Error ? error.message : 'Payment failed'}`);
     } finally {
       setLoading(false);
@@ -140,6 +145,32 @@ const PaymentForm: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Payment Progress Indicator */}
+      {paymentStep !== 'ready' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            {paymentStep === 'success' ? (
+              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            ) : (
+              <div className="w-6 h-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                {paymentStep === 'processing' && '🔐 Processing payment...'}
+                {paymentStep === 'creating' && '📝 Creating brief...'}
+                {paymentStep === 'success' && '✅ Payment successful!'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Card Details

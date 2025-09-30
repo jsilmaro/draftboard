@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Link, useSearchParams } from 'react-router-dom';
 import WinnerSelectionModal from './WinnerSelectionModal';
@@ -15,8 +15,7 @@ import CreateBrief from './CreateBrief';
 import ManageRewardsPayments from './ManageRewardsPayments';
 import EditBrief from './EditBrief';
 
-// Lazy load Stripe-dependent components
-const BrandWallet = lazy(() => import('./BrandWallet'));
+// BrandWallet removed - brands pay directly through Stripe Checkout when funding briefs
 
 interface BrandBriefCardProps {
   brief: {
@@ -206,7 +205,7 @@ const BrandDashboard: React.FC = () => {
     const stripeParam = searchParams.get('stripe');
 
     // Set active tab from URL parameter
-    if (tabParam && ['overview', 'briefs', 'create-brief', 'creators', 'analytics', 'wallet', 'messaging', 'manage-rewards'].includes(tabParam)) {
+    if (tabParam && ['overview', 'briefs', 'create-brief', 'creators', 'analytics', 'messaging', 'manage-rewards'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -325,7 +324,6 @@ const BrandDashboard: React.FC = () => {
   // Navigation items (flattened without grouping)
   const navigationItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: 'overview' },
-    { id: 'wallet', label: 'Wallet', icon: 'wallet' },
     { id: 'messaging', label: 'Messages', icon: 'messaging' },
     { id: 'create-brief', label: 'Create Brief', icon: 'create' },
     { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
@@ -1167,12 +1165,7 @@ const BrandDashboard: React.FC = () => {
         return renderCreators();
       case 'analytics':
         return renderAnalytics();
-      case 'wallet':
-        return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <BrandWallet analytics={analytics} />
-          </Suspense>
-        );
+      // Wallet removed - brands pay directly via Stripe Checkout when funding briefs
       case 'messaging':
         return <MessagingSystem />;
       default:
@@ -1201,7 +1194,6 @@ const BrandDashboard: React.FC = () => {
                activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
                activeTab === 'creators' ? 'Creators' :
                activeTab === 'analytics' ? 'Analytics' :
-               activeTab === 'wallet' ? 'Wallet' :
                activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
             </h1>
           </div>
@@ -1432,7 +1424,6 @@ const BrandDashboard: React.FC = () => {
                  activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
                  activeTab === 'creators' ? 'Creators' :
                  activeTab === 'analytics' ? 'Analytics' :
-                 activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
               </h1>
             </div>

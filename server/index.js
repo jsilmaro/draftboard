@@ -1753,18 +1753,14 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       prisma.brief.findMany({
         where: { brandId },
         include: {
-          submissions: true,
-          _count: {
-            select: { submissions: true }
-          }
+          submissions: true
         },
-        orderBy: {
-          submissions: {
-            _count: 'desc'
-          }
-        },
-        take: 5
-      })
+        take: 10
+      }).then(briefs => 
+        briefs
+          .sort((a, b) => b.submissions.length - a.submissions.length)
+          .slice(0, 5)
+      )
     ]);
 
     // Calculate conversion rate
@@ -1815,7 +1811,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
 
     res.json({
       // Main metrics
-      totalSpent: totalSpent._sum.amount || 0,
+      totalSpent: parseFloat((totalSpent._sum.totalAmount || 0).toString()),
       totalRewards: totalRewardsPaid._sum.totalRewardsPaid || 0,
       totalRewardValue,
       activeCampaigns: activeBriefs,
@@ -1831,7 +1827,7 @@ app.get('/api/rewards/analytics/brand', authenticateToken, async (req, res) => {
       topPerformingBriefs: topPerformingBriefs.map(brief => ({
         id: brief.id,
         title: brief.title,
-        submissions: brief._count.submissions,
+        submissions: brief.submissions.length,
         status: brief.status
       })),
       
@@ -2312,6 +2308,7 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
           select: {
             id: true,
             content: true,
+            files: true,
             status: true,
             submittedAt: true,
             creator: {
@@ -3291,6 +3288,7 @@ app.get('/api/creators/submissions', authenticateToken, async (req, res) => {
     // Transform data to match frontend expectations
     const transformedSubmissions = submissions.map(sub => ({
       id: sub.id,
+      briefId: sub.briefId,
       briefTitle: sub.brief.title,
       status: sub.status,
       submittedAt: sub.submittedAt,
@@ -3487,10 +3485,19 @@ app.put('/api/creators/submissions/:id', authenticateToken, async (req, res) => 
       return res.status(404).json({ error: 'Submission not found or access denied' });
     }
 
-    // Check if submission can be edited (not approved or rejected)
-    if (existingSubmission.status === 'approved' || existingSubmission.status === 'rejected') {
-      console.log('❌ Cannot edit submission with status:', existingSubmission.status);
-      return res.status(400).json({ error: 'Cannot edit approved or rejected submissions' });
+    // Check if submission can be edited (only pending submissions can be edited)
+    if (existingSubmission.status === 'approved') {
+      console.log('❌ Cannot edit approved submission:', existingSubmission.status);
+      return res.status(400).json({ 
+        error: 'This submission has already been approved by the brand and cannot be edited. You can view it in "My Submissions".' 
+      });
+    }
+    
+    if (existingSubmission.status === 'rejected') {
+      console.log('❌ Cannot edit rejected submission:', existingSubmission.status);
+      return res.status(400).json({ 
+        error: 'This submission was rejected and cannot be edited. Please submit a new application to a different brief.' 
+      });
     }
 
     // Validate URL format
@@ -5793,6 +5800,34 @@ app.post('/api/notifications/read', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error marking notifications as read:', error);
     res.status(500).json({ error: 'Failed to mark notifications as read' });
+  }
+});
+
+// Get single notification by ID
+app.get('/api/notifications/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const notification = await prisma.notification.findUnique({
+      where: { id }
+    });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    // Verify ownership
+    if (notification.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json({
+      ...notification,
+      metadata: notification.metadata ? JSON.parse(notification.metadata) : null
+    });
+  } catch (error) {
+    console.error('Error fetching notification:', error);
+    res.status(500).json({ error: 'Failed to fetch notification' });
   }
 });
 
