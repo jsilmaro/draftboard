@@ -14,6 +14,7 @@ import ThemeToggle from './ThemeToggle';
 import CreateBrief from './CreateBrief';
 import ManageRewardsPayments from './ManageRewardsPayments';
 import EditBrief from './EditBrief';
+import CreatorDetailModal from './CreatorDetailModal';
 
 // BrandWallet removed - brands pay directly through Stripe Checkout when funding briefs
 
@@ -119,13 +120,27 @@ interface Submission {
 interface Creator {
   id: string;
   name: string;
+  userName: string;
   email: string;
-  portfolio?: string;
-  socialMedia?: {
-    instagram?: string;
-    tiktok?: string;
-    youtube?: string;
-  };
+  profileImage?: string | null;
+  socialInstagram?: string;
+  socialTwitter?: string;
+  socialLinkedIn?: string;
+  socialTikTok?: string;
+  socialYouTube?: string;
+  isVerified: boolean;
+  totalSubmissions: number;
+  wins: number;
+  totalEarnings: number;
+  lastInteraction: string;
+  submissions: Array<{
+    id: string;
+    briefId: string;
+    briefTitle: string;
+    submittedAt: string;
+    status: string;
+    isWinner: boolean;
+  }>;
 }
 
 interface Metrics {
@@ -164,6 +179,11 @@ const BrandDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [briefsFilter, setBriefsFilter] = useState('all');
   const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
+  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
+  const [showCreatorModal, setShowCreatorModal] = useState(false);
+  const [creatorsSearchQuery, setCreatorsSearchQuery] = useState('');
+  const [creatorsSortBy, setCreatorsSortBy] = useState<'name' | 'wins' | 'earnings' | 'lastInteraction'>('lastInteraction');
+  const [creatorsFilter, setCreatorsFilter] = useState<'all' | 'topEarners' | 'mostActive' | 'recentWinners'>('all');
   const [analytics, setAnalytics] = useState({
     totalSpent: 0,
     totalRewards: 0,
@@ -854,43 +874,365 @@ const BrandDashboard: React.FC = () => {
   };
 
 
-  const renderCreators = () => (
+  const handleMessageCreator = (_creatorId: string) => {
+    // Close the modal and switch to messaging tab
+    setShowCreatorModal(false);
+    setSelectedCreator(null);
+    handleTabChange('messaging');
+    // The messaging system will handle opening the conversation
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo ago`;
+    return `${Math.floor(diffInDays / 365)}y ago`;
+  };
+
+  const renderCreators = () => {
+    // Filter creators based on search query
+    let filteredCreators = creators.filter(creator => {
+      const searchLower = creatorsSearchQuery.toLowerCase();
+      return (
+        (creator.name?.toLowerCase() || '').includes(searchLower) ||
+        (creator.userName?.toLowerCase() || '').includes(searchLower) ||
+        (creator.email?.toLowerCase() || '').includes(searchLower)
+      );
+    });
+
+    // Apply category filters
+    if (creatorsFilter === 'topEarners') {
+      filteredCreators = filteredCreators
+        .filter(c => c.totalEarnings > 0)
+        .sort((a, b) => b.totalEarnings - a.totalEarnings)
+        .slice(0, 10);
+    } else if (creatorsFilter === 'mostActive') {
+      filteredCreators = filteredCreators
+        .filter(c => c.totalSubmissions > 0)
+        .sort((a, b) => b.totalSubmissions - a.totalSubmissions)
+        .slice(0, 10);
+    } else if (creatorsFilter === 'recentWinners') {
+      filteredCreators = filteredCreators.filter(c => c.wins > 0);
+    }
+
+    // Sort creators
+    const sortedCreators = [...filteredCreators].sort((a, b) => {
+      switch (creatorsSortBy) {
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'wins':
+          return (b.wins || 0) - (a.wins || 0);
+        case 'earnings':
+          return (b.totalEarnings || 0) - (a.totalEarnings || 0);
+        case 'lastInteraction':
+        default:
+          return new Date(b.lastInteraction || 0).getTime() - new Date(a.lastInteraction || 0).getTime();
+      }
+    });
+
+    return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
         <h2 className={`text-2xl font-bold ${
           isDark ? 'text-white' : 'text-gray-900'
-        }`}>Creators</h2>
-        <Link
-          to="/brand/creators"
-          className="btn btn-primary"
-        >
-          View All Creators
-        </Link>
-      </div>
+            }`}>
+              Creators
+            </h2>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Manage creators who have worked with your brand
+            </p>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {creators.slice(0, 6).map((creator) => (
-          <div key={creator.id} className="card">
-            <div className="card-content">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
-                  <img src="/icons/profile.png" alt="Creator" className="w-10 h-10" />
-                </div>
-                <div>
-                  <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{creator.name}</h3>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{creator.email}</p>
-                </div>
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-              <div className="mt-4 flex space-x-2">
-                <button className="btn btn-outline text-sm">View Profile</button>
-                <button className="btn btn-primary text-sm">Contact</button>
-              </div>
+              <input
+                type="text"
+                placeholder="Search creators by name, username, or email..."
+                value={creatorsSearchQuery}
+                onChange={(e) => setCreatorsSearchQuery(e.target.value)}
+                className={`w-full pl-10 pr-4 py-2.5 rounded-lg border transition-colors ${
+                  isDark
+                    ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                }`}
+              />
             </div>
           </div>
-        ))}
+
+          {/* Sort Dropdown */}
+          <select
+            value={creatorsSortBy}
+            onChange={(e) => setCreatorsSortBy(e.target.value as typeof creatorsSortBy)}
+            className={`px-4 py-2.5 rounded-lg border transition-colors ${
+              isDark
+                ? 'bg-gray-900 border-gray-800 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                : 'bg-white border-gray-200 text-gray-900 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+            }`}
+          >
+            <option value="lastInteraction">Sort by: Last Interaction</option>
+            <option value="name">Sort by: Name</option>
+            <option value="wins">Sort by: Wins</option>
+            <option value="earnings">Sort by: Earnings</option>
+          </select>
       </div>
+
+        {/* Filter Tabs */}
+        <div className={`flex space-x-1 p-1 rounded-lg ${
+          isDark ? 'bg-gray-950' : 'bg-gray-100'
+        }`}>
+          {[
+            { id: 'all', label: 'All Creators' },
+            { id: 'topEarners', label: 'Top Earners' },
+            { id: 'mostActive', label: 'Most Active' },
+            { id: 'recentWinners', label: 'Recent Winners' }
+          ].map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setCreatorsFilter(filter.id as typeof creatorsFilter)}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                creatorsFilter === filter.id
+                  ? isDark
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
+                  : isDark
+                    ? 'text-gray-400 hover:text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className={`p-4 rounded-lg border ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
+              Total Creators
+            </p>
+            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {creators.length}
+            </p>
+          </div>
+          <div className={`p-4 rounded-lg border ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
+              Total Submissions
+            </p>
+            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {creators.reduce((sum, c) => sum + c.totalSubmissions, 0)}
+            </p>
+          </div>
+          <div className={`p-4 rounded-lg border ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
+              Total Winners
+            </p>
+            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {creators.reduce((sum, c) => sum + c.wins, 0)}
+            </p>
+          </div>
+          <div className={`p-4 rounded-lg border ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
+              Total Paid Out
+            </p>
+            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              ${creators.reduce((sum, c) => sum + c.totalEarnings, 0).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        {/* Creators Table */}
+        {sortedCreators.length === 0 ? (
+          <div className={`text-center py-12 rounded-lg border ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <svg className={`w-16 h-16 mx-auto mb-4 ${
+              isDark ? 'text-gray-700' : 'text-gray-300'
+            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+            <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              {creatorsSearchQuery ? 'No creators found matching your search' : 'No creators have submitted to your briefs yet'}
+            </p>
+          </div>
+        ) : (
+          <div className={`rounded-lg border overflow-hidden ${
+            isDark ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'
+          }`}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className={`${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                  <tr>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Creator
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Submissions
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Wins
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Earnings
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Last Interaction
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${isDark ? 'divide-gray-800' : 'divide-gray-200'}`}>
+                  {sortedCreators.map((creator) => (
+                    <tr 
+                      key={creator.id}
+                      className={`transition-colors ${
+                        isDark 
+                          ? 'hover:bg-gray-900/50' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                            isDark 
+                              ? 'bg-gradient-to-br from-green-600 to-green-800 text-white' 
+                              : 'bg-gradient-to-br from-green-500 to-green-700 text-white'
+                          }`}>
+                            {(creator.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                            <div className="flex items-center space-x-2">
+                              <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                {creator.name || 'Unknown'}
+                              </p>
+                              {creator.isVerified && (
+                                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                </div>
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                              @{creator.userName || 'unknown'}
+                            </p>
+              </div>
+              </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {creator.totalSubmissions || 0}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            {creator.wins || 0}
+                          </span>
+                          {(creator.wins || 0) > 0 && (
+                            <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          )}
+            </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm font-medium ${
+                          (creator.totalEarnings || 0) > 0 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          ${(creator.totalEarnings || 0).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {formatTimeAgo(creator.lastInteraction || new Date().toISOString())}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedCreator(creator);
+                              setShowCreatorModal(true);
+                            }}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                              isDark
+                                ? 'bg-gray-800 text-white hover:bg-gray-700'
+                                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                            }`}
+                          >
+                            View Profile
+                          </button>
+                          <button
+                            onClick={() => handleMessageCreator(creator.id)}
+                            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
+                          >
+                            Message
+                          </button>
+          </div>
+                      </td>
+                    </tr>
+        ))}
+                </tbody>
+              </table>
+      </div>
+          </div>
+        )}
+
+        {/* Creator Detail Modal */}
+        {showCreatorModal && selectedCreator && (
+          <CreatorDetailModal
+            creator={selectedCreator}
+            isOpen={showCreatorModal}
+            onClose={() => {
+              setShowCreatorModal(false);
+              setSelectedCreator(null);
+            }}
+            onMessage={handleMessageCreator}
+          />
+        )}
     </div>
   );
+  };
 
   const renderAnalytics = () => {
     // Safe analytics data with defaults
