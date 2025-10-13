@@ -502,23 +502,56 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
             ? 'bg-black/20 border-white/20'
             : 'bg-white border-gray-200'
         }`}>
-          <div className="flex justify-between items-center mb-6">
+          {/* Back to Templates Button - Always visible in Step 2 */}
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                setCurrentStep(1);
+                setSelectedTemplate(null);
+                setFormData({
+                  title: '',
+                  description: '',
+                  requirements: '',
+                  reward: 0,
+                  deadline: '',
+                  amountOfWinners: 1,
+                  rewardTiers: [],
+                  additionalFields: {}
+                });
+                setFormKey(prev => prev + 1);
+              }}
+              className={`flex items-center text-sm font-medium transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-green-500'
+                  : 'text-gray-600 hover:text-green-600'
+              }`}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-4 w-4 mr-2" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to Templates
+            </button>
+          </div>
+
+          {/* Header */}
+          <div className="mb-6">
             <h1 className={`text-2xl font-bold ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>
               Create Brief
             </h1>
-            {!isSideModal && (
-              <button
-                onClick={() => setCurrentStep(1)}
-                className={`${
-                  isDark 
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                ← Back to Templates
-              </button>
+            {selectedTemplate && selectedTemplate !== 'scratch' && (
+              <p className={`text-sm mt-1 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Using template: {templates.find(t => t.id === selectedTemplate)?.name || 'Custom'}
+              </p>
             )}
           </div>
 
