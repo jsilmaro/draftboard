@@ -1041,7 +1041,7 @@ const BrandDashboard: React.FC = () => {
               Total Submissions
             </p>
             <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {creators.reduce((sum, c) => sum + c.totalSubmissions, 0)}
+              {creators.reduce((sum, c) => sum + (Number(c.totalSubmissions) || 0), 0)}
             </p>
           </div>
           <div className={`p-4 rounded-lg border ${
@@ -1051,7 +1051,7 @@ const BrandDashboard: React.FC = () => {
               Total Winners
             </p>
             <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {creators.reduce((sum, c) => sum + c.wins, 0)}
+              {creators.reduce((sum, c) => sum + (Number(c.wins) || 0), 0)}
             </p>
           </div>
           <div className={`p-4 rounded-lg border ${
@@ -1061,7 +1061,7 @@ const BrandDashboard: React.FC = () => {
               Total Paid Out
             </p>
             <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              ${creators.reduce((sum, c) => sum + c.totalEarnings, 0).toFixed(2)}
+              ${creators.reduce((sum, c) => sum + (Number(c.totalEarnings) || 0), 0).toFixed(2)}
             </p>
           </div>
         </div>

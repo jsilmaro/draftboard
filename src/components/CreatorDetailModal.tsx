@@ -66,17 +66,21 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
   };
 
   const calculateWinRate = () => {
-    const submissions = creator.totalSubmissions || 0;
-    const wins = creator.wins || 0;
+    const submissions = Number(creator.totalSubmissions) || 0;
+    const wins = Number(creator.wins) || 0;
     if (submissions === 0) return '0';
-    return ((wins / submissions) * 100).toFixed(1);
+    const rate = ((wins / submissions) * 100);
+    if (isNaN(rate)) return '0';
+    return rate.toFixed(1);
   };
 
   const calculateAverageEarnings = () => {
-    const wins = creator.wins || 0;
-    const earnings = creator.totalEarnings || 0;
+    const wins = Number(creator.wins) || 0;
+    const earnings = Number(creator.totalEarnings) || 0;
     if (wins === 0) return '0.00';
-    return (earnings / wins).toFixed(2);
+    const avg = (earnings / wins);
+    if (isNaN(avg)) return '0.00';
+    return avg.toFixed(2);
   };
 
   const formatDate = (dateString: string) => {
