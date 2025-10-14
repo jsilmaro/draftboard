@@ -98,8 +98,8 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
         </div>
       </div>
       
-      <div className="mt-6 flex justify-center">
-        <div id="google-signin-container">
+      <div className="mt-6 flex justify-center items-center">
+        <div id="google-signin-container" className="w-full max-w-[320px] mx-auto text-center flex justify-center">
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={handleError}
