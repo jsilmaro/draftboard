@@ -45,8 +45,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   brief, 
   onViewClick, 
   onEditClick, 
-  onEditRewardsClick: _onEditRewardsClick, 
-  onSelectWinnersClick: _onSelectWinnersClick,
+  onEditRewardsClick, 
+  onSelectWinnersClick,
   onViewSubmissionsClick,
   onDeleteClick,
   onPublishClick,
@@ -407,17 +407,33 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               📋 Submissions
             </button>
           )}
+          {onEditRewardsClick && (
+            <button
+              onClick={() => onEditRewardsClick(brief)}
+              className="px-3 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-indigo-700 transition-colors"
+            >
+              💰 Edit Rewards
+            </button>
+          )}
+          {onSelectWinnersClick && (
+            <button
+              onClick={() => onSelectWinnersClick(brief)}
+              className="px-3 py-2 bg-pink-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-pink-700 transition-colors"
+            >
+              🏆 Select Winners
+            </button>
+          )}
         </div>
         
         {/* Additional Action Buttons */}
         <div className="grid grid-cols-1 gap-2 mt-2">
           <button
             onClick={() => {
-              // Get the current user ID from localStorage or use the brief's brandId
-              // const currentUserId = localStorage.getItem('userId') || brief.brand?.id || 'unknown';
               const shareUrl = `${window.location.origin}/brief/${brief.id}`;
               navigator.clipboard.writeText(shareUrl).then(() => {
                 alert('Brief link copied to clipboard!');
+              }).catch(() => {
+                alert('Failed to copy link');
               });
             }}
             className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"

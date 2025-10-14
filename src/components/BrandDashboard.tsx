@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Link, useSearchParams } from 'react-router-dom';
 import WinnerSelectionModal from './WinnerSelectionModal';
 import { useToast } from '../contexts/ToastContext';
@@ -151,7 +152,7 @@ interface Metrics {
 }
 
 const BrandDashboard: React.FC = () => {
-  // const { user } = useAuth();
+  const { user } = useAuth();
   const { isDark } = useTheme();
   const { showSuccessToast, showErrorToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -411,8 +412,22 @@ const BrandDashboard: React.FC = () => {
 
   // Brief management functions
   const handleDeleteBrief = async (briefId: string) => {
+    if (!window.confirm('Are you sure you want to delete this brief? This action cannot be undone.')) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
+      console.log('🔍 DELETE Brief - Token:', token ? 'Present' : 'Missing');
+      console.log('🔍 DELETE Brief - User:', user);
+      
+      // First verify authentication
+      const verifyResponse = await fetch('/api/auth/verify', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const verifyData = await verifyResponse.json();
+      console.log('🔍 Auth Verification:', verifyData);
+      
       const response = await fetch(`/api/briefs/${briefId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
@@ -422,9 +437,12 @@ const BrandDashboard: React.FC = () => {
         showSuccessToast('Brief deleted successfully');
         loadDashboardData();
       } else {
-        showErrorToast('Failed to delete brief');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ DELETE failed:', { status: response.status, error: errorData });
+        showErrorToast(`Failed to delete brief: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
+      console.error('❌ DELETE exception:', error);
       showErrorToast('Failed to delete brief');
     }
   };
@@ -432,6 +450,8 @@ const BrandDashboard: React.FC = () => {
   const handlePublishBrief = async (briefId: string) => {
     try {
       const token = localStorage.getItem('token');
+      console.log('🔍 PUBLISH Brief - Token:', token ? 'Present' : 'Missing');
+      console.log('🔍 PUBLISH Brief - User:', user);
       const response = await fetch(`/api/briefs/${briefId}`, {
         method: 'PUT',
         headers: { 
@@ -445,9 +465,12 @@ const BrandDashboard: React.FC = () => {
         showSuccessToast('Brief published successfully');
         loadDashboardData();
       } else {
-        showErrorToast('Failed to publish brief');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ PUBLISH failed:', { status: response.status, error: errorData });
+        showErrorToast(`Failed to publish brief: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
+      console.error('❌ PUBLISH exception:', error);
       showErrorToast('Failed to publish brief');
     }
   };
@@ -455,6 +478,16 @@ const BrandDashboard: React.FC = () => {
   const handleDraftBrief = async (briefId: string) => {
     try {
       const token = localStorage.getItem('token');
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('🔍 DRAFT Brief - Token:', token ? 'Present' : 'Missing');
+      console.log('🔍 DRAFT Brief - User from context:', user);
+      console.log('🔍 DRAFT Brief - User from localStorage:', storedUser);
+      
+      if (storedUser.type !== 'brand') {
+        alert(`ERROR: You are logged in as a ${storedUser.type}, not a brand! Please log in as a brand to manage briefs.`);
+        return;
+      }
+      
       const response = await fetch(`/api/briefs/${briefId}`, {
         method: 'PUT',
         headers: { 
@@ -468,9 +501,18 @@ const BrandDashboard: React.FC = () => {
         showSuccessToast('Brief moved to draft');
         loadDashboardData();
       } else {
-        showErrorToast('Failed to move brief to draft');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ DRAFT failed:', { status: response.status, error: errorData });
+        console.error('❌ Your Brand ID:', storedUser.id);
+        console.error('❌ Brief ID:', briefId);
+        
+        if (errorData.error === 'Access denied - you can only update your own briefs') {
+          alert(`⚠️ OWNERSHIP ERROR:\n\nThis brief belongs to a different brand!\n\nYou are logged in as: ${storedUser.companyName || storedUser.email}\nYour Brand ID: ${storedUser.id}\n\nThis brief was created by another brand account.\n\nYou can only manage briefs that YOU created.`);
+        }
+        showErrorToast(`Failed to move brief to draft: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
+      console.error('❌ DRAFT exception:', error);
       showErrorToast('Failed to move brief to draft');
     }
   };
@@ -478,6 +520,8 @@ const BrandDashboard: React.FC = () => {
   const handleArchiveBrief = async (briefId: string) => {
     try {
       const token = localStorage.getItem('token');
+      console.log('🔍 ARCHIVE Brief - Token:', token ? 'Present' : 'Missing');
+      console.log('🔍 ARCHIVE Brief - User:', user);
       const response = await fetch(`/api/briefs/${briefId}`, {
         method: 'PUT',
         headers: { 
@@ -491,9 +535,12 @@ const BrandDashboard: React.FC = () => {
         showSuccessToast('Brief archived successfully');
         loadDashboardData();
       } else {
-        showErrorToast('Failed to archive brief');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ ARCHIVE failed:', { status: response.status, error: errorData });
+        showErrorToast(`Failed to archive brief: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
+      console.error('❌ ARCHIVE exception:', error);
       showErrorToast('Failed to archive brief');
     }
   };
@@ -897,6 +944,16 @@ const BrandDashboard: React.FC = () => {
               onDraftClick={handleDraftBrief}
               onArchiveClick={handleArchiveBrief}
               onEditClick={handleEditBrief}
+              onEditRewardsClick={(brief) => {
+                // Navigate to manage rewards tab to edit reward tiers
+                handleTabChange('manage-rewards');
+                showSuccessToast(`Edit rewards for "${brief.title}" in Manage Rewards & Payments`);
+              }}
+              onSelectWinnersClick={(brief) => {
+                // Navigate to manage rewards tab to select winners
+                handleTabChange('manage-rewards');
+                showSuccessToast(`Select winners for "${brief.title}" in Manage Rewards & Payments`);
+              }}
             />
           ))}
         </div>

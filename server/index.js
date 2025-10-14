@@ -106,11 +106,23 @@ const authenticateToken = (req, res, next) => {
       console.log('❌ Token verification failed:', err.message);
       return res.status(403).json({ error: 'Invalid token' });
     }
-    console.log('✅ Token verified successfully for user:', user.id);
+    console.log('✅ Token verified successfully for user:', { id: user.id, type: user.type, email: user.email });
     req.user = user;
     next();
   });
 };
+
+// Debug endpoint to verify current user authentication
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.json({
+    authenticated: true,
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+      type: req.user.type
+    }
+  });
+});
 
 // Utility function to validate URLs
 function isValidUrl(string) {
@@ -2055,7 +2067,9 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
     console.log('Brief ID:', req.params.id);
     console.log('Request body:', req.body);
 
+    console.log('🔍 User type check:', { userType: req.user.type, userId: req.user.id });
     if (req.user.type !== 'brand') {
+      console.log('❌ User is not a brand:', req.user.type);
       return res.status(403).json({ error: 'Only brands can update briefs' });
     }
     const { id } = req.params;
@@ -2082,7 +2096,9 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Brief not found' });
     }
     
+    console.log('🔍 Ownership check:', { briefBrandId: brief.brandId, userId: req.user.id, match: brief.brandId === req.user.id });
     if (brief.brandId !== req.user.id) {
+      console.log('❌ Brief ownership mismatch:', { briefBrandId: brief.brandId, userId: req.user.id });
       return res.status(403).json({ error: 'Access denied - you can only update your own briefs' });
     }
 
@@ -2224,7 +2240,9 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
 // Delete a brief
 app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 DELETE - User type check:', { userType: req.user.type, userId: req.user.id });
     if (req.user.type !== 'brand') {
+      console.log('❌ DELETE - User is not a brand:', req.user.type);
       return res.status(403).json({ error: 'Only brands can delete briefs' });
     }
 
@@ -2240,7 +2258,9 @@ app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
       }
     });
 
+    console.log('🔍 DELETE - Ownership check:', { briefBrandId: brief?.brandId, userId: req.user.id, match: brief?.brandId === req.user.id });
     if (!brief || brief.brandId !== req.user.id) {
+      console.log('❌ DELETE - Brief not found or ownership mismatch:', { briefExists: !!brief, briefBrandId: brief?.brandId, userId: req.user.id });
       return res.status(404).json({ error: 'Brief not found or access denied' });
     }
 

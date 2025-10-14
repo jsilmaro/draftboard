@@ -28,7 +28,7 @@ const authenticateToken = (req, res, next) => {
 // GET /api/brands/briefs - Get all briefs for the authenticated brand
 router.get('/briefs', authenticateToken, async (req, res) => {
   try {
-    const brandId = req.user.userId;
+    const brandId = req.user.id; // Fixed: JWT stores id, not userId
 
     const briefs = await prisma.brief.findMany({
       where: { brandId },
@@ -52,7 +52,7 @@ router.get('/briefs', authenticateToken, async (req, res) => {
 // GET /api/brands/submissions - Get all submissions for the authenticated brand's briefs
 router.get('/submissions', authenticateToken, async (req, res) => {
   try {
-    const brandId = req.user.userId;
+    const brandId = req.user.id; // Fixed: JWT stores id, not userId
 
     const submissions = await prisma.submission.findMany({
       where: {
@@ -88,7 +88,7 @@ router.get('/submissions', authenticateToken, async (req, res) => {
 // GET /api/brands/creators - Get all creators who have submitted to the brand's briefs
 router.get('/creators', authenticateToken, async (req, res) => {
   try {
-    const brandId = req.user.userId;
+    const brandId = req.user.id; // Fixed: JWT stores id, not userId
 
     // Get all submissions for this brand to calculate stats per creator
     const submissions = await prisma.submission.findMany({
