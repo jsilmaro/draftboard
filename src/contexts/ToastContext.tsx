@@ -8,6 +8,7 @@ interface Toast {
 }
 
 interface ToastContextType {
+  showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   showSuccessToast: (message: string) => void;
   showErrorToast: (message: string) => void;
   showWarningToast: (message: string) => void;
@@ -63,7 +64,12 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     addToast(message, 'info');
   }, [addToast]);
 
+  const showToast = React.useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+    addToast(message, type);
+  }, [addToast]);
+
   const value = {
+    showToast,
     showSuccessToast,
     showErrorToast,
     showWarningToast,
