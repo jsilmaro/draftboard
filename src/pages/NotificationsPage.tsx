@@ -124,8 +124,25 @@ const NotificationsPage: React.FC = () => {
     return true;
   });
 
-  const handleNotificationClick = (notificationId: string) => {
-    navigate(`/notifications/${notificationId}`);
+  const handleNotificationClick = (notification: Notification) => {
+    // If notification has actionUrl, redirect there, otherwise go to detail page
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    } else {
+      navigate(`/notifications/${notification.id}`);
+    }
+    
+    // Mark as read if not already
+    if (!notification.isRead) {
+      fetch(`/api/notifications/${notification.id}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Silently handle error
+      });
+    }
   };
 
   if (loading) {
@@ -298,7 +315,7 @@ const NotificationsPage: React.FC = () => {
               filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                   className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
                     !notification.isRead ? 'ring-2 ring-blue-500/50' : ''
                   }`}

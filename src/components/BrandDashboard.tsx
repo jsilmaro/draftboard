@@ -122,6 +122,7 @@ interface Creator {
   name: string;
   userName: string;
   email: string;
+  userType?: string; // MUST be 'creator'
   profileImage?: string | null;
   socialInstagram?: string;
   socialTwitter?: string;
@@ -184,6 +185,11 @@ const BrandDashboard: React.FC = () => {
   const [creatorsSearchQuery, setCreatorsSearchQuery] = useState('');
   const [creatorsSortBy, setCreatorsSortBy] = useState<'name' | 'wins' | 'earnings' | 'lastInteraction'>('lastInteraction');
   const [creatorsFilter, setCreatorsFilter] = useState<'all' | 'topEarners' | 'mostActive' | 'recentWinners'>('all');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [invitingCreatorId, setInvitingCreatorId] = useState<string | null>(null);
+  const [invitedCreators, setInvitedCreators] = useState<Set<string>>(new Set());
+  const [sendingInvite, setSendingInvite] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalSpent: 0,
     totalRewards: 0,
@@ -297,13 +303,48 @@ const BrandDashboard: React.FC = () => {
         }));
       }
 
-      // Load creators
+      // Load creators - ONLY creators, NEVER brands
       const creatorsResponse = await fetch('/api/brands/creators', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      // Load invited creators list
+      const invitedResponse = await fetch('/api/creators/invited', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      let invitedIds: string[] = [];
+      if (invitedResponse.ok) {
+        const invitedData = await invitedResponse.json();
+        invitedIds = invitedData.invitedCreators || [];
+        // Loaded previously invited creators
+      }
+      
       if (creatorsResponse.ok) {
         const creatorsData = await creatorsResponse.json();
-        setCreators(creatorsData);
+        
+        // STRICT VALIDATION: ONLY accept if explicitly marked as 'creator'
+        const verifiedCreators = creatorsData.filter((user: Creator) => {
+          // MUST have userType === 'creator' (NO exceptions!)
+          if (user.userType !== 'creator') {
+            // Rejected: Not explicitly marked as creator
+            return false;
+          }
+          
+          // MUST have required creator fields
+          if (!user.userName || !user.email) {
+            // Rejected: Missing creator fields
+            return false;
+          }
+          
+          return true;
+        });
+        
+        // Loaded verified creators only
+        setCreators(verifiedCreators);
+        
+        // Set invited creators from backend
+        setInvitedCreators(new Set(invitedIds));
       }
 
       // Load analytics data
@@ -882,6 +923,100 @@ const BrandDashboard: React.FC = () => {
     // The messaging system will handle opening the conversation
   };
 
+  const handleOpenInviteModal = (creator: Creator) => {
+    // VALIDATION: Ensure this is definitely a creator, not a brand
+    if (creator.userType && creator.userType !== 'creator') {
+      showErrorToast('Cannot invite brand accounts. Only creators can be invited.');
+      // Attempted to invite non-creator
+      return;
+    }
+    
+    // Extra safety check
+    if (!creator.userName || !creator.email) {
+      showErrorToast('Invalid creator account.');
+      // Invalid creator data
+      return;
+    }
+    
+    setSelectedCreator(creator);
+    setInvitingCreatorId(creator.id);
+    setInviteMessage('');
+    setShowInviteModal(true);
+  };
+
+  const handleSendInvite = async () => {
+    if (!invitingCreatorId || !selectedCreator || sendingInvite) return;
+
+    // FINAL VALIDATION: Double-check this is a creator before sending
+    if (selectedCreator.userType && selectedCreator.userType !== 'creator') {
+      showErrorToast('Cannot invite brand accounts. Only creators can be invited.');
+      // Blocked: Attempted to invite non-creator via API
+      setShowInviteModal(false);
+      return;
+    }
+
+    try {
+      setSendingInvite(true);
+      const token = localStorage.getItem('token');
+      
+      // Sending invitation to creator
+      
+      const response = await fetch('/api/creators/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          creatorId: invitingCreatorId,
+          message: inviteMessage
+        })
+      });
+
+      if (response.ok) {
+        // Successfully invited creator
+        showSuccessToast(`Invitation sent to ${selectedCreator.name}!`);
+        
+        // Add creator to invited list immediately (optimistic update)
+        setInvitedCreators(prev => new Set(prev).add(invitingCreatorId));
+        
+        // Close modal
+        setShowInviteModal(false);
+        setInviteMessage('');
+        setInvitingCreatorId(null);
+        setSelectedCreator(null);
+        
+        // Reload invited list from backend to ensure sync
+        try {
+          const token = localStorage.getItem('token');
+          const invitedResponse = await fetch('/api/creators/invited', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (invitedResponse.ok) {
+            const invitedData = await invitedResponse.json();
+            setInvitedCreators(new Set(invitedData.invitedCreators || []));
+            // Refreshed invited list
+          }
+        } catch (error) {
+          // Failed to refresh invited list
+        }
+      } else {
+        const error = await response.json();
+        
+        // Show specific error message for brand accounts
+        if (error.error === 'Cannot invite brand accounts') {
+          showErrorToast('You can only invite creator accounts, not other brands.');
+        } else {
+          showErrorToast(error.message || error.error || 'Failed to send invitation');
+        }
+      }
+    } catch (error) {
+      showErrorToast('Failed to send invitation');
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -1203,6 +1338,31 @@ const BrandDashboard: React.FC = () => {
                             View Profile
                           </button>
                           <button
+                            onClick={() => !invitedCreators.has(creator.id) && handleOpenInviteModal(creator)}
+                            disabled={invitedCreators.has(creator.id)}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                              invitedCreators.has(creator.id)
+                                ? isDark
+                                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                : isDark
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                            }`}
+                            title={invitedCreators.has(creator.id) ? 'Already invited' : 'Invite this creator to connect'}
+                          >
+                            {invitedCreators.has(creator.id) ? (
+                              <span className="flex items-center space-x-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Invited</span>
+                              </span>
+                            ) : (
+                              'Invite'
+                            )}
+                          </button>
+                          <button
                             onClick={() => handleMessageCreator(creator.id)}
                             className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
                           >
@@ -1229,6 +1389,126 @@ const BrandDashboard: React.FC = () => {
             }}
             onMessage={handleMessageCreator}
           />
+        )}
+
+        {/* Invite Creator Modal */}
+        {showInviteModal && selectedCreator && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm"
+            onClick={() => {
+              setShowInviteModal(false);
+              setInviteMessage('');
+              setInvitingCreatorId(null);
+              setSelectedCreator(null);
+            }}
+          >
+            <div 
+              className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 ${
+                isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="mb-4">
+                <h3 className={`text-xl font-bold mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Invite {selectedCreator.name}
+                </h3>
+                <p className={`text-sm ${
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Send an invitation to collaborate or connect with this creator.
+                </p>
+              </div>
+
+              {/* Creator Info */}
+              <div className={`mb-4 p-3 rounded-lg border ${
+                isDark ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                    isDark 
+                      ? 'bg-gradient-to-br from-green-600 to-green-800 text-white' 
+                      : 'bg-gradient-to-br from-green-500 to-green-700 text-white'
+                  }`}>
+                    {(selectedCreator.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {selectedCreator.name}
+                    </p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      @{selectedCreator.userName || 'unknown'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="mb-6">
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Message (Optional)
+                </label>
+                <textarea
+                  value={inviteMessage}
+                  onChange={(e) => setInviteMessage(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                  rows={3}
+                  placeholder="Include a personal message with your invitation..."
+                />
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Let them know why you&apos;d like to work together
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setInviteMessage('');
+                    setInvitingCreatorId(null);
+                    setSelectedCreator(null);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isDark 
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendInvite}
+                  disabled={sendingInvite}
+                  className={`px-6 py-2 font-medium rounded-lg transition-all shadow-md ${
+                    sendingInvite
+                      ? 'bg-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-lg'
+                  } text-white`}
+                >
+                  {sendingInvite ? (
+                    <span className="flex items-center space-x-2">
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Sending...</span>
+                    </span>
+                  ) : (
+                    'Send Invite'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
     </div>
   );

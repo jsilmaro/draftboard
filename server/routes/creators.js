@@ -33,6 +33,25 @@ const authenticateCreator = (req, res, next) => {
   });
 };
 
+// Brand authentication middleware
+const authenticateBrand = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  const jwt = require('jsonwebtoken');
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err || user.type !== 'brand') {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.brand = user;
+    next();
+  });
+};
+
 // Get creator's Stripe Connect account status
 router.get('/onboard/status', authenticateCreator, async (req, res) => {
   try {
@@ -445,6 +464,167 @@ router.post('/onboard/simulate-verified', authenticateCreator, async (req, res) 
   } catch (error) {
     console.error('Error simulating verified account:', error);
     res.status(500).json({ error: 'Failed to simulate verified account' });
+  }
+});
+
+// Invite creator endpoint (for brands)
+router.post('/invite', authenticateBrand, async (req, res) => {
+  try {
+    const brandId = req.brand.id;
+    const { creatorId, message } = req.body;
+
+    if (!creatorId) {
+      return res.status(400).json({ error: 'Creator ID is required' });
+    }
+
+    console.log(`🔍 VALIDATION: Brand ${brandId} attempting to invite user ${creatorId}`);
+
+    // Get brand details
+    const brand = await prisma.brand.findUnique({
+      where: { id: brandId },
+      select: { companyName: true }
+    });
+
+    if (!brand) {
+      return res.status(404).json({ error: 'Brand not found' });
+    }
+
+    // STEP 1: Check if ID exists in Brand table (REJECT if true)
+    const brandAccount = await prisma.brand.findUnique({
+      where: { id: creatorId },
+      select: { id: true, companyName: true }
+    });
+
+    if (brandAccount) {
+      console.error(`❌ BLOCKED: Attempt to invite BRAND account ${creatorId} (${brandAccount.companyName})`);
+      return res.status(400).json({ 
+        error: 'Cannot invite brand accounts',
+        message: 'You can only invite creator accounts, not other brands.'
+      });
+    }
+
+    // STEP 2: Verify ID exists in Creator table (REQUIRED)
+    const creator = await prisma.creator.findUnique({
+      where: { id: creatorId },
+      select: { 
+        id: true, 
+        fullName: true, 
+        userName: true,
+        email: true 
+      }
+    });
+
+    if (!creator) {
+      console.error(`❌ REJECTED: User ${creatorId} not found in Creator table`);
+      return res.status(404).json({ error: 'Creator not found' });
+    }
+
+    // STEP 3: Validate creator has required fields
+    if (!creator.userName || !creator.email) {
+      console.error(`❌ REJECTED: Invalid creator data for ${creatorId}`);
+      return res.status(400).json({ 
+        error: 'Invalid creator account',
+        message: 'This account is missing required creator fields.'
+      });
+    }
+
+    console.log(`✅ VALIDATED: ${creatorId} is a CREATOR (${creator.fullName || creator.userName})`);
+
+    // Create invite record in database
+    const invite = await prisma.invite.create({
+      data: {
+        creatorId: creatorId,
+        brandId: brandId,
+        status: 'PENDING',
+        message: message,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    // Create notification for the creator with redirect to invites tab
+    await prisma.notification.create({
+      data: {
+        userId: creatorId,
+        userType: 'creator',
+        type: 'BRAND_INVITATION',
+        category: 'invitation',
+        title: `Invitation from ${brand.companyName}`,
+        message: message 
+          ? `${brand.companyName} has invited you to connect. Message: "${message}"`
+          : `${brand.companyName} has invited you to connect and collaborate!`,
+        actionUrl: '/creator/dashboard?tab=invites',
+        actionText: 'View Invites',
+        priority: 'normal',
+        isRead: false,
+        metadata: {
+          brandId: brandId,
+          brandName: brand.companyName,
+          inviteId: invite.id,
+          invitationType: 'direct_invite',
+          invitedAt: new Date().toISOString()
+        },
+        createdAt: new Date()
+      }
+    });
+
+    console.log(`✅ SUCCESS: Brand ${brand.companyName} (${brandId}) invited CREATOR ${creator.fullName || creator.userName} (${creatorId})`);
+    
+    res.json({ 
+      message: 'Invitation sent successfully',
+      inviteId: invite.id,
+      creator: {
+        id: creator.id,
+        name: creator.fullName || creator.userName,
+        userType: 'creator', // Explicit confirmation
+        invited: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Error sending creator invitation:', error);
+    res.status(500).json({ error: 'Failed to send invitation' });
+  }
+});
+
+// Get list of invited creators for a brand
+router.get('/invited', authenticateBrand, async (req, res) => {
+  try {
+    const brandId = req.brand.id;
+
+    // Find all BRAND_INVITATION notifications sent by THIS brand
+    const invitations = await prisma.notification.findMany({
+      where: {
+        type: 'BRAND_INVITATION',
+        userType: 'creator'
+      },
+      select: {
+        userId: true, // This is the creator ID who was invited
+        metadata: true,
+        createdAt: true
+      }
+    });
+
+    // Filter to only invitations from THIS brand using metadata
+    const invitedByThisBrand = invitations.filter(inv => {
+      if (inv.metadata && typeof inv.metadata === 'object') {
+        return inv.metadata.brandId === brandId;
+      }
+      return false;
+    });
+
+    // Get unique creator IDs
+    const invitedCreatorIds = [...new Set(invitedByThisBrand.map(inv => inv.userId))];
+
+    console.log(`📋 Brand ${brandId} has invited ${invitedCreatorIds.length} creators`);
+
+    res.json({ 
+      invitedCreators: invitedCreatorIds
+    });
+
+  } catch (error) {
+    console.error('Error fetching invited creators:', error);
+    res.status(500).json({ error: 'Failed to fetch invited creators' });
   }
 });
 

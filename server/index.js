@@ -44,11 +44,13 @@ const communityRoutes = require('./routes/community');
 const eventsRoutes = require('./routes/events');
 const successStoriesRoutes = require('./routes/success-stories');
 const notificationsRoutes = require('./routes/notifications');
+const invitesRoutes = require('./routes/invites');
 const stripeConnectRoutes = require('./routes/stripeConnect');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
 const webhookRoutes = require('./routes/webhooks');
 const stripeRoutes = require('./routes/stripe');
 const rewardManagementRoutes = require('./routes/rewardManagement');
+const brandsRoutes = require('./routes/brands');
 
 // Import Stripe integration routes
 // rewardsRoutes removed - replaced with Stripe Connect functionality
@@ -382,6 +384,7 @@ app.use('/api/forums', communityRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/success-stories', successStoriesRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/invites', invitesRoutes);
 
 // Stripe Connect routes
 app.use('/api', stripeConnectRoutes);
@@ -394,6 +397,7 @@ app.use('/api', rewardManagementRoutes);
 // Stripe integration routes
 // Mount Stripe routes with selective authentication
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/brands', brandsRoutes);
 // Mock Stripe routes removed - using live Stripe Connect
 // app.use('/api/rewards-system', rewardsRoutes); // Removed - replaced with Stripe Connect
 
@@ -2616,6 +2620,7 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // ONLY fetch from Creator table - NEVER include brands
     const creators = await prisma.creator.findMany({
       select: {
         id: true,
@@ -2632,7 +2637,25 @@ app.get('/api/brands/creators', authenticateToken, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json(creators);
+    // Additional safety: Filter out any IDs that might exist in Brand table
+    const brandIds = await prisma.brand.findMany({
+      select: { id: true }
+    });
+    const brandIdSet = new Set(brandIds.map(b => b.id));
+
+    // ONLY return users that are CREATORS and NOT BRANDS
+    const onlyCreators = creators.filter(creator => !brandIdSet.has(creator.id));
+
+    // Add explicit userType field for frontend validation
+    const creatorsWithType = onlyCreators.map(creator => ({
+      ...creator,
+      userType: 'creator', // Explicit marker
+      name: creator.fullName || creator.userName || 'Unknown'
+    }));
+
+    console.log(`✅ Returning ${creatorsWithType.length} CREATORS ONLY (filtered out ${creators.length - onlyCreators.length} potential brand duplicates)`);
+
+    res.json(creatorsWithType);
   } catch (error) {
     console.error('Error fetching creators:', error);
     res.status(500).json({ error: 'Internal server error' });

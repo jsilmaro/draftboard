@@ -147,14 +147,15 @@ const CreatorWallet: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const userId = localStorage.getItem('userId') || 'current';
-      const response = await fetch(`/api/stripe/payouts/${userId}`, {
+      // Use the /api/creators/payouts endpoint which gets payouts from the authenticated user's token
+      const response = await fetch('/api/creators/payouts', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
         const data = await response.json();
-        setPayouts(data);
+        // The response has a 'data' wrapper from stripeConnect routes
+        setPayouts(data.data || data);
       }
     } catch (error) {
       // Error fetching payouts

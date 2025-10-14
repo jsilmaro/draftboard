@@ -847,3 +847,20 @@ model BriefStatus {
   @@index([briefId])
   @@index([status])
 }
+
+model Invite {
+  id          String   @id @default(cuid())
+  creatorId   String
+  brandId     String
+  briefId     String?
+  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  message     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  respondedAt DateTime?
+
+  @@index([creatorId])
+  @@index([brandId])
+  @@index([status])
+  @@index([createdAt])
+}

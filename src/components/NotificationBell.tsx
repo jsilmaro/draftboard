@@ -88,9 +88,19 @@ const NotificationBell: React.FC = () => {
     });
   };
 
-  const handleNotificationClick = (notificationId: string) => {
-    navigate(`/notifications/${notificationId}`);
+  const handleNotificationClick = (notification: Notification) => {
+    // If notification has actionUrl, redirect there, otherwise go to detail page
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    } else {
+      navigate(`/notifications/${notification.id}`);
+    }
     setIsOpen(false); // Close the dropdown
+    
+    // Mark as read if not already
+    if (!notification.isRead) {
+      markAsRead([notification.id]);
+    }
   };
 
   const handleViewAllNotifications = () => {
@@ -342,7 +352,7 @@ const NotificationBell: React.FC = () => {
                           ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700' 
                           : 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-700 shadow-sm'
                       }`}
-                      onClick={() => handleNotificationClick(notification.id)}
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         notification.priority === 'high' 

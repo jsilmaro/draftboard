@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import CreatorWallet from './CreatorWallet';
 import CreatorBriefCard from './CreatorBriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
+import BrandPageView from './BrandPageView';
 import CreatorApplicationForm from './CreatorApplicationForm';
 // StripeConnectButton and PaymentStatusCard now handled by CreatorWallet component
 
@@ -107,9 +109,20 @@ interface SearchResult {
 }
 
 const CreatorDashboard: React.FC = () => {
+  const location = useLocation();
   const { user, logout } = useAuth();
   const { isDark } = useTheme();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Handle query parameter for tab activation (e.g., ?tab=invites)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
@@ -122,6 +135,37 @@ const CreatorDashboard: React.FC = () => {
   const [showEarningDetails, setShowEarningDetails] = useState(false);
   const [earningsLoading, setEarningsLoading] = useState(false);
   const [earningsError, setEarningsError] = useState<string | null>(null);
+  interface Invite {
+    id: string;
+    creatorId: string;
+    brandId: string;
+    briefId?: string;
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+    message?: string;
+    createdAt: string;
+    updatedAt: string;
+    respondedAt?: string;
+    brand?: {
+      id: string;
+      companyName: string;
+      logo?: string;
+      socialWebsite?: string;
+    };
+    brief?: {
+      id: string;
+      title: string;
+      description: string;
+      reward: number;
+      deadline: string;
+    };
+  }
+
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [acceptedInvites, setAcceptedInvites] = useState<Invite[]>([]);
+  const [rejectedInvites, setRejectedInvites] = useState<Invite[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [processingInviteId, setProcessingInviteId] = useState<string | null>(null);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -755,6 +799,7 @@ const CreatorDashboard: React.FC = () => {
   const navigationItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: 'overview' },
     { id: 'wallet', label: 'Wallet', icon: 'wallet' },
+    { id: 'invites', label: 'Invitations', icon: 'invites' },
     { id: 'messaging', label: 'Messages', icon: 'messaging' },
     { id: 'marketplace', label: 'Marketplace', icon: 'marketplace' },
     { id: 'briefs', label: 'Available Briefs', icon: 'briefs' },
@@ -2241,6 +2286,342 @@ const CreatorDashboard: React.FC = () => {
     </div>
   );
 
+  // Fetch invites when tab is activated
+  const fetchInvites = useCallback(async () => {
+    try {
+      setInvitesLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        return;
+      }
+
+      // Fetch all invites (pending, accepted, rejected)
+      const [pendingResponse, acceptedResponse, rejectedResponse] = await Promise.all([
+        fetch('/api/invites', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('/api/invites?status=accepted', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('/api/invites?status=rejected', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      ]);
+
+      if (pendingResponse.ok) {
+        const pendingData = await pendingResponse.json();
+        setInvites(pendingData);
+      }
+
+      if (acceptedResponse.ok) {
+        const acceptedData = await acceptedResponse.json();
+        setAcceptedInvites(acceptedData);
+      }
+
+      if (rejectedResponse.ok) {
+        const rejectedData = await rejectedResponse.json();
+        setRejectedInvites(rejectedData);
+      }
+    } catch (error) {
+      // Error fetching invites
+    } finally {
+      setInvitesLoading(false);
+    }
+  }, []);
+
+  // Fetch invites when invites tab is active
+  useEffect(() => {
+    if (activeTab === 'invites') {
+      fetchInvites();
+    }
+  }, [activeTab, fetchInvites]);
+
+  // Handle invite actions
+  const handleInviteAction = async (inviteId: string, action: 'accept' | 'decline') => {
+    try {
+      setProcessingInviteId(inviteId);
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        showToast('Not authenticated', 'error');
+        return;
+      }
+
+      const response = await fetch(`/api/invites/${inviteId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Remove the invite from the list
+        setInvites(invites.filter((invite) => invite.id !== inviteId));
+        
+        // Show success toast
+        if (action === 'accept') {
+          showToast('Invitation accepted successfully!', 'success');
+        } else {
+          showToast('Invitation declined', 'info');
+        }
+      } else {
+        const data = await response.json();
+        showToast(data.error || `Failed to ${action} invitation`, 'error');
+      }
+    } catch (error) {
+      showToast(`Error ${action}ing invitation`, 'error');
+    } finally {
+      setProcessingInviteId(null);
+    }
+  };
+
+  // Helper function to render individual invite card
+  const renderInviteCard = (invite: Invite, showActions: boolean = true) => (
+    <div
+      key={invite.id}
+      className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl border ${isDark ? 'border-gray-700' : 'border-gray-200'} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden`}
+    >
+      <div className="p-6">
+        {/* Brand Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            {invite.brand?.logo ? (
+              <img 
+                src={invite.brand.logo} 
+                alt={invite.brand.companyName}
+                className="w-14 h-14 rounded-xl object-cover"
+              />
+            ) : (
+              <div className={`w-14 h-14 rounded-xl ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center`}>
+                <svg className={`w-7 h-7 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+            )}
+            <div>
+              <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+                {invite.brand?.companyName || 'Unknown Brand'}
+              </h3>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Invited {new Date(invite.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                setSelectedBrandId(invite.brand?.id);
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-medium ${
+                isDark 
+                  ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30' 
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+              } transition-colors`}
+            >
+              View Brand
+            </button>
+            {invite.status === 'PENDING' && (
+              <span className="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-xs font-medium">
+                New Invitation
+              </span>
+            )}
+            {invite.status === 'ACCEPTED' && (
+              <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                Accepted
+              </span>
+            )}
+            {invite.status === 'DECLINED' && (
+              <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium">
+                Declined
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Message */}
+        {invite.message && (
+          <div className={`mb-4 p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>
+              &ldquo;{invite.message}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Brief Info (if available) */}
+        {invite.brief && (
+          <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-white'}`}>
+            <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>
+              Related Brief
+            </p>
+            <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+              {invite.brief.title}
+            </h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2 line-clamp-2`}>
+              {invite.brief.description}
+            </p>
+            <div className="flex items-center space-x-4 text-sm">
+              <span className={isDark ? 'text-green-400' : 'text-green-600'}>
+                💰 ${invite.brief.reward.toLocaleString()}
+              </span>
+              <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                📅 Deadline: {new Date(invite.brief.deadline).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons (only for pending invites) */}
+        {showActions && invite.status === 'PENDING' && (
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => handleInviteAction(invite.id, 'accept')}
+              disabled={processingInviteId === invite.id}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                processingInviteId === invite.id
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-green-500 text-white hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-0.5'
+              }`}
+            >
+              {processingInviteId === invite.id ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Accept
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => handleInviteAction(invite.id, 'decline')}
+              disabled={processingInviteId === invite.id}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                processingInviteId === invite.id
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : isDark
+                  ? 'bg-gray-700 text-white hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+              }`}
+            >
+              <span className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Decline
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Response date for accepted/declined invites */}
+        {invite.respondedAt && (
+          <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Responded on {new Date(invite.respondedAt).toLocaleDateString()}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderInvites = () => {
+    if (invitesLoading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className={isDark ? 'text-white' : 'text-gray-900'}>Loading invitations...</p>
+          </div>
+        </div>
+      );
+    }
+
+    const totalInvites = invites.length + acceptedInvites.length + rejectedInvites.length;
+
+    if (totalInvites === 0) {
+      return (
+        <div className="text-center py-16">
+          <div className={`w-20 h-20 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+            <svg className={`w-10 h-10 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+          </div>
+          <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+            No invitations yet
+          </h3>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+            When brands invite you to collaborate, they&apos;ll appear here
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-8 p-6">
+        {/* Pending Invitations */}
+        {invites.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Pending Invitations ({invites.length})
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {invites.map((invite) => renderInviteCard(invite, true))}
+            </div>
+          </div>
+        )}
+
+        {/* Accepted Invitations */}
+        {acceptedInvites.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Accepted Invitations ({acceptedInvites.length})
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {acceptedInvites.map((invite) => renderInviteCard(invite, false))}
+            </div>
+          </div>
+        )}
+
+        {/* Rejected Invitations */}
+        {rejectedInvites.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Rejected Invitations ({rejectedInvites.length})
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {rejectedInvites.map((invite) => renderInviteCard(invite, false))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -2257,6 +2638,8 @@ const CreatorDashboard: React.FC = () => {
         return renderEarnings();
       case 'wallet':
         return <CreatorWallet />;
+      case 'invites':
+        return renderInvites();
       case 'analytics':
         return renderAnalytics();
       case 'portfolio':
@@ -2496,6 +2879,11 @@ const CreatorDashboard: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 )}
+                {item.icon === 'invites' && (
+                  <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                )}
                 {item.icon === 'marketplace' && (
                   <svg className={`${sidebarCollapsed ? 'w-6 h-6 mx-auto' : 'w-5 h-5 mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
@@ -2598,6 +2986,7 @@ const CreatorDashboard: React.FC = () => {
                  activeTab === 'submissions' ? 'My Submissions' :
                  activeTab === 'earnings' ? 'Earnings' :
                  activeTab === 'wallet' ? 'Wallet' :
+                 activeTab === 'invites' ? 'Invitations' :
                  activeTab === 'analytics' ? 'Analytics' :
                  activeTab === 'portfolio' ? 'Portfolio' :
                  activeTab === 'profile' ? 'Profile' : 'Dashboard'}
@@ -2807,6 +3196,16 @@ const CreatorDashboard: React.FC = () => {
           onClose={() => {
             setShowBriefDetailsModal(false);
             setSelectedBriefId(null);
+          }}
+        />
+      )}
+
+      {/* Brand Page View Modal */}
+      {selectedBrandId && (
+        <BrandPageView
+          brandId={selectedBrandId}
+          onClose={() => {
+            setSelectedBrandId(null);
           }}
         />
       )}
