@@ -69,24 +69,12 @@ router.post('/create-payment-intent', auth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Use mock mode only if Stripe is not configured at all
-    if (useMockMode) {
-      const paymentIntentId = `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const clientSecret = `pi_${paymentIntentId}_secret_${Math.random().toString(36).substr(2, 9)}`;
-      
-      console.log(`✅ Mock payment intent created: ${paymentIntentId} for $${amount}`);
-      
-      return res.json({
-        clientSecret: clientSecret,
-        paymentIntentId: paymentIntentId,
-        mode: 'mock'
-      });
-    }
-
     // Check if Stripe is configured for live mode
     if (!stripe) {
       return res.status(503).json({ 
-        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.',
+        message: 'Payment processing is currently unavailable. Please contact support.',
+        code: 'STRIPE_NOT_CONFIGURED'
       });
     }
 
@@ -112,21 +100,20 @@ router.post('/create-payment-intent', auth, async (req, res) => {
     } catch (stripeError) {
       console.error('❌ Stripe API error:', stripeError.message);
       
-      // If Stripe key is invalid, fall back to mock mode
+      // Return proper error instead of falling back to mock mode
       if (stripeError.type === 'StripeAuthenticationError') {
-        console.log('🔄 Stripe key invalid, falling back to mock mode');
-        
-        const paymentIntentId = `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const clientSecret = `pi_${paymentIntentId}_secret_${Math.random().toString(36).substr(2, 9)}`;
-        
-        return res.json({
-          clientSecret: clientSecret,
-          paymentIntentId: paymentIntentId,
-          mode: 'mock'
+        return res.status(401).json({
+          error: 'Stripe authentication failed',
+          message: 'Invalid Stripe configuration. Please contact support.',
+          code: 'STRIPE_AUTH_ERROR'
         });
       }
       
-      throw stripeError;
+      return res.status(500).json({
+        error: 'Payment processing failed',
+        message: 'Unable to process payment at this time. Please try again later.',
+        code: 'STRIPE_ERROR'
+      });
     }
   } catch (error) {
     console.error('Payment intent creation error:', error);
@@ -146,36 +133,30 @@ router.post('/confirm-payment', auth, async (req, res) => {
 
     let finalAmount = amount;
 
-    // Use mock mode only if Stripe is not configured at all
-    if (useMockMode) {
-      // For mock mode, we'll use the amount from the request
-      if (!amount) {
-        return res.status(400).json({ error: 'Amount is required for mock mode' });
-      }
-      
-      console.log(`✅ Mock payment confirmed: $${amount} for user ${userId}`);
-    } else {
-      // Check if Stripe is configured for live mode
-      if (!stripe) {
-        return res.status(503).json({ 
-          error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.' 
-        });
-      }
-
-      // Retrieve payment intent from Stripe
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      
-      console.log(`🔧 Payment intent status: ${paymentIntent.status}`);
-      
-      if (paymentIntent.status !== 'succeeded') {
-        return res.status(400).json({ 
-          error: `Payment not completed. Status: ${paymentIntent.status}` 
-        });
-      }
-
-      finalAmount = paymentIntent.amount / 100; // Convert from cents
-      console.log(`🔧 Payment succeeded: $${finalAmount}`);
+    // Check if Stripe is configured for live mode
+    if (!stripe) {
+      return res.status(503).json({ 
+        error: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.',
+        message: 'Payment processing is currently unavailable. Please contact support.',
+        code: 'STRIPE_NOT_CONFIGURED'
+      });
     }
+
+    // Retrieve payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    console.log(`🔧 Payment intent status: ${paymentIntent.status}`);
+    
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ 
+        error: `Payment not completed. Status: ${paymentIntent.status}`,
+        message: 'Payment was not successful. Please try again.',
+        code: 'PAYMENT_NOT_SUCCEEDED'
+      });
+    }
+
+    finalAmount = paymentIntent.amount / 100; // Convert from cents
+    console.log(`🔧 Payment succeeded: $${finalAmount}`);
 
     // Update wallet balance
     if (userType === 'brand') {

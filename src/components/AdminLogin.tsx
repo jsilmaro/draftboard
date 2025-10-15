@@ -38,7 +38,13 @@ const AdminLogin: React.FC = () => {
         setError(data.error || 'Login failed');
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setError('Unable to connect to server. Please check your internet connection and try again.');
+      } else if (error instanceof Error) {
+        setError(`Login failed: ${error.message}`);
+      } else {
+        setError('Network error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

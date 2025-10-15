@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else if (googleUserData.type === 'creator') {
       navigate('/creator/dashboard');
     } else if (googleUserData.type === 'admin') {
-      navigate('/admin');
+      navigate('/admin/dashboard');
     }
   };
 

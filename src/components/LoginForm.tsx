@@ -54,7 +54,13 @@ const LoginForm: React.FC = () => {
         setError('Invalid email or password');
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setError('Unable to connect to server. Please check your internet connection and try again.');
+      } else if (error instanceof Error) {
+        setError(`Login failed: ${error.message}`);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

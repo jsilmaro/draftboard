@@ -115,11 +115,33 @@ const BrandForm: React.FC = () => {
 
 
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const getPasswordStrength = (password: string): { score: number; text: string; color: string } => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    
+    if (score <= 2) return { score, text: 'Weak', color: 'text-red-500' };
+    if (score <= 3) return { score, text: 'Medium', color: 'text-yellow-500' };
+    return { score, text: 'Strong', color: 'text-green-500' };
+  };
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
         if (!formData.companyName || !formData.contactName || !formData.email || !formData.password || !formData.confirmPassword) {
           setError('Please fill in all required fields');
+          return false;
+        }
+        if (!validateEmail(formData.email)) {
+          setError('Please enter a valid email address');
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
@@ -338,6 +360,29 @@ const BrandForm: React.FC = () => {
             }`}
             placeholder="Create a strong password"
           />
+          {formData.password && (
+            <div className="mt-2">
+              <div className={`text-xs ${getPasswordStrength(formData.password).color}`}>
+                Password strength: {getPasswordStrength(formData.password).text}
+              </div>
+              <div className="flex space-x-1 mt-1">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <div
+                    key={level}
+                    className={`h-1 flex-1 rounded ${
+                      level <= getPasswordStrength(formData.password).score
+                        ? getPasswordStrength(formData.password).score <= 2
+                          ? 'bg-red-500'
+                          : getPasswordStrength(formData.password).score <= 3
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                        : isDark ? 'bg-gray-600' : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="form-field">

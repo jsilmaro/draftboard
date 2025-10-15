@@ -68,17 +68,9 @@ const MarketplaceNav = () => {
             >
               Success Stories
             </Link>
-            <Link
-              to="/theme-demo"
-              className={`marketplace-nav-item ${
-                isActive('/theme-demo') ? 'active' : ''
-              }`}
-            >
-              Theme Demo
-            </Link>
             
             {/* User-specific links */}
-            {user ? (
+            {user && (
               <>
                 {user.type === 'brand' && (
                   <Link
@@ -96,21 +88,6 @@ const MarketplaceNav = () => {
                     Dashboard
                   </Link>
                 )}
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/brand/register"
-                  className="marketplace-nav-item"
-                >
-                  For Brands
-                </Link>
-                <Link
-                  to="/creator/register"
-                  className="marketplace-nav-item"
-                >
-                  For Creators
-                </Link>
               </>
             )}
           </div>
@@ -228,7 +205,7 @@ const MarketplaceNav = () => {
               Home
             </Link>
             
-            {user ? (
+            {user && (
               <>
                 {user.type === 'brand' && (
                   <Link
@@ -271,42 +248,20 @@ const MarketplaceNav = () => {
                   Sign Out
                 </button>
               </>
-            ) : (
-              <>
-                <Link
-                  to="/brand/register"
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isDark 
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  For Brands
-                </Link>
-                <Link
-                  to="/creator/register"
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isDark 
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  For Creators
-                </Link>
-                <Link
-                  to="/login"
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isDark 
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
-              </>
+            )}
+            
+            {!user && (
+              <Link
+                to="/login"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isDark 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Sign In
+              </Link>
             )}
           </div>
         </div>

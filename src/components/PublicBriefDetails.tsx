@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import LoadingSpinner from './LoadingSpinner';
 import MarketplaceNav from './MarketplaceNav';
 
@@ -44,6 +45,7 @@ const PublicBriefDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
 
   const fetchBriefDetails = useCallback(async () => {
@@ -145,7 +147,7 @@ const PublicBriefDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'} flex items-center justify-center`}>
         <LoadingSpinner />
       </div>
     );
@@ -153,10 +155,10 @@ const PublicBriefDetails = () => {
 
   if (error || !brief) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'} flex items-center justify-center`}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Brief Not Found</h1>
-          <p className="text-gray-400 mb-6">{error}</p>
+          <h1 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Brief Not Found</h1>
+          <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{error}</p>
           <Link
             to="/marketplace"
             className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-200"
@@ -173,16 +175,16 @@ const PublicBriefDetails = () => {
   const canApply = !isExpired && brief.status === 'published';
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
       <MarketplaceNav />
       
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 to-black border-b border-gray-800">
+      <div className={`border-b ${isDark ? 'bg-gradient-to-r from-gray-900 to-black border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link
               to="/marketplace"
-              className="text-gray-400 hover:text-white transition-colors"
+              className={`transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
             >
               ← Back to Marketplace
             </Link>
@@ -217,7 +219,7 @@ const PublicBriefDetails = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Brief Header */}
-        <div className="bg-gray-900 rounded-lg p-6 mb-8">
+        <div className={`rounded-lg p-6 mb-8 ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -234,15 +236,15 @@ const PublicBriefDetails = () => {
                 )}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{brief.title}</h1>
-                <p className="text-gray-400">by {brief.brand.companyName}</p>
+                <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.title}</h1>
+                <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>by {brief.brand.companyName}</p>
               </div>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-green-400 mb-2">
                 {formatCurrency(brief.reward)}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
               </div>
             </div>
@@ -252,13 +254,15 @@ const PublicBriefDetails = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                brief.status === 'published' ? 'bg-green-100 text-green-800' :
-                brief.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-gray-100 text-gray-800'
+                brief.status === 'published' 
+                  ? (isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-800')
+                  : brief.status === 'draft' 
+                  ? (isDark ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800')
+                  : (isDark ? 'bg-gray-900/20 text-gray-400' : 'bg-gray-100 text-gray-800')
               }`}>
                 {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
               </span>
-              <span className="text-gray-400">
+              <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
                 Posted {formatDate(brief.createdAt)}
               </span>
             </div>
@@ -266,7 +270,7 @@ const PublicBriefDetails = () => {
               <div className={`text-lg font-semibold ${isExpired ? 'text-red-400' : 'text-green-400'}`}>
                 {isExpired ? 'Expired' : `${daysRemaining} days left`}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Deadline: {formatDate(brief.deadline)}
               </div>
             </div>
@@ -278,9 +282,9 @@ const PublicBriefDetails = () => {
            {/* Left Column - Brief Details */}
            <div className="lg:col-span-2 space-y-8 overflow-hidden">
                          {/* Description */}
-             <div className="bg-gray-900 rounded-lg p-6 w-full">
-               <h2 className="text-xl font-semibold text-white mb-4">Description</h2>
-               <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+             <div className={`rounded-lg p-6 w-full ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+               <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Description</h2>
+               <div className={`leading-relaxed break-words overflow-hidden ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                  <div className="whitespace-pre-wrap max-w-full text-wrap">
                    {brief.description}
                  </div>
@@ -288,9 +292,9 @@ const PublicBriefDetails = () => {
              </div>
 
                          {/* Requirements */}
-             <div className="bg-gray-900 rounded-lg p-6 w-full">
-               <h2 className="text-xl font-semibold text-white mb-4">Requirements</h2>
-                                <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+             <div className={`rounded-lg p-6 w-full ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+               <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Requirements</h2>
+                                <div className={`leading-relaxed break-words overflow-hidden ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                    <div className="whitespace-pre-wrap max-w-full text-wrap">
                      {brief.requirements}
                    </div>
@@ -299,9 +303,9 @@ const PublicBriefDetails = () => {
 
                                       {/* Additional Fields */}
                            {hasMeaningfulAdditionalFields(brief.additionalFields) && (
-                <div className="bg-gray-900 rounded-lg p-6 w-full">
-                  <h2 className="text-xl font-semibold text-white mb-4">Additional Information</h2>
-                  <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                <div className={`rounded-lg p-6 w-full ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+                  <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Additional Information</h2>
+                  <div className={`leading-relaxed break-words overflow-hidden ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                     <div className="whitespace-pre-wrap max-w-full text-wrap">
                       {(() => {
                         try {
@@ -356,20 +360,20 @@ const PublicBriefDetails = () => {
               )}
 
                          {/* Stats */}
-             <div className="bg-gray-900 rounded-lg p-6 w-full">
-              <h2 className="text-xl font-semibold text-white mb-4">Brief Statistics</h2>
+             <div className={`rounded-lg p-6 w-full ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Brief Statistics</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-400">
                     {brief.submissions.length}
                   </div>
-                  <div className="text-gray-400">Submissions</div>
+                  <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Submissions</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-400">
                     {brief.winners.length}
                   </div>
-                  <div className="text-gray-400">Winners Selected</div>
+                  <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Winners Selected</div>
                 </div>
               </div>
             </div>
@@ -378,8 +382,8 @@ const PublicBriefDetails = () => {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Apply Button */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Ready to Apply?</h3>
+            <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Ready to Apply?</h3>
               {canApply ? (
                 <button
                   onClick={handleApplyClick}
@@ -400,7 +404,7 @@ const PublicBriefDetails = () => {
               
               {!user && (
                 <div className="text-center">
-                  <p className="text-gray-400 text-sm mb-3">
+                  <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Already have an account?
                   </p>
                   <Link
@@ -414,18 +418,18 @@ const PublicBriefDetails = () => {
             </div>
 
             {/* Brand Info */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">About {brief.brand.companyName}</h3>
+            <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>About {brief.brand.companyName}</h3>
               <div className="space-y-3">
                 <div>
-                  <span className="text-gray-400">Contact:</span>
-                  <div className="text-white">{brief.brand.contactName}</div>
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Contact:</span>
+                  <div className={isDark ? 'text-white' : 'text-gray-900'}>{brief.brand.contactName}</div>
                 </div>
                 
                 {/* Social Links */}
                 {(brief.brand.socialWebsite || brief.brand.socialInstagram || brief.brand.socialTwitter || brief.brand.socialLinkedIn) && (
                   <div>
-                    <span className="text-gray-400">Follow:</span>
+                    <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Follow:</span>
                     <div className="flex space-x-3 mt-2">
                       {brief.brand.socialWebsite && (
                         <a
@@ -475,17 +479,17 @@ const PublicBriefDetails = () => {
 
             {/* Location */}
             {brief.location && (
-              <div className="bg-gray-900 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Location</h3>
-                <div className="text-gray-300">
+              <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+                <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Location</h3>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                   {brief.location}
                 </div>
               </div>
             )}
 
             {/* More from this brand */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">More from {brief.brand.companyName}</h3>
+            <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>More from {brief.brand.companyName}</h3>
               <Link
                 to={`/brand/${brief.brand.id}/briefs`}
                 className="text-green-400 hover:text-green-300 transition-colors"
