@@ -834,7 +834,6 @@ const CreatorDashboard: React.FC = () => {
   }, [navigationItems, sidebarSearchQuery]);
 
   const accountNav = [
-    { id: 'earnings', label: 'Earnings', icon: 'payments' },
     { id: 'settings', label: 'Settings', icon: 'settings', action: () => setShowSettingsModal(true) },
     { id: 'logout', label: 'Logout', icon: 'logout', action: logout },
   ];
@@ -1570,14 +1569,18 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Filters and Sorting */}
         <div className="card">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
                 <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Filter:</label>
                 <select
                   value={earningsFilter}
                   onChange={(e) => setEarningsFilter(e.target.value as 'all' | 'paid' | 'pending' | 'processing')}
-                  className="input text-sm"
+                  className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
+                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
                   <option value="all">All</option>
                   <option value="paid">Paid</option>
@@ -1586,12 +1589,16 @@ const CreatorDashboard: React.FC = () => {
                 </select>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-300">Sort by:</label>
+              <div className="flex items-center space-x-3">
+                <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Sort by:</label>
                 <select
                   value={earningsSortBy}
                   onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
-                  className="px-3 py-1 bg-gray-900 border border-gray-800 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
+                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
                   <option value="date">Date</option>
                   <option value="amount">Amount</option>
@@ -1601,14 +1608,18 @@ const CreatorDashboard: React.FC = () => {
               
               <button
                 onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-1 bg-gray-900 hover:bg-gray-600 border border-gray-800 rounded-md text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                className={`px-4 py-2 border rounded-md text-sm transition-colors duration-200 flex items-center space-x-2 ${
+                  isDark 
+                    ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900'
+                }`}
               >
                 <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
                 <span>{earningsSortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
               </button>
             </div>
             
-            <div className="text-sm text-gray-400">
+            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Showing {sortedEarnings.length} of {earnings.length} earnings
             </div>
           </div>
@@ -1631,39 +1642,43 @@ const CreatorDashboard: React.FC = () => {
         )}
 
         {/* Enhanced Earnings Table */}
-      <div className="bg-gray-950/20 backdrop-blur-xl rounded-lg shadow-sm border border-gray-800/30 overflow-hidden">
+      <div className={`backdrop-blur-xl rounded-lg shadow-sm overflow-hidden ${
+        isDark 
+          ? 'bg-gray-950/20 border border-gray-800/30' 
+          : 'bg-white border border-gray-200'
+      }`}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-900/30 backdrop-blur-sm">
+            <thead className={`${isDark ? 'bg-gray-900/30' : 'bg-gray-50'} backdrop-blur-sm`}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brief</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Brand</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Brief</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Brand</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Amount</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Type</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Status</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-gray-950/10 divide-y divide-gray-700/30">
+            <tbody className={`${isDark ? 'bg-gray-950/10 divide-y divide-gray-700/30' : 'bg-white divide-y divide-gray-200'}`}>
                 {earningsLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={7} className={`px-6 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       <div className="flex flex-col items-center space-y-2">
                         <svg className="w-8 h-8 animate-spin text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        <p>Loading earnings...</p>
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Loading earnings...</p>
                       </div>
                   </td>
                   </tr>
                 ) : sortedEarnings.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={7} className={`px-6 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       <div className="flex flex-col items-center space-y-2">
                         <span className="text-4xl">💰</span>
-                        <p>No earnings found</p>
-                        <p className="text-sm">Earnings are based on wallet transactions. Start submitting to briefs to earn rewards!</p>
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-800'}`}>No earnings found</p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Earnings are based on wallet transactions. Start submitting to briefs to earn rewards!</p>
                         <button
                           onClick={() => fetchAllSubmissions()}
                           className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
@@ -1675,24 +1690,26 @@ const CreatorDashboard: React.FC = () => {
                   </tr>
                 ) : (
                   sortedEarnings.map((earning) => (
-                    <tr key={earning.id} className="hover:bg-gray-900/20 transition-colors duration-200">
+                    <tr key={earning.id} className={`transition-colors duration-200 ${isDark ? 'hover:bg-gray-900/20' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-white">{earning.briefTitle}</div>
+                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{earning.briefTitle}</div>
                         {earning.position && (
-                          <div className="text-xs text-gray-400">Position #{earning.position}</div>
+                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position #{earning.position}</div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                         {earning.brandName || 'Unknown Brand'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         ${Number(earning.amount || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          earning.status === 'paid' ? 'bg-green-900/20 text-green-400' :
-                          earning.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400' :
-                          'bg-gray-900/20 text-gray-400'
+                          earning.status === 'paid' ? 
+                            (isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-800') :
+                          earning.status === 'pending' ? 
+                            (isDark ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800') :
+                            (isDark ? 'bg-gray-900/20 text-gray-400' : 'bg-gray-100 text-gray-800')
                         }`}>
                           {earning.status === 'paid' ? 'Paid' : 
                            earning.status === 'pending' ? 'Pending' : 'Processing'}
@@ -1700,20 +1717,22 @@ const CreatorDashboard: React.FC = () => {
                       </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      earning.status === 'paid' ? 'bg-emerald-900/20 text-emerald-400' :
-                      earning.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400' :
-                      'bg-blue-900/20 text-blue-400'
+                      earning.status === 'paid' ? 
+                        (isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-100 text-emerald-800') :
+                      earning.status === 'pending' ? 
+                        (isDark ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800') :
+                        (isDark ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-100 text-blue-800')
                     }`}>
                       {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
                     </span>
                   </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                         <div>
                           {earning.paidAt ? (
                             <div>
                               <div>Paid: {new Date(earning.paidAt).toLocaleDateString()}</div>
                               {earning.submittedAt && (
-                                <div className="text-xs text-gray-500">
+                                <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
                                   Submitted: {new Date(earning.submittedAt).toLocaleDateString()}
                                 </div>
                               )}
@@ -1729,7 +1748,11 @@ const CreatorDashboard: React.FC = () => {
                             setSelectedEarning(earning);
                             setShowEarningDetails(true);
                           }}
-                          className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                          className={`transition-colors duration-200 ${
+                            isDark 
+                              ? 'text-blue-400 hover:text-blue-300' 
+                              : 'text-blue-600 hover:text-blue-800'
+                          }`}
                         >
                           View Details
                         </button>
