@@ -3128,7 +3128,62 @@ const CreatorDashboard: React.FC = () => {
                       <div>
                         <label className="text-sm font-medium text-gray-300 mb-2 block">Additional Content:</label>
                         <div className="bg-gray-800 p-3 rounded border border-gray-700">
-                          <p className="text-gray-200 text-sm whitespace-pre-wrap">{submissionDetails.content}</p>
+                          <p className="text-gray-200 text-sm whitespace-pre-wrap">
+                            {(() => {
+                              try {
+                                // Try to parse as JSON first (in case it's escaped JSON)
+                                let parsed: unknown = JSON.parse(submissionDetails.content);
+                                
+                                // Handle nested JSON (multiple levels of escaping)
+                                while (typeof parsed === 'string' && parsed.startsWith('{')) {
+                                  try {
+                                    parsed = JSON.parse(parsed);
+                                  } catch {
+                                    break;
+                                  }
+                                }
+                                
+                                // If it's an object, try to extract readable content
+                                if (typeof parsed === 'object' && parsed !== null) {
+                                  const parsedObj = parsed as Record<string, unknown>;
+                                  // Look for common content fields in order of preference
+                                  const contentField = parsedObj.additionalInfo || 
+                                                    parsedObj.content || 
+                                                    parsedObj.message || 
+                                                    parsedObj.text || 
+                                                    parsedObj.description ||
+                                                    parsedObj.note;
+                                  
+                                  if (contentField && typeof contentField === 'string' && contentField.trim()) {
+                                    return contentField;
+                                  }
+                                  
+                                  // If no readable field found, try to extract any string values
+                                  const stringValues = Object.values(parsed).filter(val => 
+                                    typeof val === 'string' && val.trim() && val.length > 5
+                                  ) as string[];
+                                  
+                                  if (stringValues.length > 0) {
+                                    return stringValues[0];
+                                  }
+                                  
+                                  // If no readable content found, show a message
+                                  return "Content is available but not in a readable format.";
+                                }
+                                
+                                // If it's already a string, return it
+                                if (typeof parsed === 'string') {
+                                  return parsed;
+                                }
+                                
+                                // Fallback to stringifying the object
+                                return JSON.stringify(parsed, null, 2);
+                              } catch {
+                                // If JSON parsing fails, return the content as-is
+                                return submissionDetails.content;
+                              }
+                            })() as string}
+                          </p>
                         </div>
                       </div>
                     )}
