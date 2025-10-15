@@ -106,23 +106,11 @@ const authenticateToken = (req, res, next) => {
       console.log('❌ Token verification failed:', err.message);
       return res.status(403).json({ error: 'Invalid token' });
     }
-    console.log('✅ Token verified successfully for user:', { id: user.id, type: user.type, email: user.email });
+    console.log('✅ Token verified successfully for user:', user.id);
     req.user = user;
     next();
   });
 };
-
-// Debug endpoint to verify current user authentication
-app.get('/api/auth/verify', authenticateToken, (req, res) => {
-  res.json({
-    authenticated: true,
-    user: {
-      id: req.user.id,
-      email: req.user.email,
-      type: req.user.type
-    }
-  });
-});
 
 // Utility function to validate URLs
 function isValidUrl(string) {
@@ -2067,9 +2055,7 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
     console.log('Brief ID:', req.params.id);
     console.log('Request body:', req.body);
 
-    console.log('🔍 User type check:', { userType: req.user.type, userId: req.user.id });
     if (req.user.type !== 'brand') {
-      console.log('❌ User is not a brand:', req.user.type);
       return res.status(403).json({ error: 'Only brands can update briefs' });
     }
     const { id } = req.params;
@@ -2096,9 +2082,7 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Brief not found' });
     }
     
-    console.log('🔍 Ownership check:', { briefBrandId: brief.brandId, userId: req.user.id, match: brief.brandId === req.user.id });
     if (brief.brandId !== req.user.id) {
-      console.log('❌ Brief ownership mismatch:', { briefBrandId: brief.brandId, userId: req.user.id });
       return res.status(403).json({ error: 'Access denied - you can only update your own briefs' });
     }
 
@@ -2240,9 +2224,7 @@ app.put('/api/briefs/:id', authenticateToken, async (req, res) => {
 // Delete a brief
 app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 DELETE - User type check:', { userType: req.user.type, userId: req.user.id });
     if (req.user.type !== 'brand') {
-      console.log('❌ DELETE - User is not a brand:', req.user.type);
       return res.status(403).json({ error: 'Only brands can delete briefs' });
     }
 
@@ -2258,9 +2240,7 @@ app.delete('/api/briefs/:id', authenticateToken, async (req, res) => {
       }
     });
 
-    console.log('🔍 DELETE - Ownership check:', { briefBrandId: brief?.brandId, userId: req.user.id, match: brief?.brandId === req.user.id });
     if (!brief || brief.brandId !== req.user.id) {
-      console.log('❌ DELETE - Brief not found or ownership mismatch:', { briefExists: !!brief, briefBrandId: brief?.brandId, userId: req.user.id });
       return res.status(404).json({ error: 'Brief not found or access denied' });
     }
 
@@ -3225,6 +3205,86 @@ app.get('/api/briefs/:id/funding/status', authenticateToken, async (req, res) =>
   } catch (error) {
     console.error('Error fetching funding status:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all public briefs for marketplace (no authentication required)
+// IMPORTANT: This route must come BEFORE /api/briefs/:id to avoid route matching issues
+app.get('/api/briefs/public', async (req, res) => {
+  try {
+    // Fetch from database
+    let briefs = [];
+    
+    try {
+      briefs = await prisma.brief.findMany({
+        where: { 
+          status: { in: ['published'] },
+          isPrivate: false
+        },
+        include: {
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+              logo: true
+            }
+          },
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              submittedAt: true
+            }
+          },
+          winners: {
+            select: {
+              id: true,
+              position: true
+            }
+          },
+          winnerRewards: {
+            select: {
+              position: true,
+              cashAmount: true,
+              creditAmount: true,
+              prizeDescription: true
+            },
+            orderBy: { position: 'asc' }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Transform briefs for public view
+      const transformedBriefs = briefs.map(brief => ({
+        id: brief.id,
+        title: brief.title,
+        description: brief.description,
+        requirements: brief.requirements,
+        reward: brief.reward,
+        deadline: brief.deadline,
+        status: brief.status,
+        createdAt: brief.createdAt,
+        amountOfWinners: brief.amountOfWinners,
+        brand: brief.brand,
+        submissions: brief.submissions,
+        winners: brief.winners,
+        winnerRewards: brief.winnerRewards
+      }));
+
+      briefs = transformedBriefs;
+      console.log(`✅ Fetched ${briefs.length} public briefs from database`);
+      
+    } catch (dbError) {
+      console.error('❌ Database connection failed:', dbError.message);
+      res.status(500).json({ error: 'Failed to fetch briefs from database' });
+      return;
+    }
+
+    res.json(briefs);
+  } catch (error) {
+    console.error('Error fetching public briefs:', error);
+    res.status(500).json({ error: 'Failed to fetch briefs' });
   }
 });
 
@@ -6098,85 +6158,7 @@ app.get('/api/test-proxy', (req, res) => {
 // ==================== END NOTIFICATION ROUTES ====================
 
 // ==================== PUBLIC ROUTES ====================
-
-// Get all public briefs for marketplace (no authentication required)
-app.get('/api/briefs/public', async (req, res) => {
-  try {
-    // Fetch from database
-    let briefs = [];
-    
-    try {
-      briefs = await prisma.brief.findMany({
-        where: { 
-          status: { in: ['published'] },
-          isPrivate: false
-        },
-        include: {
-          brand: {
-            select: {
-              id: true,
-              companyName: true,
-              logo: true
-            }
-          },
-          submissions: {
-            select: {
-              id: true,
-              status: true,
-              submittedAt: true
-            }
-          },
-          winners: {
-            select: {
-              id: true,
-              position: true
-            }
-          },
-          winnerRewards: {
-            select: {
-              position: true,
-              cashAmount: true,
-              creditAmount: true,
-              prizeDescription: true
-            },
-            orderBy: { position: 'asc' }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      // Transform briefs for public view
-      const transformedBriefs = briefs.map(brief => ({
-        id: brief.id,
-        title: brief.title,
-        description: brief.description,
-        requirements: brief.requirements,
-        reward: brief.reward,
-        deadline: brief.deadline,
-        status: brief.status,
-        createdAt: brief.createdAt,
-        amountOfWinners: brief.amountOfWinners,
-        brand: brief.brand,
-        submissions: brief.submissions,
-        winners: brief.winners,
-        winnerRewards: brief.winnerRewards
-      }));
-
-      briefs = transformedBriefs;
-      console.log(`✅ Fetched ${briefs.length} briefs from database`);
-      
-    } catch (dbError) {
-      console.error('❌ Database connection failed:', dbError.message);
-      res.status(500).json({ error: 'Failed to fetch briefs from database' });
-      return;
-    }
-
-    res.json(briefs);
-  } catch (error) {
-    console.error('Error fetching public briefs:', error);
-    res.status(500).json({ error: 'Failed to fetch briefs' });
-  }
-});
+// Note: /api/briefs/public has been moved before /api/briefs/:id to prevent route matching issues
 
 // Get public brand briefs (no authentication required)
 app.get('/api/briefs/:briefId/public', async (req, res) => {

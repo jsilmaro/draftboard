@@ -108,8 +108,8 @@ const CommunityPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Community Forums Modal */}
-      <CommunityForums isOpen={showForums} onClose={() => setShowForums(false)} />
+      {/* Community Forums Modal - READ ONLY for public */}
+      <CommunityForums isOpen={showForums} onClose={() => setShowForums(false)} isPublic={true} />
     </div>
   );
 };

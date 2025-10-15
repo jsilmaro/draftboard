@@ -21,8 +21,23 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Get all success stories
-router.get('/', authenticateToken, async (req, res) => {
+// Optional authentication middleware - allows public access
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (!err) {
+        req.user = user;
+      }
+    });
+  }
+  next();
+};
+
+// Get all success stories - PUBLIC ACCESS
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { filter, sort, page = 1, limit = 12 } = req.query;
     const skip = (page - 1) * limit;
@@ -57,8 +72,7 @@ router.get('/', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            avatar: true,
-            type: true
+            userName: true
           }
         }
       },
@@ -108,9 +122,7 @@ router.get('/:storyId', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            avatar: true,
-            type: true,
-            bio: true
+            userName: true
           }
         }
       }
@@ -180,8 +192,7 @@ router.post('/', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            avatar: true,
-            type: true
+            userName: true
           }
         }
       }
@@ -230,8 +241,7 @@ router.patch('/:storyId', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            avatar: true,
-            type: true
+            userName: true
           }
         }
       }
@@ -308,8 +318,7 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            avatar: true,
-            type: true
+            userName: true
           }
         }
       },

@@ -48,122 +48,12 @@ const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'creative' | 'technical' | 'business' | 'featured'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'budget' | 'popularity'>('newest');
-
-  // Mock data for when database is empty
-  const getMockStories = (): SuccessStory[] => [
-    {
-      id: 'mock-story-1',
-      title: 'Viral Social Media Campaign',
-      description: 'A creative campaign that reached 2M+ people and generated 500% ROI for a sustainable fashion brand.',
-      briefTitle: 'Sustainable Fashion Awareness Campaign',
-      brand: {
-        id: 'brand-1',
-        name: 'EcoStyle',
-        logo: '/icons/Green_icons/Brief1.png'
-      },
-      creator: {
-        id: 'creator-1',
-        name: 'Sarah Johnson',
-        avatar: '/icons/Green_icons/UserProfile1.png',
-        type: 'individual'
-      },
-      category: 'creative',
-      budget: 15000,
-      duration: '2 weeks',
-      outcome: 'Generated 2.3M impressions, 45K new followers, and $75K in sales within 2 weeks.',
-      metrics: {
-        reach: 2300000,
-        engagement: 8.5,
-        conversion: 3.2,
-        roi: 500
-      },
-      testimonial: {
-        brandQuote: 'Sarah\'s creative approach exceeded our expectations. The campaign not only raised awareness but drove real sales.',
-        creatorQuote: 'Working with EcoStyle was amazing. They gave me creative freedom and the results speak for themselves.'
-      },
-      images: ['/icons/Green_icons/Campaign1.png'],
-      tags: ['social-media', 'sustainability', 'fashion', 'viral'],
-      featured: true,
-      verified: true,
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'mock-story-2',
-      title: 'E-commerce Platform Development',
-      description: 'Complete platform build that increased sales by 300% in 3 months for a growing online retailer.',
-      briefTitle: 'Full-Stack E-commerce Development',
-      brand: {
-        id: 'brand-2',
-        name: 'TechRetail Pro',
-        logo: '/icons/Green_icons/Brief1.png'
-      },
-      creator: {
-        id: 'creator-2',
-        name: 'Mike Chen',
-        avatar: '/icons/Green_icons/UserProfile1.png',
-        type: 'individual'
-      },
-      category: 'technical',
-      budget: 25000,
-      duration: '6 weeks',
-      outcome: 'Built a scalable e-commerce platform that increased conversion rates by 40% and sales by 300%.',
-      metrics: {
-        reach: 150000,
-        engagement: 12.3,
-        conversion: 5.8,
-        roi: 300
-      },
-      testimonial: {
-        brandQuote: 'Mike delivered exactly what we needed. The platform is fast, secure, and user-friendly.',
-        creatorQuote: 'This was a challenging project but very rewarding. The client was great to work with.'
-      },
-      images: ['/icons/Green_icons/Dashboard1.png'],
-      tags: ['e-commerce', 'development', 'platform', 'scalable'],
-      featured: true,
-      verified: true,
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'mock-story-3',
-      title: 'Marketing Strategy Overhaul',
-      description: 'Complete marketing transformation that doubled customer acquisition and reduced cost per acquisition by 60%.',
-      briefTitle: 'Digital Marketing Strategy & Implementation',
-      brand: {
-        id: 'brand-3',
-        name: 'GrowthCo',
-        logo: '/icons/Green_icons/Brief1.png'
-      },
-      creator: {
-        id: 'creator-3',
-        name: 'Lisa Rodriguez',
-        avatar: '/icons/Green_icons/UserProfile1.png',
-        type: 'individual'
-      },
-      category: 'business',
-      budget: 12000,
-      duration: '4 weeks',
-      outcome: 'Doubled customer acquisition rate and reduced cost per acquisition by 60% through strategic optimization.',
-      metrics: {
-        reach: 800000,
-        engagement: 6.7,
-        conversion: 4.1,
-        roi: 200
-      },
-      testimonial: {
-        brandQuote: 'Lisa\'s strategic approach transformed our marketing. We\'re seeing results we never thought possible.',
-        creatorQuote: 'GrowthCo was open to new ideas and the collaboration was fantastic. Great results all around.'
-      },
-      images: ['/icons/Green_icons/Performance1.png'],
-      tags: ['marketing', 'strategy', 'optimization', 'growth'],
-      featured: false,
-      verified: true,
-      createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStories = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('filter', filter);
       params.append('sort', sortBy);
@@ -176,19 +66,17 @@ const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
       
       if (response.ok) {
         const data = await response.json();
-        // If no stories returned, use mock data
-        if (data.length === 0) {
-          setStories(getMockStories());
-        } else {
-          setStories(data);
-        }
-      } else {
-        // If API fails, use mock data
-        setStories(getMockStories());
+        // API returns { stories: [], pagination: {} }
+        const storiesArray = Array.isArray(data) ? data : (data.stories || []);
+        setStories(storiesArray);
+      } else{
+        setError('Failed to load success stories. Please try again.');
+        setStories([]);
       }
     } catch (error) {
-      // Error fetching success stories - use mock data as fallback
-      setStories(getMockStories());
+      // Error fetching success stories
+      setError('Unable to connect to the server. Please check your connection.');
+      setStories([]);
     } finally {
       setIsLoading(false);
     }
@@ -298,10 +186,22 @@ const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
             <div className="flex justify-center items-center h-full">
               <div className="text-gray-400">Loading success stories...</div>
             </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+              <div className="text-6xl mb-4">⚠️</div>
+              <p className="text-xl text-center mb-2">{error}</p>
+              <button
+                onClick={fetchStories}
+                className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+              >
+                Try Again
+              </button>
+            </div>
           ) : filteredStories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
               <div className="text-6xl mb-4">🏆</div>
-              <p className="text-xl">No success stories found</p>
+              <p className="text-xl text-center mb-2">No success stories found</p>
+              <p className="text-sm text-center text-gray-500">Success stories will appear here as projects are completed</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

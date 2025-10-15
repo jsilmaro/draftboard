@@ -52,136 +52,12 @@ const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'education' | 'networking' | 'business' | 'creative' | 'technical'>('all');
   const [showRegistration, setShowRegistration] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
-
-  // Mock data for when database is empty
-  const getMockEvents = (): Event[] => [
-    {
-      id: 'mock-1',
-      title: 'Content Creation Masterclass',
-      description: 'Learn advanced techniques for creating engaging content that converts and drives results for your brand.',
-      type: 'webinar',
-      category: 'education',
-      host: {
-        id: 'host-1',
-        name: 'DraftBoard Academy',
-        type: 'platform',
-        avatar: '/icons/Green_icons/Dashboard1.png',
-        bio: 'Leading platform for brand-creator education'
-      },
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      time: '14:00',
-      duration: '2 hours',
-      timezone: 'EST',
-      maxAttendees: 100,
-      currentAttendees: 45,
-      price: 0,
-      currency: 'USD',
-      isFree: true,
-      isLive: false,
-      isRecorded: false,
-      tags: ['content', 'marketing', 'social-media'],
-      requirements: ['Basic understanding of social media', 'Laptop or mobile device'],
-      learningOutcomes: [
-        'Master content creation frameworks',
-        'Learn engagement optimization techniques',
-        'Understand platform-specific best practices'
-      ],
-      agenda: [
-        { time: '14:00', topic: 'Welcome & Introduction', speaker: 'Sarah Johnson' },
-        { time: '14:15', topic: 'Content Strategy Fundamentals', speaker: 'Mike Chen' },
-        { time: '15:00', topic: 'Platform-Specific Optimization', speaker: 'Lisa Rodriguez' },
-        { time: '15:45', topic: 'Q&A Session', speaker: 'All Speakers' }
-      ],
-      featured: true,
-      status: 'upcoming',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'mock-2',
-      title: 'Brand-Creator Collaboration Workshop',
-      description: 'Master the art of successful brand-creator partnerships and learn how to build lasting relationships.',
-      type: 'workshop',
-      category: 'business',
-      host: {
-        id: 'host-2',
-        name: 'Creative Partners Inc.',
-        type: 'brand',
-        avatar: '/icons/Green_icons/Brief1.png',
-        bio: 'Expert in brand-creator partnerships'
-      },
-      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      time: '10:00',
-      duration: '3 hours',
-      timezone: 'PST',
-      maxAttendees: 50,
-      currentAttendees: 23,
-      price: 25,
-      currency: 'USD',
-      isFree: false,
-      isLive: false,
-      isRecorded: true,
-      tags: ['collaboration', 'business', 'partnerships'],
-      requirements: ['Experience with brand collaborations', 'Notebook for exercises'],
-      learningOutcomes: [
-        'Understand collaboration best practices',
-        'Learn contract negotiation skills',
-        'Build effective communication strategies'
-      ],
-      agenda: [
-        { time: '10:00', topic: 'Workshop Introduction', speaker: 'David Kim' },
-        { time: '10:30', topic: 'Collaboration Framework', speaker: 'David Kim' },
-        { time: '11:30', topic: 'Hands-on Exercises', speaker: 'All Participants' },
-        { time: '12:30', topic: 'Case Studies & Discussion', speaker: 'David Kim' }
-      ],
-      featured: true,
-      status: 'upcoming',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'mock-3',
-      title: 'Creative Industry Networking Mixer',
-      description: 'Connect with fellow creators and industry professionals in an informal networking setting.',
-      type: 'networking',
-      category: 'networking',
-      host: {
-        id: 'host-3',
-        name: 'Creative Network Hub',
-        type: 'platform',
-        avatar: '/icons/Green_icons/UserProfile1.png',
-        bio: 'Building connections in the creative industry'
-      },
-      date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      time: '18:00',
-      duration: '2 hours',
-      timezone: 'EST',
-      maxAttendees: 75,
-      currentAttendees: 67,
-      price: 0,
-      currency: 'USD',
-      isFree: true,
-      isLive: false,
-      isRecorded: false,
-      tags: ['networking', 'community', 'connections'],
-      requirements: ['Professional profile', 'Business cards (optional)'],
-      learningOutcomes: [
-        'Expand your professional network',
-        'Discover collaboration opportunities',
-        'Learn from industry peers'
-      ],
-      agenda: [
-        { time: '18:00', topic: 'Welcome & Introductions', speaker: 'Emma Wilson' },
-        { time: '18:30', topic: 'Speed Networking', speaker: 'All Participants' },
-        { time: '19:30', topic: 'Open Networking', speaker: 'All Participants' }
-      ],
-      featured: false,
-      status: 'upcoming',
-      createdAt: new Date().toISOString()
-    }
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('filter', filter);
       if (categoryFilter !== 'all') params.append('category', categoryFilter);
@@ -194,19 +70,17 @@ const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
       
       if (response.ok) {
         const data = await response.json();
-        // If no events returned, use mock data
-        if (data.length === 0) {
-          setEvents(getMockEvents());
-        } else {
-          setEvents(data);
-        }
+        // API returns { events: [], pagination: {} }
+        const eventsArray = Array.isArray(data) ? data : (data.events || []);
+        setEvents(eventsArray);
       } else {
-        // If API fails, use mock data
-        setEvents(getMockEvents());
+        setError('Failed to load events. Please try again.');
+        setEvents([]);
       }
     } catch (error) {
-      // Error fetching events - use mock data as fallback
-      setEvents(getMockEvents());
+      // Error fetching events
+      setError('Unable to connect to the server. Please check your connection.');
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
@@ -387,10 +261,22 @@ const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
             <div className="flex justify-center items-center h-full">
               <div className="text-gray-400">Loading events...</div>
             </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+              <div className="text-6xl mb-4">⚠️</div>
+              <p className="text-xl text-center mb-2">{error}</p>
+              <button
+                onClick={fetchEvents}
+                className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+              >
+                Try Again
+              </button>
+            </div>
           ) : filteredEvents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
               <div className="text-6xl mb-4">📅</div>
-              <p className="text-xl">No events found</p>
+              <p className="text-xl text-center mb-2">No events found</p>
+              <p className="text-sm text-center text-gray-500">Check back soon for upcoming events and webinars</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

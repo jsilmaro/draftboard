@@ -58,86 +58,12 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
     tags: ''
   });
   const [newReply, setNewReply] = useState('');
-
-  // Mock data for when database is empty
-  const getMockPosts = (): ForumPost[] => [
-    {
-      id: 'mock-post-1',
-      title: 'Best Practices for Brand-Creator Collaborations',
-      content: 'I\'ve been working with brands for over 3 years and wanted to share some key insights that have helped me build lasting partnerships...',
-      author: {
-        id: 'author-1',
-        name: 'Sarah Johnson',
-        type: 'creator',
-        avatar: '/icons/Green_icons/UserProfile1.png'
-      },
-      category: 'tips',
-      tags: ['collaboration', 'brands', 'best-practices'],
-      likes: 24,
-      replies: 8,
-      views: 156,
-      isPinned: true,
-      isLocked: false,
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      lastReply: {
-        author: 'Mike Chen',
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-      }
-    },
-    {
-      id: 'mock-post-2',
-      title: 'Looking for Creative Collaborators in NYC',
-      content: 'Hey everyone! I\'m a brand manager looking to connect with talented creators in the New York area for upcoming campaigns...',
-      author: {
-        id: 'author-2',
-        name: 'Creative Brands Co.',
-        type: 'brand',
-        avatar: '/icons/Green_icons/Brief1.png'
-      },
-      category: 'networking',
-      tags: ['networking', 'nyc', 'collaboration'],
-      likes: 12,
-      replies: 15,
-      views: 89,
-      isPinned: false,
-      isLocked: false,
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      lastReply: {
-        author: 'Lisa Rodriguez',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-      }
-    },
-    {
-      id: 'mock-post-3',
-      title: 'Payment Issues - Need Help!',
-      content: 'I completed a project 2 weeks ago but haven\'t received payment yet. The brand said they sent it but I don\'t see it in my account...',
-      author: {
-        id: 'author-3',
-        name: 'Alex Thompson',
-        type: 'creator',
-        avatar: '/icons/Green_icons/UserProfile1.png'
-      },
-      category: 'support',
-      tags: ['payment', 'help', 'urgent'],
-      likes: 5,
-      replies: 12,
-      views: 67,
-      isPinned: false,
-      isLocked: false,
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      lastReply: {
-        author: 'DraftBoard Support',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-      }
-    }
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPosts = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const url = activeCategory === 'all' 
         ? '/api/forums/posts' 
         : `/api/forums/posts?category=${activeCategory}`;
@@ -150,19 +76,17 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
       
       if (response.ok) {
         const data = await response.json();
-        // If no posts returned, use mock data
-        if (data.length === 0) {
-          setPosts(getMockPosts());
-        } else {
-          setPosts(data);
-        }
+        // API returns { posts: [], pagination: {} }
+        const postsArray = Array.isArray(data) ? data : (data.posts || []);
+        setPosts(postsArray);
       } else {
-        // If API fails, use mock data
-        setPosts(getMockPosts());
+        setError('Failed to load forum posts. Please try again.');
+        setPosts([]);
       }
     } catch (error) {
-      // Error fetching posts - use mock data as fallback
-      setPosts(getMockPosts());
+      // Error fetching posts
+      setError('Unable to connect to the server. Please check your connection.');
+      setPosts([]);
     } finally {
       setIsLoading(false);
     }
@@ -343,10 +267,28 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
               <div className="flex justify-center items-center h-full">
                 <div className="text-gray-400">Loading posts...</div>
               </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+                <div className="text-4xl mb-4">⚠️</div>
+                <p className="text-center">{error}</p>
+                <button
+                  onClick={fetchPosts}
+                  className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+                >
+                  Try Again
+                </button>
+              </div>
             ) : filteredPosts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
                 <div className="text-4xl mb-4">💬</div>
-                <p>No posts found</p>
+                <p className="text-center mb-2">No posts found</p>
+                <p className="text-sm text-center text-gray-500">Be the first to start a discussion!</p>
+                <button
+                  onClick={() => setShowNewPost(true)}
+                  className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+                >
+                  Create First Post
+                </button>
               </div>
             ) : (
               <div className="divide-y divide-gray-700">

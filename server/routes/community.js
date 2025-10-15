@@ -21,8 +21,53 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Get all forum posts
-router.get('/posts', authenticateToken, async (req, res) => {
+// Optional authentication middleware - allows public access
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (!err) {
+        req.user = user;
+      }
+    });
+  }
+  next();
+};
+
+// Helper function to get or create User for community features
+async function getOrCreateUser(userId, userType) {
+  let user = await prisma.user.findUnique({ where: { id: userId } });
+  
+  if (!user) {
+    let name = 'User';
+    let avatar = null;
+    
+    if (userType === 'creator') {
+      const creator = await prisma.creator.findUnique({ where: { id: userId } });
+      name = creator?.fullName || creator?.userName || 'Creator';
+    } else if (userType === 'brand') {
+      const brand = await prisma.brand.findUnique({ where: { id: userId } });
+      name = brand?.companyName || 'Brand';
+      avatar = brand?.logo;
+    }
+    
+    user = await prisma.user.create({
+      data: {
+        id: userId,
+        name,
+        type: userType,
+        avatar
+      }
+    });
+  }
+  
+  return user;
+}
+
+// Get all forum posts - PUBLIC ACCESS
+router.get('/posts', optionalAuth, async (req, res) => {
   try {
     const { category, page = 1, limit = 20 } = req.query;
     const skip = (page - 1) * limit;
@@ -35,18 +80,15 @@ router.get('/posts', authenticateToken, async (req, res) => {
     const posts = await prisma.forumPost.findMany({
       where,
       include: {
-        author: {
+        author: true,
+        forumReplies: {
           select: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true
+            id: true
           }
         },
-        _count: {
+        forumLikes: {
           select: {
-            replies: true,
-            likes: true
+            id: true
           }
         }
       },
@@ -58,11 +100,32 @@ router.get('/posts', authenticateToken, async (req, res) => {
       take: parseInt(limit)
     });
 
+    // Transform posts to include reply and like counts
+    const transformedPosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      category: post.category,
+      tags: post.tags,
+      isPinned: post.isPinned,
+      isLocked: post.isLocked,
+      views: post.views,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      author: post.author,
+      likes: post.forumLikes.length,
+      replies: post.forumReplies.length,
+      _count: {
+        likes: post.forumLikes.length,
+        forumReplies: post.forumReplies.length
+      }
+    }));
+
     // Get total count for pagination
     const totalCount = await prisma.forumPost.count({ where });
 
     res.json({
-      posts,
+      posts: transformedPosts,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -72,11 +135,11 @@ router.get('/posts', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching forum posts:', error);
-    res.status(500).json({ error: 'Failed to fetch forum posts' });
+    res.status(500).json({ error: 'Failed to fetch forum posts', details: error.message });
   }
 });
 
-// Get a specific forum post with replies
+// Get a specific forum post with replies  
 router.get('/posts/:postId', authenticateToken, async (req, res) => {
   try {
     const { postId } = req.params;
@@ -84,38 +147,15 @@ router.get('/posts/:postId', authenticateToken, async (req, res) => {
     const post = await prisma.forumPost.findUnique({
       where: { id: postId },
       include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true
-          }
-        },
-        replies: {
+        author: true,
+        forumReplies: {
           include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                type: true,
-                avatar: true
-              }
-            },
-            _count: {
-              select: {
-                likes: true
-              }
-            }
+            author: true,
+            forumLikes: true
           },
           orderBy: { createdAt: 'asc' }
         },
-        _count: {
-          select: {
-            likes: true,
-            views: true
-          }
-        }
+        forumLikes: true
       }
     });
 
@@ -129,10 +169,24 @@ router.get('/posts/:postId', authenticateToken, async (req, res) => {
       data: { views: { increment: 1 } }
     });
 
-    res.json(post);
+    // Transform response
+    const transformedPost = {
+      ...post,
+      likes: post.forumLikes.length,
+      replies: post.forumReplies.map(reply => ({
+        ...reply,
+        likes: reply.forumLikes.length
+      })),
+      _count: {
+        likes: post.forumLikes.length,
+        forumReplies: post.forumReplies.length
+      }
+    };
+
+    res.json(transformedPost);
   } catch (error) {
     console.error('Error fetching forum post:', error);
-    res.status(500).json({ error: 'Failed to fetch forum post' });
+    res.status(500).json({ error: 'Failed to fetch forum post', details: error.message });
   }
 });
 
@@ -141,6 +195,10 @@ router.post('/posts', authenticateToken, async (req, res) => {
   try {
     const { title, content, category, tags } = req.body;
     const userId = req.user.id;
+    const userType = req.user.type;
+
+    // Get or create User record for forum posting
+    await getOrCreateUser(userId, userType);
 
     const post = await prisma.forumPost.create({
       data: {
@@ -151,21 +209,40 @@ router.post('/posts', authenticateToken, async (req, res) => {
         authorId: userId
       },
       include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true
-          }
-        }
+        author: true
       }
     });
 
     res.status(201).json(post);
   } catch (error) {
     console.error('Error creating forum post:', error);
-    res.status(500).json({ error: 'Failed to create forum post' });
+    res.status(500).json({ error: 'Failed to create forum post', details: error.message });
+  }
+});
+
+// Get replies for a post
+router.get('/posts/:postId/replies', authenticateToken, async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const replies = await prisma.forumReply.findMany({
+      where: { postId },
+      include: {
+        author: true,
+        forumLikes: true
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const transformedReplies = replies.map(reply => ({
+      ...reply,
+      likes: reply.forumLikes.length
+    }));
+
+    res.json(transformedReplies);
+  } catch (error) {
+    console.error('Error fetching replies:', error);
+    res.status(500).json({ error: 'Failed to fetch replies', details: error.message });
   }
 });
 
@@ -175,6 +252,10 @@ router.post('/posts/:postId/replies', authenticateToken, async (req, res) => {
     const { postId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
+    const userType = req.user.type;
+
+    // Get or create User record
+    await getOrCreateUser(userId, userType);
 
     // Verify post exists
     const post = await prisma.forumPost.findUnique({
@@ -196,18 +277,11 @@ router.post('/posts/:postId/replies', authenticateToken, async (req, res) => {
         authorId: userId
       },
       include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true
-          }
-        }
+        author: true
       }
     });
 
-    // Update post's reply count and last activity
+    // Update post's reply count
     await prisma.forumPost.update({
       where: { id: postId },
       data: {
@@ -219,7 +293,7 @@ router.post('/posts/:postId/replies', authenticateToken, async (req, res) => {
     res.status(201).json(reply);
   } catch (error) {
     console.error('Error creating reply:', error);
-    res.status(500).json({ error: 'Failed to create reply' });
+    res.status(500).json({ error: 'Failed to create reply', details: error.message });
   }
 });
 
@@ -228,6 +302,10 @@ router.post('/posts/:postId/like', authenticateToken, async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
+    const userType = req.user.type;
+
+    // Get or create User record
+    await getOrCreateUser(userId, userType);
 
     // Check if user already liked this post
     const existingLike = await prisma.forumPostLike.findFirst({
@@ -269,6 +347,10 @@ router.post('/replies/:replyId/like', authenticateToken, async (req, res) => {
   try {
     const { replyId } = req.params;
     const userId = req.user.id;
+    const userType = req.user.type;
+
+    // Get or create User record
+    await getOrCreateUser(userId, userType);
 
     // Check if user already liked this reply
     const existingLike = await prisma.forumReplyLike.findFirst({
@@ -350,8 +432,8 @@ router.post('/replies/:replyId/solution', authenticateToken, async (req, res) =>
   }
 });
 
-// Get success stories
-router.get('/success-stories', authenticateToken, async (req, res) => {
+// Get success stories - PUBLIC ACCESS
+router.get('/success-stories', optionalAuth, async (req, res) => {
   try {
     const { filter, sort, page = 1, limit = 12 } = req.query;
     const skip = (page - 1) * limit;
@@ -378,16 +460,15 @@ router.get('/success-stories', authenticateToken, async (req, res) => {
         brand: {
           select: {
             id: true,
-            name: true,
+            companyName: true,
             logo: true
           }
         },
         creator: {
           select: {
             id: true,
-            name: true,
-            avatar: true,
-            type: true
+            fullName: true,
+            userName: true
           }
         }
       },
@@ -410,12 +491,12 @@ router.get('/success-stories', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching success stories:', error);
-    res.status(500).json({ error: 'Failed to fetch success stories' });
+    res.status(500).json({ error: 'Failed to fetch success stories', details: error.message });
   }
 });
 
 // Get a specific success story
-router.get('/success-stories/:storyId', authenticateToken, async (req, res) => {
+router.get('/success-stories/:storyId', optionalAuth, async (req, res) => {
   try {
     const { storyId } = req.params;
 
@@ -425,9 +506,9 @@ router.get('/success-stories/:storyId', authenticateToken, async (req, res) => {
         brand: {
           select: {
             id: true,
-            name: true,
+            companyName: true,
             logo: true,
-            website: true,
+            socialWebsite: true,
             socialInstagram: true,
             socialTwitter: true,
             socialLinkedIn: true
@@ -436,10 +517,8 @@ router.get('/success-stories/:storyId', authenticateToken, async (req, res) => {
         creator: {
           select: {
             id: true,
-            name: true,
-            avatar: true,
-            type: true,
-            bio: true
+            fullName: true,
+            userName: true
           }
         }
       }
@@ -458,7 +537,7 @@ router.get('/success-stories/:storyId', authenticateToken, async (req, res) => {
     res.json(story);
   } catch (error) {
     console.error('Error fetching success story:', error);
-    res.status(500).json({ error: 'Failed to fetch success story' });
+    res.status(500).json({ error: 'Failed to fetch success story', details: error.message });
   }
 });
 
@@ -501,16 +580,15 @@ router.post('/success-stories', authenticateToken, async (req, res) => {
         brand: {
           select: {
             id: true,
-            name: true,
+            companyName: true,
             logo: true
           }
         },
         creator: {
           select: {
             id: true,
-            name: true,
-            avatar: true,
-            type: true
+            fullName: true,
+            userName: true
           }
         }
       }
@@ -519,7 +597,7 @@ router.post('/success-stories', authenticateToken, async (req, res) => {
     res.status(201).json(story);
   } catch (error) {
     console.error('Error creating success story:', error);
-    res.status(500).json({ error: 'Failed to create success story' });
+    res.status(500).json({ error: 'Failed to create success story', details: error.message });
   }
 });
 

@@ -24,6 +24,7 @@ interface Brief {
   id: string;
   title: string;
   description: string;
+  requirements?: string;
   brandName: string;
   reward: number;
   rewardType?: 'CASH' | 'CREDIT' | 'PRIZES';
@@ -63,6 +64,9 @@ interface Submission {
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
   amount: number;
+  content?: string;
+  contentUrl?: string;
+  additionalInfo?: string;
 }
 
 
@@ -202,7 +206,8 @@ const CreatorDashboard: React.FC = () => {
   } | null>(null);
 
   const [applyFormData, setApplyFormData] = useState({
-    contentUrl: ''
+    contentUrl: '',
+    additionalInfo: ''
   });
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedBriefForApplication, setSelectedBriefForApplication] = useState<Brief | null>(null);
@@ -297,9 +302,13 @@ const CreatorDashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setMarketplaceBriefs(data);
+      } else {
+        // Failed to fetch marketplace briefs
+        setMarketplaceBriefs([]);
       }
     } catch (error) {
-      // console.error('Error fetching marketplace briefs:', error);
+      // Error fetching marketplace briefs
+      setMarketplaceBriefs([]);
     } finally {
       setMarketplaceLoading(false);
     }
@@ -471,13 +480,20 @@ const CreatorDashboard: React.FC = () => {
 
       const payoutsData = await response.json();
       // Transform payouts data to match earnings format
-      const earningsData = payoutsData.data?.map((payout: { id: string; brief: { title: string; brand: { companyName: string } }; netAmount: number; status: string; createdAt: string }) => ({
+      const earningsData = payoutsData.data?.map((payout: { 
+        id: string; 
+        brief: { title: string; brand: { companyName: string } }; 
+        netAmount: number; 
+        status: string; 
+        createdAt: string;
+        paidAt?: string;
+      }) => ({
         id: payout.id,
         briefTitle: payout.brief.title,
         brandName: payout.brief.brand.companyName,
         amount: payout.netAmount,
-        rewardType: 'CASH', // Stripe Connect always pays cash
-        status: payout.status === 'paid' ? 'paid' : 'pending',
+        rewardType: 'CASH' as const, // Stripe Connect always pays cash
+        status: payout.status === 'paid' ? 'paid' as const : 'pending' as const,
         submittedAt: payout.createdAt,
         paidAt: payout.paidAt
       })) || [];
@@ -770,12 +786,12 @@ const CreatorDashboard: React.FC = () => {
 
 
   // Helper function to get submission status for a brief
-  const getSubmissionStatus = (briefId: string) => {
+  const getSubmissionStatus = (briefId: string): 'pending' | 'approved' | 'rejected' | undefined => {
     const brief = availableBriefs.find(b => b.id === briefId);
-    if (!brief) return null;
+    if (!brief) return undefined;
     
     const submission = mySubmissions.find(s => s.briefTitle === brief.title);
-    return submission ? submission.status : null;
+    return submission ? submission.status as 'pending' | 'approved' | 'rejected' : undefined;
   };
 
   // Helper function to get existing submission data for a brief
@@ -1119,9 +1135,11 @@ const CreatorDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {availableBriefs.map((brief) => {
             // Transform the brief data to match BriefCard interface
-            const briefForCard = {
+            const briefForCard: Brief = {
               ...brief,
+              brandName: brief.brandName || brief.brand?.companyName || '',
               description: brief.description || '',
+              requirements: brief.requirements || '',
               amountOfWinners: brief.amountOfWinners || 1,
               totalRewardsPaid: brief.totalRewardsPaid || 0,
 
@@ -1141,9 +1159,9 @@ const CreatorDashboard: React.FC = () => {
               <CreatorBriefCard 
                 key={brief.id}
                 brief={briefForCard} 
-                onApplyClick={(brief) => {
-                  setSelectedBriefForApplication(brief);
-                  setIsEditingApplication(hasSubmittedToBrief(brief.id));
+                onApplyClick={(clickedBrief) => {
+                  setSelectedBriefForApplication(briefForCard);
+                  setIsEditingApplication(hasSubmittedToBrief(clickedBrief.id));
                   setShowApplicationForm(true);
                 }}
                 hasApplied={hasSubmittedToBrief(brief.id)}
@@ -1257,7 +1275,13 @@ const CreatorDashboard: React.FC = () => {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSubmitApplication} className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmitApplication({ 
+                contentUrl: applyFormData.contentUrl, 
+                additionalInfo: applyFormData.additionalInfo 
+              });
+            }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Content Submission link:
@@ -2421,7 +2445,7 @@ const CreatorDashboard: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => {
-                setSelectedBrandId(invite.brand?.id);
+                setSelectedBrandId(invite.brand?.id || null);
               }}
               className={`px-3 py-1 rounded-lg text-xs font-medium ${
                 isDark 
@@ -3365,7 +3389,10 @@ const CreatorDashboard: React.FC = () => {
       {/* Creator Application Form Modal */}
       {selectedBriefForApplication && (
         <CreatorApplicationForm
-          brief={selectedBriefForApplication}
+          brief={{
+            ...selectedBriefForApplication,
+            requirements: selectedBriefForApplication.requirements || ''
+          }}
           isOpen={showApplicationForm}
           onClose={() => {
             setShowApplicationForm(false);
@@ -3376,7 +3403,10 @@ const CreatorDashboard: React.FC = () => {
             await handleSubmitApplication(data);
           }}
           isEdit={isEditingApplication}
-          existingSubmission={isEditingApplication ? getExistingSubmission(selectedBriefForApplication.id) : undefined}
+          existingSubmission={isEditingApplication ? {
+            contentUrl: getExistingSubmission(selectedBriefForApplication.id)?.contentUrl || '',
+            additionalInfo: getExistingSubmission(selectedBriefForApplication.id)?.additionalInfo
+          } : undefined}
         />
       )}
 

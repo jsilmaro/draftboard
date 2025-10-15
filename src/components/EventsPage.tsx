@@ -17,7 +17,7 @@ const EventsPage: React.FC = () => {
               Events & Webinars
             </h1>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Join educational sessions, networking events, and workshops to grow your skills and connect with the community
+              Join educational sessions, networking events, and workshops hosted by our community
             </p>
           </div>
         </div>
@@ -164,8 +164,8 @@ const EventsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Events Modal */}
-      <EventsWebinars isOpen={showEvents} onClose={() => setShowEvents(false)} />
+      {/* Events Modal - READ ONLY for public */}
+      <EventsWebinars isOpen={showEvents} onClose={() => setShowEvents(false)} isPublic={true} />
     </div>
   );
 };

@@ -21,8 +21,53 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Get all events
-router.get('/', authenticateToken, async (req, res) => {
+// Optional authentication middleware - allows public access
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (!err) {
+        req.user = user;
+      }
+    });
+  }
+  next();
+};
+
+// Helper function to get or create User for event registration
+async function getOrCreateUser(userId, userType) {
+  let user = await prisma.user.findUnique({ where: { id: userId } });
+  
+  if (!user) {
+    let name = 'User';
+    let avatar = null;
+    
+    if (userType === 'creator') {
+      const creator = await prisma.creator.findUnique({ where: { id: userId } });
+      name = creator?.fullName || creator?.userName || 'Creator';
+    } else if (userType === 'brand') {
+      const brand = await prisma.brand.findUnique({ where: { id: userId } });
+      name = brand?.companyName || 'Brand';
+      avatar = brand?.logo;
+    }
+    
+    user = await prisma.user.create({
+      data: {
+        id: userId,
+        name,
+        type: userType,
+        avatar
+      }
+    });
+  }
+  
+  return user;
+}
+
+// Get all events - PUBLIC ACCESS
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { filter, category, page = 1, limit = 12 } = req.query;
     const skip = (page - 1) * limit;
@@ -53,13 +98,13 @@ router.get('/', authenticateToken, async (req, res) => {
             id: true,
             name: true,
             type: true,
-            avatar: true,
-            bio: true
+            avatar: true
           }
         },
-        _count: {
+        attendees: {
           select: {
-            attendees: true
+            id: true,
+            userId: true
           }
         }
       },
@@ -71,11 +116,19 @@ router.get('/', authenticateToken, async (req, res) => {
       take: parseInt(limit)
     });
 
+    // Transform events to include attendee count
+    const transformedEvents = events.map(event => ({
+      ...event,
+      _count: {
+        attendees: event.attendees.length
+      }
+    }));
+
     // Get total count for pagination
     const totalCount = await prisma.event.count({ where });
 
     res.json({
-      events,
+      events: transformedEvents,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -85,7 +138,7 @@ router.get('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching events:', error);
-    res.status(500).json({ error: 'Failed to fetch events' });
+    res.status(500).json({ error: 'Failed to fetch events', details: error.message });
   }
 });
 
@@ -102,21 +155,19 @@ router.get('/:eventId', authenticateToken, async (req, res) => {
             id: true,
             name: true,
             type: true,
-            avatar: true,
-            bio: true
-          }
-        },
-        attendees: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
             avatar: true
           }
         },
-        _count: {
-          select: {
-            attendees: true
+        eventRegistrations: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                avatar: true
+              }
+            }
           }
         }
       }
@@ -126,10 +177,19 @@ router.get('/:eventId', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    res.json(event);
+    // Transform response
+    const transformedEvent = {
+      ...event,
+      attendees: event.eventRegistrations.map(reg => reg.user),
+      _count: {
+        attendees: event.eventRegistrations.length
+      }
+    };
+
+    res.json(transformedEvent);
   } catch (error) {
     console.error('Error fetching event:', error);
-    res.status(500).json({ error: 'Failed to fetch event' });
+    res.status(500).json({ error: 'Failed to fetch event', details: error.message });
   }
 });
 
@@ -205,6 +265,10 @@ router.post('/:eventId/register', authenticateToken, async (req, res) => {
   try {
     const { eventId } = req.params;
     const userId = req.user.id;
+    const userType = req.user.type;
+
+    // Get or create User record for event registration
+    await getOrCreateUser(userId, userType);
 
     // Check if event exists and is not full
     const event = await prisma.event.findUnique({
@@ -416,20 +480,8 @@ router.get('/user/registered', authenticateToken, async (req, res) => {
       include: {
         event: {
           include: {
-            host: {
-              select: {
-                id: true,
-                name: true,
-                type: true,
-                avatar: true
-              }
-            }
+            host: true
           }
-        }
-      },
-      orderBy: {
-        event: {
-          date: 'asc'
         }
       }
     });
@@ -439,7 +491,7 @@ router.get('/user/registered', authenticateToken, async (req, res) => {
     res.json(events);
   } catch (error) {
     console.error('Error fetching user events:', error);
-    res.status(500).json({ error: 'Failed to fetch user events' });
+    res.status(500).json({ error: 'Failed to fetch user events', details: error.message });
   }
 });
 
@@ -451,19 +503,27 @@ router.get('/user/hosted', authenticateToken, async (req, res) => {
     const events = await prisma.event.findMany({
       where: { hostId: userId },
       include: {
-        _count: {
+        eventRegistrations: {
           select: {
-            attendees: true
+            id: true
           }
         }
       },
       orderBy: { date: 'desc' }
     });
 
-    res.json(events);
+    // Transform to include count
+    const transformedEvents = events.map(event => ({
+      ...event,
+      _count: {
+        attendees: event.eventRegistrations.length
+      }
+    }));
+
+    res.json(transformedEvents);
   } catch (error) {
     console.error('Error fetching hosted events:', error);
-    res.status(500).json({ error: 'Failed to fetch hosted events' });
+    res.status(500).json({ error: 'Failed to fetch hosted events', details: error.message });
   }
 });
 

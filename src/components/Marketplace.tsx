@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import LoadingSpinner from './LoadingSpinner';
 import MarketplaceNav from './MarketplaceNav';
+import EnhancedMarketplaceBriefCard from './EnhancedMarketplaceBriefCard';
 
 interface Brief {
   id: string;
@@ -36,6 +37,7 @@ interface Brief {
 const Marketplace = () => {
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -45,24 +47,30 @@ const Marketplace = () => {
   const { user } = useAuth();
   const { isDark } = useTheme();
 
-  useEffect(() => {
-    fetchBriefs();
-  }, []);
-
-  const fetchBriefs = async () => {
+  const fetchBriefs = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch('/api/briefs/public');
       if (response.ok) {
         const data = await response.json();
         setBriefs(data);
+      } else {
+        setError('Failed to load briefs. Please try again.');
+        setBriefs([]);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching briefs:', error);
+      // Error fetching briefs
+      setError('Unable to connect to the server. Please check your connection.');
+      setBriefs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBriefs();
+  }, [fetchBriefs]);
 
   // Function to determine brief type based on content
   const getBriefType = (brief: Brief) => {
@@ -140,33 +148,27 @@ const Marketplace = () => {
       }
     });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getDaysRemaining = (deadline: string) => {
-    const now = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{error}</h2>
+          <button
+            onClick={fetchBriefs}
+            className="mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 font-medium"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -328,139 +330,40 @@ const Marketplace = () => {
         </div>
 
         {/* Briefs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBriefs.map((brief) => {
-            const daysRemaining = getDaysRemaining(brief.deadline);
-            const isExpired = daysRemaining < 0;
-            
-            return (
-              <div
-                key={brief.id}
-                className="product-card"
+        {filteredBriefs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>No Briefs Available</h3>
+            <p className={`text-lg mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              {searchTerm || filterType !== 'all' || budgetRange.min || budgetRange.max || deadlineFilter !== 'all'
+                ? 'No briefs match your current filters. Try adjusting your search criteria.'
+                : 'There are no active briefs at the moment. Check back soon for new opportunities!'}
+            </p>
+            {(searchTerm || filterType !== 'all' || budgetRange.min || budgetRange.max || deadlineFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterType('all');
+                  setBudgetRange({ min: '', max: '' });
+                  setDeadlineFilter('all');
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 font-medium"
               >
-                {/* Brand Header */}
-                <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 ${
-                      isDark 
-                        ? 'bg-gray-900 border-gray-800' 
-                        : 'bg-gray-50 border-gray-200'
-                    } border rounded-xl flex items-center justify-center`}>
-                      {brief.brand.logo ? (
-                        <img
-                          src={brief.brand.logo}
-                          alt={brief.brand.companyName}
-                          className="w-8 h-8 rounded"
-                        />
-                      ) : (
-                        <span className={`font-bold text-sm ${
-                          isDark ? 'text-white' : 'text-gray-700'
-                        }`}>
-                          {brief.brand.companyName.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brand.companyName}</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(brief.createdAt)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Brief Content */}
-                <div className="p-4">
-                  <h2 className={`${isDark ? 'text-white' : 'text-gray-900'} text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors`}>
-                    {brief.title}
-                  </h2>
-                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-4 line-clamp-3`}>
-                    {brief.description}
-                  </p>
-
-                  {/* Reward and Stats */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-right">
-                      <div className="product-card-price">
-                        {brief.winnerRewards && brief.winnerRewards.length > 0 
-                          ? formatCurrency(brief.winnerRewards.reduce((sum, r) => sum + (r.cashAmount || 0) + (r.creditAmount || 0), 0))
-                          : formatCurrency(brief.reward)
-                        }
-                      </div>
-                      <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {brief.amountOfWinners} winner{brief.amountOfWinners > 1 ? 's' : ''}
-                      </div>
-                      {brief.winnerRewards && brief.winnerRewards.length > 0 && (
-                        <div className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                          Calculated amounts
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {brief.submissions.length} submissions
-                      </div>
-                      {brief.amountOfWinners > 1 && (
-                        <div className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                          Tiered rewards
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Deadline */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</span>
-                      <span className={`text-sm font-medium ${
-                        isExpired 
-                          ? (isDark ? 'text-red-400' : 'text-red-600')
-                          : (isDark ? 'text-green-400' : 'text-green-600')
-                      }`}>
-                        {isExpired ? 'Expired' : `${daysRemaining} days left`}
-                      </span>
-                    </div>
-                    <div className={`mt-2 rounded-full h-2 ${
-                      isDark ? 'bg-gray-600' : 'bg-gray-200'
-                    }`}>
-                      <div
-                        className={`h-2 rounded-full ${
-                          isExpired 
-                            ? (isDark ? 'bg-red-500' : 'bg-red-500')
-                            : (isDark ? 'bg-green-400' : 'bg-green-500')
-                        }`}
-                        style={{
-                          width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Brief Type Badge */}
-                  <div className="mb-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isDark 
-                        ? 'bg-gray-800 text-gray-300 border border-gray-700' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
-                    }`}>
-                      {getBriefType(brief).charAt(0).toUpperCase() + getBriefType(brief).slice(1)}
-                    </span>
-                  </div>
-
-                  {/* Action Button */}
-                  <Link
-                    to={`/brief/${brief.id}`}
-                    className={`w-full text-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isDark 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                Clear All Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBriefs.map((brief) => (
+              <EnhancedMarketplaceBriefCard
+                key={brief.id}
+                brief={brief}
+                onSubmissionSuccess={fetchBriefs}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Empty State */}
         {filteredBriefs.length === 0 && (

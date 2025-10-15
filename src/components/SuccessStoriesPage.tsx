@@ -187,7 +187,8 @@ const SuccessStoriesPage: React.FC = () => {
       </div>
 
       {/* Success Stories Modal */}
-      <SuccessStories isOpen={showStories} onClose={() => setShowStories(false)} />
+      {/* Success Stories Modal - READ ONLY for public */}
+      <SuccessStories isOpen={showStories} onClose={() => setShowStories(false)} isPublic={true} />
     </div>
   );
 };
