@@ -1,114 +1,223 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import MarketplaceNav from './MarketplaceNav';
 import CommunityForums from './CommunityForums';
 import { useTheme } from '../contexts/ThemeContext';
 
 const CommunityPage: React.FC = () => {
-  const [showForums, setShowForums] = useState(true);
+  const [showForums, setShowForums] = useState(false);
   const { isDark } = useTheme();
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
       <MarketplaceNav />
       
-      {/* Header */}
-      <div className={`border-b ${isDark ? 'bg-gradient-to-r from-gray-900 to-black border-gray-800' : 'bg-white border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
+      {/* Premium Header */}
+      <motion.div 
+        className={`border-b ${isDark ? 'bg-gradient-to-br from-gray-950 to-gray-900 border-gray-800' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'}`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-accent-green to-accent-green-hover bg-clip-text text-transparent mb-6">
               Community
             </h1>
-            <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xl max-w-3xl mx-auto ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Connect with fellow creators and brands, share knowledge, and grow together in our vibrant community
             </p>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Community Features */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {/* Forums Card */}
-          <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+      {/* Premium Community Features */}
+      <motion.div 
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {/* Premium Forums Card */}
+          <motion.div 
+            className={`rounded-2xl border-2 p-8 transition-all duration-500 ${
+              isDark 
+                ? 'bg-gradient-to-br from-gray-900/90 to-gray-800/90 border-gray-700/50 hover:border-accent-green/60 hover:shadow-2xl hover:shadow-accent-green/20' 
+                : 'bg-gradient-to-br from-white to-gray-50/50 border-gray-200 hover:border-accent-green/60 hover:shadow-2xl hover:shadow-accent-green/10'
+            }`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            whileHover={{ 
+              y: -8,
+              transition: { duration: 0.3, ease: "easeOut" }
+            }}
+          >
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/icons/Green_icons/Dashboard1.png" alt="Forums" className="w-8 h-8" />
-              </div>
-              <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Community Forums</h3>
-              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <motion.div 
+                className="w-20 h-20 bg-gradient-to-br from-accent-green to-accent-green-hover rounded-2xl flex items-center justify-center mx-auto mb-6"
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: "0 0 30px rgba(0, 255, 132, 0.4)"
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <img src="/icons/Green_icons/Dashboard1.png" alt="Forums" className="w-10 h-10" />
+              </motion.div>
+              <h3 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Community Forums</h3>
+              <p className={`mb-6 text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Join discussions, ask questions, and share insights with the community
               </p>
-              <button
+              <motion.button
                 onClick={() => setShowForums(true)}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all"
+                className="w-full marketplace-button-premium py-3 px-6 text-lg font-semibold"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Open Forums
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Networking Card */}
-          <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+          {/* Premium Networking Card */}
+          <motion.div 
+            className={`rounded-2xl border-2 p-8 transition-all duration-500 ${
+              isDark 
+                ? 'bg-gradient-to-br from-gray-900/90 to-gray-800/90 border-gray-700/50 hover:border-purple-500/60 hover:shadow-2xl hover:shadow-purple-500/20' 
+                : 'bg-gradient-to-br from-white to-gray-50/50 border-gray-200 hover:border-purple-500/60 hover:shadow-2xl hover:shadow-purple-500/10'
+            }`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            whileHover={{ 
+              y: -8,
+              transition: { duration: 0.3, ease: "easeOut" }
+            }}
+          >
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/icons/Green_icons/UserProfile1.png" alt="Networking" className="w-8 h-8" />
-              </div>
-              <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Networking</h3>
-              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <motion.div 
+                className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: "0 0 30px rgba(168, 85, 247, 0.4)"
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <img src="/icons/Green_icons/UserProfile1.png" alt="Networking" className="w-10 h-10" />
+              </motion.div>
+              <h3 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Networking</h3>
+              <p className={`mb-6 text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Connect with brands and creators for potential collaborations
               </p>
-              <button
+              <motion.button
                 onClick={() => setShowForums(true)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-2 rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-3 px-6 rounded-xl text-lg font-semibold hover:from-purple-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Start Networking
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Support Card */}
-          <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+          {/* Premium Support Card */}
+          <motion.div 
+            className={`rounded-2xl border-2 p-8 transition-all duration-500 ${
+              isDark 
+                ? 'bg-gradient-to-br from-gray-900/90 to-gray-800/90 border-gray-700/50 hover:border-orange-500/60 hover:shadow-2xl hover:shadow-orange-500/20' 
+                : 'bg-gradient-to-br from-white to-gray-50/50 border-gray-200 hover:border-orange-500/60 hover:shadow-2xl hover:shadow-orange-500/10'
+            }`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            whileHover={{ 
+              y: -8,
+              transition: { duration: 0.3, ease: "easeOut" }
+            }}
+          >
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/icons/Green_icons/NotificationBell.png" alt="Support" className="w-8 h-8" />
-              </div>
-              <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Support</h3>
-              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <motion.div 
+                className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: "0 0 30px rgba(249, 115, 22, 0.4)"
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <img src="/icons/Green_icons/NotificationBell.png" alt="Support" className="w-10 h-10" />
+              </motion.div>
+              <h3 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Support</h3>
+              <p className={`mb-6 text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Get help from the community and platform support team
               </p>
-              <button
+              <motion.button
                 onClick={() => setShowForums(true)}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-2 rounded-lg hover:from-orange-600 hover:to-red-700 transition-all"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 px-6 rounded-xl text-lg font-semibold hover:from-orange-600 hover:to-red-700 transition-all shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Get Support
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Community Stats */}
-        <div className={`rounded-lg border p-8 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-          <h2 className={`text-2xl font-bold mb-6 text-center ${isDark ? 'text-white' : 'text-gray-900'}`}>Community Stats</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-400 mb-2">1,200+</div>
-              <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Active Members</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400 mb-2">500+</div>
-              <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Forum Posts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-400 mb-2">2,000+</div>
-              <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Replies</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-400 mb-2">95%</div>
-              <div className={isDark ? 'text-gray-400' : 'text-gray-600'}>Helpful Responses</div>
-            </div>
+        {/* Premium Community Stats */}
+        <motion.div 
+          className={`rounded-2xl border-2 p-10 ${isDark ? 'bg-gradient-to-br from-gray-900/80 to-gray-800/80 border-gray-700/50' : 'bg-gradient-to-br from-white/80 to-gray-50/80 border-gray-200'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+        >
+          <motion.h2 
+            className={`text-3xl font-bold mb-8 text-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            Community Stats
+          </motion.h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { value: "1,200+", label: "Active Members", color: "text-accent-green" },
+              { value: "500+", label: "Forum Posts", color: "text-blue-400" },
+              { value: "2,000+", label: "Replies", color: "text-purple-400" },
+              { value: "95%", label: "Helpful Responses", color: "text-orange-400" }
+            ].map((stat, index) => (
+              <motion.div 
+                key={index}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
+              >
+                <motion.div 
+                  className={`text-4xl font-bold mb-3 ${stat.color}`}
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: index * 0.2
+                  }}
+                >
+                  {stat.value}
+                </motion.div>
+                <div className={`text-lg font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Community Forums Modal - READ ONLY for public */}
       <CommunityForums isOpen={showForums} onClose={() => setShowForums(false)} isPublic={true} />

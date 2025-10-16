@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import SubmissionModal from './SubmissionModal';
@@ -130,28 +131,49 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
 
   return (
     <>
-      <div
-        className={`group relative rounded-2xl overflow-hidden transition-all duration-300 ${
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        whileHover={{ 
+          y: -8,
+          transition: { duration: 0.3, ease: "easeOut" }
+        }}
+        style={{ willChange: 'transform' }}
+        className={`group relative rounded-2xl overflow-hidden transition-all duration-500 ${
           isDark
-            ? `bg-gray-900/90 backdrop-blur-sm border-2 ${isHovered ? 'border-green-500/50 shadow-xl shadow-green-500/20' : 'border-gray-700/50'}`
-            : `bg-white border-2 ${isHovered ? 'border-green-500/50 shadow-xl shadow-green-500/10' : 'border-gray-200'}`
-        } ${isHovered ? 'transform -translate-y-1' : ''}`}
+            ? `bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-sm border-2 ${isHovered ? 'border-accent-green/60 shadow-2xl shadow-accent-green/25' : 'border-gray-700/50'}`
+            : `bg-gradient-to-br from-white to-gray-50/50 border-2 ${isHovered ? 'border-accent-green/60 shadow-2xl shadow-accent-green/20' : 'border-gray-200'}`
+        }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Gradient overlay on hover */}
-        <div className={`absolute inset-0 bg-gradient-to-br from-green-500/0 to-blue-600/0 ${
-          isHovered ? 'from-green-500/5 to-blue-600/5' : ''
-        } transition-all duration-300 pointer-events-none`} />
+        {/* Premium gradient overlay on hover */}
+        <motion.div 
+          className="absolute inset-0 pointer-events-none"
+          animate={{
+            background: isHovered 
+              ? "linear-gradient(135deg, rgba(0, 255, 132, 0.08) 0%, rgba(0, 158, 96, 0.05) 100%)"
+              : "linear-gradient(135deg, rgba(0, 255, 132, 0) 0%, rgba(0, 158, 96, 0) 100%)"
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
 
         {/* Content */}
         <div className="relative p-6">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 ${
-                isHovered ? 'scale-110' : ''
-              } ${isDark ? 'bg-gradient-to-br from-green-500 to-blue-600' : 'bg-gradient-to-br from-green-400 to-blue-500'}`}>
+              <motion.div 
+                className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                  isDark ? 'bg-gradient-to-br from-accent-green to-accent-green-hover' : 'bg-gradient-to-br from-accent-green to-accent-green-hover'
+                }`}
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: "0 0 20px rgba(0, 255, 132, 0.4)"
+                }}
+                transition={{ duration: 0.2 }}
+              >
                 {brief.brand.logo ? (
                   <img
                     src={brief.brand.logo}
@@ -163,7 +185,7 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
                     {brief.brand.companyName.charAt(0).toUpperCase()}
                   </span>
                 )}
-              </div>
+              </motion.div>
               <div className="flex-1 min-w-0">
                 <h3 className={`font-semibold text-sm truncate ${
                   isDark ? 'text-gray-300' : 'text-gray-600'
@@ -198,22 +220,34 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
             {brief.description}
           </p>
 
-          {/* Reward Display */}
-          <div className={`p-4 rounded-xl mb-4 ${
-            isDark ? 'bg-gray-800/50 border border-gray-700/50' : 'bg-gray-50 border border-gray-200'
-          }`}>
+          {/* Premium Reward Display */}
+          <motion.div 
+            className={`p-5 rounded-xl mb-4 ${
+              isDark ? 'bg-gradient-to-br from-gray-800/60 to-gray-700/40 border border-gray-600/30' : 'bg-gradient-to-br from-gray-50 to-white border border-gray-200'
+            }`}
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: "0 8px 25px rgba(0, 255, 132, 0.1)"
+            }}
+            transition={{ duration: 0.2 }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-xs font-medium mb-1 ${
+                <div className={`text-xs font-medium mb-2 ${
                   isDark ? 'text-gray-400' : 'text-gray-600'
                 }`}>
                   Total Reward Pool
                 </div>
-                <div className={`text-2xl font-bold ${
-                  isDark ? 'text-green-400' : 'text-green-600'
-                }`}>
+                <motion.div 
+                  className={`text-2xl font-bold ${
+                    isDark ? 'text-accent-green' : 'text-accent-green'
+                  }`}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
                   {formatCurrency(totalReward)}
-                </div>
+                </motion.div>
               </div>
               <div className="text-right">
                 <div className={`text-xs font-medium mb-1 ${
@@ -228,7 +262,7 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stats Row */}
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -280,71 +314,99 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-2">
-            <Link
-              to={`/brief/${brief.id}`}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-center transition-colors ${
-                isDark
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
+          {/* Premium Action Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }}
             >
-              View Details
-            </Link>
-            {user?.type === 'creator' && (
-              <button
-                onClick={handleApplyClick}
-                disabled={isExpired}
-                className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
-                  isExpired
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : userSubmission
-                    ? isDark
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl'
+              <Link
+                to={`/brief/${brief.id}`}
+                className={`w-full py-3 px-4 rounded-xl font-medium text-center transition-all duration-300 block ${
+                  isDark
+                    ? 'bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 border border-gray-600/50 hover:border-accent-green/30'
+                    : 'bg-white/80 text-gray-700 hover:bg-gray-50/80 border border-gray-300/50 hover:border-accent-green/30'
                 }`}
               >
-                {isExpired ? 'Expired' : userSubmission ? 'Update' : 'Apply Now'}
-              </button>
+                View Details
+              </Link>
+            </motion.div>
+            {user?.type === 'creator' && (
+              <motion.div 
+                whileHover={{ scale: 1.02 }} 
+                whileTap={{ scale: 0.98 }}
+              >
+                <button
+                  onClick={handleApplyClick}
+                  disabled={isExpired}
+                  className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+                    isExpired
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : userSubmission
+                      ? 'bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white shadow-lg hover:shadow-xl hover:shadow-accent-green/25'
+                      : 'bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white shadow-lg hover:shadow-xl hover:shadow-accent-green/25'
+                  }`}
+                >
+                  {isExpired ? 'Expired' : userSubmission ? 'Update' : 'Apply Now'}
+                </button>
+              </motion.div>
             )}
             {!user && (
-              <button
-                onClick={handleApplyClick}
-                className="flex-1 py-2.5 px-4 rounded-lg font-medium bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white transition-all shadow-lg hover:shadow-xl"
+              <motion.div 
+                whileHover={{ scale: 1.02 }} 
+                whileTap={{ scale: 0.98 }}
               >
-                Apply Now
-              </button>
+                <button
+                  onClick={handleApplyClick}
+                  className="w-full py-3 px-4 rounded-xl font-medium bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-accent-green/25"
+                >
+                  Apply Now
+                </button>
+              </motion.div>
             )}
           </div>
 
-          {/* Quick Info Tags */}
+          {/* Premium Quick Info Tags */}
           <div className="flex flex-wrap gap-2 mt-4">
             {brief.rewardTiers && brief.rewardTiers.length > 0 && (
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-700'
-              }`}>
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isDark ? 'bg-accent-green/20 text-accent-green border border-accent-green/30' : 'bg-accent-green/10 text-accent-green border border-accent-green/20'
+                }`}
+              >
                 🏆 {brief.rewardTiers.length} Tiers
-              </span>
+              </motion.span>
             )}
             {brief.submissions && brief.submissions.length > 10 && (
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isDark ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-100 text-orange-700'
-              }`}>
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isDark ? 'bg-orange-900/30 text-orange-400 border border-orange-500/30' : 'bg-orange-100 text-orange-700 border border-orange-200'
+                }`}
+              >
                 🔥 Popular
-              </span>
+              </motion.span>
             )}
             {daysRemaining <= 3 && !isExpired && (
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'
-              }`}>
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isDark ? 'bg-red-900/30 text-red-400 border border-red-500/30' : 'bg-red-100 text-red-700 border border-red-200'
+                }`}
+              >
                 ⚡ Urgent
-              </span>
+              </motion.span>
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Submission Modal */}
       <SubmissionModal
@@ -359,5 +421,6 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
 };
 
 export default EnhancedMarketplaceBriefCard;
+
 
 

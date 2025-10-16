@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Event {
   id: string;
@@ -45,6 +46,7 @@ interface EventsWebinarsProps {
 }
 
 const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
+  const { isDark } = useTheme();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -194,12 +196,12 @@ const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
         <div className="p-6 border-b border-gray-700">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Events & Webinars</h1>
+              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Events & Webinars</h1>
               <p className="text-gray-400 mt-1">Join educational sessions and networking events</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl"
+              className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} text-2xl`}
             >
               ✕
             </button>
@@ -309,7 +311,7 @@ const EventsWebinars: React.FC<EventsWebinarsProps> = ({ isOpen, onClose }) => {
                       </div>
                     </div>
 
-                    <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+                    <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold text-lg mb-2 line-clamp-2 group-hover:text-accent-green transition-colors`}>
                       {event.title}
                     </h3>
 

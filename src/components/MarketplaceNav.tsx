@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Logo from './Logo';
@@ -16,7 +17,12 @@ const MarketplaceNav = () => {
   };
 
   return (
-    <nav className="marketplace-header sticky top-0 z-50">
+    <motion.nav 
+      className="marketplace-header sticky top-0 z-50 backdrop-blur-md"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
@@ -28,14 +34,16 @@ const MarketplaceNav = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/marketplace"
-              className={`marketplace-nav-item ${
-                isActive('/marketplace') ? 'active' : ''
-              }`}
-            >
-              Marketplace
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/marketplace"
+                className={`marketplace-nav-item ${
+                  isActive('/marketplace') ? 'active text-accent-green border-accent-green/30' : ''
+                }`}
+              >
+                Marketplace
+              </Link>
+            </motion.div>
             <Link
               to="/"
               className={`marketplace-nav-item ${
@@ -143,7 +151,7 @@ const MarketplaceNav = () => {
                 </Link>
                 <Link
                   to="/creator/register"
-                  className="marketplace-button text-sm"
+                  className="marketplace-button-premium text-sm"
                 >
                   Join as Creator
                 </Link>
@@ -265,8 +273,8 @@ const MarketplaceNav = () => {
             )}
           </div>
         </div>
-      )}
-    </nav>
+        )}
+      </motion.nav>
   );
 };
 

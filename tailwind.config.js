@@ -63,7 +63,10 @@ export default {
         },
         accent: {
           blue: '#2563EB',
-          green: '#10B981',
+          green: '#00FF84',
+          'green-hover': '#009E60',
+          'green-light': '#33FF99',
+          'green-dark': '#00CC6A',
           purple: '#8B5CF6',
         },
         card: {

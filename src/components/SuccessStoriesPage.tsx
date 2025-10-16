@@ -1,29 +1,40 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import MarketplaceNav from './MarketplaceNav';
 import SuccessStories from './SuccessStories';
 import { useTheme } from '../contexts/ThemeContext';
 
 const SuccessStoriesPage: React.FC = () => {
-  const [showStories, setShowStories] = useState(true);
+  const [showStories, setShowStories] = useState(false);
   const { isDark } = useTheme();
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
       <MarketplaceNav />
       
-      {/* Header */}
-      <div className={`border-b ${isDark ? 'bg-gradient-to-r from-gray-900 to-black border-gray-800' : 'bg-white border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
+      {/* Premium Header */}
+      <motion.div 
+        className={`border-b ${isDark ? 'bg-gradient-to-br from-gray-950 to-gray-900 border-gray-800' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'}`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-accent-green to-accent-green-hover bg-clip-text text-transparent mb-6">
               Success Stories
             </h1>
-            <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xl max-w-3xl mx-auto ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Discover amazing collaborations between brands and creators, and see the incredible results they achieved together
             </p>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Success Story Categories */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

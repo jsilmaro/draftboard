@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SuccessStory {
   id: string;
@@ -43,6 +44,7 @@ interface SuccessStoriesProps {
 }
 
 const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
+  const { isDark } = useTheme();
   const [stories, setStories] = useState<SuccessStory[]>([]);
   const [selectedStory, setSelectedStory] = useState<SuccessStory | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -130,12 +132,12 @@ const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
         <div className="p-6 border-b border-gray-700">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-white">Success Stories</h1>
+              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Success Stories</h1>
               <p className="text-gray-400 mt-1">Discover amazing collaborations and their results</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl"
+              className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} text-2xl`}
             >
               ✕
             </button>
@@ -247,7 +249,7 @@ const SuccessStories: React.FC<SuccessStoriesProps> = ({ isOpen, onClose }) => {
                       <span className="text-gray-400 text-sm capitalize">{story.category}</span>
                     </div>
 
-                    <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+                    <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold text-lg mb-2 line-clamp-2 group-hover:text-accent-green transition-colors`}>
                       {story.title}
                     </h3>
 

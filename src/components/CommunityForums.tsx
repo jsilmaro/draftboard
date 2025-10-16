@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ForumPost {
   id: string;
@@ -45,6 +46,7 @@ interface CommunityForumsProps {
 }
 
 const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) => {
+  const { isDark } = useTheme();
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
   const [replies, setReplies] = useState<ForumReply[]>([]);
@@ -213,17 +215,17 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex">
+    <div className={`fixed inset-0 ${isDark ? 'bg-black bg-opacity-50' : 'bg-gray-900 bg-opacity-50'} flex items-center justify-center z-50`}>
+      <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex`}>
         {/* Posts List */}
-        <div className="w-1/2 border-r border-gray-700 flex flex-col">
+        <div className={`w-1/2 border-r ${isDark ? 'border-gray-700' : 'border-gray-200'} flex flex-col`}>
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-white">Community Forums</h2>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Community Forums</h2>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-white"
+                className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 ✕
               </button>
@@ -243,8 +245,10 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
                   onClick={() => setActiveCategory(key as 'all' | 'tips' | 'networking' | 'support' | 'general')}
                   className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                     activeCategory === key
-                      ? 'bg-green-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      ? 'bg-accent-green text-white'
+                      : isDark 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
                   {label}
@@ -255,7 +259,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
             {/* New Post Button */}
             <button
               onClick={() => setShowNewPost(true)}
-              className="mt-3 w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all"
+              className="mt-3 w-full bg-gradient-to-r from-accent-green to-accent-green-hover text-white py-2 rounded-lg hover:from-accent-green-hover hover:to-accent-green-dark transition-all"
             >
               + New Post
             </button>
@@ -265,27 +269,27 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="flex justify-center items-center h-full">
-                <div className="text-gray-400">Loading posts...</div>
+                <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Loading posts...</div>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+              <div className={`flex flex-col items-center justify-center h-full ${isDark ? 'text-gray-400' : 'text-gray-600'} p-4`}>
                 <div className="text-4xl mb-4">⚠️</div>
                 <p className="text-center">{error}</p>
                 <button
                   onClick={fetchPosts}
-                  className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+                  className="mt-4 px-6 py-2 bg-gradient-to-r from-accent-green to-accent-green-hover text-white rounded-lg hover:from-accent-green-hover hover:to-accent-green-dark"
                 >
                   Try Again
                 </button>
               </div>
             ) : filteredPosts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+              <div className={`flex flex-col items-center justify-center h-full ${isDark ? 'text-gray-400' : 'text-gray-600'} p-4`}>
                 <div className="text-4xl mb-4">💬</div>
                 <p className="text-center mb-2">No posts found</p>
-                <p className="text-sm text-center text-gray-500">Be the first to start a discussion!</p>
+                <p className={`text-sm text-center ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Be the first to start a discussion!</p>
                 <button
                   onClick={() => setShowNewPost(true)}
-                  className="mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700"
+                  className="mt-4 px-6 py-2 bg-gradient-to-r from-accent-green to-accent-green-hover text-white rounded-lg hover:from-accent-green-hover hover:to-accent-green-dark"
                 >
                   Create First Post
                 </button>
@@ -308,7 +312,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-white font-medium truncate">{post.title}</h3>
+                          <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium truncate`}>{post.title}</h3>
                           {post.isPinned && <span className="text-yellow-400">📌</span>}
                           {post.isLocked && <span className="text-red-400">🔒</span>}
                         </div>
@@ -352,7 +356,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
                     alt={selectedPost.category}
                     className="w-6 h-6"
                   />
-                  <h2 className="text-lg font-bold text-white">{selectedPost.title}</h2>
+                  <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selectedPost.title}</h2>
                 </div>
                 <div className="flex items-center space-x-4 text-sm text-gray-400">
                   <span>by {selectedPost.author.name}</span>
@@ -374,7 +378,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
 
               {/* Replies */}
               <div className="flex-1 overflow-y-auto p-4">
-                <h3 className="text-white font-medium mb-4">Replies ({replies.length})</h3>
+                <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium mb-4`}>Replies ({replies.length})</h3>
                 <div className="space-y-4">
                   {replies.map((reply) => (
                     <div key={reply.id} className="bg-gray-800 rounded-lg p-4">
@@ -384,7 +388,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-white font-medium">{reply.author.name}</span>
+                            <span className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>{reply.author.name}</span>
                             <div className="flex items-center space-x-2">
                               {reply.isSolution && (
                                 <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">
@@ -411,7 +415,7 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
                     value={newReply}
                     onChange={(e) => setNewReply(e.target.value)}
                     placeholder="Write a reply..."
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                    className={`flex-1 ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-green resize-none`}
                     rows={3}
                   />
                   <button
@@ -437,10 +441,10 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
 
       {/* New Post Modal */}
       {showNewPost && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60">
-          <div className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-2xl p-6">
+        <div className={`fixed inset-0 ${isDark ? 'bg-black bg-opacity-75' : 'bg-gray-900 bg-opacity-75'} flex items-center justify-center z-60`}>
+          <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl p-6`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Create New Post</h3>
+              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Create New Post</h3>
               <button
                 onClick={() => setShowNewPost(false)}
                 className="text-gray-400 hover:text-white"
@@ -451,22 +455,22 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Title</label>
                 <input
                   type="text"
                   value={newPost.title}
                   onChange={(e) => setNewPost({...newPost, title: e.target.value})}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-green`}
                   placeholder="Enter post title..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Category</label>
                 <select
                   value={newPost.category}
                   onChange={(e) => setNewPost({...newPost, category: e.target.value as 'general' | 'tips' | 'networking' | 'support'})}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-green`}
                 >
                   <option value="general">General</option>
                   <option value="tips">Tips & Tricks</option>
@@ -476,23 +480,23 @@ const CommunityForums: React.FC<CommunityForumsProps> = ({ isOpen, onClose }) =>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Content</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Content</label>
                 <textarea
                   value={newPost.content}
                   onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-green resize-none`}
                   rows={6}
                   placeholder="Write your post content..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Tags (comma-separated)</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Tags (comma-separated)</label>
                 <input
                   type="text"
                   value={newPost.tags}
                   onChange={(e) => setNewPost({...newPost, tags: e.target.value})}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={`w-full ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-green`}
                   placeholder="e.g., design, marketing, tips"
                 />
               </div>

@@ -22,8 +22,10 @@
   --input-focus: #3b82f6;
   --accent-blue: #3b82f6;
   --accent-blue-hover: #2563eb;
-  --accent-green: #10b981;
-  --accent-green-hover: #059669;
+  --accent-green: #00FF84;
+  --accent-green-hover: #009E60;
+  --accent-green-light: #33FF99;
+  --accent-green-dark: #00CC6A;
   --accent-purple: #8b5cf6;
   --accent-purple-hover: #7c3aed;
   --accent-red: #ef4444;
@@ -59,8 +61,10 @@
   --input-focus: #3b82f6;
   --accent-blue: #3b82f6;
   --accent-blue-hover: #2563eb;
-  --accent-green: #34d399;
-  --accent-green-hover: #10b981;
+  --accent-green: #00FF84;
+  --accent-green-hover: #009E60;
+  --accent-green-light: #33FF99;
+  --accent-green-dark: #00CC6A;
   --accent-purple: #a78bfa;
   --accent-purple-hover: #8b5cf6;
   --accent-red: #f87171;
@@ -101,6 +105,49 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Premium Green Accent Animations */
+@keyframes green-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 132, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 132, 0);
+  }
+}
+
+@keyframes green-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 255, 132, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 132, 0.6);
+  }
+}
+
+@keyframes green-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Premium marketplace animations */
+.marketplace-card-premium {
+  animation: green-pulse 2s infinite;
+}
+
+.marketplace-button-premium {
+  background: linear-gradient(45deg, var(--accent-green), var(--accent-green-hover), var(--accent-green));
+  background-size: 200% 200%;
+  animation: green-shimmer 3s ease-in-out infinite;
+}
+
+.marketplace-button-premium:hover {
+  animation: green-glow 1s ease-in-out infinite;
 }
 
 @keyframes fade-in-delay {
@@ -676,6 +723,69 @@ body {
 
 .dark .marketplace-button-secondary:hover {
   background-color: var(--background-tertiary);
+}
+
+/* Premium Green Accent Styles */
+.accent-green-glow {
+  box-shadow: 0 0 20px rgba(0, 255, 132, 0.3);
+}
+
+.accent-green-glow-hover:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 132, 0.4);
+}
+
+.accent-green-border {
+  border: 1px solid var(--accent-green);
+}
+
+.accent-green-gradient {
+  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-hover) 100%);
+}
+
+.accent-green-text {
+  color: var(--accent-green);
+}
+
+.accent-green-bg {
+  background-color: var(--accent-green);
+}
+
+.accent-green-bg-light {
+  background-color: rgba(0, 255, 132, 0.1);
+}
+
+.accent-green-bg-dark {
+  background-color: rgba(0, 255, 132, 0.2);
+}
+
+/* Premium marketplace enhancements */
+.marketplace-card-premium {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(0, 255, 132, 0.02) 100%);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.marketplace-card-premium:hover {
+  border-color: var(--accent-green);
+  box-shadow: 0 8px 25px rgba(0, 255, 132, 0.15);
+  transform: translateY(-2px);
+}
+
+.marketplace-button-premium {
+  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-hover) 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 255, 132, 0.3);
+}
+
+.marketplace-button-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 132, 0.4);
 }
 
 /* Landing page theme-aware effects */
