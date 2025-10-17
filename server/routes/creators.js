@@ -628,4 +628,81 @@ router.get('/invited', authenticateBrand, async (req, res) => {
   }
 });
 
+// Update creator profile
+router.put('/profile', authenticateCreator, async (req, res) => {
+  try {
+    const { fullName, userName, email, socialInstagram, socialTikTok, socialYouTube } = req.body;
+    const creatorId = req.creator.id;
+
+    // Validate required fields
+    if (!fullName || !userName || !email) {
+      return res.status(400).json({ error: 'Full name, username, and email are required' });
+    }
+
+    // Check if username is already taken by another creator
+    if (userName !== req.creator.userName) {
+      const existingCreator = await prisma.creator.findFirst({
+        where: {
+          userName: userName,
+          id: { not: creatorId }
+        }
+      });
+
+      if (existingCreator) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+    }
+
+    // Check if email is already taken by another creator
+    if (email !== req.creator.email) {
+      const existingCreator = await prisma.creator.findFirst({
+        where: {
+          email: email,
+          id: { not: creatorId }
+        }
+      });
+
+      if (existingCreator) {
+        return res.status(400).json({ error: 'Email is already taken' });
+      }
+    }
+
+    // Update creator profile
+    const updatedCreator = await prisma.creator.update({
+      where: { id: creatorId },
+      data: {
+        fullName,
+        userName,
+        email,
+        socialInstagram: socialInstagram || null,
+        socialTikTok: socialTikTok || null,
+        socialYouTube: socialYouTube || null,
+        updatedAt: new Date()
+      },
+      select: {
+        id: true,
+        fullName: true,
+        userName: true,
+        email: true,
+        socialInstagram: true,
+        socialTikTok: true,
+        socialYouTube: true,
+        socialTwitter: true,
+        socialLinkedIn: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    console.log(`✅ Creator profile updated: ${creatorId}`);
+    res.json(updatedCreator);
+  } catch (error) {
+    console.error('❌ Error updating creator profile:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

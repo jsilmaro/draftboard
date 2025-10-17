@@ -114,10 +114,87 @@ interface SearchResult {
 
 const CreatorDashboard: React.FC = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { isDark } = useTheme();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Profile form state
+  const [profileData, setProfileData] = useState({
+    fullName: user?.fullName || '',
+    userName: user?.userName || '',
+    email: user?.email || '',
+    socialInstagram: user?.socialInstagram || '',
+    socialTikTok: user?.socialTikTok || '',
+    socialYouTube: user?.socialYouTube || '',
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Update profile data when user changes
+  useEffect(() => {
+    setProfileData({
+      fullName: user?.fullName || '',
+      userName: user?.userName || '',
+      email: user?.email || '',
+      socialInstagram: user?.socialInstagram || '',
+      socialTikTok: user?.socialTikTok || '',
+      socialYouTube: user?.socialYouTube || '',
+    });
+  }, [user]);
+
+  // Handle form input changes
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle profile save
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      setSaveMessage(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setSaveMessage({ type: 'error', text: 'Not authenticated' });
+        return;
+      }
+
+      const response = await fetch('/api/creators/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        
+        // Update the user context with new data
+        updateUser(updatedUser);
+        
+        setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
+        showToast('Profile updated successfully!', 'success');
+        
+        // Clear message after 3 seconds
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setSaveMessage({ type: 'error', text: errorData.error || 'Failed to update profile' });
+        showToast(errorData.error || 'Failed to update profile', 'error');
+      }
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: 'Network error. Please try again.' });
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Handle query parameter for tab activation (e.g., ?tab=invites)
   useEffect(() => {
@@ -817,7 +894,6 @@ const CreatorDashboard: React.FC = () => {
     { id: 'submissions', label: 'My Submissions', icon: 'submissions' },
     { id: 'earnings', label: 'Earnings', icon: 'payments' },
     { id: 'analytics', label: 'Analytics', icon: 'statistics' },
-    { id: 'portfolio', label: 'Portfolio', icon: 'awards' },
     { id: 'profile', label: 'Profile', icon: 'profile' },
   ], []);
 
@@ -1761,65 +1837,323 @@ const CreatorDashboard: React.FC = () => {
   );
   };
 
-  const renderProfile = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Profile</h2>
-      
-      <div className="bg-gray-900/95 backdrop-blur-md rounded-lg shadow-2xl border-2 border-gray-500/80 p-6">
-        <div className="flex items-center mb-6">
-          <DefaultAvatar name={user?.fullName || user?.userName || 'Creator'} size="lg" className="mr-4" />
-          <div>
-            <h3 className="text-xl font-semibold text-white">{user?.fullName || 'Creator Name'}</h3>
-            <p className="text-gray-300">@{user?.userName || 'username'}</p>
+  const renderProfile = () => {
+    // Calculate portfolio stats from real data
+    const completedProjects = mySubmissions.filter(s => s.status === 'approved').length;
+    const totalEarnings = earnings.reduce((sum, earning) => sum + earning.amount, 0);
+    const successStories = mySubmissions.filter(s => s.status === 'approved').slice(0, 6);
+    const brandInteractions = mySubmissions.reduce((acc, submission) => {
+      const brandName = submission.briefTitle; // This would be the brand name from the brief
+      if (!acc[brandName]) {
+        acc[brandName] = { count: 0, totalEarnings: 0, lastInteraction: submission.submittedAt };
+      }
+      acc[brandName].count += 1;
+      acc[brandName].totalEarnings += submission.amount;
+      return acc;
+    }, {} as Record<string, { count: number; totalEarnings: number; lastInteraction: string }>);
+
+    return (
+      <div className="space-y-8">
+        {/* Modern Header with Glass Effect */}
+        <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700/50' : 'bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-xl border border-gray-200/50'} shadow-2xl`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10"></div>
+          <div className="relative p-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className="relative">
+                <DefaultAvatar name={profileData.fullName || user?.fullName || user?.userName || 'Creator'} size="lg" className="ring-4 ring-green-500/20" />
+                <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  {profileData.fullName || user?.fullName || 'Creator Name'}
+                </h1>
+                <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+                  @{profileData.userName || user?.userName || 'username'}
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'}`}>
+                    {completedProjects} Projects Completed
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-800'}`}>
+                    ${totalEarnings.toFixed(2)} Total Earnings
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-800'}`}>
+                    {Object.keys(brandInteractions).length} Brands Worked With
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-white mb-3">Personal Information</h4>
-            <div className="space-y-3">
+        {/* Profile Information & Social Media */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Personal Information */}
+          <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+            <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+              <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Personal Information
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Full Name</label>
-                <input type="text" defaultValue={user?.fullName || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Full Name</label>
+                <input 
+                  type="text" 
+                  value={profileData.fullName}
+                  onChange={(e) => handleInputChange('fullName', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Username</label>
-                <input type="text" defaultValue={user?.userName || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Username</label>
+                <input 
+                  type="text" 
+                  value={profileData.userName}
+                  onChange={(e) => handleInputChange('userName', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Email</label>
-                <input type="email" defaultValue={user?.email || ''} className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
+                <input 
+                  type="email" 
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
             </div>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-white mb-3">Social Media</h4>
-            <div className="space-y-3">
+          {/* Social Media */}
+          <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+            <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-9 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2" />
+              </svg>
+              Social Media
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Instagram</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Instagram</label>
+                <input 
+                  type="text" 
+                  placeholder="@username" 
+                  value={profileData.socialInstagram}
+                  onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">TikTok</label>
-                <input type="text" placeholder="@username" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>TikTok</label>
+                <input 
+                  type="text" 
+                  placeholder="@username" 
+                  value={profileData.socialTikTok}
+                  onChange={(e) => handleInputChange('socialTikTok', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">YouTube</label>
-                <input type="text" placeholder="Channel URL" className="mt-1 block w-full border border-gray-800 rounded-md px-3 py-2 bg-gray-900 text-white placeholder-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>YouTube</label>
+                <input 
+                  type="text" 
+                  placeholder="Channel URL" 
+                  value={profileData.socialYouTube}
+                  onChange={(e) => handleInputChange('socialYouTube', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 transition-all duration-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500 ${
+                    isDark 
+                      ? 'border-gray-600 bg-gray-800/50 text-white placeholder-gray-400' 
+                      : 'border-gray-300 bg-white/50 text-gray-900 placeholder-gray-500'
+                  }`} 
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6">
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-            Save Changes
+        {/* Brand Interaction History */}
+        <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+          <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Brand Collaboration History
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(brandInteractions).map(([brandName, data]) => (
+              <div key={brandName} className={`p-4 rounded-xl border ${isDark ? 'bg-gray-800/50 border-gray-600' : 'bg-gray-50/50 border-gray-200'} hover:shadow-lg transition-all duration-200`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'}`}>
+                    {data.count} projects
+                  </span>
+                </div>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Total Earnings: ${data.totalEarnings.toFixed(2)}
+                </p>
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  Last: {new Date(data.lastInteraction).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Featured Work Portfolio */}
+        <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+          <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <svg className="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Featured Work & Achievements
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {successStories.map((submission) => (
+              <div key={submission.id} className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800/50 border-gray-600' : 'bg-gray-50/50 border-gray-200'} hover:shadow-lg transition-all duration-200 group`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-green-500 transition-colors`}>
+                    {submission.briefTitle}
+                  </h4>
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                    Approved
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Earnings:</span>
+                    <span className={`font-semibold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                      ${submission.amount}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Completed:</span>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {new Date(submission.submittedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center text-sm">
+                    <svg className="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Success Story</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20' : 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200'} shadow-xl`}>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-green-500 rounded-xl">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Completed Projects</p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{completedProjects}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20' : 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200'} shadow-xl`}>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-500 rounded-xl">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Earnings</p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${totalEarnings.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20' : 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200'} shadow-xl`}>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-purple-500 rounded-xl">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Success Rate</p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {mySubmissions.length > 0 ? Math.round((completedProjects / mySubmissions.length) * 100) : 0}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Save Changes Button */}
+        <div className="flex flex-col items-end space-y-4">
+          {/* Save Status Message */}
+          {saveMessage && (
+            <div className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              saveMessage.type === 'success' 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
+                : 'bg-red-100 text-red-800 border border-red-200'
+            }`}>
+              {saveMessage.text}
+            </div>
+          )}
+          
+          <button 
+            onClick={handleSaveProfile}
+            disabled={isSaving}
+            className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              isSaving 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+            }`}
+          >
+            {isSaving ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Saving...</span>
+              </div>
+            ) : (
+              'Save Changes'
+            )}
           </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderSearchResults = () => (
     <div className="space-y-6">
@@ -2229,102 +2563,6 @@ const CreatorDashboard: React.FC = () => {
     </div>
   );
 
-  const renderPortfolio = () => (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
-          Portfolio
-        </h1>
-        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg`}>
-          Showcase your work and achievements
-        </p>
-      </div>
-
-      {/* Portfolio Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Completed Projects
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {mySubmissions.filter(s => s.status === 'approved').length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            </div>
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Rating
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                4.8/5
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Total Earnings
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                ${earnings.reduce((sum, earning) => sum + earning.amount, 0).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Work */}
-      <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          Featured Work
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mySubmissions.filter(s => s.status === 'approved').slice(0, 6).map((submission) => (
-            <div key={submission.id} className={`p-4 rounded-lg border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {submission.briefTitle}
-                </h4>
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                  Approved
-                </span>
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Earned: ${submission.amount}
-              </p>
-              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                {new Date(submission.submittedAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   // Fetch invites when tab is activated
   const fetchInvites = useCallback(async () => {
@@ -2682,8 +2920,6 @@ const CreatorDashboard: React.FC = () => {
         return renderInvites();
       case 'analytics':
         return renderAnalytics();
-      case 'portfolio':
-        return renderPortfolio();
       case 'profile':
         return renderProfile();
       default:
@@ -3029,7 +3265,6 @@ const CreatorDashboard: React.FC = () => {
                  activeTab === 'wallet' ? 'Wallet' :
                  activeTab === 'invites' ? 'Invitations' :
                  activeTab === 'analytics' ? 'Analytics' :
-                 activeTab === 'portfolio' ? 'Portfolio' :
                  activeTab === 'profile' ? 'Profile' : 'Dashboard'}
               </h1>
               

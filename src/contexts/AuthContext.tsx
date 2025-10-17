@@ -8,6 +8,11 @@ interface User {
   companyName?: string;
   userName?: string;
   fullName?: string;
+  socialInstagram?: string;
+  socialTikTok?: string;
+  socialYouTube?: string;
+  socialTwitter?: string;
+  socialLinkedIn?: string;
 }
 
 interface AuthContextType {
@@ -15,6 +20,7 @@ interface AuthContextType {
   login: (userData: User, token: string) => void;
   googleLogin: (googleUserData: User, token: string) => void;
   adminLogin: (userData: User, token: string) => void;
+  updateUser: (userData: Partial<User>) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -105,6 +111,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     navigate('/admin/dashboard');
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...userData } : null);
+    
+    // Update local storage
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const updatedUser = { ...currentUser, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -118,6 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     googleLogin,
     adminLogin,
+    updateUser,
     logout,
     isAuthenticated,
     isLoading,
