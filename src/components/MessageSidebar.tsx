@@ -108,8 +108,24 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Search Bar */}
+      {/* Search Bar with Add Chat Button */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className={`text-lg font-semibold flex-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Messages
+          </h2>
+          <button
+            onClick={() => setShowUserSearchModal(true)}
+            className={`p-2 rounded-lg transition-colors hover:bg-accent/10 ${
+              isDark ? 'text-accent' : 'text-accent'
+            }`}
+            title="Start new conversation"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
