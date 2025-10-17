@@ -76,6 +76,14 @@ const MarketplaceNav = () => {
             >
               Success Stories
             </Link>
+            <Link
+              to="/messages"
+              className={`marketplace-nav-item ${
+                isActive('/messages') ? 'active' : ''
+              }`}
+            >
+              Messages
+            </Link>
             
             {/* User-specific links */}
             {user && (
@@ -211,6 +219,17 @@ const MarketplaceNav = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Home
+            </Link>
+            <Link
+              to="/messages"
+              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                isActive('/messages') 
+                  ? (isDark ? 'text-green-400 bg-gray-800' : 'text-blue-600 bg-blue-50')
+                  : (isDark ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100')
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Messages
             </Link>
             
             {user && (

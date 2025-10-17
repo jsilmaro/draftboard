@@ -24,6 +24,7 @@ import PublicBriefDetails from './components/PublicBriefDetails'
 import CommunityPage from './components/CommunityPage'
 import EventsPage from './components/EventsPage'
 import SuccessStoriesPage from './components/SuccessStoriesPage'
+import MessagingSystem from './components/MessagingSystem'
 import NotificationsPage from './pages/NotificationsPage'
 import NotificationDetailPage from './pages/NotificationDetailPage'
 import { AuthProvider } from './contexts/AuthContext'
@@ -59,6 +60,7 @@ function App() {
               <Route path="/community" element={<CommunityPage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/success-stories" element={<SuccessStoriesPage />} />
+              <Route path="/messages" element={<MessagingSystem />} />
               
               {/* Authentication Routes */}
               <Route path="/login" element={<LoginForm />} />
