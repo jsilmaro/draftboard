@@ -1,16 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/[...path].js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/stripe/webhook.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/test.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
