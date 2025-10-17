@@ -3,22 +3,56 @@ import { motion } from 'framer-motion';
 import MarketplaceNav from './MarketplaceNav';
 import SuccessStories from './SuccessStories';
 import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from './GlassCard';
 
 const SuccessStoriesPage: React.FC = () => {
   const [showStories, setShowStories] = useState(false);
   const { isDark } = useTheme();
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white' 
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
+    }`}>
       <MarketplaceNav />
       
-      {/* Premium Header */}
+      {/* Tripzy-inspired Header */}
       <motion.div 
-        className={`border-b ${isDark ? 'bg-gradient-to-br from-gray-950 to-gray-900 border-gray-800' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'}`}
+        className="relative overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
+        {/* Animated background particles */}
+        <div className="absolute inset-0">
+          {[...Array(18)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-accent/30 rounded-full"
+              animate={{
+                x: [0, 70, -70, 0],
+                y: [0, -70, 70, 0],
+                opacity: [0, 0.7, 0],
+              }}
+              transition={{
+                duration: 7 + i * 0.3,
+                repeat: Infinity,
+                delay: i * 0.15,
+              }}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+            />
+          ))}
+        </div>
+        
+        <div className={`relative backdrop-blur-md border-b ${
+          isDark 
+            ? 'bg-gray-900/40 border-gray-800/50' 
+            : 'bg-white/60 border-gray-200/50'
+        }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <motion.div 
             className="text-center"
@@ -26,13 +60,31 @@ const SuccessStoriesPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-accent-green to-accent-green-hover bg-clip-text text-transparent mb-6">
-              Success Stories
+            {/* New feature banner */}
+            <motion.div 
+              className="inline-flex items-center px-4 py-2 rounded-full bg-accent/10 border border-accent/30 mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <span className="text-accent text-sm font-medium">🏆 New: Success story video testimonials just launched</span>
+            </motion.div>
+            
+            <h1 className={`text-6xl font-bold mb-6 leading-tight ${
+              isDark 
+                ? 'bg-gradient-to-r from-white via-green-500 to-white bg-clip-text text-transparent' 
+                : 'text-gray-900'
+            }`}>
+              Success Stories – Win Smarter,<br />
+              Achieve Better, Inspire Others
             </h1>
-            <p className={`text-xl max-w-3xl mx-auto ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              Discover amazing collaborations between brands and creators, and see the incredible results they achieved together
+            <p className={`text-xl mb-12 max-w-3xl mx-auto leading-relaxed ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              Discover amazing collaborations between brands and creators, and see the incredible results they achieved together. Get inspired by real success stories and learn from the best.
             </p>
           </motion.div>
+        </div>
         </div>
       </motion.div>
 
@@ -40,44 +92,40 @@ const SuccessStoriesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Creative Success */}
-          <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/icons/Green_icons/Campaign1.png" alt="Creative" className="w-8 h-8" />
-              </div>
-              <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Creative Projects</h3>
-              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Stunning visual campaigns, social media content, and creative collaborations
-              </p>
-              <div className="text-purple-400 text-sm font-medium mb-4">45+ Success Stories</div>
-              <button
-                onClick={() => setShowStories(true)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-2 rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all"
-              >
-                View Creative Stories
-              </button>
+          <GlassCard delay={0.3} className="p-6 text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500/20 to-pink-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <img src="/icons/Green_icons/Campaign1.png" alt="Creative" className="w-8 h-8" />
             </div>
-          </div>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Creative Projects</h3>
+            <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Stunning visual campaigns, social media content, and creative collaborations
+            </p>
+            <div className="text-accent text-sm font-medium mb-4">45+ Success Stories</div>
+            <button
+              onClick={() => setShowStories(true)}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-2 rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all"
+            >
+              View Creative Stories
+            </button>
+          </GlassCard>
 
           {/* Technical Success */}
-          <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/icons/Green_icons/Dashboard1.png" alt="Technical" className="w-8 h-8" />
-              </div>
-              <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Technical Projects</h3>
-              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                App development, website creation, and technical solution implementations
-              </p>
-              <div className="text-blue-400 text-sm font-medium mb-4">28+ Success Stories</div>
-              <button
-                onClick={() => setShowStories(true)}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-2 rounded-lg hover:from-blue-600 hover:to-cyan-700 transition-all"
-              >
-                View Technical Stories
-              </button>
+          <GlassCard delay={0.4} className="p-6 text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500/20 to-cyan-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <img src="/icons/Green_icons/Dashboard1.png" alt="Technical" className="w-8 h-8" />
             </div>
-          </div>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Technical Projects</h3>
+            <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              App development, website creation, and technical solution implementations
+            </p>
+            <div className="text-accent text-sm font-medium mb-4">28+ Success Stories</div>
+            <button
+              onClick={() => setShowStories(true)}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-2 rounded-lg hover:from-blue-600 hover:to-cyan-700 transition-all"
+            >
+              View Technical Stories
+            </button>
+          </GlassCard>
 
           {/* Business Success */}
           <div className={`rounded-lg border p-6 transition-colors ${isDark ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}>

@@ -39,8 +39,8 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   --gradient-secondary: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.3);
 }
 
 .dark {
@@ -710,6 +710,25 @@ body {
 .marketplace-nav-item.active {
   color: var(--accent-blue);
   background-color: rgba(37, 99, 235, 0.1);
+}
+
+/* Light mode specific overrides */
+.light .marketplace-search {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--foreground);
+}
+
+.light .marketplace-search:focus {
+  background-color: var(--input-bg);
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.light .marketplace-button-secondary:hover {
+  background-color: var(--background-secondary);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
 }
 
 /* Dark mode specific overrides */

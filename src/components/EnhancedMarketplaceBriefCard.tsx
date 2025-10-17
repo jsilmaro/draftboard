@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import SubmissionModal from './SubmissionModal';
@@ -51,7 +50,6 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
   const { user } = useAuth();
   const { isDark } = useTheme();
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const getDaysRemaining = () => {
     const now = new Date();
@@ -70,7 +68,6 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
 
   const daysRemaining = getDaysRemaining();
   const isExpired = daysRemaining < 0;
-  const totalReward = brief.reward * brief.amountOfWinners;
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -96,317 +93,155 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
     }
   };
 
-  const getStatusBadge = () => {
-    if (userSubmission) {
-      const status = userSubmission.status;
-      if (status === 'approved' || status === 'winner') {
-        return (
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-            ✓ {status === 'winner' ? 'Winner' : 'Approved'}
-          </div>
-        );
-      } else if (status === 'rejected') {
-        return (
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-            ✗ Rejected
-          </div>
-        );
-      } else {
-        return (
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-            ⏳ Pending
-          </div>
-        );
-      }
-    }
-    return null;
-  };
 
-  const getTimeRemainingColor = () => {
-    if (isExpired) return 'text-red-500';
-    if (daysRemaining <= 3) return 'text-yellow-500';
-    if (daysRemaining <= 7) return 'text-orange-500';
-    return isDark ? 'text-green-400' : 'text-green-600';
+  const getBriefType = (brief: Brief) => {
+    const content = (brief.title + ' ' + brief.description).toLowerCase();
+    
+    // Technical keywords
+    if (content.includes('code') || content.includes('development') || content.includes('programming') || 
+        content.includes('api') || content.includes('software') || content.includes('technical') ||
+        content.includes('backend') || content.includes('frontend') || content.includes('database')) {
+      return 'technical';
+    }
+    
+    // Business keywords
+    if (content.includes('strategy') || content.includes('business') || content.includes('consulting') ||
+        content.includes('marketing') || content.includes('sales') || content.includes('analysis') ||
+        content.includes('research') || content.includes('planning')) {
+      return 'business';
+    }
+    
+    // Default to creative for design, content, and other creative work
+    return 'creative';
   };
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        whileHover={{ 
-          y: -8,
-          transition: { duration: 0.3, ease: "easeOut" }
-        }}
-        style={{ willChange: 'transform' }}
-        className={`group relative rounded-2xl overflow-hidden transition-all duration-500 ${
-          isDark
-            ? `bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-sm border-2 ${isHovered ? 'border-accent-green/60 shadow-2xl shadow-accent-green/25' : 'border-gray-700/50'}`
-            : `bg-gradient-to-br from-white to-gray-50/50 border-2 ${isHovered ? 'border-accent-green/60 shadow-2xl shadow-accent-green/20' : 'border-gray-200'}`
-        }`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Premium gradient overlay on hover */}
-        <motion.div 
-          className="absolute inset-0 pointer-events-none"
-          animate={{
-            background: isHovered 
-              ? "linear-gradient(135deg, rgba(0, 255, 132, 0.08) 0%, rgba(0, 158, 96, 0.05) 100%)"
-              : "linear-gradient(135deg, rgba(0, 255, 132, 0) 0%, rgba(0, 158, 96, 0) 100%)"
-          }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        />
-
-        {/* Content */}
-        <div className="relative p-6">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <motion.div 
-                className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                  isDark ? 'bg-gradient-to-br from-accent-green to-accent-green-hover' : 'bg-gradient-to-br from-accent-green to-accent-green-hover'
-                }`}
-                whileHover={{ 
-                  scale: 1.1,
-                  boxShadow: "0 0 20px rgba(0, 255, 132, 0.4)"
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                {brief.brand.logo ? (
-                  <img
-                    src={brief.brand.logo}
-                    alt={brief.brand.companyName}
-                    className="w-8 h-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  <span className="text-white font-bold text-lg">
-                    {brief.brand.companyName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </motion.div>
-              <div className="flex-1 min-w-0">
-                <h3 className={`font-semibold text-sm truncate ${
-                  isDark ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {brief.brand.companyName}
-                </h3>
-                {brief.location && (
-                  <p className={`text-xs truncate ${
-                    isDark ? 'text-gray-500' : 'text-gray-400'
-                  }`}>
-                    📍 {brief.location}
-                  </p>
-                )}
-              </div>
+      <div className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:scale-105 ${
+        isDark 
+          ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600' 
+          : 'bg-white border-gray-200 hover:border-gray-300'
+      }`}>
+        
+        {/* Header with Brand Info and Payout Rate */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+              {brief.brand.logo ? (
+                <img
+                  src={brief.brand.logo}
+                  alt={brief.brand.companyName}
+                  className="w-5 h-5 rounded object-cover"
+                />
+              ) : (
+                <span className="text-white font-bold text-sm">
+                  {brief.brand.companyName.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
-            {getStatusBadge()}
-          </div>
-
-          {/* Title */}
-          <Link to={`/brief/${brief.id}`}>
-            <h2 className={`text-xl font-bold mb-3 line-clamp-2 transition-colors ${
-              isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'
-            }`}>
-              {brief.title}
-            </h2>
-          </Link>
-
-          {/* Description */}
-          <p className={`text-sm line-clamp-3 mb-4 ${
-            isDark ? 'text-gray-400' : 'text-gray-600'
-          }`}>
-            {brief.description}
-          </p>
-
-          {/* Premium Reward Display */}
-          <motion.div 
-            className={`p-5 rounded-xl mb-4 ${
-              isDark ? 'bg-gradient-to-br from-gray-800/60 to-gray-700/40 border border-gray-600/30' : 'bg-gradient-to-br from-gray-50 to-white border border-gray-200'
-            }`}
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: "0 8px 25px rgba(0, 255, 132, 0.1)"
-            }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className={`text-xs font-medium mb-2 ${
-                  isDark ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  Total Reward Pool
-                </div>
-                <motion.div 
-                  className={`text-2xl font-bold ${
-                    isDark ? 'text-accent-green' : 'text-accent-green'
-                  }`}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  {formatCurrency(totalReward)}
-                </motion.div>
-              </div>
-              <div className="text-right">
-                <div className={`text-xs font-medium mb-1 ${
-                  isDark ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  Winners
-                </div>
-                <div className={`text-2xl font-bold ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {brief.amountOfWinners}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className={`p-3 rounded-lg text-center ${
-              isDark ? 'bg-gray-800/30' : 'bg-gray-50'
-            }`}>
-              <div className={`text-lg font-bold ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
-                {brief.submissions?.length || 0}
-              </div>
-              <div className={`text-xs ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Applications
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg text-center ${
-              isDark ? 'bg-gray-800/30' : 'bg-gray-50'
-            }`}>
-              <div className={`text-lg font-bold ${getTimeRemainingColor()}`}>
-                {isExpired ? 'Expired' : `${daysRemaining}d`}
-              </div>
-              <div className={`text-xs ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Remaining
-              </div>
+            <div>
+              <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {brief.brand.companyName}
+              </h3>
             </div>
           </div>
+          <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+            {formatCurrency(brief.reward)} / Winner
+          </div>
+        </div>
 
-          {/* Deadline Progress Bar */}
-          <div className="mb-4">
-            <div className={`h-2 rounded-full overflow-hidden ${
-              isDark ? 'bg-gray-800' : 'bg-gray-200'
-            }`}>
+        {/* Campaign Details */}
+        <div className="p-4">
+          <h4 className={`font-semibold text-base mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {brief.title}
+          </h4>
+          
+          {/* Payout Progress */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                ${brief.reward * brief.amountOfWinners} total reward pool
+              </span>
+              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {brief.amountOfWinners} winners
+              </span>
+            </div>
+            <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
               <div
-                className={`h-full transition-all duration-300 ${
-                  isExpired
-                    ? 'bg-red-500'
-                    : daysRemaining <= 3
-                    ? 'bg-yellow-500'
-                    : 'bg-gradient-to-r from-green-500 to-blue-600'
-                }`}
+                className="h-full bg-orange-500 transition-all duration-300"
                 style={{
-                  width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%`
+                  width: `${Math.min(100, ((brief.submissions?.length || 0) / brief.amountOfWinners) * 100)}%`
                 }}
               />
             </div>
           </div>
 
-          {/* Premium Action Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <motion.div 
-              whileHover={{ scale: 1.02 }} 
-              whileTap={{ scale: 0.98 }}
-            >
-              <Link
-                to={`/brief/${brief.id}`}
-                className={`w-full py-3 px-4 rounded-xl font-medium text-center transition-all duration-300 block ${
-                  isDark
-                    ? 'bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 border border-gray-600/50 hover:border-accent-green/30'
-                    : 'bg-white/80 text-gray-700 hover:bg-gray-50/80 border border-gray-300/50 hover:border-accent-green/30'
-                }`}
-              >
-                View Details
-              </Link>
-            </motion.div>
-            {user?.type === 'creator' && (
-              <motion.div 
-                whileHover={{ scale: 1.02 }} 
-                whileTap={{ scale: 0.98 }}
-              >
-                <button
-                  onClick={handleApplyClick}
-                  disabled={isExpired}
-                  className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
-                    isExpired
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : userSubmission
-                      ? 'bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white shadow-lg hover:shadow-xl hover:shadow-accent-green/25'
-                      : 'bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white shadow-lg hover:shadow-xl hover:shadow-accent-green/25'
-                  }`}
-                >
-                  {isExpired ? 'Expired' : userSubmission ? 'Update' : 'Apply Now'}
-                </button>
-              </motion.div>
-            )}
-            {!user && (
-              <motion.div 
-                whileHover={{ scale: 1.02 }} 
-                whileTap={{ scale: 0.98 }}
-              >
-                <button
-                  onClick={handleApplyClick}
-                  className="w-full py-3 px-4 rounded-xl font-medium bg-gradient-to-r from-accent-green to-accent-green-hover hover:from-accent-green-hover hover:to-accent-green-dark text-white transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-accent-green/25"
-                >
-                  Apply Now
-                </button>
-              </motion.div>
-            )}
+          {/* Campaign Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Type</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {getBriefType(brief).charAt(0).toUpperCase() + getBriefType(brief).slice(1)}
+              </p>
+            </div>
+            <div>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Platforms</p>
+              <div className="flex space-x-1">
+                <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                  <span className="text-white text-xs">I</span>
+                </div>
+                <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
+                  <span className="text-white text-xs">T</span>
+                </div>
+                <div className="w-4 h-4 bg-red-500 rounded flex items-center justify-center">
+                  <span className="text-white text-xs">Y</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Applications</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {brief.submissions?.length || 0}
+              </p>
+            </div>
           </div>
 
-          {/* Premium Quick Info Tags */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {brief.rewardTiers && brief.rewardTiers.length > 0 && (
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-                  isDark ? 'bg-accent-green/20 text-accent-green border border-accent-green/30' : 'bg-accent-green/10 text-accent-green border border-accent-green/20'
+          {/* Action Buttons */}
+          <div className="flex space-x-2">
+            <Link
+              to={`/brief/${brief.id}`}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium text-center transition-all duration-300 ${
+                isDark 
+                  ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              View Details
+            </Link>
+            {user?.type === 'creator' && (
+              <button
+                onClick={handleApplyClick}
+                disabled={isExpired}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  isExpired
+                    ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                    : 'bg-accent text-black hover:bg-accent/90'
                 }`}
               >
-                🏆 {brief.rewardTiers.length} Tiers
-              </motion.span>
+                {isExpired ? 'Expired' : userSubmission ? 'Update' : 'Apply Now'}
+              </button>
             )}
-            {brief.submissions && brief.submissions.length > 10 && (
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-                  isDark ? 'bg-orange-900/30 text-orange-400 border border-orange-500/30' : 'bg-orange-100 text-orange-700 border border-orange-200'
-                }`}
+            {!user && (
+              <button
+                onClick={handleApplyClick}
+                className="flex-1 py-2 px-4 bg-accent text-black rounded-lg text-sm font-medium hover:bg-accent/90 transition-all duration-300"
               >
-                🔥 Popular
-              </motion.span>
-            )}
-            {daysRemaining <= 3 && !isExpired && (
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-                  isDark ? 'bg-red-900/30 text-red-400 border border-red-500/30' : 'bg-red-100 text-red-700 border border-red-200'
-                }`}
-              >
-                ⚡ Urgent
-              </motion.span>
+                Apply Now
+              </button>
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Submission Modal */}
       <SubmissionModal

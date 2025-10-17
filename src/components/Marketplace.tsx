@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import MarketplaceNav from './MarketplaceNav';
 import EnhancedMarketplaceBriefCard from './EnhancedMarketplaceBriefCard';
@@ -44,8 +42,6 @@ const Marketplace = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [budgetRange, setBudgetRange] = useState({ min: '', max: '' });
   const [deadlineFilter, setDeadlineFilter] = useState('all');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const { user } = useAuth();
   const { isDark } = useTheme();
 
   const fetchBriefs = useCallback(async () => {
@@ -219,188 +215,102 @@ const Marketplace = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'} ${isDark ? 'text-white' : 'text-gray-900'}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isDark 
+        ? 'bg-gray-900 text-white' 
+        : 'bg-white text-gray-900'
+    }`}>
       <MarketplaceNav />
       
-      {/* Premium Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`${isDark ? 'bg-gradient-to-br from-gray-950 to-gray-900 border-gray-800' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'} border-b`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <h1 className={`text-4xl font-bold bg-gradient-to-r ${
-                isDark ? 'from-white to-gray-300' : 'from-gray-900 to-gray-700'
-              } bg-clip-text text-transparent`}>
-                Marketplace
-              </h1>
-              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-3 text-lg`}>
-                Discover creative opportunities from top brands
-              </p>
-            </motion.div>
-            <motion.div 
-              className="mt-4 lg:mt-0 flex space-x-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              {!user ? (
-                <>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      to="/creator/register"
-                      className="marketplace-button-premium"
-                    >
-                      Join as Creator
-                    </Link>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      to="/login"
-                      className="marketplace-button-secondary"
-                    >
-                      Sign In
-                    </Link>
-                  </motion.div>
-                </>
-              ) : (
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link
-                    to="/creator/dashboard"
-                    className="marketplace-button-premium"
-                  >
-                    My Dashboard
-                  </Link>
-                </motion.div>
-              )}
-            </motion.div>
+      {/* Whop-style Clean Header */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center"
+        >
+          <div className="mb-4 flex justify-center">
+            <img 
+              src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+              alt="DraftBoard" 
+              className="h-12 w-auto"
+            />
           </div>
-        </div>
-      </motion.div>
-
-      {/* Premium Filters and Search */}
-      <motion.div 
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <div className={`${isDark ? 'bg-gradient-to-br from-gray-950/80 to-gray-900/80 border-gray-800' : 'bg-gradient-to-br from-white/80 to-gray-50/80 border-gray-200'} border rounded-2xl p-8 mb-8 shadow-lg backdrop-blur-sm`}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Premium Search */}
-            <div className="md:col-span-2">
-              <motion.input
-                type="text"
-                placeholder="Search briefs, brands, or keywords..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`${isDark ? 'bg-gray-900/80 border-gray-700 text-white placeholder-gray-400' : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-xl px-5 py-4 w-full focus:outline-none focus:ring-2 focus:ring-accent-green/50 focus:border-accent-green/50 transition-all duration-300 backdrop-blur-sm`}
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              />
-            </div>
-
-            {/* Brief Template Filter */}
-            <div>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500`}
-              >
-                <option value="all">All Templates</option>
-                <option value="creative">Social Media Campaign</option>
-                <option value="technical">Product Review</option>
-                <option value="business">Brand Partnership</option>
-                <option value="content">Content Creation</option>
-                <option value="influencer">Influencer Marketing</option>
-                <option value="video">Video Production</option>
-                <option value="photography">Photography</option>
-                <option value="writing">Copywriting</option>
-                <option value="design">Graphic Design</option>
-              </select>
-            </div>
-
-            {/* Sort */}
-            <div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500`}
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="reward-high">Highest Reward</option>
-                <option value="reward-low">Lowest Reward</option>
-                <option value="deadline">Deadline</option>
-              </select>
-            </div>
-          </div>
+          <p className={`text-lg mb-12 ${
+            isDark ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Where creators find their next opportunity
+          </p>
           
-          {/* Advanced Filters Toggle */}
-          <div className="mt-4 flex justify-between items-center">
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`${isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'} text-sm font-medium flex items-center transition-colors`}
-            >
-              {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
-              <span className="ml-1">{showAdvancedFilters ? '▲' : '▼'}</span>
-            </button>
-            <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
-              {filteredBriefs.length} briefs found
-            </span>
-          </div>
-
-          {/* Advanced Filters */}
-          {showAdvancedFilters && (
-            <div className={`mt-4 pt-4 border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Budget Range */}
-                <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Budget Range</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      placeholder="Min $"
-                      value={budgetRange.min}
-                      onChange={(e) => setBudgetRange({...budgetRange, min: e.target.value})}
-                      className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max $"
-                      value={budgetRange.max}
-                      onChange={(e) => setBudgetRange({...budgetRange, max: e.target.value})}
-                      className={`${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
-                    />
-                  </div>
-                </div>
-
-                {/* Deadline Filter */}
-                <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Deadline</label>
-                  <select
-                    value={deadlineFilter}
-                    onChange={(e) => setDeadlineFilter(e.target.value)}
-                    className="marketplace-input text-sm"
-                  >
-                    <option value="all">Any Deadline</option>
-                    <option value="urgent">Urgent (&le;3 days)</option>
-                    <option value="week">This Week (&le;7 days)</option>
-                    <option value="month">This Month (&le;30 days)</option>
-                      <option value="long-term">Long-term (&gt;30 days)</option>
-                  </select>
-                </div>
-
-              </div>
+          {/* Whop-style Search Bar */}
+          <div className="relative max-w-2xl mx-auto">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          )}
+            <motion.input
+              type="text"
+              placeholder="Search briefs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+                isDark 
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-accent' 
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:border-accent'
+              }`}
+              whileFocus={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Results Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Results Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {filteredBriefs.length} Briefs Found
+          </h2>
+          <div className="flex items-center space-x-4">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark 
+                  ? 'bg-gray-800 border-gray-700 text-white' 
+                  : 'bg-white border-gray-200 text-gray-900'
+              }`}
+            >
+              <option value="all">All Categories</option>
+              <option value="creative">Creative</option>
+              <option value="technical">Technical</option>
+              <option value="business">Business</option>
+              <option value="content">Content</option>
+              <option value="influencer">Influencer</option>
+              <option value="video">Video</option>
+              <option value="photography">Photography</option>
+              <option value="writing">Writing</option>
+              <option value="design">Design</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark 
+                  ? 'bg-gray-800 border-gray-700 text-white' 
+                  : 'bg-white border-gray-200 text-gray-900'
+              }`}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="reward-high">Highest Reward</option>
+              <option value="reward-low">Lowest Reward</option>
+              <option value="deadline">Deadline</option>
+            </select>
+          </div>
         </div>
 
         {/* Briefs Grid */}
@@ -453,26 +363,7 @@ const Marketplace = () => {
             ))}
           </motion.div>
         )}
-
-        {/* Empty State */}
-        {filteredBriefs.length === 0 && (
-          <div className="text-center py-12">
-            <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-lg mb-4`}>
-              No briefs found matching your criteria
-            </div>
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setFilterType('all');
-                setSortBy('newest');
-              }}
-              className={`${isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'} transition-colors`}
-            >
-              Clear filters
-            </button>
-          </div>
-        )}
-      </motion.div>
+      </div>
     </div>
   );
 };

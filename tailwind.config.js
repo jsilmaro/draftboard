@@ -62,6 +62,7 @@ export default {
           900: '#1e3a8a',
         },
         accent: {
+          DEFAULT: '#00FF84',
           blue: '#2563EB',
           green: '#00FF84',
           'green-hover': '#009E60',
@@ -73,6 +74,12 @@ export default {
           DEFAULT: '#FFFFFF',
           border: '#E5E7EB',
         },
+        // Tripzy-inspired dark theme
+        darkbg: '#0A0A0A',
+        darkgrad: '#0F1C12',
+        'dark-secondary': '#111111',
+        'dark-card': '#151515',
+        'dark-border': '#1a1a1a',
         // Dark mode colors
         dark: {
           background: {
@@ -96,6 +103,14 @@ export default {
         'card-hover': 'rgba(0, 0, 0, 0.1) 0px 4px 12px',
         '3xl': '0 35px 60px -12px rgba(0, 0, 0, 0.25)',
         '4xl': '0 45px 80px -15px rgba(0, 0, 0, 0.3)',
+        'glow': '0 0 20px rgba(0, 255, 132, 0.4)',
+        'glow-sm': '0 0 10px rgba(0, 255, 132, 0.3)',
+        'glow-lg': '0 0 30px rgba(0, 255, 132, 0.5)',
+        'glow-xl': '0 0 40px rgba(0, 255, 132, 0.6)',
+        'inner-glow': 'inset 0 0 20px rgba(0, 255, 132, 0.2)',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
       borderRadius: {
         'card': '12px',
