@@ -135,7 +135,7 @@ async function archiveExpiredBriefs() {
           lt: now
         },
         status: {
-          in: ['published']
+          in: ['published', 'draft']
         }
         // Note: archivedAt field might not exist in all database versions
       },
@@ -465,6 +465,71 @@ app.post('/api/admin/archive-expired-briefs', authenticateToken, async (req, res
     });
   } catch (error) {
     console.error('Error in manual brief archiving:', error);
+    res.status(500).json({ 
+      error: 'Failed to archive expired briefs',
+      details: error.message 
+    });
+  }
+});
+
+// Public endpoint for brands to trigger archiving of their expired briefs
+app.post('/api/briefs/archive-expired', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is a brand
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Brand access required' });
+    }
+
+    const brandId = req.user.id;
+    const now = new Date();
+    
+    // Find expired briefs for this brand
+    const expiredBriefs = await prisma.brief.findMany({
+      where: {
+        brandId: brandId,
+        deadline: {
+          lt: now
+        },
+        status: {
+          in: ['published', 'draft']
+        }
+      }
+    });
+
+    if (expiredBriefs.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No expired briefs found',
+        archived: 0
+      });
+    }
+
+    // Archive expired briefs
+    const updateResult = await prisma.brief.updateMany({
+      where: {
+        brandId: brandId,
+        deadline: {
+          lt: now
+        },
+        status: {
+          in: ['published', 'draft']
+        }
+      },
+      data: {
+        status: 'archived',
+        archivedAt: now
+      }
+    });
+
+    console.log(`📋 Archived ${updateResult.count} expired briefs for brand ${brandId}`);
+
+    res.json({
+      success: true,
+      message: `Archived ${updateResult.count} expired briefs`,
+      archived: updateResult.count
+    });
+  } catch (error) {
+    console.error('Error archiving expired briefs for brand:', error);
     res.status(500).json({ 
       error: 'Failed to archive expired briefs',
       details: error.message 

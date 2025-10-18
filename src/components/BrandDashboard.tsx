@@ -264,6 +264,17 @@ const BrandDashboard: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
+      // First, trigger automatic archiving of expired briefs
+      try {
+        await fetch('/api/briefs/archive-expired', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (archiveError) {
+        // Archive error is not critical, continue loading data
+        console.log('Archive check failed:', archiveError);
+      }
+      
       // Load briefs
       const briefsResponse = await fetch('/api/brands/briefs', {
         headers: { Authorization: `Bearer ${token}` }
@@ -408,12 +419,6 @@ const BrandDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
-      // First verify authentication
-      const verifyResponse = await fetch('/api/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      await verifyResponse.json();
       
       const response = await fetch(`/api/briefs/${briefId}`, {
         method: 'DELETE',
@@ -1617,6 +1622,44 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Additional Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/Brief1.png" alt="Total Briefs" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">{safeAnalytics.totalBriefs}</p>
+              <p className="metric-label">Total Briefs</p>
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/Submissions1.png" alt="Total Submissions" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">{safeAnalytics.totalSubmissions}</p>
+              <p className="metric-label">Total Submissions</p>
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-center">
+                <img src="/icons/Green_icons/MoneyBag1.png" alt="Average Reward" className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <p className="metric-value">${safeAnalytics.averageReward.toLocaleString()}</p>
+              <p className="metric-label">Average Reward</p>
+            </div>
+          </div>
+        </div>
 
         {/* Performance Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

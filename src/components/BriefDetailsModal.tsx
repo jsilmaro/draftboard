@@ -469,7 +469,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
           <div className={`flex items-center justify-end space-x-3 p-6 border-t ${
             isDark ? 'border-gray-700' : 'border-gray-200'
           }`}>
-                <button
+            <button
               onClick={onClose}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isDark 
@@ -478,16 +478,7 @@ const BriefDetailsModal: React.FC<BriefDetailsModalProps> = ({ brief, isOpen, on
               }`}
             >
               Close
-                </button>
-                  <button
-                    onClick={() => {
-                // TODO: Implement edit functionality
-                // console.log('Edit brief:', brief.id);
-              }}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Edit Brief
-                  </button>
+            </button>
           </div>
         </div>
       </div>

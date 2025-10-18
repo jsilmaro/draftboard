@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface BrandBriefCardProps {
@@ -55,6 +55,25 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
 }) => {
   const { isDark } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const getSubmissionsCount = () => {
     try {
@@ -84,9 +103,27 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const getStatusBadge = () => {
     const baseClasses = "px-3 py-1 text-xs rounded-full font-medium";
     
+    // Check if deadline is approaching (within 24 hours)
+    const now = new Date();
+    const deadline = new Date(brief.deadline);
+    const hoursUntilDeadline = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
     // Show funding status if brief is funded
     if (brief.isFunded) {
+      if (hoursUntilDeadline <= 24 && hoursUntilDeadline > 0) {
+        return `${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400`;
+      }
       return `${baseClasses} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400`;
+    }
+    
+    // Check if deadline has passed
+    if (hoursUntilDeadline <= 0) {
+      return `${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400`;
+    }
+    
+    // Check if deadline is approaching
+    if (hoursUntilDeadline <= 24) {
+      return `${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400`;
     }
     
     switch (brief.status) {
@@ -96,15 +133,32 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
         return `${baseClasses} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400`;
       case 'completed':
         return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400`;
+      case 'archived':
+        return `${baseClasses} bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400`;
       default:
         return `${baseClasses} bg-black/20 text-gray-400`;
     }
   };
 
   const getStatusText = () => {
+    // Check if deadline is approaching or has passed
+    const now = new Date();
+    const deadline = new Date(brief.deadline);
+    const hoursUntilDeadline = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursUntilDeadline <= 0) {
+      return 'Expired';
+    }
+    
+    if (hoursUntilDeadline <= 24 && hoursUntilDeadline > 0) {
+      const hours = Math.floor(hoursUntilDeadline);
+      return `Due in ${hours}h`;
+    }
+    
     if (brief.isFunded) {
       return 'Funded';
     }
+    
     return brief.status.charAt(0).toUpperCase() + brief.status.slice(1);
   };
 
@@ -147,9 +201,160 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               </h3>
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
+          <div className="flex items-center space-x-2">
             <div className={getStatusBadge()}>
               {getStatusText()}
+            </div>
+            {/* 3-dots menu button */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className={`p-1 rounded-lg transition-colors ${
+                  isDark 
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+                title="More options"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+              
+              {/* Dropdown menu */}
+              {showMenu && (
+                <div className={`absolute right-0 top-8 w-48 rounded-lg shadow-lg border z-50 ${
+                  isDark 
+                    ? 'bg-gray-900 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <div className="py-1">
+                    {onEditClick && (
+                      <button
+                        onClick={() => {
+                          onEditClick(brief);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {onArchiveClick && (
+                      <button
+                        onClick={() => {
+                          onArchiveClick(brief.id);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Archive
+                      </button>
+                    )}
+                    {onViewSubmissionsClick && (
+                      <button
+                        onClick={() => {
+                          onViewSubmissionsClick(brief);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Submissions
+                      </button>
+                    )}
+                    {onEditRewardsClick && (
+                      <button
+                        onClick={() => {
+                          onEditRewardsClick(brief);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Edit Rewards
+                      </button>
+                    )}
+                    {onSelectWinnersClick && (
+                      <button
+                        onClick={() => {
+                          onSelectWinnersClick(brief);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Select Winners
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/brief/${brief.id}`;
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                          alert('Brief link copied to clipboard!');
+                        }).catch(() => {
+                          alert('Failed to copy link');
+                        });
+                        setShowMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        isDark 
+                          ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      Share
+                    </button>
+                    {onPublishClick && brief.status === 'draft' && (
+                      <button
+                        onClick={() => {
+                          onPublishClick(brief.id);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Publish
+                      </button>
+                    )}
+                    {onDraftClick && brief.status === 'published' && (
+                      <button
+                        onClick={() => {
+                          onDraftClick(brief.id);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        Move to Draft
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -357,8 +562,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
+        {/* Action Buttons - Only View and Delete */}
+        <div className="grid grid-cols-2 gap-2">
           {onViewClick && (
             <button
               onClick={() => onViewClick(brief)}
@@ -367,80 +572,6 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               👁️ View
             </button>
           )}
-          {onEditClick && (
-            <button
-              onClick={() => onEditClick(brief)}
-              className="px-3 py-2 bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-yellow-700 transition-colors"
-            >
-              ✏️ Edit
-            </button>
-          )}
-          {onPublishClick && brief.status === 'draft' && (
-            <button
-              onClick={() => onPublishClick(brief.id)}
-              className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"
-            >
-              📢 Publish
-            </button>
-          )}
-          {onDraftClick && brief.status === 'published' && (
-            <button
-              onClick={() => onDraftClick(brief.id)}
-              className="px-3 py-2 bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-gray-700 transition-colors"
-            >
-              📝 Draft
-            </button>
-          )}
-          {onArchiveClick && (
-            <button
-              onClick={() => onArchiveClick(brief.id)}
-              className="px-3 py-2 bg-orange-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-orange-700 transition-colors"
-            >
-              📦 Archive
-            </button>
-          )}
-          {onViewSubmissionsClick && (
-            <button
-              onClick={() => onViewSubmissionsClick(brief)}
-              className="px-3 py-2 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-purple-700 transition-colors"
-            >
-              📋 Submissions
-            </button>
-          )}
-          {onEditRewardsClick && (
-            <button
-              onClick={() => onEditRewardsClick(brief)}
-              className="px-3 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-              💰 Edit Rewards
-            </button>
-          )}
-          {onSelectWinnersClick && (
-            <button
-              onClick={() => onSelectWinnersClick(brief)}
-              className="px-3 py-2 bg-pink-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-pink-700 transition-colors"
-            >
-              🏆 Select Winners
-            </button>
-          )}
-        </div>
-        
-        {/* Additional Action Buttons */}
-        <div className="grid grid-cols-1 gap-2 mt-2">
-          <button
-            onClick={() => {
-              const shareUrl = `${window.location.origin}/brief/${brief.id}`;
-              navigator.clipboard.writeText(shareUrl).then(() => {
-                alert('Brief link copied to clipboard!');
-              }).catch(() => {
-                alert('Failed to copy link');
-              });
-            }}
-            className="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors"
-            title="Copy shareable link"
-          >
-            📤 Share
-          </button>
           {onDeleteClick && (
             <button
               onClick={() => {
