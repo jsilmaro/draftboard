@@ -1873,8 +1873,8 @@ const BrandDashboard: React.FC = () => {
       {/* Modern Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col overflow-y-auto transition-all duration-300 rounded-r-2xl shadow-lg`}>
-        <div className="p-4 flex flex-col h-full">
+      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 rounded-r-2xl shadow-lg`}>
+        <div className="p-4 flex flex-col h-full overflow-hidden">
           
           {/* Header with Logo */}
             <div className="mb-8">
@@ -1928,8 +1928,8 @@ const BrandDashboard: React.FC = () => {
             
           </div>
 
-          {/* Navigation Items */}
-          <nav className="space-y-0.5 flex-1">
+          {/* Navigation Items - scrollable */}
+          <nav className="space-y-0.5 flex-1 overflow-y-auto pr-2">
             {filteredNavigationItems.map((item) => (
               <button
                 key={item.id}
@@ -2022,8 +2022,8 @@ const BrandDashboard: React.FC = () => {
             ))}
           </nav>
 
-          {/* Footer */}
-          <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+          {/* Footer - Fixed at bottom */}
+          <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="space-y-1">
               {accountNav.map((item) => (
                 <button
