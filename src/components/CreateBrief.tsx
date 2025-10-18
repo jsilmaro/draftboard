@@ -324,8 +324,8 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
 
     // Check if funding is required
     if (requireFunding) {
-      // Show funding modal for funded briefs
-      setShowFundingModal(true);
+      // First create the brief as unfunded, then redirect to Stripe Checkout
+      await createUnfundedBriefThenFund();
     } else {
       // Create unfunded brief directly
       await createUnfundedBrief();
@@ -419,6 +419,58 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
     });
     setCurrentStep(1);
     setFormKey(prev => prev + 1);
+  };
+
+  const createUnfundedBriefThenFund = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in to create a brief');
+        return;
+      }
+
+      const briefData = {
+        title: formData.title,
+        description: formData.description,
+        requirements: formData.requirements,
+        reward: calculateTotalReward(),
+        deadline: formData.deadline,
+        amountOfWinners: formData.amountOfWinners,
+        isPrivate: isPrivate,
+        additionalFields: formData.additionalFields,
+        rewardTiers: formData.rewardTiers.map(tier => ({
+          position: tier.position,
+          cashAmount: tier.amount,
+          creditAmount: 0,
+          prizeDescription: tier.description
+        })),
+        isFunded: false // Create as unfunded first
+      };
+
+      const response = await fetch('/api/briefs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(briefData)
+      });
+
+      if (response.ok) {
+        const newBrief = await response.json();
+        setBriefId(newBrief.id);
+        
+        // Now open funding modal with the newly created brief ID
+        setShowFundingModal(true);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create brief: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating brief:', error);
+      alert('Failed to create brief. Please try again.');
+    }
   };
 
   const handleFundingSuccess = (briefId: string) => {
@@ -1012,23 +1064,26 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
       )}
 
       {/* Brief Funding Modal */}
-      <BriefFundingModal
-        isOpen={showFundingModal}
-        onClose={() => setShowFundingModal(false)}
-        onSuccess={handleFundingSuccess}
-        briefData={{
-          title: formData.title,
-          description: formData.description,
-          requirements: formData.requirements,
-          reward: calculateTotalReward(),
-          amountOfWinners: formData.amountOfWinners,
-          deadline: formData.deadline,
-          location: '',
-          isPrivate: false,
-          additionalFields: formData.additionalFields,
-          rewardTiers: formData.rewardTiers
-        }}
-      />
+      {showFundingModal && briefId && (
+        <BriefFundingModal
+          isOpen={showFundingModal}
+          onClose={() => setShowFundingModal(false)}
+          onSuccess={handleFundingSuccess}
+          briefId={briefId}
+          briefData={{
+            title: formData.title,
+            description: formData.description,
+            requirements: formData.requirements,
+            reward: calculateTotalReward(),
+            amountOfWinners: formData.amountOfWinners,
+            deadline: formData.deadline,
+            location: '',
+            isPrivate: false,
+            additionalFields: formData.additionalFields,
+            rewardTiers: formData.rewardTiers
+          }}
+        />
+      )}
     </div>
   );
 };

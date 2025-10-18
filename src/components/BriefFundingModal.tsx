@@ -1,20 +1,10 @@
 import React, { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
-import { STRIPE_CONFIG } from '../config/stripe';
-
-// Initialize Stripe
-const stripePromise = loadStripe(STRIPE_CONFIG.TEST.PUBLISHABLE_KEY);
 
 interface BriefFundingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (briefId: string) => void;
+  briefId?: string; // Optional: If provided, we're funding an existing brief
   briefData: {
     title: string;
     description: string;
@@ -39,19 +29,14 @@ const PaymentForm: React.FC<{
   onSuccess: (briefId: string) => void;
   onClose: () => void;
   briefData: BriefFundingModalProps['briefData'];
-}> = ({ onSuccess, onClose, briefData }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+  briefId: string;
+}> = ({ onClose, briefData, briefId }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [paymentStep, setPaymentStep] = useState<'ready' | 'processing' | 'creating' | 'success'>('ready');
+  const [paymentStep, setPaymentStep] = useState<'ready' | 'processing'>('ready');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
 
     setLoading(true);
     setMessage(null);
@@ -63,82 +48,31 @@ const PaymentForm: React.FC<{
         throw new Error('No authentication token found');
       }
 
-      // Create payment intent for brief funding
-      setPaymentStep('creating');
-      const response = await fetch('/api/payments/create-payment-intent', {
+      // Always use Stripe Connect Checkout flow
+      const response = await fetch(`/api/briefs/${briefId}/fund`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount: briefData.reward * 100, // Convert to cents
-          currency: 'usd',
-          metadata: {
-            type: 'brief_funding',
-            briefTitle: briefData.title
-          }
-        })
+        }
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to create payment intent: ${errorData.error || 'Unknown error'}`);
+        throw new Error(`Failed to create funding session: ${errorData.error || 'Unknown error'}`);
       }
 
-      const responseData = await response.json();
+      const { data } = await response.json();
       
-      // Handle both camelCase and snake_case response formats
-      const clientSecret = responseData.clientSecret || responseData.client_secret;
-      
-      if (!clientSecret) {
-        throw new Error('No client secret received from server');
+      if (!data || !data.url) {
+        throw new Error('No checkout URL received from server');
       }
 
-      // Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
-        }
-      });
-
-      if (error) {
-        setMessage(`Payment failed: ${error.message}`);
-        setLoading(false);
-        return;
-      }
-
-      if (paymentIntent.status === 'succeeded') {
-        setPaymentStep('success');
-        // Create the brief with funding
-        const briefPayload = {
-          ...briefData,
-          isFunded: true,
-          status: 'active',
-          fundedAt: new Date().toISOString()
-        };
-        
-        const briefResponse = await fetch('/api/briefs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(briefPayload)
-        });
-
-        if (briefResponse.ok) {
-          const result = await briefResponse.json();
-          onSuccess(result.id);
-        } else {
-          const errorData = await briefResponse.json();
-          throw new Error(`Failed to create brief: ${errorData.error || 'Unknown error'}`);
-        }
-      }
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (error) {
       setPaymentStep('ready');
       setMessage(`Error: ${error instanceof Error ? error.message : 'Payment failed'}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -146,54 +80,20 @@ const PaymentForm: React.FC<{
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Payment Progress Indicator */}
-      {paymentStep !== 'ready' && (
+      {paymentStep === 'processing' && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-center space-x-3">
-            {paymentStep === 'success' ? (
-              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            ) : (
-              <div className="w-6 h-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              </div>
-            )}
+            <div className="w-6 h-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
             <div>
               <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                {paymentStep === 'processing' && '🔐 Processing payment...'}
-                {paymentStep === 'creating' && '📝 Creating brief...'}
-                {paymentStep === 'success' && '✅ Payment successful!'}
+                🔄 Redirecting to Stripe Checkout...
               </p>
             </div>
           </div>
         </div>
       )}
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Card Details
-        </label>
-        <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
 
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
         <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -225,16 +125,17 @@ const PaymentForm: React.FC<{
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          disabled={loading}
+          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={!stripe || loading}
+          disabled={loading}
           className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
         >
-          {loading ? 'Processing...' : `Pay $${briefData.reward.toFixed(2)}`}
+          {loading ? 'Redirecting...' : 'Continue to Checkout'}
         </button>
       </div>
     </form>
@@ -245,9 +146,10 @@ const BriefFundingModal: React.FC<BriefFundingModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  briefData
+  briefData,
+  briefId
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen || !briefId) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -269,17 +171,16 @@ const BriefFundingModal: React.FC<BriefFundingModalProps> = ({
 
           <div className="mb-6">
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              To create and publish your brief, you need to fund it first. This ensures creators can see that the brief is legitimate and funded.
+              You&apos;ll be redirected to Stripe&apos;s secure checkout page to complete the payment. This ensures creators can see that your brief is legitimate and funded.
             </p>
           </div>
 
-          <Elements stripe={stripePromise}>
-            <PaymentForm
-              onSuccess={onSuccess}
-              onClose={onClose}
-              briefData={briefData}
-            />
-          </Elements>
+          <PaymentForm
+            onSuccess={onSuccess}
+            onClose={onClose}
+            briefData={briefData}
+            briefId={briefId}
+          />
         </div>
       </div>
     </div>

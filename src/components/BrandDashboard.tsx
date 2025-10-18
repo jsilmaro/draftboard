@@ -2233,6 +2233,7 @@ const BrandDashboard: React.FC = () => {
             setBriefToFund(null);
           }}
           onSuccess={handleFundingSuccess}
+          briefId={briefToFund.id} // Pass the existing brief ID to prevent duplication
           briefData={{
             title: briefToFund.title,
             description: briefToFund.description,
