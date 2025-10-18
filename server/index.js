@@ -2026,7 +2026,7 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
         deadline: new Date(deadline),
         isPrivate: isPrivate || false,
         additionalFields: additionalFields ? JSON.stringify(additionalFields) : null,
-        status: status || 'published', // Use provided status or default to published
+        status: status || 'draft', // Allow any status regardless of funding
         isFunded: isFunded || false, // Use provided isFunded or default to false
         fundedAt: fundedAt ? new Date(fundedAt) : null, // Use provided fundedAt or null
         brandId: req.user.id
@@ -2065,7 +2065,7 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
           briefId: brief.id,
           status: status || 'draft',
           updatedBy: req.user.id,
-          notes: isFunded ? 'Brief created and funded' : 'Brief created'
+          notes: isFunded ? 'Brief created and funded' : 'Brief created (unfunded - can be funded later)'
         }
       });
     }

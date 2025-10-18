@@ -39,6 +39,7 @@ interface BrandBriefCardProps {
   onPublishClick?: (briefId: string) => void;
   onDraftClick?: (briefId: string) => void;
   onArchiveClick?: (briefId: string) => void;
+  onFundClick?: (brief: BrandBriefCardProps['brief']) => void;
 }
 
 const BrandBriefCard: React.FC<BrandBriefCardProps> = ({ 
@@ -51,7 +52,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   onDeleteClick,
   onPublishClick,
   onDraftClick,
-  onArchiveClick
+  onArchiveClick,
+  onFundClick
 }) => {
   const { isDark } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
@@ -116,6 +118,11 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
       return `${baseClasses} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400`;
     }
     
+    // Show unfunded status for any unfunded brief
+    if (!brief.isFunded) {
+      return `${baseClasses} bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400`;
+    }
+    
     // Check if deadline has passed
     if (hoursUntilDeadline <= 0) {
       return `${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400`;
@@ -157,6 +164,11 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
     
     if (brief.isFunded) {
       return 'Funded';
+    }
+    
+    // Show "Unfunded" for any unfunded brief
+    if (!brief.isFunded) {
+      return 'Unfunded';
     }
     
     return brief.status.charAt(0).toUpperCase() + brief.status.slice(1);
@@ -242,6 +254,21 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
                         }`}
                       >
                         Edit
+                      </button>
+                    )}
+                    {!brief.isFunded && onFundClick && (
+                      <button
+                        onClick={() => {
+                          onFundClick(brief);
+                          setShowMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          isDark 
+                            ? 'text-green-300 hover:bg-green-800 hover:text-white' 
+                            : 'text-green-700 hover:bg-green-100 hover:text-green-900'
+                        }`}
+                      >
+                        💰 Fund Brief
                       </button>
                     )}
                     {onArchiveClick && (
@@ -562,30 +589,66 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons - Only View and Delete */}
-        <div className="grid grid-cols-2 gap-2">
-          {onViewClick && (
+        {/* Action Buttons */}
+        {!brief.isFunded && onFundClick ? (
+          // Show Fund button prominently for unfunded briefs
+          <div className="space-y-2">
             <button
-              onClick={() => onViewClick(brief)}
-              className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
+              onClick={() => onFundClick(brief)}
+              className="w-full px-3 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              👁️ View
+              💰 Fund This Brief
             </button>
-          )}
-          {onDeleteClick && (
-            <button
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete "${brief.title}"? This action cannot be undone.`)) {
-                  onDeleteClick(brief.id);
-                }
-              }}
-              className="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-red-700 transition-colors"
-              title="Delete brief"
-            >
-              🗑️ Delete
-            </button>
-          )}
-        </div>
+            <div className="grid grid-cols-2 gap-2">
+              {onViewClick && (
+                <button
+                  onClick={() => onViewClick(brief)}
+                  className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  👁️ View
+                </button>
+              )}
+              {onDeleteClick && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete "${brief.title}"? This action cannot be undone.`)) {
+                      onDeleteClick(brief.id);
+                    }
+                  }}
+                  className="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-red-700 transition-colors"
+                  title="Delete brief"
+                >
+                  🗑️ Delete
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Show normal View and Delete for funded briefs
+          <div className="grid grid-cols-2 gap-2">
+            {onViewClick && (
+              <button
+                onClick={() => onViewClick(brief)}
+                className="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                👁️ View
+              </button>
+            )}
+            {onDeleteClick && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete "${brief.title}"? This action cannot be undone.`)) {
+                    onDeleteClick(brief.id);
+                  }
+                }}
+                className="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl hover:bg-red-700 transition-colors"
+                title="Delete brief"
+              >
+                🗑️ Delete
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

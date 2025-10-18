@@ -15,6 +15,7 @@ import CreateBrief from './CreateBrief';
 import ManageRewardsPayments from './ManageRewardsPayments';
 import EditBrief from './EditBrief';
 import CreatorDetailModal from './CreatorDetailModal';
+import BriefFundingModal from './BriefFundingModal';
 
 // BrandWallet removed - brands pay directly through Stripe Checkout when funding briefs
 
@@ -187,6 +188,8 @@ const BrandDashboard: React.FC = () => {
   const [inviteMessage, setInviteMessage] = useState('');
   const [invitingCreatorId, setInvitingCreatorId] = useState<string | null>(null);
   const [invitedCreators, setInvitedCreators] = useState<Set<string>>(new Set());
+  const [showFundingModal, setShowFundingModal] = useState(false);
+  const [briefToFund, setBriefToFund] = useState<Brief | null>(null);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalSpent: 0,
@@ -272,7 +275,7 @@ const BrandDashboard: React.FC = () => {
         });
       } catch (archiveError) {
         // Archive error is not critical, continue loading data
-        console.log('Archive check failed:', archiveError);
+        // Silently continue if archive check fails
       }
       
       // Load briefs
@@ -459,6 +462,44 @@ const BrandDashboard: React.FC = () => {
     } catch (error) {
       showErrorToast('Failed to publish brief');
     }
+  };
+
+  const handleFundBrief = (brief: BrandBriefCardProps['brief']) => {
+    // Convert to Brief format
+    const briefForFunding: Brief = {
+      id: brief.id,
+      title: brief.title,
+      description: brief.description || '',
+      requirements: (brief as { requirements?: string }).requirements || '',
+      reward: brief.reward || 0,
+      amountOfWinners: brief.amountOfWinners || 1,
+      deadline: brief.deadline,
+      status: brief.status,
+      submissions: Array.isArray(brief.submissions) ? (brief.submissions as Array<{ id: string; creator: { userName: string; fullName: string }; status: string; submittedAt: string }>) : [],
+      isPrivate: false,
+      location: (brief as { location?: string }).location || 'Anywhere',
+      additionalFields: {},
+      rewardTiers: brief.rewardTiers || [],
+      totalRewardsPaid: brief.totalRewardsPaid || 0,
+      brand: brief.brand || {
+        id: brief.id,
+        companyName: 'Your Brand',
+        logo: undefined,
+        socialInstagram: undefined,
+        socialTwitter: undefined,
+        socialLinkedIn: undefined,
+        socialWebsite: undefined
+      }
+    };
+    setBriefToFund(briefForFunding);
+    setShowFundingModal(true);
+  };
+
+  const handleFundingSuccess = (_briefId: string) => {
+    setShowFundingModal(false);
+    setBriefToFund(null);
+    showSuccessToast('Brief funded successfully! It is now visible to creators.');
+    loadDashboardData();
   };
 
   const handleDraftBrief = async (briefId: string) => {
@@ -838,7 +879,7 @@ const BrandDashboard: React.FC = () => {
         <div className="flex justify-between items-center">
           <h2 className={`text-2xl font-bold ${
             isDark ? 'text-white' : 'text-gray-900'
-          }`}>My Briefs</h2>
+          }`}>Created Briefs</h2>
           <Link
             to="/brand/create-brief"
             className="btn btn-primary"
@@ -919,6 +960,7 @@ const BrandDashboard: React.FC = () => {
               onDraftClick={handleDraftBrief}
               onArchiveClick={handleArchiveBrief}
               onEditClick={handleEditBrief}
+              onFundClick={handleFundBrief}
               onEditRewardsClick={(brief) => {
                 // Navigate to manage rewards tab to edit reward tiers
                 handleTabChange('manage-rewards');
@@ -1622,44 +1664,6 @@ const BrandDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="metric-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-center">
-                <img src="/icons/Green_icons/Brief1.png" alt="Total Briefs" className="w-8 h-8" />
-              </div>
-            </div>
-            <div>
-              <p className="metric-value">{safeAnalytics.totalBriefs}</p>
-              <p className="metric-label">Total Briefs</p>
-            </div>
-          </div>
-
-          <div className="metric-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-center">
-                <img src="/icons/Green_icons/Submissions1.png" alt="Total Submissions" className="w-8 h-8" />
-              </div>
-            </div>
-            <div>
-              <p className="metric-value">{safeAnalytics.totalSubmissions}</p>
-              <p className="metric-label">Total Submissions</p>
-            </div>
-          </div>
-
-          <div className="metric-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-center">
-                <img src="/icons/Green_icons/MoneyBag1.png" alt="Average Reward" className="w-8 h-8" />
-              </div>
-            </div>
-            <div>
-              <p className="metric-value">${safeAnalytics.averageReward.toLocaleString()}</p>
-              <p className="metric-label">Average Reward</p>
-            </div>
-          </div>
-        </div>
 
         {/* Performance Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2217,6 +2221,36 @@ const BrandDashboard: React.FC = () => {
             setEditingBrief(null);
           }}
           onSuccess={handleEditBriefSuccess}
+        />
+      )}
+
+      {/* Brief Funding Modal */}
+      {showFundingModal && briefToFund && (
+        <BriefFundingModal
+          isOpen={showFundingModal}
+          onClose={() => {
+            setShowFundingModal(false);
+            setBriefToFund(null);
+          }}
+          onSuccess={handleFundingSuccess}
+          briefData={{
+            title: briefToFund.title,
+            description: briefToFund.description,
+            requirements: briefToFund.requirements,
+            reward: briefToFund.reward,
+            amountOfWinners: briefToFund.amountOfWinners,
+            deadline: briefToFund.deadline,
+            location: briefToFund.location || 'Anywhere',
+            isPrivate: briefToFund.isPrivate,
+            additionalFields: briefToFund.additionalFields,
+            rewardTiers: briefToFund.rewardTiers.map((tier, index) => ({
+              tierNumber: index + 1,
+              name: `Tier ${index + 1}`,
+              amount: tier.cashAmount || 0,
+              position: tier.position,
+              isActive: true
+            }))
+          }}
         />
       )}
     </div>

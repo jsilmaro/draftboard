@@ -68,6 +68,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
   const [briefId, setBriefId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [showFundingModal, setShowFundingModal] = useState(false);
+  const [requireFunding, setRequireFunding] = useState(false);
 
   // Ensure form is always empty on mount
   useEffect(() => {
@@ -321,23 +322,84 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
       return;
     }
 
-    // Show funding modal instead of creating brief directly
-    setShowFundingModal(true);
+    // Check if funding is required
+    if (requireFunding) {
+      // Show funding modal for funded briefs
+      setShowFundingModal(true);
+    } else {
+      // Create unfunded brief directly
+      await createUnfundedBrief();
+    }
   };
 
-  const handleFundingSuccess = (briefId: string) => {
-    setBriefId(briefId);
-    setShowFundingModal(false);
-    
-    // Call onSuccess callback if provided
-    if (onSuccess) {
-      onSuccess({ id: briefId, title: formData.title });
+  const createUnfundedBrief = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in to create a brief');
+        return;
+      }
+
+      const briefData = {
+        title: formData.title,
+        description: formData.description,
+        requirements: formData.requirements,
+        reward: calculateTotalReward(),
+        deadline: formData.deadline,
+        amountOfWinners: formData.amountOfWinners,
+        isPrivate: isPrivate,
+        additionalFields: formData.additionalFields,
+        rewardTiers: formData.rewardTiers.map(tier => ({
+          position: tier.position,
+          cashAmount: tier.amount,
+          creditAmount: 0,
+          prizeDescription: tier.description
+        })),
+        isFunded: false // Mark as unfunded
+      };
+
+      const response = await fetch('/api/briefs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(briefData)
+      });
+
+      if (response.ok) {
+        const newBrief = await response.json();
+        setBriefId(newBrief.id);
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess({ id: newBrief.id, title: formData.title });
+        }
+        
+        // Show success message
+        alert('Brief created successfully! You can publish and fund it anytime from your dashboard.');
+        
+        // Reset form
+        resetForm();
+        
+        // Close modal if it's a side modal
+        if (isSideModal && onClose) {
+          onClose();
+        } else {
+          navigate('/brand-dashboard?tab=briefs');
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create brief: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating unfunded brief:', error);
+      alert('Failed to create brief. Please try again.');
     }
-    
-    // Show success message
-    alert('Brief created and funded successfully! Your brief is now active and visible to creators.');
-    
-    // Reset form
+  };
+
+  const resetForm = () => {
     setFormData({
       title: '',
       description: '',
@@ -357,6 +419,22 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
     });
     setCurrentStep(1);
     setFormKey(prev => prev + 1);
+  };
+
+  const handleFundingSuccess = (briefId: string) => {
+    setBriefId(briefId);
+    setShowFundingModal(false);
+    
+    // Call onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess({ id: briefId, title: formData.title });
+    }
+    
+    // Show success message
+    alert('Brief created and funded successfully! Your brief is now active and visible to creators.');
+    
+    // Reset form
+    resetForm();
     
     // Close modal if it's a side modal
     if (isSideModal && onClose) {
@@ -771,6 +849,50 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
               </div>
             )}
 
+            {/* Funding Settings */}
+            <div>
+              <h3 className={`text-lg font-semibold mb-4 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                Funding Settings
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="requireFunding"
+                    checked={requireFunding}
+                    onChange={(e) => setRequireFunding(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
+                  />
+                  <label htmlFor="requireFunding" className={`ml-2 block text-sm ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Fund this brief now (optional - you can fund it later)
+                  </label>
+                </div>
+                {!requireFunding && (
+                  <div className={`p-4 rounded-lg border ${
+                    isDark 
+                      ? 'bg-yellow-900/20 border-yellow-700 text-yellow-300'
+                      : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                  }`}>
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <p className="font-medium">Unfunded Brief</p>
+                        <p className="text-sm mt-1">
+                          This brief will be created without funding. You can publish it now and fund it anytime later.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Privacy Settings */}
             <div>
               <h3 className={`text-lg font-semibold mb-4 ${
@@ -811,7 +933,7 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
                 type="submit"
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                Create Brief
+                {requireFunding ? 'Create & Fund Brief' : 'Create Brief (Unfunded)'}
               </button>
             </div>
           </form>
