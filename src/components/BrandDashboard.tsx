@@ -1884,7 +1884,7 @@ const BrandDashboard: React.FC = () => {
                   <img 
                     src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
                     alt="DraftBoard" 
-                    className="w-20 h-6"
+                    className="w-36 h-10"
                   />
                 </div>
               ) : (
