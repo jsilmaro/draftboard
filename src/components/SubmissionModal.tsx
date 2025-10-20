@@ -198,7 +198,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
                   <div className={`text-2xl font-bold ${
                     isDark ? 'text-green-400' : 'text-green-600'
                   }`}>
-                    {formatCurrency(brief.reward * brief.amountOfWinners)}
+                    {formatCurrency(brief.reward)}
                   </div>
                 </div>
                 <div>

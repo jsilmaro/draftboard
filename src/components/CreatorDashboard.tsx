@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
@@ -7,6 +8,7 @@ import DefaultAvatar from './DefaultAvatar';
 import AnimatedNotification from './AnimatedNotification';
 import CreatorWallet from './CreatorWallet';
 import CreatorBriefCard from './CreatorBriefCard';
+import EnhancedMarketplaceBriefCard from './EnhancedMarketplaceBriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
 import BrandPageView from './BrandPageView';
 import CreatorApplicationForm from './CreatorApplicationForm';
@@ -47,6 +49,14 @@ interface Brief {
     creator: {
       userName: string;
     };
+  }>;
+  rewardTiers?: Array<{
+    position: number;
+    name: string;
+    amount: number;
+    description?: string;
+    cashAmount: number;
+    creditAmount: number;
   }>;
   winnerRewards?: Array<{
     position: number;
@@ -207,6 +217,9 @@ const CreatorDashboard: React.FC = () => {
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
+  const [marketplaceSearchTerm, setMarketplaceSearchTerm] = useState('');
+  const [marketplaceFilterType, setMarketplaceFilterType] = useState('all');
+  const [marketplaceSortBy, setMarketplaceSortBy] = useState('newest');
   const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [earningsFilter, setEarningsFilter] = useState<'all' | 'paid' | 'pending' | 'processing'>('all');
@@ -247,9 +260,7 @@ const CreatorDashboard: React.FC = () => {
   const [invitesLoading, setInvitesLoading] = useState(false);
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null);
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
-  const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showApplyModal, setShowApplyModal] = useState(false);
+  
   const [showSubmissionViewModal, setShowSubmissionViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showBriefDetailsModal, setShowBriefDetailsModal] = useState(false);
@@ -281,10 +292,7 @@ const CreatorDashboard: React.FC = () => {
     };
   } | null>(null);
 
-  const [applyFormData, setApplyFormData] = useState({
-    contentUrl: '',
-    additionalInfo: ''
-  });
+  
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedBriefForApplication, setSelectedBriefForApplication] = useState<Brief | null>(null);
   const [isEditingApplication, setIsEditingApplication] = useState(false);
@@ -389,6 +397,28 @@ const CreatorDashboard: React.FC = () => {
       setMarketplaceLoading(false);
     }
   }, []);
+
+  // Function to determine brief type based on content
+  const getBriefType = (brief: Brief) => {
+    const content = (brief.title + ' ' + brief.description).toLowerCase();
+    
+    // Technical keywords
+    if (content.includes('code') || content.includes('development') || content.includes('programming') || 
+        content.includes('api') || content.includes('software') || content.includes('technical') ||
+        content.includes('backend') || content.includes('frontend') || content.includes('database')) {
+      return 'technical';
+    }
+    
+    // Business keywords
+    if (content.includes('strategy') || content.includes('business') || content.includes('consulting') ||
+        content.includes('marketing') || content.includes('sales') || content.includes('analysis') ||
+        content.includes('research') || content.includes('planning')) {
+      return 'business';
+    }
+    
+    // Default to creative for design, content, and other creative work
+    return 'creative';
+  };
 
   useEffect(() => {
     if (activeTab === 'marketplace') {
@@ -1240,167 +1270,7 @@ const CreatorDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* View Brief Modal */}
-      {showViewModal && selectedBrief && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-950 rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">{selectedBrief.title}</h3>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-300 dark:hover:text-gray-300"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="font-medium text-white">Brand:</span>
-                <span className="text-gray-300">{selectedBrief.brandName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-white">Reward Type:</span>
-                <span className="text-gray-300">{selectedBrief.rewardType === 'CASH' ? 'Cash' : 
-                       selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
-                       selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
-                       'Cash'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-white">Spots:</span>
-                <span className="text-gray-300">{selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-white">Deadline:</span>
-                <span className="text-gray-300">{new Date(selectedBrief.deadline).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-white">Status:</span>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedBrief.status === 'published' ? 'bg-emerald-900/20 text-emerald-400' :
-                                      selectedBrief.status === 'draft' ? 'bg-yellow-900/20 text-yellow-400' :
-                    'bg-gray-900 text-gray-300'
-                }`}>
-                  {selectedBrief.status.charAt(0).toUpperCase() + selectedBrief.status.slice(1)}
-                </span>
-              </div>
-            </div>
-
-            {/* Detailed Reward Information */}
-            {selectedBrief.winnerRewards && selectedBrief.winnerRewards.length > 0 && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-[#00FF85] to-[#00C853] rounded-lg">
-                <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <img src="/icons/Green_icons/Trophy1.png" alt="Rewards" className="w-5 h-5 mr-2" />
-                  Reward Breakdown
-                </h4>
-                <div className="space-y-3">
-                  {selectedBrief.winnerRewards.map((reward, index) => (
-                    <div key={index} className="bg-gray-950/20 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-white">
-                          Reward {reward.position}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-sm text-white">
-                        {reward.cashAmount > 0 && (
-                          <p>Cash: ${(reward.cashAmount || 0).toLocaleString()}</p>
-                        )}
-                        {reward.creditAmount > 0 && (
-                          <p>🎫 Credits: {(reward.creditAmount || 0).toLocaleString()}</p>
-                        )}
-                        {reward.prizeDescription && (
-                          <p>🎁 Prize: {reward.prizeDescription}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="mt-6 flex justify-end space-x-2">
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Apply Modal */}
-      {showApplyModal && selectedBrief && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-950 rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">
-                {hasSubmittedToBrief(selectedBrief.id) ? 'Edit Submission' : 'Apply to'} {selectedBrief.title}
-              </h3>
-              <button
-                onClick={() => setShowApplyModal(false)}
-                className="text-gray-500 hover:text-gray-300"
-              >
-                ✕
-              </button>
-            </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmitApplication({ 
-                contentUrl: applyFormData.contentUrl, 
-                additionalInfo: applyFormData.additionalInfo 
-              });
-            }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Content Submission link:
-                </label>
-                <input
-                  type="url"
-                  value={applyFormData.contentUrl}
-                  onChange={(e) => setApplyFormData(prev => ({ ...prev, contentUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-900 text-white placeholder-gray-400"
-                  placeholder="https://drive.google.com/file/d/... or https://www.youtube.com/watch?v=..."
-                  required
-                />
-                <p className={`text-xs mt-1 ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Paste a link to your content (Google Drive, YouTube, Instagram, etc.)
-                </p>
-              </div>
-
-              <div className="bg-gray-900 p-4 rounded-lg">
-                <h4 className="font-medium text-white mb-2">Brief Summary</h4>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <p><strong>Brand:</strong> {selectedBrief.brandName}</p>
-                  <p><strong>Reward:</strong> {selectedBrief.rewardType === 'CASH' ? 'Cash' : 
-                       selectedBrief.rewardType === 'CREDIT' ? 'Credit' :
-                       selectedBrief.rewardType === 'PRIZES' ? 'Prize' :
-                       'Cash'}</p>
-                  <p><strong>Spots:</strong> {selectedBrief.amountOfWinners !== null && selectedBrief.amountOfWinners !== undefined ? selectedBrief.amountOfWinners : 1}</p>
-                  <p><strong>Deadline:</strong> {new Date(selectedBrief.deadline).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 border border-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                  {hasSubmittedToBrief(selectedBrief.id) ? 'Update Submission' : 'Submit Application'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Legacy view/apply modals removed (handled by dedicated components elsewhere) */}
     </div>
   );
 
@@ -2293,173 +2163,283 @@ const CreatorDashboard: React.FC = () => {
     </div>
   );
 
-  const renderMarketplace = () => (
-    <div className="space-y-6">
-      {/* Marketplace Header */}
-      <div className="mb-8">
-        <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
-          Discover Opportunities
-        </h1>
-        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg`}>
-          Find briefs that match your skills and start earning
-        </p>
-      </div>
+  const renderMarketplace = () => {
+    // Filter and sort briefs
+    const filteredBriefs = marketplaceBriefs
+      .filter(brief => {
+        const matchesSearch = brief.title.toLowerCase().includes(marketplaceSearchTerm.toLowerCase()) ||
+                             brief.description.toLowerCase().includes(marketplaceSearchTerm.toLowerCase()) ||
+                             brief.brand.companyName.toLowerCase().includes(marketplaceSearchTerm.toLowerCase());
+        
+        const matchesType = marketplaceFilterType === 'all' || getBriefType(brief) === marketplaceFilterType;
+        
+        // Only show published briefs
+        const isPublished = brief.status === 'published';
+        
+        return matchesSearch && matchesType && isPublished;
+      })
+      .sort((a, b) => {
+        switch (marketplaceSortBy) {
+          case 'newest':
+            return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
+          case 'oldest':
+            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+          case 'reward-high':
+            return b.reward - a.reward;
+          case 'reward-low':
+            return a.reward - b.reward;
+          case 'deadline':
+            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+          default:
+            return 0;
+        }
+      });
 
-      {/* Navigation Tabs */}
-      <div className={`${isDark ? 'bg-gray-900/90 border-gray-800/50' : 'bg-white border-gray-200'} backdrop-blur-sm rounded-xl border p-6 mb-8 shadow-sm`}>
-        <div className="flex flex-wrap gap-4">
-          <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
-            Marketplace
-          </button>
-          <Link 
-            to="/community" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
+    return (
+      <div className="space-y-6">
+        {/* Whop-style Clean Header */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
           >
-            Community
-          </Link>
-          <Link 
-            to="/events" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
-          >
-            Events
-          </Link>
-          <Link 
-            to="/success-stories" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
-          >
-            Success Stories
-          </Link>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 mb-8 shadow-sm`}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <input
-              type="text"
-              placeholder="Search briefs, brands, or keywords..."
-              className={`w-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'} border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500`}
-            />
-          </div>
-          <div>
-            <select className={`w-full ${isDark ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500`}>
-              <option value="all">All Templates</option>
-              <option value="creative">Social Media Campaign</option>
-              <option value="technical">Product Review</option>
-              <option value="business">Brand Partnership</option>
-              <option value="content">Content Creation</option>
-              <option value="influencer">Influencer Marketing</option>
-              <option value="video">Video Production</option>
-              <option value="photography">Photography</option>
-              <option value="writing">Copywriting</option>
-              <option value="design">Graphic Design</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Marketplace Briefs Grid */}
-      {marketplaceLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {marketplaceBriefs.map((brief) => {
-            const hasApplied = mySubmissions.some(sub => sub.briefTitle === brief.title);
-            const daysRemaining = Math.ceil((new Date(brief.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            <div className="mb-4 flex justify-center">
+              <img 
+                src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+                alt="DraftBoard" 
+                className="h-12 w-auto"
+              />
+            </div>
+            <p className={`text-lg mb-12 ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Where creators find their next opportunity
+            </p>
             
-            return (
-              <div key={brief.id} className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className={`w-12 h-12 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl flex items-center justify-center`}>
-                    <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-700'}`}>
-                      {brief.brand?.companyName?.charAt(0) || 'B'}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brand?.companyName || 'Brand'}</h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {new Date(brief.deadline).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2 line-clamp-2`}>
-                  {brief.title}
-                </h2>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-4 line-clamp-3`}>
-                  {brief.description}
-                </p>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                      ${(brief.reward || 0).toLocaleString()}
-                    </div>
-                    <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {brief.amountOfWinners || 1} winner{(brief.amountOfWinners || 1) > 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {brief.submissions?.length || 0} submissions
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</span>
-                    <span className={`text-sm font-medium ${daysRemaining < 0 ? (isDark ? 'text-red-400' : 'text-red-600') : (isDark ? 'text-green-400' : 'text-green-600')}`}>
-                      {daysRemaining < 0 ? 'Expired' : `${daysRemaining} days left`}
-                    </span>
-                  </div>
-                  <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-200'} rounded-full h-2`}>
-                    <div 
-                      className={`h-2 rounded-full ${daysRemaining < 0 ? 'bg-red-500' : 'bg-green-500'}`} 
-                      style={{ width: `${Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))}%` }} 
-                    />
-                  </div>
-                </div>
-
-                {hasApplied ? (
-                  <button 
-                    disabled
-                    className={`w-full ${isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-300 text-gray-500'} py-3 rounded-lg font-medium cursor-not-allowed`}
-                  >
-                    Already Applied
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => {
-                      setSelectedBrief(brief);
-                      setShowApplyModal(true);
-                    }}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Apply Now
-                  </button>
-                )}
+            {/* Whop-style Search Bar */}
+            <div className="relative max-w-2xl mx-auto">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-            );
-          })}
+              <motion.input
+                type="text"
+                placeholder="Search briefs..."
+                value={marketplaceSearchTerm}
+                onChange={(e) => setMarketplaceSearchTerm(e.target.value)}
+                className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+                  isDark 
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-accent' 
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:border-accent'
+                }`}
+                whileFocus={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+          </motion.div>
         </div>
-      )}
 
-      {marketplaceBriefs.length === 0 && !marketplaceLoading && (
-        <div className="text-center py-12">
-          <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-lg mb-4`}>
-            No marketplace briefs available
+        {/* Top Navigation Tabs (Marketplace | Community | Events | Success Stories) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`${
+            isDark 
+              ? 'bg-gradient-to-br from-gray-900/90 via-gray-900/80 to-gray-800/80 border-gray-800/60' 
+              : 'bg-gradient-to-br from-white via-white to-gray-50 border-gray-200'
+          } backdrop-blur-sm rounded-2xl border p-3 sm:p-4 mb-4 sm:mb-6 shadow-lg ${isDark ? 'shadow-black/30' : 'shadow-gray-200'}`}>
+            {(() => {
+              const base = 'px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium border transition-all duration-200 inline-flex items-center gap-2';
+              const inactive = isDark 
+                ? 'bg-gray-800/50 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/60 hover:border-gray-600 focus:outline-none focus:ring-1 focus:ring-accent/25 hover:shadow-md hover:shadow-black/20' 
+                : 'bg-white/70 border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-white focus:outline-none focus:ring-1 focus:ring-accent/25 hover:shadow-md hover:shadow-gray-200';
+              const active = isDark 
+                ? 'bg-accent/20 border-accent text-white ring-2 ring-accent/60 shadow-lg shadow-green-500/10' 
+                : 'bg-accent/10 border-accent text-gray-900 ring-2 ring-accent/40 shadow-lg shadow-green-400/10';
+
+              const isOnCommunity = location.pathname.startsWith('/community');
+              const isOnEvents = location.pathname.startsWith('/events');
+              const isOnSuccess = location.pathname.startsWith('/success-stories');
+              const isOnMarketplace = activeTab === 'marketplace' && !isOnCommunity && !isOnEvents && !isOnSuccess;
+
+              return (
+                <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+                  <button
+                    onClick={() => setActiveTab('marketplace')}
+                    className={`${base} ${isOnMarketplace ? active : inactive} ${isDark ? 'shadow-black/20' : 'shadow-gray-200'} shadow-sm`}
+                  >
+                    {/* bag icon */}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7V6a6 6 0 1112 0v1m-9 4a3 3 0 006 0M5 7h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7z" />
+                    </svg>
+                    Marketplace
+                  </button>
+                  <Link 
+                    to="/community" 
+                    className={`${base} ${isOnCommunity ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
+                  >
+                    {/* users icon */}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m6-6a4 4 0 11-8 0 4 4 0 018 0zm6 4a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Community
+                  </Link>
+                  <Link 
+                    to="/events" 
+                    className={`${base} ${isOnEvents ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
+                  >
+                    {/* calendar icon */}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Events
+                  </Link>
+                  <Link 
+                    to="/success-stories" 
+                    className={`${base} ${isOnSuccess ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
+                  >
+                    {/* trophy icon */}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 21h8m-4-4v4m8-16h-3a3 3 0 01-3 3H8a3 3 0 01-3-3H2v2a5 5 0 005 5h10a5 5 0 005-5V5z" />
+                    </svg>
+                    Success Stories
+                  </Link>
+                </div>
+              );
+            })()}
           </div>
-          <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            Check back later for new opportunities
-          </p>
         </div>
-      )}
-    </div>
-  );
+
+        {/* Results Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Results Header */}
+          <div className="flex justify-between items-center mb-8">
+            <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {filteredBriefs.length} Briefs Found
+            </h2>
+            <div className="flex items-center space-x-4">
+              <select
+                value={marketplaceFilterType}
+                onChange={(e) => setMarketplaceFilterType(e.target.value)}
+                className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                  isDark 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white border-gray-200 text-gray-900'
+                }`}
+              >
+                <option value="all">All Categories</option>
+                <option value="creative">Creative</option>
+                <option value="technical">Technical</option>
+                <option value="business">Business</option>
+                <option value="content">Content</option>
+                <option value="influencer">Influencer</option>
+                <option value="video">Video</option>
+                <option value="photography">Photography</option>
+                <option value="writing">Writing</option>
+                <option value="design">Design</option>
+              </select>
+              <select
+                value={marketplaceSortBy}
+                onChange={(e) => setMarketplaceSortBy(e.target.value)}
+                className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                  isDark 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white border-gray-200 text-gray-900'
+                }`}
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="reward-high">Highest Reward</option>
+                <option value="reward-low">Lowest Reward</option>
+                <option value="deadline">Deadline</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Briefs Grid */}
+          {marketplaceLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+            </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              {filteredBriefs.map((brief, index) => {
+                const hasApplied = mySubmissions.some(sub => sub.briefTitle === brief.title);
+                
+                return (
+                  <motion.div
+                    key={brief.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: index * 0.1,
+                      ease: "easeOut"
+                    }}
+                  >
+                    <EnhancedMarketplaceBriefCard
+                      brief={{
+                        ...brief,
+                        requirements: brief.requirements || '',
+                        brand: brief.brand || { 
+                          id: '', 
+                          companyName: 'Unknown Brand',
+                          socialInstagram: undefined,
+                          socialTwitter: undefined,
+                          socialLinkedIn: undefined,
+                          socialWebsite: undefined
+                        },
+                        submissions: brief.submissions || []
+                      }}
+                      userSubmission={hasApplied ? {
+                        id: mySubmissions.find(sub => sub.briefTitle === brief.title)?.id || '',
+                        content: '',
+                        files: '',
+                        status: 'pending'
+                      } : undefined}
+                      onSubmissionSuccess={() => {
+                        fetchMarketplaceBriefs();
+                        fetchDashboardData();
+                      }}
+                    />
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {filteredBriefs.length === 0 && !marketplaceLoading && (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📋</div>
+              <h3 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>No Briefs Available</h3>
+              <p className={`text-lg mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {marketplaceSearchTerm || marketplaceFilterType !== 'all'
+                  ? 'No briefs match your current filters. Try adjusting your search criteria.'
+                  : 'There are no active briefs at the moment. Check back soon for new opportunities!'}
+              </p>
+              {(marketplaceSearchTerm || marketplaceFilterType !== 'all') && (
+                <button
+                  onClick={() => {
+                    setMarketplaceSearchTerm('');
+                    setMarketplaceFilterType('all');
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 font-medium"
+                >
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderAnalytics = () => (
     <div className="space-y-6">

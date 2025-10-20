@@ -17,6 +17,7 @@ interface BriefCardProps {
     location?: string;
     additionalFields?: Record<string, unknown>;
     rewardTiers?: Array<{
+      name?: string;
       position: number;
       amount: number;
       cashAmount: number;
@@ -47,7 +48,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
   const { isDark } = useTheme();
 
   // Calculate progress percentage for rewards given
-  const totalRewardValue = brief.reward * brief.amountOfWinners;
+  const totalRewardValue = brief.reward; // brief.reward is already the total reward pool
   const rewardsProgress = totalRewardValue > 0 ? (brief.totalRewardsPaid / totalRewardValue) * 100 : 0;
 
   // Calculate submissions count
@@ -215,12 +216,12 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
                   <span className={`text-xs ${
                     isDark ? 'text-gray-300' : 'text-gray-600'
                   }`}>
-                    Reward {tier.position}
+                    {tier.name || `Reward ${tier.position}`}
                   </span>
                   <span className={`text-xs font-medium ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
-                    ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
+                    ${tier.amount.toLocaleString()}
                   </span>
                 </div>
               ))}

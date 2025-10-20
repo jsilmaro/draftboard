@@ -18,6 +18,10 @@ interface Brief {
     id: string;
     companyName: string;
     logo?: string;
+    socialInstagram?: string;
+    socialTwitter?: string;
+    socialLinkedIn?: string;
+    socialWebsite?: string;
   };
   submissions: Array<{
     id: string;
@@ -146,7 +150,10 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
             </div>
           </div>
           <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-            {formatCurrency(brief.reward)} / Winner
+            {brief.rewardTiers && brief.rewardTiers.length > 0 
+              ? `${formatCurrency(brief.rewardTiers[0].amount)} - ${formatCurrency(brief.rewardTiers[brief.rewardTiers.length - 1].amount)}`
+              : formatCurrency(brief.reward / brief.amountOfWinners)
+            } / Winner
           </div>
         </div>
 
@@ -160,7 +167,7 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                ${brief.reward * brief.amountOfWinners} total reward pool
+                ${brief.reward.toLocaleString()} total reward pool
               </span>
               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {brief.amountOfWinners} winners
@@ -187,15 +194,29 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
             <div>
               <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Platforms</p>
               <div className="flex space-x-1">
-                <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
-                  <span className="text-white text-xs">I</span>
-                </div>
-                <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
-                  <span className="text-white text-xs">T</span>
-                </div>
-                <div className="w-4 h-4 bg-red-500 rounded flex items-center justify-center">
-                  <span className="text-white text-xs">Y</span>
-                </div>
+                {brief.brand.socialInstagram && (
+                  <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                    <span className="text-white text-xs">I</span>
+                  </div>
+                )}
+                {brief.brand.socialTwitter && (
+                  <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
+                    <span className="text-white text-xs">T</span>
+                  </div>
+                )}
+                {brief.brand.socialLinkedIn && (
+                  <div className="w-4 h-4 bg-blue-600 rounded flex items-center justify-center">
+                    <span className="text-white text-xs">L</span>
+                  </div>
+                )}
+                {brief.brand.socialWebsite && (
+                  <div className="w-4 h-4 bg-gray-600 rounded flex items-center justify-center">
+                    <span className="text-white text-xs">W</span>
+                  </div>
+                )}
+                {!brief.brand.socialInstagram && !brief.brand.socialTwitter && !brief.brand.socialLinkedIn && !brief.brand.socialWebsite && (
+                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>No platforms</span>
+                )}
               </div>
             </div>
             <div>

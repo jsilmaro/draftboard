@@ -54,7 +54,7 @@ const CreatorBriefCard: React.FC<CreatorBriefCardProps> = ({
   const { isDark } = useTheme();
 
   // Calculate total reward value
-  const totalRewardValue = brief.reward * brief.amountOfWinners;
+  const totalRewardValue = brief.reward; // brief.reward is already the total reward pool
 
   // Calculate submissions count
   const submissionsCount = brief.submissions?.length || 0;
