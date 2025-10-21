@@ -350,7 +350,11 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
         isPrivate: isPrivate,
         additionalFields: formData.additionalFields,
         rewardTiers: formData.rewardTiers.map(tier => ({
+          tierNumber: tier.tierNumber,
+          name: tier.name,
+          description: tier.description,
           position: tier.position,
+          amount: tier.amount,
           cashAmount: tier.amount,
           creditAmount: 0,
           prizeDescription: tier.description
@@ -439,7 +443,11 @@ const CreateBrief: React.FC<CreateBriefProps> = ({ isSideModal = false, onClose,
         isPrivate: isPrivate,
         additionalFields: formData.additionalFields,
         rewardTiers: formData.rewardTiers.map(tier => ({
+          tierNumber: tier.tierNumber,
+          name: tier.name,
+          description: tier.description,
           position: tier.position,
+          amount: tier.amount,
           cashAmount: tier.amount,
           creditAmount: 0,
           prizeDescription: tier.description

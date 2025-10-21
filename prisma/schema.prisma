@@ -39,19 +39,19 @@ model Brand {
   awardDrafts     AwardDraft[]
   wallet          BrandWallet?
   briefs          Brief[]
-  publishedAwards PublishedAward[]
-  successStories  SuccessStory[]
   briefFundings   BriefFunding[]
   briefRefunds    BriefRefund[]
+  publishedAwards PublishedAward[]
+  successStories  SuccessStory[]
 
   @@index([email])
   @@index([createdAt])
 }
 
 model Creator {
-  id                 String              @id @default(cuid())
-  userName           String              @unique
-  email              String              @unique
+  id                 String                @id @default(cuid())
+  userName           String                @unique
+  email              String                @unique
   password           String
   fullName           String
   phoneCountry       String?
@@ -74,18 +74,18 @@ model Creator {
   bankRouting        String?
   bankAccount        String?
   paypalEmail        String?
-  isVerified         Boolean             @default(false)
-  termsAccepted      Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  wallet             CreatorWallet?
+  isVerified         Boolean               @default(false)
+  termsAccepted      Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  payouts            CreatorPayout[]
   stripeAccount      CreatorStripeAccount?
+  wallet             CreatorWallet?
+  rewardAssignments  RewardAssignment[]
   submissions        Submission[]
   successStories     SuccessStory[]
   winners            Winner[]
   withdrawalRequests WithdrawalRequest[]
-  payouts            CreatorPayout[]
-  rewardAssignments  RewardAssignment[]
 
   @@index([email])
   @@index([userName])
@@ -93,60 +93,59 @@ model Creator {
 }
 
 model Brief {
-  id               String           @id @default(cuid())
-  title            String
-  description      String
-  requirements     String
-  reward           Float            // Legacy field - will be calculated from reward tiers
-  deadline         DateTime
-  status           String           @default("draft")
-  isPrivate        Boolean          @default(false)
-  additionalFields String?
-  brandId          String
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  closedAt         DateTime?
-  amountOfWinners  Int              @default(1)
-  winnersSelected  Boolean          @default(false)
-  location         String?
-  totalRewardsPaid Float            @default(0)
-  isFunded         Boolean          @default(false)
-  fundedAt         DateTime?
-  archivedAt       DateTime?
-  // New reward tier system
-  totalBudget      Float?           // Calculated from reward tiers
-  rewardTiers      RewardTier[]
+  id                String             @id @default(cuid())
+  title             String
+  description       String
+  requirements      String
+  reward            Float
+  deadline          DateTime
+  status            String             @default("draft")
+  isPrivate         Boolean            @default(false)
+  additionalFields  String?
+  brandId           String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  closedAt          DateTime?
+  amountOfWinners   Int                @default(1)
+  winnersSelected   Boolean            @default(false)
+  location          String?
+  totalRewardsPaid  Float              @default(0)
+  archivedAt        DateTime?
+  isFunded          Boolean            @default(false)
+  fundedAt          DateTime?
+  totalBudget       Float?
+  awardDrafts       AwardDraft[]
+  brand             Brand              @relation(fields: [brandId], references: [id])
+  funding           BriefFunding?
+  refunds           BriefRefund[]      @relation("BriefRefunds")
+  briefStatuses     BriefStatus[]
+  payouts           CreatorPayout[]    @relation("BriefPayouts")
+  publishedAwards   PublishedAward[]
   rewardAssignments RewardAssignment[]
-  briefStatuses    BriefStatus[]
-  awardDrafts      AwardDraft[]
-  brand            Brand            @relation(fields: [brandId], references: [id])
-  publishedAwards  PublishedAward[]
-  rewardPool       RewardPool?
-  submissions      Submission[]
-  winners          Winner[]
-  winnerRewards    WinnerReward[]
-  funding          BriefFunding?
-  refunds          BriefRefund[]    @relation("BriefRefunds")
-  payouts          CreatorPayout[]  @relation("BriefPayouts")
+  rewardPool        RewardPool?
+  rewardTiers       RewardTier[]
+  submissions       Submission[]
+  winners           Winner[]
+  winnerRewards     WinnerReward[]
 }
 
 model Submission {
-  id          String    @id @default(cuid())
-  briefId     String
-  creatorId   String
-  content     String
-  files       String?
-  amount      Float
-  status      String    @default("pending")
-  submittedAt DateTime  @default(now())
-  reviewedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  brief       Brief     @relation(fields: [briefId], references: [id])
-  creator     Creator   @relation(fields: [creatorId], references: [id])
-  winner      Winner?
-  payouts     CreatorPayout[]
+  id               String            @id @default(cuid())
+  briefId          String
+  creatorId        String
+  content          String
+  files            String?
+  amount           Float
+  status           String            @default("pending")
+  submittedAt      DateTime          @default(now())
+  reviewedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  payouts          CreatorPayout[]
   rewardAssignment RewardAssignment?
+  brief            Brief             @relation(fields: [briefId], references: [id])
+  creator          Creator           @relation(fields: [creatorId], references: [id])
+  winner           Winner?
 }
 
 model AwardDraft {
@@ -369,17 +368,17 @@ model CreatorWallet {
 }
 
 model CreatorStripeAccount {
-  id               String    @id @default(cuid())
-  creatorId        String    @unique
-  stripeAccountId  String    @unique
-  status           String    @default("pending") // pending, restricted, active
-  chargesEnabled   Boolean   @default(false)
-  payoutsEnabled   Boolean   @default(false)
-  detailsSubmitted Boolean   @default(false)
-  requirements     Json?     // Store Stripe requirements as JSON
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  creator          Creator   @relation(fields: [creatorId], references: [id])
+  id               String   @id @default(cuid())
+  creatorId        String   @unique
+  stripeAccountId  String   @unique
+  status           String   @default("pending")
+  chargesEnabled   Boolean  @default(false)
+  payoutsEnabled   Boolean  @default(false)
+  detailsSubmitted Boolean  @default(false)
+  requirements     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  creator          Creator  @relation(fields: [creatorId], references: [id])
 
   @@index([creatorId])
   @@index([stripeAccountId])
@@ -493,24 +492,22 @@ model StripeConnectAccount {
 }
 
 model BriefFunding {
-  id                      String    @id @default(cuid())
-  briefId                 String    @unique
+  id                      String          @id @default(cuid())
+  briefId                 String          @unique
   brandId                 String
-  totalAmount             Decimal   @db.Decimal(10, 2)
-  platformFee             Decimal   @default(0) @db.Decimal(10, 2)
-  netAmount               Decimal   @db.Decimal(10, 2)
+  totalAmount             Decimal         @db.Decimal(10, 2)
+  platformFee             Decimal         @default(0) @db.Decimal(10, 2)
+  netAmount               Decimal         @db.Decimal(10, 2)
   stripePaymentIntentId   String?
   stripeCheckoutSessionId String?
-  status                  String    @default("pending")
+  status                  String          @default("pending")
   fundedAt                DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  // Relations
-  brief   Brief           @relation(fields: [briefId], references: [id], onDelete: Cascade)
-  brand   Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  payouts CreatorPayout[] @relation("BriefFundingPayouts")
-  refunds BriefRefund[]   @relation("BriefFundingRefunds")
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  brand                   Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brief                   Brief           @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  refunds                 BriefRefund[]   @relation("BriefRefunds")
+  payouts                 CreatorPayout[] @relation("BriefPayouts")
 
   @@index([brandId])
   @@index([status])
@@ -518,25 +515,23 @@ model BriefFunding {
 }
 
 model CreatorPayout {
-  id                    String    @id @default(cuid())
+  id                    String       @id @default(cuid())
   creatorId             String
   briefId               String
   submissionId          String
-  amount                Decimal   @db.Decimal(10, 2)
-  platformFee           Decimal   @default(0) @db.Decimal(10, 2)
-  netAmount             Decimal   @db.Decimal(10, 2)
+  amount                Decimal      @db.Decimal(10, 2)
+  platformFee           Decimal      @default(0) @db.Decimal(10, 2)
+  netAmount             Decimal      @db.Decimal(10, 2)
   stripeTransferId      String?
   stripeTransferGroupId String?
-  status                String    @default("pending")
+  status                String       @default("pending")
   paidAt                DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  // Relations
-  creator       Creator      @relation(fields: [creatorId], references: [id])
-  brief         Brief        @relation("BriefPayouts", fields: [briefId], references: [id], map: "CreatorPayout_brief_fkey")
-  submission    Submission   @relation(fields: [submissionId], references: [id])
-  briefFunding  BriefFunding @relation("BriefFundingPayouts", fields: [briefId], references: [briefId], map: "CreatorPayout_briefFunding_fkey")
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  brief                 Brief        @relation("BriefPayouts", fields: [briefId], references: [id], map: "CreatorPayout_brief_fkey")
+  briefFunding          BriefFunding @relation("BriefPayouts", fields: [briefId], references: [briefId])
+  creator               Creator      @relation(fields: [creatorId], references: [id])
+  submission            Submission   @relation(fields: [submissionId], references: [id])
 
   @@index([creatorId])
   @@index([briefId])
@@ -545,21 +540,19 @@ model CreatorPayout {
 }
 
 model BriefRefund {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   briefId        String
   brandId        String
-  amount         Decimal   @db.Decimal(10, 2)
+  amount         Decimal      @db.Decimal(10, 2)
   stripeRefundId String?
   reason         String?
-  status         String    @default("pending")
+  status         String       @default("pending")
   processedAt    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relations
-  brief         Brief        @relation("BriefRefunds", fields: [briefId], references: [id], map: "BriefRefund_brief_fkey")
-  brand         Brand        @relation(fields: [brandId], references: [id], map: "BriefRefund_brand_fkey")
-  briefFunding  BriefFunding @relation("BriefFundingRefunds", fields: [briefId], references: [briefId], map: "BriefRefund_briefFunding_fkey")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  brand          Brand        @relation(fields: [brandId], references: [id], map: "BriefRefund_brand_fkey")
+  brief          Brief        @relation("BriefRefunds", fields: [briefId], references: [id], map: "BriefRefund_brief_fkey")
+  briefFunding   BriefFunding @relation("BriefRefunds", fields: [briefId], references: [briefId])
 
   @@index([briefId])
   @@index([brandId])
@@ -775,29 +768,19 @@ model User {
   @@index([name])
 }
 
-enum MessageType {
-  TEXT
-  FILE
-  IMAGE
-  VIDEO
-}
-
-// New Reward Tier System Models
 model RewardTier {
-  id          String   @id @default(cuid())
-  briefId     String
-  tierNumber  Int
-  name        String
-  description String?
-  amount      Decimal  @db.Decimal(10, 2)
-  position    Int
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  brief           Brief             @relation(fields: [briefId], references: [id], onDelete: Cascade)
-  rewardAssignments RewardAssignment[]
+  id                String            @id @default(cuid())
+  briefId           String
+  tierNumber        Int
+  name              String
+  description       String?
+  amount            Decimal           @db.Decimal(10, 2)
+  position          Int
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  rewardAssignments RewardAssignment?
+  brief             Brief             @relation(fields: [briefId], references: [id], onDelete: Cascade)
 
   @@unique([briefId, tierNumber])
   @@index([briefId])
@@ -806,25 +789,23 @@ model RewardTier {
 }
 
 model RewardAssignment {
-  id              String    @id @default(cuid())
-  briefId         String
-  rewardTierId    String    @unique
-  creatorId       String
-  submissionId    String    @unique
-  assignedAt     DateTime  @default(now())
-  assignedBy     String
-  status          String    @default("assigned") // assigned, confirmed, completed
-  payoutStatus    String    @default("pending") // pending, processing, paid, failed
+  id               String     @id @default(cuid())
+  briefId          String
+  rewardTierId     String     @unique
+  creatorId        String
+  submissionId     String     @unique
+  assignedAt       DateTime   @default(now())
+  assignedBy       String
+  status           String     @default("assigned")
+  payoutStatus     String     @default("pending")
   stripeTransferId String?
-  paidAt         DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relations
-  brief        Brief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
-  rewardTier   RewardTier @relation(fields: [rewardTierId], references: [id], onDelete: Cascade)
-  creator      Creator    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  paidAt           DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  brief            Brief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  creator          Creator    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  rewardTier       RewardTier @relation(fields: [rewardTierId], references: [id], onDelete: Cascade)
+  submission       Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@index([briefId])
   @@index([creatorId])
@@ -836,31 +817,36 @@ model RewardAssignment {
 model BriefStatus {
   id        String   @id @default(cuid())
   briefId   String
-  status    String   // draft, funded, winners_selected, payouts_completed, closed
+  status    String
   updatedAt DateTime @default(now())
   updatedBy String
   notes     String?
-
-  // Relations
-  brief Brief @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  brief     Brief    @relation(fields: [briefId], references: [id], onDelete: Cascade)
 
   @@index([briefId])
   @@index([status])
 }
 
 model Invite {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   creatorId   String
   brandId     String
   briefId     String?
-  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  status      String    @default("PENDING")
   message     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   respondedAt DateTime?
 
   @@index([creatorId])
   @@index([brandId])
   @@index([status])
   @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+  VIDEO
 }

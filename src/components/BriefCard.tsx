@@ -221,7 +221,7 @@ const BriefCard: React.FC<BriefCardProps> = ({ brief, onApplyClick }) => {
                   <span className={`text-xs font-medium ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
-                    ${tier.amount.toLocaleString()}
+                    ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
                   </span>
                 </div>
               ))}

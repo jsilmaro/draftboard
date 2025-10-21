@@ -2044,7 +2044,7 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
         const tier = rewardTiers[i];
         console.log(`Creating reward tier ${i + 1}:`, tier);
         
-        await prisma.rewardTier.create({
+        const createdTier = await prisma.rewardTier.create({
           data: {
             briefId: brief.id,
             tierNumber: tier.tierNumber || (i + 1), // Use provided tierNumber or default to position
@@ -2055,6 +2055,7 @@ app.post('/api/briefs', authenticateToken, async (req, res) => {
             isActive: true
           }
         });
+        console.log(`💰 Created reward tier ${i + 1}:`, createdTier);
       }
       
       console.log('Reward tiers created successfully');
@@ -2368,42 +2369,42 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
     // Query briefs with essential data only
     const briefs = await prisma.brief.findMany({
       where: { brandId: req.user.id },
-      include: {
-        rewardTiers: {
-          orderBy: { position: 'asc' }
-        },
-        winnerRewards: {
-          orderBy: { position: 'asc' }
-        },
-        submissions: {
-          select: {
-            id: true,
-            content: true,
-            files: true,
-            status: true,
-            submittedAt: true,
-            createdAt: true,
-            creator: {
-              select: {
-                id: true,
-                userName: true,
-                fullName: true,
-                email: true,
-                isVerified: true,
-                stripeAccount: {
-                  select: {
-                    id: true,
-                    status: true,
-                    chargesEnabled: true,
-                    payoutsEnabled: true
+        include: {
+          rewardTiers: {
+            orderBy: { position: 'asc' }
+          },
+          winnerRewards: {
+            orderBy: { position: 'asc' }
+          },
+          submissions: {
+            select: {
+              id: true,
+              content: true,
+              files: true,
+              status: true,
+              submittedAt: true,
+              createdAt: true,
+              creator: {
+                select: {
+                  id: true,
+                  userName: true,
+                  fullName: true,
+                  email: true,
+                  isVerified: true,
+                  stripeAccount: {
+                    select: {
+                      id: true,
+                      status: true,
+                      chargesEnabled: true,
+                      payoutsEnabled: true
+                    }
                   }
                 }
               }
-            }
-          },
-          orderBy: { submittedAt: 'desc' }
-        }
-      },
+            },
+            orderBy: { submittedAt: 'desc' }
+          }
+        },
       orderBy: { createdAt: 'desc' }
     });
     
@@ -2425,6 +2426,25 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
             cashAmount: wr.cashAmount || 0,
             creditAmount: wr.creditAmount || 0
           }));
+
+      // If reward tiers are empty or all have 0 amounts, create fallback tiers from legacy reward
+      if (!rewardTiers || rewardTiers.length === 0 || rewardTiers.every(t => t.amount === 0)) {
+        console.log(`📋 Creating fallback reward tiers for brief "${brief.title}"`);
+        const amountOfWinners = brief.amountOfWinners || 1;
+        const rewardPerWinner = (brief.reward || 0) / amountOfWinners;
+        
+        rewardTiers = Array.from({ length: amountOfWinners }, (_, i) => ({
+          position: i + 1,
+          amount: rewardPerWinner,
+          cashAmount: rewardPerWinner,
+          creditAmount: 0
+        }));
+      }
+
+      console.log(`📋 Brand brief "${brief.title}" reward tiers:`, rewardTiers);
+      console.log(`📋 Raw database rewardTiers:`, brief.rewardTiers);
+      console.log(`📋 Brief reward field:`, brief.reward);
+      console.log(`📋 Brief totalBudget field:`, brief.totalBudget);
 
       const totalRewardValue = rewardTiers.reduce(
         (sum, t) => sum + Number(t.cashAmount || 0) + Number(t.creditAmount || 0),
@@ -2462,6 +2482,8 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
         ...brief,
         totalRewardValue,
         rewardTiers,
+        winners: [],
+        rewardAssignments: [],
         displayLocation: country, // Show only country on cards
         submissions: submissions
       };
@@ -2479,8 +2501,13 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
     res.json(transformedBriefs);
   } catch (error) {
     console.error('❌ Error fetching brand briefs:', error);
+    console.error('❌ Error message:', error.message);
     console.error('❌ Error stack:', error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack
+    });
   }
 });
 
@@ -2545,9 +2572,9 @@ app.get('/api/briefs/public/:id', async (req, res) => {
       return res.status(404).json({ error: 'Brief not available' });
     }
 
-    // Calculate total reward value
+    // Calculate total reward value from reward tiers
     const totalRewardValue = brief.rewardTiers?.reduce((sum, tier) => 
-      sum + (tier.cashAmount || 0) + (tier.creditAmount || 0), 0
+      sum + (tier.amount || 0), 0
     ) || brief.totalBudget || brief.reward || 0;
 
     const transformedBrief = {
@@ -3094,24 +3121,38 @@ app.get('/api/creators/briefs', authenticateToken, async (req, res) => {
     });
 
     // Transform data to match frontend expectations
-    const transformedBriefs = briefs.map(brief => ({
-      id: brief.id,
-      title: brief.title,
-      description: brief.description,
-      requirements: brief.requirements,
-      reward: brief.reward,
-      amountOfWinners: brief.amountOfWinners,
-      location: brief.location,
-      deadline: brief.deadline,
-      status: brief.status,
-      isFunded: brief.isFunded || false,
-      fundedAt: brief.fundedAt,
-      additionalFields: brief.additionalFields ? JSON.parse(brief.additionalFields) : null,
-      brand: brief.brand,
-      submissions: brief.submissions || [],
-      rewardTiers: brief.rewardTiers || [],
-      winnerRewards: brief.winnerRewards || []
-    }));
+    const transformedBriefs = briefs.map(brief => {
+      // Transform reward tiers
+      const rewardTiers = brief.rewardTiers?.map(tier => ({
+        position: tier.position,
+        amount: parseFloat(tier.amount.toString()) || 0,
+        cashAmount: parseFloat(tier.amount.toString()) || 0,
+        creditAmount: 0,
+        name: tier.name || `Reward ${tier.position}`,
+        description: tier.description || ''
+      })) || [];
+
+      console.log(`📋 Creator brief "${brief.title}" reward tiers:`, rewardTiers);
+
+      return {
+        id: brief.id,
+        title: brief.title,
+        description: brief.description,
+        requirements: brief.requirements,
+        reward: brief.reward,
+        amountOfWinners: brief.amountOfWinners,
+        location: brief.location,
+        deadline: brief.deadline,
+        status: brief.status,
+        isFunded: brief.isFunded || false,
+        fundedAt: brief.fundedAt,
+        additionalFields: brief.additionalFields ? JSON.parse(brief.additionalFields) : null,
+        brand: brief.brand,
+        submissions: brief.submissions || [],
+        rewardTiers: rewardTiers,
+        winnerRewards: brief.winnerRewards || []
+      };
+    });
 
     res.json(transformedBriefs);
   } catch (error) {
@@ -3335,6 +3376,9 @@ app.get('/api/briefs/public', async (req, res) => {
               logo: true
             }
           },
+          rewardTiers: {
+            orderBy: { position: 'asc' }
+          },
           submissions: {
             select: {
               id: true,
@@ -3362,21 +3406,36 @@ app.get('/api/briefs/public', async (req, res) => {
       });
 
       // Transform briefs for public view
-      const transformedBriefs = briefs.map(brief => ({
-        id: brief.id,
-        title: brief.title,
-        description: brief.description,
-        requirements: brief.requirements,
-        reward: brief.reward,
-        deadline: brief.deadline,
-        status: brief.status,
-        createdAt: brief.createdAt,
-        amountOfWinners: brief.amountOfWinners,
-        brand: brief.brand,
-        submissions: brief.submissions,
-        winners: brief.winners,
-        winnerRewards: brief.winnerRewards
-      }));
+      const transformedBriefs = briefs.map(brief => {
+        // Transform reward tiers
+        const rewardTiers = brief.rewardTiers?.map(tier => ({
+          position: tier.position,
+          amount: parseFloat(tier.amount.toString()) || 0,
+          cashAmount: parseFloat(tier.amount.toString()) || 0,
+          creditAmount: 0,
+          name: tier.name || `Reward ${tier.position}`,
+          description: tier.description || ''
+        })) || [];
+
+        console.log(`📋 Brief "${brief.title}" reward tiers:`, rewardTiers);
+
+        return {
+          id: brief.id,
+          title: brief.title,
+          description: brief.description,
+          requirements: brief.requirements,
+          reward: brief.reward,
+          deadline: brief.deadline,
+          status: brief.status,
+          createdAt: brief.createdAt,
+          amountOfWinners: brief.amountOfWinners,
+          brand: brief.brand,
+          submissions: brief.submissions,
+          winners: brief.winners,
+          winnerRewards: brief.winnerRewards,
+          rewardTiers: rewardTiers
+        };
+      });
 
       briefs = transformedBriefs;
       console.log(`✅ Fetched ${briefs.length} public briefs from database`);

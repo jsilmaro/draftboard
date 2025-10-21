@@ -22,6 +22,13 @@ interface CreatorBriefCardProps {
       cashAmount: number;
       creditAmount: number;
     }>;
+    winners?: Array<{
+      id: string;
+      position: number;
+      submissionId: string;
+      creatorId: string;
+      selectedAt: string;
+    }>;
 
     brand: {
       id: string;
@@ -52,6 +59,32 @@ const CreatorBriefCard: React.FC<CreatorBriefCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { isDark } = useTheme();
+
+  // Calculate remaining reward pool
+  const calculateRemainingRewardPool = () => {
+    if (!brief.rewardTiers || brief.rewardTiers.length === 0) {
+      return brief.reward || 0;
+    }
+
+    const totalRewardPool = brief.rewardTiers.reduce((sum, tier) => {
+      return sum + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+    }, 0);
+
+    const distributedAmount = (brief.winners || []).reduce((sum, winner) => {
+      const tier = brief.rewardTiers?.find(t => t.position === winner.position);
+      if (tier) {
+        return sum + (tier.cashAmount || 0) + (tier.creditAmount || 0);
+      }
+      return sum;
+    }, 0);
+
+    return totalRewardPool - distributedAmount;
+  };
+
+  // Check if a position is already distributed
+  const isPositionDistributed = (position: number) => {
+    return (brief.winners || []).some(winner => winner.position === position);
+  };
 
   // Calculate total reward value
   const totalRewardValue = brief.reward; // brief.reward is already the total reward pool
@@ -222,25 +255,35 @@ const CreatorBriefCard: React.FC<CreatorBriefCardProps> = ({
           {/* Reward Structure */}
           {brief.rewardTiers && brief.rewardTiers.length > 0 && (
             <div className="space-y-1">
-              <h5 className={`text-xs font-medium ${
-                isDark ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Reward Structure:
-              </h5>
-              {brief.rewardTiers.slice(0, 3).map((tier) => (
-                <div key={tier.position} className="flex justify-between items-center">
-                  <span className={`text-xs ${
-                    isDark ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Reward {tier.position}
-                  </span>
-                  <span className={`text-xs font-medium ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
+              <div className="flex justify-between items-center">
+                <h5 className={`text-xs font-medium ${
+                  isDark ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Reward Structure:
+                </h5>
+                <div className="text-xs">
+                  <span className={`font-medium ${calculateRemainingRewardPool() > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    ${calculateRemainingRewardPool().toFixed(0)} remaining
                   </span>
                 </div>
-              ))}
+              </div>
+              {brief.rewardTiers.slice(0, 3).map((tier) => {
+                const isDistributed = isPositionDistributed(tier.position);
+                return (
+                  <div key={tier.position} className={`flex justify-between items-center ${isDistributed ? 'line-through opacity-60' : ''}`}>
+                    <span className={`text-xs ${
+                      isDark ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      Reward {tier.position} {isDistributed ? '(Distributed)' : ''}
+                    </span>
+                    <span className={`text-xs font-medium ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
               {brief.rewardTiers.length > 3 && (
                 <p className={`text-xs ${
             isDark ? 'text-gray-400' : 'text-gray-500'

@@ -83,7 +83,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
         },
         body: JSON.stringify({
           briefId: brief.id,
-          contentUrl: contentUrl.trim()
+          content: contentUrl.trim()
         })
       });
 

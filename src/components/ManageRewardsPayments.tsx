@@ -35,12 +35,28 @@ interface Brief {
   deadline: string;
   status: string;
   createdAt: string;
+  amountOfWinners?: number;
   submissions: Submission[];
   rewardTiers?: Array<{
     position: number;
     cashAmount: number;
     creditAmount: number;
     amount: number;
+  }>;
+  winners?: Array<{
+    id: string;
+    position: number;
+    submissionId: string;
+    creatorId: string;
+    selectedAt: string;
+  }>;
+  rewardAssignments?: Array<{
+    id: string;
+    position: number;
+    creatorId: string;
+    submissionId: string;
+    status: string;
+    payoutStatus: string;
   }>;
   _count?: {
     submissions: number;
@@ -101,7 +117,77 @@ const ManageRewardsPayments: React.FC = () => {
     fetchBriefs();
   }, [fetchBriefs]);
 
+  // Calculate remaining reward pool
+  const calculateRemainingRewardPool = (brief: Brief) => {
+    if (!brief.rewardTiers || brief.rewardTiers.length === 0) {
+      return brief.reward || 0;
+    }
+
+    const totalRewardPool = brief.rewardTiers.reduce((sum, tier) => {
+      let amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
+      // If amount is 0, try using the amount field
+      if (amount === 0 && tier.amount) {
+        amount = parseFloat(tier.amount.toString()) || 0;
+      }
+      return sum + amount;
+    }, 0);
+
+    const distributedAmount = (brief.winners || []).reduce((sum, winner) => {
+      const tier = brief.rewardTiers?.find(t => t.position === winner.position);
+      if (tier) {
+        let amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
+        // If amount is 0, try using the amount field
+        if (amount === 0 && tier.amount) {
+          amount = parseFloat(tier.amount.toString()) || 0;
+        }
+        return sum + amount;
+      }
+      return sum;
+    }, 0);
+
+    return totalRewardPool - distributedAmount;
+  };
+
+  // Check if a position is already distributed
+  const isPositionDistributed = (brief: Brief, position: number) => {
+    return (brief.winners || []).some(winner => winner.position === position);
+  };
+
+  // Get available positions (not yet distributed)
+  const getAvailablePositions = (brief: Brief) => {
+    if (!brief.rewardTiers || brief.rewardTiers.length === 0) {
+      const maxWinners = brief.amountOfWinners || 1;
+      return Array.from({ length: maxWinners }, (_, i) => i + 1);
+    }
+
+    return brief.rewardTiers
+      .filter(tier => !isPositionDistributed(brief, tier.position))
+      .map(tier => tier.position)
+      .sort((a, b) => a - b);
+  };
+
   const handleBriefSelect = (brief: Brief) => {
+    console.log('📋 Selected brief:', brief.title);
+    console.log('📋 Reward tiers:', brief.rewardTiers);
+    console.log('📋 Legacy reward:', brief.reward);
+    console.log('📋 Winners:', brief.winners);
+    console.log('📋 Remaining reward pool:', calculateRemainingRewardPool(brief));
+    console.log('📋 Full brief object:', brief);
+    
+    // Debug reward tier calculations
+    if (brief.rewardTiers && brief.rewardTiers.length > 0) {
+      console.log('📋 Reward tier calculations:');
+      brief.rewardTiers.forEach((tier, index) => {
+        console.log(`  Tier ${index + 1}:`, {
+          position: tier.position,
+          cashAmount: tier.cashAmount,
+          creditAmount: tier.creditAmount,
+          amount: tier.amount,
+          total: (tier.cashAmount || 0) + (tier.creditAmount || 0)
+        });
+      });
+    }
+    
     setSelectedBrief(brief);
     setActiveSection('review');
     setSelectedWinners([]);
@@ -177,16 +263,37 @@ const ManageRewardsPayments: React.FC = () => {
       // Get the reward tier for this position
       const rewardTier = selectedBrief?.rewardTiers?.find(tier => tier.position === nextPosition);
       
+      console.log(`🔍 Looking for reward tier at position ${nextPosition}`);
+      console.log(`🔍 Available reward tiers:`, selectedBrief?.rewardTiers);
+      console.log(`🔍 Found reward tier:`, rewardTier);
+      
       // Calculate the total amount (cash + credit) from the tier
-      const tierAmount = rewardTier 
-        ? (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0)
-        : 0;
+      let tierAmount = 0;
+      if (rewardTier) {
+        // Try multiple ways to get the amount
+        tierAmount = (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0);
+        if (tierAmount === 0 && rewardTier.amount) {
+          tierAmount = parseFloat(rewardTier.amount.toString()) || 0;
+        }
+        console.log(`💰 Found reward tier for position ${nextPosition}:`, tierAmount);
+        console.log(`💰 Reward tier details:`, {
+          position: rewardTier.position,
+          cashAmount: rewardTier.cashAmount,
+          creditAmount: rewardTier.creditAmount,
+          amount: rewardTier.amount
+        });
+      } else {
+        // Fallback: If no reward tiers, divide the legacy reward by number of winners
+        const amountOfWinners = selectedBrief?.amountOfWinners || 1;
+        tierAmount = (selectedBrief?.reward || 0) / amountOfWinners;
+        console.log(`💰 Using legacy reward divided by winners: ${tierAmount} (${selectedBrief?.reward} / ${amountOfWinners})`);
+      }
       
       const newWinner: Winner = {
         submissionId: submission.id,
         creatorId: submission.creator.id,
         rewardType: 'cash',
-        amount: tierAmount, // Automatically set from reward tier
+        amount: tierAmount, // Automatically set from reward tier or legacy reward
         description: `Reward ${nextPosition} for ${selectedBrief?.title || 'brief'}`
       };
       setSelectedWinners(prev => [...prev, newWinner]);
@@ -195,9 +302,19 @@ const ManageRewardsPayments: React.FC = () => {
 
   const handlePositionChange = (submissionId: string, newPosition: number) => {
     const rewardTier = selectedBrief?.rewardTiers?.find(tier => tier.position === newPosition);
-    const tierAmount = rewardTier 
-      ? (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0)
-      : 0;
+    
+    let tierAmount = 0;
+    if (rewardTier) {
+      // Try multiple ways to get the amount
+      tierAmount = (rewardTier.cashAmount || 0) + (rewardTier.creditAmount || 0);
+      if (tierAmount === 0 && rewardTier.amount) {
+        tierAmount = parseFloat(rewardTier.amount.toString()) || 0;
+      }
+    } else {
+      // Fallback: If no reward tiers, divide the legacy reward by number of winners
+      const amountOfWinners = selectedBrief?.amountOfWinners || 1;
+      tierAmount = (selectedBrief?.reward || 0) / amountOfWinners;
+    }
 
     setSelectedWinners(prev => 
       prev.map(winner => 
@@ -368,12 +485,72 @@ const ManageRewardsPayments: React.FC = () => {
                   {brief.description}
                 </p>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Reward:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      ${brief.reward.toFixed(2)}
-                    </span>
-                  </div>
+                  {brief.rewardTiers && brief.rewardTiers.length > 0 ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Total Reward Pool:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          ${(() => {
+                            const total = brief.rewardTiers.reduce((sum, t) => sum + (t.cashAmount || 0) + (t.creditAmount || 0), 0);
+                            console.log(`💰 Brief "${brief.title}" total calculation:`, {
+                              rewardTiers: brief.rewardTiers,
+                              total: total
+                            });
+                            // If total is 0, try using the amount field
+                            if (total === 0) {
+                              const amountTotal = brief.rewardTiers.reduce((sum, t) => sum + (parseFloat(t.amount?.toString()) || 0), 0);
+                              console.log(`💰 Using amount field instead:`, amountTotal);
+                              return amountTotal;
+                            }
+                            return total;
+                          })().toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Remaining:</span>
+                        <span className={`font-medium ${calculateRemainingRewardPool(brief) > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          ${calculateRemainingRewardPool(brief).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {brief.rewardTiers.map((tier, idx) => {
+                          const isDistributed = isPositionDistributed(brief, tier.position);
+                          return (
+                            <div key={idx} className={`flex justify-between ${isDistributed ? 'line-through text-gray-400' : ''}`}>
+                              <span>
+                                Reward {tier.position} {isDistributed ? '(Distributed)' : ''}:
+                              </span>
+                              <span className={isDistributed ? 'text-gray-400' : ''}>
+                                ${(() => {
+                                  let amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
+                                  console.log(`💰 Tier ${tier.position} calculation:`, {
+                                    tier: tier,
+                                    cashAmount: tier.cashAmount,
+                                    creditAmount: tier.creditAmount,
+                                    amount: tier.amount,
+                                    calculated: amount
+                                  });
+                                  // If amount is 0, try using the amount field
+                                  if (amount === 0 && tier.amount) {
+                                    amount = parseFloat(tier.amount.toString()) || 0;
+                                    console.log(`💰 Using amount field for tier ${tier.position}:`, amount);
+                                  }
+                                  return amount;
+                                })().toFixed(2)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Total Reward:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        ${brief.reward.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Submissions:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
@@ -470,6 +647,28 @@ const ManageRewardsPayments: React.FC = () => {
           {/* Section Content */}
           {activeSection === 'review' && (
             <div className="space-y-4">
+              {/* Reward Pool Status */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                      Reward Pool Status
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      Track remaining rewards for this brief
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                      ${calculateRemainingRewardPool(selectedBrief).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                      Remaining
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-between items-center">
                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Review All Submissions
@@ -659,8 +858,8 @@ const ManageRewardsPayments: React.FC = () => {
                               const positionMatch = winner?.description.match(/Reward (\d+)/);
                               const position = positionMatch ? parseInt(positionMatch[1]) : 1;
                               
-                              // Get all available positions from reward tiers
-                              const availablePositions = selectedBrief?.rewardTiers?.map(tier => tier.position) || [];
+                              // Get available positions (not yet distributed)
+                              const availablePositions = getAvailablePositions(selectedBrief);
                               
                               return (
                                 <>
@@ -674,9 +873,26 @@ const ManageRewardsPayments: React.FC = () => {
                                       {availablePositions.map(pos => {
                                         const tier = selectedBrief?.rewardTiers?.find(t => t.position === pos);
                                         const emoji = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏅';
+                                        
+                                        // Calculate amount for this position
+                                        let amount = 0;
+                                        if (tier) {
+                                          // Try multiple ways to get the amount
+                                          amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
+                                          if (amount === 0 && tier.amount) {
+                                            amount = parseFloat(tier.amount.toString()) || 0;
+                                          }
+                                          console.log(`🎯 Position ${pos} tier found:`, tier, 'amount:', amount);
+                                        } else {
+                                          // Fallback: Use legacy reward divided by winners
+                                          const amountOfWinners = selectedBrief?.amountOfWinners || 1;
+                                          amount = (selectedBrief?.reward || 0) / amountOfWinners;
+                                          console.log(`🎯 Position ${pos} using fallback:`, amount);
+                                        }
+                                        
                                         return (
                                           <option key={pos} value={pos}>
-                                            {emoji} Reward {pos} (${((tier?.cashAmount || 0) + (tier?.creditAmount || 0)).toFixed(2)})
+                                            {emoji} Reward {pos} (${amount.toFixed(2)})
                                           </option>
                                         );
                                       })}
