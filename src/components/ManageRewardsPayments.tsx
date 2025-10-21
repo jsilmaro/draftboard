@@ -15,7 +15,13 @@ interface Submission {
     fullName: string;
     userName: string;
     email: string;
-    hasStripeAccount?: boolean;
+    isVerified?: boolean;
+    stripeAccount?: {
+      id: string;
+      status: string;
+      chargesEnabled: boolean;
+      payoutsEnabled: boolean;
+    } | null;
   };
 }
 
@@ -61,7 +67,7 @@ const ManageRewardsPayments: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'review' | 'winners' | 'payments'>('review');
   const [selectedWinners, setSelectedWinners] = useState<Winner[]>([]);
   const [processingPayment, setProcessingPayment] = useState(false);
-  const [submissionsFilter, setSubmissionsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [submissionsFilter, setSubmissionsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const { showErrorToast, showSuccessToast } = useToast();
 
   const fetchBriefs = useCallback(async () => {
@@ -78,7 +84,8 @@ const ManageRewardsPayments: React.FC = () => {
         
         // Show all briefs with submissions, not just funded ones
         const briefsWithSubmissions = data.filter((brief: Brief) => {
-          return brief.submissions && brief.submissions.length > 0;
+          const hasSubmissions = brief.submissions && brief.submissions.length > 0;
+          return hasSubmissions;
         });
         
         setBriefs(briefsWithSubmissions);
@@ -98,6 +105,7 @@ const ManageRewardsPayments: React.FC = () => {
     setSelectedBrief(brief);
     setActiveSection('review');
     setSelectedWinners([]);
+    setSubmissionsFilter('pending');
   };
 
   const handleAcceptSubmission = async (submissionId: string) => {
@@ -254,7 +262,7 @@ const ManageRewardsPayments: React.FC = () => {
       
       // Reset state
       setSelectedWinners([]);
-      setActiveSection('review');
+      setActiveSection('winners');
       fetchBriefs(); // Refresh data
 
     } catch (error) {
@@ -307,12 +315,14 @@ const ManageRewardsPayments: React.FC = () => {
             Review submissions, select winners, and distribute rewards
           </p>
         </div>
-        <button
-          onClick={fetchBriefs}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          Refresh
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={fetchBriefs}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Brief Selection */}
@@ -332,9 +342,16 @@ const ManageRewardsPayments: React.FC = () => {
                 To see briefs here, you need to:
               </p>
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <p>1. Create a brief</p>
+                <p>1. Create a brief and publish it</p>
                 <p>2. Wait for creators to submit work</p>
-                <p>3. Review and manage submissions</p>
+                <p>3. Review submissions in the &quot;Review Submissions&quot; tab</p>
+                <p>4. Shortlist (approve) submissions</p>
+                <p>5. Select winners and distribute rewards</p>
+              </div>
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Debug Tip:</strong> Check the browser console for detailed logs about briefs and submissions data.
+                </p>
               </div>
             </div>
           ) : (
@@ -446,7 +463,7 @@ const ManageRewardsPayments: React.FC = () => {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              Reward & Payment
+              Distribute Rewards
             </button>
           </div>
 
@@ -454,29 +471,25 @@ const ManageRewardsPayments: React.FC = () => {
           {activeSection === 'review' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Review Submissions
-              </h4>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {getFilteredSubmissions().length} of {selectedBrief.submissions.length} submissions
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Review All Submissions
+                </h4>
+                {/* Filter Tabs */}
+                <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  {['all', 'pending', 'approved', 'rejected'].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setSubmissionsFilter(filter as typeof submissionsFilter)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        submissionsFilter === filter
+                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
                 </div>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                {['all', 'pending', 'approved', 'rejected'].map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setSubmissionsFilter(filter as 'all' | 'pending' | 'approved' | 'rejected')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      submissionsFilter === filter
-                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  </button>
-                ))}
               </div>
 
               {getFilteredSubmissions().length === 0 ? (
@@ -496,34 +509,36 @@ const ManageRewardsPayments: React.FC = () => {
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-lg flex items-center justify-center border bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center">
                             <img src="/icons/profile.png" alt="User" className="w-10 h-10" />
                           </div>
-                        <div>
-                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          <div>
+                            <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
                               {submission.creator.fullName}
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            </h5>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               @{submission.creator.userName}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
                               Submitted {new Date(submission.submittedAt).toLocaleDateString()}
-                          </p>
-                        </div>
+                            </p>
+                          </div>
                         </div>
                         <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
                           submission.status === 'approved' 
-                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700'
+                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700'
                             : submission.status === 'rejected'
-                            ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700'
-                            : 'bg-yellow-50 text-yellow-600 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-700'
+                            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700'
+                            : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700'
                         }`}>
                           {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                         </span>
                       </div>
                       
                       <div className="mb-4">
-                        <h6 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Submission Content:</h6>
+                        <h6 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Submission Content:
+                        </h6>
                         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
                           {submission.files && (
                             <div className="flex items-center space-x-3">
@@ -546,44 +561,46 @@ const ManageRewardsPayments: React.FC = () => {
                           )}
                           {submission.content && submission.content.trim() && (
                             <div>
-                              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm">
+                              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                                 {submission.content}
                               </p>
                             </div>
                           )}
                           {!submission.files && (!submission.content || !submission.content.trim()) && (
-                            <p className="text-gray-500 dark:text-gray-400 text-sm italic">No content submitted</p>
+                            <p className="text-sm italic text-gray-500 dark:text-gray-400">
+                              No content submitted
+                            </p>
                           )}
                         </div>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                      <div className="flex space-x-2">
-                        {submission.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleAcceptSubmission(submission.id)}
+                        <div className="flex space-x-2">
+                          {submission.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleAcceptSubmission(submission.id)}
                                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                            >
+                              >
                                 ✓ Accept & Shortlist
-                            </button>
-                            <button
-                              onClick={() => handleRejectSubmission(submission.id)}
+                              </button>
+                              <button
+                                onClick={() => handleRejectSubmission(submission.id)}
                                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                            >
+                              >
                                 ✗ Reject
-                            </button>
-                          </>
-                        )}
+                              </button>
+                            </>
+                          )}
                           {submission.status === 'approved' && (
-                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            ✓ Shortlisted
-                          </span>
-                        )}
-                        {submission.status === 'rejected' && (
-                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                            ✗ Rejected
-                          </span>
+                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20">
+                              ✓ Shortlisted
+                            </span>
+                          )}
+                          {submission.status === 'rejected' && (
+                            <span className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20">
+                              ✗ Rejected
+                            </span>
                           )}
                         </div>
                         

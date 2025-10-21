@@ -33,6 +33,40 @@ router.get('/briefs', authenticateToken, async (req, res) => {
     const briefs = await prisma.brief.findMany({
       where: { brandId },
       include: {
+        submissions: {
+          include: {
+            creator: {
+              select: {
+                id: true,
+                fullName: true,
+                userName: true,
+                email: true,
+                isVerified: true,
+                stripeAccount: {
+                  select: {
+                    id: true,
+                    status: true,
+                    chargesEnabled: true,
+                    payoutsEnabled: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { submittedAt: 'desc' }
+        },
+        rewardTiers: true,
+        brand: {
+          select: {
+            id: true,
+            companyName: true,
+            logo: true,
+            socialInstagram: true,
+            socialTwitter: true,
+            socialLinkedIn: true,
+            socialWebsite: true
+          }
+        },
         _count: {
           select: {
             submissions: true
@@ -82,6 +116,110 @@ router.get('/submissions', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching brand submissions:', error);
     res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+});
+
+// POST /api/brands/submissions/:id/approve - Approve a submission
+router.post('/submissions/:id/approve', authenticateToken, async (req, res) => {
+  try {
+    const { id: submissionId } = req.params;
+    const brandId = req.user.id;
+
+    // Verify this submission belongs to one of the brand's briefs
+    const submission = await prisma.submission.findFirst({
+      where: {
+        id: submissionId,
+        brief: {
+          brandId
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    // Update submission status to approved
+    const updatedSubmission = await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'approved',
+        reviewedAt: new Date()
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            fullName: true,
+            userName: true,
+            email: true
+          }
+        },
+        brief: {
+          select: {
+            id: true,
+            title: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedSubmission);
+  } catch (error) {
+    console.error('Error approving submission:', error);
+    res.status(500).json({ error: 'Failed to approve submission' });
+  }
+});
+
+// POST /api/brands/submissions/:id/reject - Reject a submission
+router.post('/submissions/:id/reject', authenticateToken, async (req, res) => {
+  try {
+    const { id: submissionId } = req.params;
+    const brandId = req.user.id;
+
+    // Verify this submission belongs to one of the brand's briefs
+    const submission = await prisma.submission.findFirst({
+      where: {
+        id: submissionId,
+        brief: {
+          brandId
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found or access denied' });
+    }
+
+    // Update submission status to rejected
+    const updatedSubmission = await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'rejected',
+        reviewedAt: new Date()
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            fullName: true,
+            userName: true,
+            email: true
+          }
+        },
+        brief: {
+          select: {
+            id: true,
+            title: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedSubmission);
+  } catch (error) {
+    console.error('Error rejecting submission:', error);
+    res.status(500).json({ error: 'Failed to reject submission' });
   }
 });
 

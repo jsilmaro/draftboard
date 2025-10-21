@@ -2382,15 +2382,26 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
             files: true,
             status: true,
             submittedAt: true,
+            createdAt: true,
             creator: {
               select: {
                 id: true,
                 userName: true,
                 fullName: true,
-                email: true
+                email: true,
+                isVerified: true,
+                stripeAccount: {
+                  select: {
+                    id: true,
+                    status: true,
+                    chargesEnabled: true,
+                    payoutsEnabled: true
+                  }
+                }
               }
             }
-          }
+          },
+          orderBy: { submittedAt: 'desc' }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -2427,16 +2438,44 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
         country = locationParts[locationParts.length - 1] || brief.location;
       }
 
+      // Ensure submissions is properly serialized
+      const submissions = Array.isArray(brief.submissions) 
+        ? brief.submissions.map(sub => ({
+            id: sub.id,
+            content: sub.content,
+            files: sub.files,
+            status: sub.status,
+            submittedAt: sub.submittedAt,
+            createdAt: sub.createdAt,
+            creator: {
+              id: sub.creator.id,
+              userName: sub.creator.userName,
+              fullName: sub.creator.fullName,
+              email: sub.creator.email,
+              isVerified: sub.creator.isVerified,
+              stripeAccount: sub.creator.stripeAccount || null
+            }
+          }))
+        : [];
+
       return {
         ...brief,
         totalRewardValue,
         rewardTiers,
         displayLocation: country, // Show only country on cards
-        submissions: brief.submissions || []
+        submissions: submissions
       };
     });
 
     console.log('📋 Successfully fetched and transformed briefs:', transformedBriefs.length);
+    
+    // Debug: Log briefs with submissions
+    const withSubmissions = transformedBriefs.filter(b => b.submissions && b.submissions.length > 0);
+    console.log('📋 Briefs with submissions:', withSubmissions.length);
+    withSubmissions.forEach(b => {
+      console.log(`   - "${b.title}": ${b.submissions.length} submissions (${b.submissions.filter(s => s.status === 'pending').length} pending)`);
+    });
+    
     res.json(transformedBriefs);
   } catch (error) {
     console.error('❌ Error fetching brand briefs:', error);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 // import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
@@ -74,6 +75,7 @@ const RewardManagementPage: React.FC = () => {
   // const { user } = useAuth();
   const { isDark } = useTheme();
   const { showErrorToast, showSuccessToast } = useToast();
+  const navigate = useNavigate();
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBrief, setSelectedBrief] = useState<Brief | null>(null);
@@ -106,8 +108,13 @@ const RewardManagementPage: React.FC = () => {
   }, [showErrorToast]);
 
   useEffect(() => {
+    // Redirect to the unified in-dashboard Manage Rewards & Payments tab,
+    // where submissions are reviewed, approved/rejected, and winners are selected.
+    navigate('/brand/dashboard?tab=manage-rewards', { replace: true });
+
+    // Fallback: still fetch in case navigation is prevented, so page has content
     fetchBriefs();
-  }, [fetchBriefs]);
+  }, [fetchBriefs, navigate]);
 
   const handleAssignReward = async (tierId: string, submissionId: string, creatorId: string) => {
     if (!selectedBrief) return;

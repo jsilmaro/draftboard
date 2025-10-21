@@ -21,6 +21,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import CreatorWallet from './components/CreatorWallet'
 import Marketplace from './components/Marketplace'
 import PublicBriefDetails from './components/PublicBriefDetails'
+import ApplyToBriefPage from './pages/ApplyToBriefPage'
+// ReviewSubmissionsPage removed - now integrated into ManageRewardsPayments
 import CommunityPage from './components/CommunityPage'
 import EventsPage from './components/EventsPage'
 import SuccessStoriesPage from './components/SuccessStoriesPage'
@@ -54,6 +56,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/brief/:briefId" element={<PublicBriefDetails />} />
+              <Route path="/brief/:briefId/apply" element={<ApplyToBriefPage />} />
               <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
               
               {/* Public Community Routes */}
@@ -93,6 +96,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              {/* Review Submissions route removed - now integrated into Manage Rewards & Payments */}
               {/* Old rewards-payments route removed - now handled by Stripe Connect in BrandDashboard */}
 
               {/* Protected Creator Routes */}

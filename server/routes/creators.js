@@ -628,6 +628,142 @@ router.get('/invited', authenticateBrand, async (req, res) => {
   }
 });
 
+// Create a submission for a brief
+router.post('/submissions', authenticateCreator, async (req, res) => {
+  try {
+    const creatorId = req.creator.id;
+    const { briefId, content, files, amount } = req.body;
+
+    // Validate required fields
+    if (!briefId) {
+      return res.status(400).json({ error: 'Brief ID is required' });
+    }
+
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ error: 'Submission content is required' });
+    }
+
+    // Check if brief exists and is published
+    const brief = await prisma.brief.findUnique({
+      where: { id: briefId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        deadline: true,
+        reward: true,
+        brand: {
+          select: {
+            id: true,
+            companyName: true
+          }
+        }
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found' });
+    }
+
+    if (brief.status !== 'published') {
+      return res.status(400).json({ error: 'This brief is not accepting submissions' });
+    }
+
+    // Check if deadline has passed
+    if (new Date(brief.deadline) < new Date()) {
+      return res.status(400).json({ error: 'This brief has expired' });
+    }
+
+    // Check if creator has already submitted to this brief
+    const existingSubmission = await prisma.submission.findFirst({
+      where: {
+        briefId: briefId,
+        creatorId: creatorId
+      }
+    });
+
+    if (existingSubmission) {
+      return res.status(400).json({ 
+        error: 'You have already submitted to this brief',
+        submissionId: existingSubmission.id
+      });
+    }
+
+    // Create the submission
+    const submission = await prisma.submission.create({
+      data: {
+        briefId: briefId,
+        creatorId: creatorId,
+        content: content,
+        files: files || null,
+        amount: amount || brief.reward || 0,
+        status: 'pending',
+        submittedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      include: {
+        brief: {
+          select: {
+            id: true,
+            title: true,
+            brand: {
+              select: {
+                id: true,
+                companyName: true
+              }
+            }
+          }
+        },
+        creator: {
+          select: {
+            id: true,
+            fullName: true,
+            userName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // Create notification for the brand
+    await prisma.notification.create({
+      data: {
+        userId: brief.brand.id,
+        userType: 'brand',
+        type: 'NEW_SUBMISSION',
+        category: 'submission',
+        title: 'New Submission Received',
+        message: `${submission.creator.fullName || submission.creator.userName} submitted to "${submission.brief.title}"`,
+        actionUrl: `/brand/review-submissions`,
+        actionText: 'Review Submission',
+        priority: 'normal',
+        isRead: false,
+        metadata: {
+          briefId: briefId,
+          submissionId: submission.id,
+          creatorId: creatorId
+        },
+        createdAt: new Date()
+      }
+    });
+
+    console.log(`✅ Submission created: ${submission.id} for brief ${briefId} by creator ${creatorId}`);
+    
+    res.status(201).json({
+      message: 'Submission created successfully',
+      submission: submission
+    });
+
+  } catch (error) {
+    console.error('Error creating submission:', error);
+    res.status(500).json({ 
+      error: 'Failed to create submission',
+      message: error.message
+    });
+  }
+});
+
 // Update creator profile
 router.put('/profile', authenticateCreator, async (req, res) => {
   try {
