@@ -97,10 +97,12 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
   const targetSubmissions = brief.amountOfWinners || 1;
   const submissionsProgress = Math.min((submissionsCount / targetSubmissions) * 100, 100);
 
-  // Calculate rewards progress using actual reward tiers
-  const totalRewardValue = brief.totalRewardValue || 0;
+  // Use the same approach as the detailed modal - brief.reward is already the total reward pool
+  const totalRewardValue = brief.reward || 0;
+  
   const rewardsPaid = brief.totalRewardsPaid || 0;
   const rewardsProgress = totalRewardValue > 0 ? (rewardsPaid / totalRewardValue) * 100 : 0;
+
 
   const getStatusBadge = () => {
     const baseClasses = "px-3 py-1 text-xs rounded-full font-medium";
@@ -476,20 +478,29 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
               }`}>
                 Reward Structure:
               </h5>
-              {brief.rewardTiers.slice(0, 3).map((tier) => (
-                <div key={tier.position} className="flex justify-between items-center">
-                  <span className={`text-xs ${
-                    isDark ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Reward {tier.position}
-                  </span>
-                  <span className={`text-xs font-medium ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    ${((tier.cashAmount || 0) + (tier.creditAmount || 0)).toLocaleString()}
-                  </span>
-                </div>
-              ))}
+              {brief.rewardTiers.slice(0, 3).map((tier) => {
+                // Calculate tier amount from available fields
+                let tierAmount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
+                // If amount is 0, try using the amount field
+                if (tierAmount === 0 && (tier as any).amount) {
+                  tierAmount = parseFloat((tier as any).amount.toString()) || 0;
+                }
+                
+                return (
+                  <div key={tier.position} className="flex justify-between items-center">
+                    <span className={`text-xs ${
+                      isDark ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      Reward {tier.position}
+                    </span>
+                    <span className={`text-xs font-medium ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      ${tierAmount.toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
               {brief.rewardTiers.length > 3 && (
                 <p className={`text-xs ${
                   isDark ? 'text-gray-400' : 'text-gray-500'

@@ -1,0 +1,45 @@
+==========================================
+COPY THESE TO YOUR .env FILE
+==========================================
+
+Add these 4 lines to your .env file for temporary testing:
+
+VITE_STRIPE_PUBLISHABLE_KEY_TEST=pk_test_51HtemporaryKeyForLocalDevelopmentTesting123456789
+STRIPE_SECRET_KEY_TEST=sk_test_51HtemporarySecretKeyForLocalDevelopmentTesting123456789
+STRIPE_CONNECT_CLIENT_ID_TEST=ca_test_temporaryClientIdForLocalTesting
+STRIPE_WEBHOOK_SECRET_TEST=whsec_test_temporaryWebhookSecretForLocalTesting
+
+==========================================
+HOW TO ADD THEM:
+==========================================
+
+1. Open: c:\Users\Janelle Silmaro\DRAFTBOARD_FOLDER\draftboard\.env
+   (or create it if it doesn't exist)
+
+2. Paste the 4 lines above
+
+3. Save the file
+
+4. Restart your server
+
+==========================================
+WHAT THIS DOES:
+==========================================
+
+✅ Allows app to run without real Stripe account
+✅ You can test UI and navigation
+✅ Won't crash when accessing payment pages
+
+❌ Won't process real payments (temporary keys)
+❌ Won't connect to real Stripe Dashboard
+
+==========================================
+WHEN READY FOR REAL STRIPE:
+==========================================
+
+Follow: START_HERE.md (15-minute setup)
+
+Just replace these 4 lines with real Stripe keys!
+
+==========================================
+

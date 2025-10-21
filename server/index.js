@@ -2414,12 +2414,16 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
     const transformedBriefs = briefs.map(brief => {
       // Use totalBudget from reward tiers, fallback to legacy reward field
       let rewardTiers = (brief.rewardTiers && brief.rewardTiers.length > 0)
-        ? brief.rewardTiers.map(tier => ({
-            position: tier.position,
-            amount: parseFloat(tier.amount.toString()) || 0,
-            cashAmount: parseFloat(tier.amount.toString()) || 0, // For now, treat all as cash
-            creditAmount: 0 // Future: separate cash/credit in RewardTier
-          }))
+        ? brief.rewardTiers.map(tier => {
+            const tierAmount = parseFloat(tier.amount.toString()) || 0;
+            console.log(`📋 Processing tier ${tier.position}: amount=${tier.amount}, parsed=${tierAmount}`);
+            return {
+              position: tier.position,
+              amount: tierAmount,
+              cashAmount: tierAmount, // For now, treat all as cash
+              creditAmount: 0 // Future: separate cash/credit in RewardTier
+            };
+          })
         : (brief.winnerRewards || []).map(wr => ({
             position: wr.position,
             amount: (wr.cashAmount || 0) + (wr.creditAmount || 0),
@@ -2441,15 +2445,18 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
         }));
       }
 
-      console.log(`📋 Brand brief "${brief.title}" reward tiers:`, rewardTiers);
-      console.log(`📋 Raw database rewardTiers:`, brief.rewardTiers);
-      console.log(`📋 Brief reward field:`, brief.reward);
-      console.log(`📋 Brief totalBudget field:`, brief.totalBudget);
-
       const totalRewardValue = rewardTiers.reduce(
         (sum, t) => sum + Number(t.cashAmount || 0) + Number(t.creditAmount || 0),
         0
       ) || brief.totalBudget || brief.reward || 0;
+
+      console.log(`📋 Brand brief "${brief.title}" reward tiers:`, rewardTiers);
+      console.log(`📋 Raw database rewardTiers:`, brief.rewardTiers);
+      console.log(`📋 Brief reward field:`, brief.reward);
+      console.log(`📋 Brief totalBudget field:`, brief.totalBudget);
+      console.log(`📋 Brief amountOfWinners:`, brief.amountOfWinners);
+      console.log(`📋 Calculated totalRewardValue:`, totalRewardValue);
+      console.log(`📋 Final rewardTiers for frontend:`, rewardTiers.map(t => ({ position: t.position, amount: t.amount, cashAmount: t.cashAmount })));
 
       // Extract country from location
       let country = '';
