@@ -147,6 +147,61 @@ router.post('/stripe/test', async (req, res) => {
 });
 
 /**
+ * Test transfer.succeeded webhook specifically for reward payments
+ */
+router.post('/stripe/test-transfer-succeeded', async (req, res) => {
+  try {
+    const { briefId, creatorId, submissionId, amount } = req.body;
+
+    if (!briefId || !creatorId || !submissionId) {
+      return res.status(400).json({ 
+        error: 'briefId, creatorId, and submissionId are required' 
+      });
+    }
+
+    // Create mock transfer.succeeded event
+    const mockEvent = {
+      id: `evt_test_transfer_${Date.now()}`,
+      type: 'transfer.succeeded',
+      data: {
+        object: {
+          id: `tr_test_${Date.now()}`,
+          amount: amount ? Math.round(amount * 100) : 10000, // Default $100
+          currency: 'usd',
+          metadata: {
+            briefId: briefId,
+            creatorId: creatorId,
+            submissionId: submissionId,
+            type: 'reward_payment'
+          }
+        }
+      },
+      created: Math.floor(Date.now() / 1000)
+    };
+
+    console.log(`🧪 Processing test transfer.succeeded webhook for submission ${submissionId}`);
+
+    const result = await stripeWebhookService.processWebhookEvent(mockEvent);
+
+    res.json({
+      success: true,
+      message: 'Test transfer.succeeded webhook processed',
+      submissionId: submissionId,
+      result,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Test transfer.succeeded webhook failed:', error);
+    res.status(500).json({
+      error: 'Test transfer.succeeded webhook processing failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
  * Webhook health check endpoint
  */
 router.get('/stripe/health', (req, res) => {

@@ -1,116 +1,162 @@
 const express = require('express');
 const router = express.Router();
-const stripeConnectService = require('../services/stripeConnectService');
-const authenticateToken = require('../middleware/auth');
-const { prisma } = require('../prisma');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Get Stripe instance function
-const getStripeInstance = () => {
-  const secretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return null;
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
   }
-  return require('stripe')(secretKey);
+
+  const jwt = require('jsonwebtoken');
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
 };
 
 /**
- * Stripe Connect API Routes
- * Handles creator onboarding, brief funding, payouts, and refunds
+ * POST /api/stripe-connect/create-account
+ * Create a Stripe Connect Express account for a creator
  */
-
-// ===== CREATOR ONBOARDING =====
-
-/**
- * POST /api/creators/onboard
- * Create Stripe Connect Express account for creator
- */
-router.post('/creators/onboard', authenticateToken, async (req, res) => {
+router.post('/create-account', authenticateToken, async (req, res) => {
   try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can onboard to Stripe' });
+    const { creatorId, email, fullName } = req.body;
+
+    if (!creatorId || !email || !fullName) {
+      return res.status(400).json({ error: 'creatorId, email, and fullName are required' });
     }
 
-    const { country = 'US' } = req.body;
-    const creatorData = {
-      email: req.user.email,
-      fullName: req.user.fullName || req.user.userName,
-      country: country
-    };
+    // Create Express account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'US', // You can make this dynamic based on user location
+      email: email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      business_type: 'individual',
+      individual: {
+        email: email,
+        first_name: fullName.split(' ')[0] || '',
+        last_name: fullName.split(' ').slice(1).join(' ') || '',
+      },
+      settings: {
+        payouts: {
+          schedule: {
+            interval: 'daily'
+          }
+        }
+      }
+    });
 
-    const result = await stripeConnectService.createConnectAccount(
-      req.user.id,
-      creatorData
-    );
+    console.log(`✅ Created Stripe Express account for creator ${creatorId}:`, account.id);
+
+    // Save account to database
+    const { prisma } = require('../prisma');
+    await prisma.stripeAccount.create({
+      data: {
+        creatorId: creatorId,
+        accountId: account.id,
+        isActive: false, // Will be true after onboarding completion
+        accountType: 'express'
+      }
+    });
+
+    console.log(`💾 Saved Stripe account to database for creator ${creatorId}`);
+
+    // Create account link for onboarding
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
+      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
+      type: 'account_onboarding',
+    });
+
+    console.log(`🔗 Created onboarding link for account ${account.id}`);
 
     res.json({
       success: true,
-      message: 'Stripe Connect account created successfully',
-      data: result
+      accountId: account.id,
+      onboardingUrl: accountLink.url,
+      message: 'Stripe Connect account created successfully'
     });
+
   } catch (error) {
-    console.error('Error creating Connect account:', error);
-    
-    // Provide specific guidance for Stripe Connect not enabled
-    if (error.message.includes('signed up for Connect')) {
-      res.status(400).json({ 
-        error: 'Stripe Connect not enabled',
-        message: 'Please enable Stripe Connect in your Stripe dashboard first. Go to Connect → Settings and complete the setup process.',
-        setupUrl: 'https://dashboard.stripe.com/connect/accounts/overview'
-      });
-      return;
-    }
-    
+    console.error('❌ Error creating Stripe Connect account:', error);
     res.status(500).json({ 
-      error: 'Failed to create Connect account',
+      error: 'Failed to create Stripe Connect account',
       message: error.message 
     });
   }
 });
 
 /**
- * POST /api/creators/onboard/link
- * Create account link for onboarding
+ * GET /api/stripe-connect/account/:accountId
+ * Get account details and status
  */
-router.post('/creators/onboard/link', authenticateToken, async (req, res) => {
+router.get('/account/:accountId', authenticateToken, async (req, res) => {
   try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can create onboarding links' });
-    }
+    const { accountId } = req.params;
 
-    const { returnUrl, refreshUrl } = req.body;
-
-    if (!returnUrl || !refreshUrl) {
-      return res.status(400).json({ error: 'returnUrl and refreshUrl are required' });
-    }
-
-    // Get creator's Stripe account
-    let connectAccount;
-    try {
-      connectAccount = await prisma.stripeConnectAccount.findUnique({
-        where: { creatorId: req.user.id }
-      });
-    } catch (dbError) {
-      console.log('StripeConnectAccount table not available');
-      connectAccount = null;
-    }
-
-    if (!connectAccount) {
-      return res.status(404).json({ error: 'Stripe Connect account not found. Please onboard first.' });
-    }
-
-    const result = await stripeConnectService.createAccountLink(
-      connectAccount.stripeAccountId,
-      returnUrl,
-      refreshUrl
-    );
+    const account = await stripe.accounts.retrieve(accountId);
 
     res.json({
       success: true,
-      message: 'Account link created successfully',
-      data: result
+      account: {
+        id: account.id,
+        charges_enabled: account.charges_enabled,
+        payouts_enabled: account.payouts_enabled,
+        details_submitted: account.details_submitted,
+        email: account.email,
+        country: account.country,
+        created: account.created
+      }
     });
+
   } catch (error) {
-    console.error('Error creating account link:', error);
+    console.error('❌ Error retrieving Stripe Connect account:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve account',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/stripe-connect/create-account-link
+ * Create a new account link for onboarding
+ */
+router.post('/create-account-link', authenticateToken, async (req, res) => {
+  try {
+    const { accountId } = req.body;
+
+    if (!accountId) {
+      return res.status(400).json({ error: 'accountId is required' });
+    }
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
+      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
+      type: 'account_onboarding',
+    });
+
+    res.json({
+      success: true,
+      onboardingUrl: accountLink.url,
+      expires_at: accountLink.expires_at
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating account link:', error);
     res.status(500).json({ 
       error: 'Failed to create account link',
       message: error.message 
@@ -119,433 +165,183 @@ router.post('/creators/onboard/link', authenticateToken, async (req, res) => {
 });
 
 /**
- * GET /api/creators/onboard/status
- * Get creator's Stripe account status
+ * POST /api/stripe-connect/create-payment-intent
+ * Create a payment intent with destination charge for marketplace
  */
-router.get('/creators/onboard/status', authenticateToken, async (req, res) => {
+router.post('/create-payment-intent', authenticateToken, async (req, res) => {
   try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can check account status' });
-    }
-
-    const result = await stripeConnectService.getCreatorAccountStatus(req.user.id);
-
-    res.json({
-      success: true,
-      data: result
-    });
-  } catch (error) {
-    console.error('Error getting account status:', error);
-    res.status(500).json({ 
-      error: 'Failed to get account status',
-      message: error.message 
-    });
-  }
-});
-
-// ===== BRIEF FUNDING =====
-
-/**
- * POST /api/briefs/:id/fund
- * Create checkout session for brief funding
- */
-router.post('/briefs/:id/fund', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Only brands can fund briefs' });
-    }
-
-    const { id: briefId } = req.params;
-
-    // Verify brief exists and belongs to brand, include reward tiers
-    const brief = await prisma.brief.findFirst({
-      where: { 
-        id: briefId,
-        brandId: req.user.id 
-      },
-      include: {
-        rewardTiers: {
-          orderBy: { position: 'asc' }
-        }
-      }
-    });
-
-    if (!brief) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
-    }
-
-    // Use totalBudget from reward tiers, fallback to legacy reward field
-    const totalAmount = brief.totalBudget || brief.reward;
-
-    if (!totalAmount || totalAmount <= 0) {
-      return res.status(400).json({ 
-        error: 'Brief must have reward tiers with valid amounts to be funded' 
-      });
-    }
-
-    // Check if brief is already funded
-    const existingFunding = await prisma.briefFunding.findUnique({
-      where: { briefId: briefId }
-    });
-
-    if (existingFunding && existingFunding.status === 'completed') {
-      return res.status(400).json({ error: 'Brief is already funded' });
-    }
-
-    const result = await stripeConnectService.createBriefFundingSession(
+    const { 
+      amount, 
+      currency = 'usd', 
+      connectedAccountId, 
+      applicationFeeAmount,
       briefId,
-      req.user.id,
-      parseFloat(totalAmount),
-      brief.title
-    );
+      submissionId,
+      creatorId,
+      metadata = {}
+    } = req.body;
 
-    res.json({
-      success: true,
-      message: 'Funding session created successfully',
-      data: result
-    });
-  } catch (error) {
-    console.error('❌ Error creating funding session:', error);
-    console.error('❌ Error details:', {
-      message: error.message,
-      stack: error.stack,
-      briefId: req.params.id,
-      totalAmount: req.body.totalAmount,
-      brandId: req.user.id
-    });
-    
-    res.status(500).json({ 
-      error: 'Failed to create funding session',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-  }
-});
-
-/**
- * POST /api/briefs/:id/fund/confirm
- * Confirm successful brief funding
- */
-router.post('/briefs/:id/fund/confirm', authenticateToken, async (req, res) => {
-  try {
-    console.log('🔧 Confirmation endpoint called');
-    const { sessionId } = req.body;
-
-    if (!sessionId) {
-      return res.status(400).json({ error: 'sessionId is required' });
-    }
-
-    console.log('🔧 Session ID:', sessionId);
-
-    // Check if funding already exists by session ID
-    const existingFunding = await prisma.briefFunding.findFirst({
-      where: { stripeCheckoutSessionId: sessionId }
-    });
-
-    if (existingFunding) {
-      console.log('🔧 Funding already exists by session ID:', existingFunding.id);
-      return res.json({
-        success: true,
-        message: 'Brief funding already confirmed',
-        data: {
-          fundingId: existingFunding.id,
-          amount: existingFunding.totalAmount,
-          netAmount: existingFunding.netAmount
-        }
+    if (!amount || !connectedAccountId) {
+      return res.status(400).json({ 
+        error: 'amount and connectedAccountId are required' 
       });
     }
 
-    // Also check if funding exists by brief ID (in case of duplicate calls)
-    const { id: briefId } = req.params;
-    const existingBriefFunding = await prisma.briefFunding.findUnique({
-      where: { briefId: briefId }
+    // Create payment intent with destination charge
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: currency,
+      application_fee_amount: applicationFeeAmount ? Math.round(applicationFeeAmount * 100) : undefined,
+      transfer_data: {
+        destination: connectedAccountId,
+      },
+      metadata: {
+        briefId: briefId || '',
+        submissionId: submissionId || '',
+        creatorId: creatorId || '',
+        type: 'reward_payment',
+        ...metadata
+      },
+      automatic_payment_methods: {
+        enabled: true,
+      },
     });
 
-    if (existingBriefFunding) {
-      console.log('🔧 Brief already funded:', existingBriefFunding.id);
-      return res.json({
-        success: true,
-        message: 'Brief is already funded',
-        data: {
-          fundingId: existingBriefFunding.id,
-          amount: existingBriefFunding.totalAmount,
-          netAmount: existingBriefFunding.netAmount
-        }
-      });
-    }
-
-    console.log('🔧 Processing new funding...');
-    const result = await stripeConnectService.processBriefFunding(sessionId);
+    console.log(`✅ Created payment intent for reward payment:`, {
+      paymentIntentId: paymentIntent.id,
+      amount: amount,
+      connectedAccountId: connectedAccountId,
+      applicationFeeAmount: applicationFeeAmount
+    });
 
     res.json({
       success: true,
-      message: 'Brief funding confirmed successfully',
-      data: result
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      message: 'Payment intent created successfully'
     });
+
   } catch (error) {
-    console.error('❌ Error confirming funding:', error);
-    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error creating payment intent:', error);
     res.status(500).json({ 
-      error: 'Failed to confirm funding',
+      error: 'Failed to create payment intent',
       message: error.message 
     });
   }
 });
 
-// ===== WINNER PAYOUTS =====
-
 /**
- * POST /api/briefs/:id/reward
- * Create payouts for selected winners
+ * POST /api/stripe-connect/create-transfer
+ * Create a direct transfer to connected account (alternative to destination charges)
  */
-router.post('/briefs/:id/reward', authenticateToken, async (req, res) => {
+router.post('/create-transfer', authenticateToken, async (req, res) => {
   try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Only brands can create payouts' });
+    const { 
+      amount, 
+      currency = 'usd', 
+      connectedAccountId, 
+      briefId,
+      submissionId,
+      creatorId,
+      metadata = {}
+    } = req.body;
+
+    if (!amount || !connectedAccountId) {
+      return res.status(400).json({ 
+        error: 'amount and connectedAccountId are required' 
+      });
     }
 
-    const { id: briefId } = req.params;
-    const { winners } = req.body;
-
-    if (!winners || !Array.isArray(winners) || winners.length === 0) {
-      return res.status(400).json({ error: 'Winners array is required' });
-    }
-
-    // Verify brief exists and belongs to brand
-    const brief = await prisma.brief.findFirst({
-      where: { 
-        id: briefId,
-        brandId: req.user.id 
+    // Create transfer to connected account
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: currency,
+      destination: connectedAccountId,
+      metadata: {
+        briefId: briefId || '',
+        submissionId: submissionId || '',
+        creatorId: creatorId || '',
+        type: 'reward_payment',
+        ...metadata
       }
     });
 
-    if (!brief) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
-    }
-
-    // Validate winners data
-    for (const winner of winners) {
-      if (!winner.creatorId || !winner.submissionId || !winner.amount) {
-        return res.status(400).json({ 
-          error: 'Each winner must have creatorId, submissionId, and amount' 
-        });
-      }
-    }
-
-    const result = await stripeConnectService.createWinnerPayouts(briefId, winners);
+    console.log(`✅ Created transfer for reward payment:`, {
+      transferId: transfer.id,
+      amount: amount,
+      connectedAccountId: connectedAccountId
+    });
 
     res.json({
       success: true,
-      message: 'Payouts created successfully',
-      data: result
+      transferId: transfer.id,
+      amount: amount,
+      currency: currency,
+      message: 'Transfer created successfully'
     });
+
   } catch (error) {
-    console.error('Error creating payouts:', error);
+    console.error('❌ Error creating transfer:', error);
     res.status(500).json({ 
-      error: 'Failed to create payouts',
+      error: 'Failed to create transfer',
       message: error.message 
     });
   }
 });
 
-// ===== REFUNDS =====
-
 /**
- * POST /api/briefs/:id/refund
- * Process refund for unused funds
+ * GET /api/stripe-connect/balance
+ * Get platform balance
  */
-router.post('/briefs/:id/refund', authenticateToken, async (req, res) => {
+router.get('/balance', authenticateToken, async (req, res) => {
   try {
-    if (req.user.type !== 'brand') {
-      return res.status(403).json({ error: 'Only brands can request refunds' });
-    }
+    const balance = await stripe.balance.retrieve();
 
-    const { id: briefId } = req.params;
-    const { reason } = req.body;
-
-    // Verify brief exists and belongs to brand
-    const brief = await prisma.brief.findFirst({
-      where: { 
-        id: briefId,
-        brandId: req.user.id 
+    res.json({
+      success: true,
+      balance: {
+        available: balance.available,
+        pending: balance.pending,
+        instant_available: balance.instant_available
       }
     });
 
-    if (!brief) {
-      return res.status(404).json({ error: 'Brief not found or access denied' });
-    }
-
-    const result = await stripeConnectService.processBriefRefund(
-      briefId, 
-      reason || 'Brief expired with unused funds'
-    );
-
-    res.json({
-      success: true,
-      message: 'Refund processed successfully',
-      data: result
-    });
   } catch (error) {
-    console.error('Error processing refund:', error);
+    console.error('❌ Error retrieving balance:', error);
     res.status(500).json({ 
-      error: 'Failed to process refund',
-      message: error.message 
-    });
-  }
-});
-
-// ===== UTILITY ROUTES =====
-
-/**
- * GET /api/briefs/:id/funding/status
- * Get brief funding status
- */
-router.get('/briefs/:id/funding/status', authenticateToken, async (req, res) => {
-  try {
-    const { id: briefId } = req.params;
-
-    const funding = await prisma.briefFunding.findUnique({
-      where: { briefId: briefId },
-      include: {
-        brief: {
-          select: { title: true, brandId: true }
-        },
-        payouts: {
-          include: {
-            creator: {
-              select: { fullName: true, userName: true }
-            }
-          }
-        },
-        refunds: true
-      }
-    });
-
-    if (!funding) {
-      return res.status(404).json({ error: 'Brief funding not found' });
-    }
-
-    // Check access permissions
-    if (req.user.type === 'brand' && funding.brief.brandId !== req.user.id) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    res.json({
-      success: true,
-      data: funding
-    });
-  } catch (error) {
-    console.error('Error getting funding status:', error);
-    res.status(500).json({ 
-      error: 'Failed to get funding status',
+      error: 'Failed to retrieve balance',
       message: error.message 
     });
   }
 });
 
 /**
- * POST /api/briefs/:id/fund/webhook-trigger
- * Manually trigger webhook processing for development
+ * GET /api/stripe-connect/connected-accounts
+ * List all connected accounts
  */
-router.post('/briefs/:id/fund/webhook-trigger', authenticateToken, async (req, res) => {
+router.get('/connected-accounts', authenticateToken, async (req, res) => {
   try {
-    const { sessionId } = req.body;
-
-    if (!sessionId) {
-      return res.status(400).json({ error: 'sessionId is required' });
-    }
-
-    // Get the session from Stripe
-    const stripeInstance = getStripeInstance();
-    const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
-    
-    if (session.payment_status !== 'paid') {
-      return res.status(400).json({ error: 'Payment not completed' });
-    }
-
-    // Process the funding
-    const result = await stripeConnectService.processBriefFunding(sessionId);
+    const accounts = await stripe.accounts.list({
+      limit: 100
+    });
 
     res.json({
       success: true,
-      message: 'Webhook processing completed',
-      data: result
+      accounts: accounts.data.map(account => ({
+        id: account.id,
+        email: account.email,
+        charges_enabled: account.charges_enabled,
+        payouts_enabled: account.payouts_enabled,
+        details_submitted: account.details_submitted,
+        country: account.country,
+        created: account.created
+      }))
     });
+
   } catch (error) {
-    console.error('Error triggering webhook:', error);
+    console.error('❌ Error listing connected accounts:', error);
     res.status(500).json({ 
-      error: 'Failed to trigger webhook',
-      message: error.message 
-    });
-  }
-});
-
-/**
- * GET /api/creators/payouts
- * Get creator's payout history
- */
-router.get('/creators/payouts', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.type !== 'creator') {
-      return res.status(403).json({ error: 'Only creators can view payouts' });
-    }
-
-    try {
-      const payouts = await prisma.creatorPayout.findMany({
-        where: { creatorId: req.user.id },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      // Fetch related data separately since relations are not defined
-      const enrichedPayouts = await Promise.all(payouts.map(async (payout) => {
-        try {
-          const [brief, submission] = await Promise.all([
-            prisma.brief.findUnique({
-              where: { id: payout.briefId },
-              select: { 
-                title: true, 
-                brand: { 
-                  select: { companyName: true } 
-                } 
-              }
-            }),
-            prisma.submission.findUnique({
-              where: { id: payout.submissionId },
-              select: { id: true, submittedAt: true }
-            })
-          ]);
-
-          return {
-            ...payout,
-            brief: brief || null,
-            submission: submission || null
-          };
-        } catch (error) {
-          console.error('Error fetching related data for payout:', payout.id, error);
-          return {
-            ...payout,
-            brief: null,
-            submission: null
-          };
-        }
-      }));
-
-      res.json({
-        success: true,
-        data: enrichedPayouts
-      });
-    } catch (dbError) {
-      // If CreatorPayout table doesn't exist yet, return empty array
-      console.log('CreatorPayout table not available, returning empty payouts');
-      res.json({
-        success: true,
-        data: []
-      });
-    }
-  } catch (error) {
-    console.error('Error getting creator payouts:', error);
-    res.status(500).json({ 
-      error: 'Failed to get payouts',
+      error: 'Failed to list connected accounts',
       message: error.message 
     });
   }

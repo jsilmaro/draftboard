@@ -4,6 +4,9 @@ const router = express.Router();
 // Import shared Prisma client
 const { prisma } = require('../prisma');
 
+// Import authentication middleware
+const authenticateToken = require('../middleware/auth');
+
 // Initialize Stripe only if API key is provided
 const stripeKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey ? require('stripe')(stripeKey) : null;
@@ -838,6 +841,72 @@ router.put('/profile', authenticateCreator, async (req, res) => {
       error: 'Internal server error',
       message: error.message
     });
+  }
+});
+
+/**
+ * GET /api/creators/stripe-account
+ * Get creator's Stripe Connect account status
+ */
+router.get('/stripe-account', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.type !== 'creator') {
+      return res.status(403).json({ error: 'Only creators can access this endpoint' });
+    }
+
+    // Find creator's Stripe account
+    const stripeAccount = await prisma.stripeAccount.findUnique({
+      where: { creatorId: req.user.id },
+      select: {
+        id: true,
+        accountId: true,
+        isActive: true,
+        createdAt: true
+      }
+    });
+
+    if (!stripeAccount) {
+      return res.json({
+        success: true,
+        stripeAccount: null,
+        message: 'No Stripe account found'
+      });
+    }
+
+    // Check account status with Stripe
+    try {
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const account = await stripe.accounts.retrieve(stripeAccount.accountId);
+
+      res.json({
+        success: true,
+        stripeAccount: {
+          id: stripeAccount.id,
+          accountId: stripeAccount.accountId,
+          connected: account.details_submitted && account.charges_enabled,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+          detailsSubmitted: account.details_submitted,
+          email: account.email,
+          country: account.country
+        }
+      });
+    } catch (stripeError) {
+      console.error('Error checking Stripe account:', stripeError);
+      res.json({
+        success: true,
+        stripeAccount: {
+          id: stripeAccount.id,
+          accountId: stripeAccount.accountId,
+          connected: false,
+          error: 'Unable to verify account status'
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Error fetching Stripe account:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

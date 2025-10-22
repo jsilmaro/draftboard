@@ -139,6 +139,7 @@ model Submission {
   status           String            @default("pending")
   submittedAt      DateTime          @default(now())
   reviewedAt       DateTime?
+  distributedAt    DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   payouts          CreatorPayout[]
@@ -777,6 +778,8 @@ model RewardTier {
   amount            Decimal           @db.Decimal(10, 2)
   position          Int
   isActive          Boolean           @default(true)
+  isAvailable       Boolean           @default(true)
+  distributedAt     DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   rewardAssignments RewardAssignment?
@@ -786,6 +789,7 @@ model RewardTier {
   @@index([briefId])
   @@index([tierNumber])
   @@index([position])
+  @@index([isAvailable])
 }
 
 model RewardAssignment {

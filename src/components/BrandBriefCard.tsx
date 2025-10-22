@@ -482,8 +482,8 @@ const BrandBriefCard: React.FC<BrandBriefCardProps> = ({
                 // Calculate tier amount from available fields
                 let tierAmount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
                 // If amount is 0, try using the amount field
-                if (tierAmount === 0 && (tier as any).amount) {
-                  tierAmount = parseFloat((tier as any).amount.toString()) || 0;
+                if (tierAmount === 0 && (tier as unknown as { amount?: number }).amount) {
+                  tierAmount = parseFloat(String((tier as unknown as { amount: number }).amount)) || 0;
                 }
                 
                 return (

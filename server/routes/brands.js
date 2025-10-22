@@ -51,11 +51,41 @@ router.get('/briefs', authenticateToken, async (req, res) => {
                   }
                 }
               }
+            },
+            winner: {
+              select: {
+                id: true,
+                position: true,
+                selectedAt: true
+              }
             }
           },
           orderBy: { submittedAt: 'desc' }
         },
         rewardTiers: true,
+        winners: {
+          select: {
+            id: true,
+            position: true,
+            submissionId: true,
+            creatorId: true,
+            selectedAt: true
+          }
+        },
+        rewardAssignments: {
+          select: {
+            id: true,
+            creatorId: true,
+            submissionId: true,
+            status: true,
+            payoutStatus: true,
+            rewardTier: {
+              select: {
+                position: true
+              }
+            }
+          }
+        },
         brand: {
           select: {
             id: true,
@@ -74,6 +104,20 @@ router.get('/briefs', authenticateToken, async (req, res) => {
         }
       },
       orderBy: { createdAt: 'desc' }
+    });
+
+    // Log winner data for debugging
+    console.log('📊 Briefs fetched for brand:', brandId);
+    briefs.forEach(brief => {
+      const submissionsWithWinners = brief.submissions.filter(s => s.winner).length;
+      if (brief.winners && brief.winners.length > 0) {
+        console.log(`  📋 Brief: ${brief.title}`, {
+          totalSubmissions: brief.submissions.length,
+          winnersInTable: brief.winners.length,
+          submissionsWithWinnerRelation: submissionsWithWinners,
+          winnerSubmissionIds: brief.winners.map(w => w.submissionId.substring(0, 8))
+        });
+      }
     });
 
     res.json(briefs);

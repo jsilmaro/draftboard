@@ -210,10 +210,22 @@ const CreatorDashboard: React.FC = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
+    const stripe = searchParams.get('stripe');
+    
     if (tab) {
       setActiveTab(tab);
     }
-  }, [location.search]);
+    
+    // Handle Stripe success parameter
+    if (stripe === 'success' && tab === 'wallet') {
+      showToast('🎉 Stripe account connected successfully! You can now receive payments.', 'success');
+      // Clean up the URL by removing the stripe parameter
+      const newSearchParams = new URLSearchParams(location.search);
+      newSearchParams.delete('stripe');
+      const newUrl = `${location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location.search, location.pathname, showToast]);
   const [availableBriefs, setAvailableBriefs] = useState<Brief[]>([]);
   const [marketplaceBriefs, setMarketplaceBriefs] = useState<Brief[]>([]);
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);

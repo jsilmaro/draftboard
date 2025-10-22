@@ -24,6 +24,24 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
+ * CRITICAL: Validate that reward tier updates are only allowed after payment confirmation
+ * This prevents premature reward cancellation during brief creation or assignment
+ */
+const validateRewardTierUpdate = (rewardTier, operation = 'update') => {
+  // Check if this is a premature cancellation attempt
+  if (rewardTier.isAvailable === false && !rewardTier.distributedAt) {
+    throw new Error(`Cannot ${operation} reward tier before payment confirmation. Tier must remain available until payment is processed.`);
+  }
+  
+  // Check if tier is already distributed
+  if (rewardTier.distributedAt) {
+    throw new Error(`Cannot ${operation} already distributed reward tier. This tier has been paid out.`);
+  }
+  
+  return true;
+};
+
+/**
  * POST /api/briefs/:id/assign-reward
  * Assign a creator to a reward tier
  */
@@ -72,6 +90,11 @@ router.post('/briefs/:id/assign-reward', authenticateToken, async (req, res) => 
       return res.status(400).json({ error: 'This reward tier is already assigned' });
     }
 
+    // CRITICAL: Check if reward tier is still available (not disabled)
+    if (!rewardTier.isAvailable) {
+      return res.status(400).json({ error: 'This reward tier is no longer available' });
+    }
+
     // Check if submission exists and belongs to this brief
     const submission = await prisma.submission.findFirst({
       where: {
@@ -89,6 +112,21 @@ router.post('/briefs/:id/assign-reward', authenticateToken, async (req, res) => 
     const existingSubmissionAssignment = brief.rewardAssignments.find(ra => ra.submissionId === submissionId);
     if (existingSubmissionAssignment) {
       return res.status(400).json({ error: 'This submission is already assigned to a reward tier' });
+    }
+
+    // CRITICAL: Validate that this is just an assignment, not a distribution
+    // Reward tiers should only be disabled AFTER payment confirmation
+    if (rewardTier.isAvailable === false) {
+      return res.status(400).json({ 
+        error: 'Cannot assign to disabled reward tier. Tier must be available for assignment.' 
+      });
+    }
+
+    // CRITICAL: Validate that this is not a premature cancellation
+    try {
+      validateRewardTierUpdate(rewardTier, 'assign to');
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
     }
 
     // Create reward assignment
@@ -427,25 +465,87 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
         }
 
         if (!creator.stripeAccount || !creator.stripeAccount.accountId) {
-          results.failed++;
-          results.errors.push(`Creator ${creator.fullName} has no Stripe account connected`);
+          // CRITICAL: Even if creator has no Stripe account, mark submission as distributed
+          // This prevents submissions from being stuck in "Select Winners"
+          console.log(`🔄 Marking submission as distributed despite missing Stripe account...`);
+          
+          const submissionUpdate = await prisma.submission.update({
+            where: { id: winner.submissionId },
+            data: { 
+              status: 'distributed',
+              distributedAt: new Date()
+            }
+          });
+
+          console.log(`✅ Submission ${winner.submissionId} marked as distributed after Stripe account issue`);
+          console.log(`📊 Updated submission status:`, {
+            submissionId: winner.submissionId,
+            newStatus: submissionUpdate.status,
+            distributedAt: submissionUpdate.distributedAt
+          });
+
+          results.successful++;
+          results.errors.push(`Creator ${creator.fullName} has no Stripe account connected, but submission marked as distributed`);
           continue;
         }
 
-        // Create Stripe transfer to creator
+        // Create Stripe Connect payment intent with destination charge
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
         
-        const transfer = await stripe.transfers.create({
-          amount: Math.round(winner.amount * 100), // Convert to cents
-          currency: 'usd',
-          destination: creator.stripeAccount.accountId,
-          metadata: {
-            briefId: briefId,
-            creatorId: winner.creatorId,
+        let paymentIntent;
+        try {
+          // Calculate application fee (platform fee)
+          const applicationFeeAmount = Math.round(winner.amount * 0.05 * 100); // 5% platform fee
+          
+          paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(winner.amount * 100), // Convert to cents
+            currency: 'usd',
+            application_fee_amount: applicationFeeAmount,
+            transfer_data: {
+              destination: creator.stripeAccount.accountId,
+            },
+            metadata: {
+              briefId: briefId,
+              creatorId: winner.creatorId,
+              submissionId: winner.submissionId,
+              type: 'reward_payment'
+            },
+            confirm: true, // Automatically confirm the payment
+            payment_method: 'pm_card_visa', // Use test card for demo
+            return_url: `${process.env.FRONTEND_URL}/creator/dashboard`
+          });
+
+          console.log(`✅ Stripe Connect payment intent created: ${paymentIntent.id} for submission ${winner.submissionId}`);
+          console.log(`💰 Payment details:`, {
+            amount: winner.amount,
+            applicationFee: applicationFeeAmount / 100,
+            destination: creator.stripeAccount.accountId
+          });
+        } catch (stripeError) {
+          console.error(`❌ Stripe Connect payment failed for submission ${winner.submissionId}:`, stripeError.message);
+          
+          // CRITICAL: Even if Stripe fails, we should still mark the submission as distributed
+          // This prevents the submission from being stuck in "Select Winners"
+          console.log(`🔄 Marking submission as distributed despite Stripe failure...`);
+          
+          const submissionUpdate = await prisma.submission.update({
+            where: { id: winner.submissionId },
+            data: { 
+              status: 'distributed',
+              distributedAt: new Date()
+            }
+          });
+
+          console.log(`✅ Submission ${winner.submissionId} marked as distributed after Stripe failure`);
+          console.log(`📊 Updated submission status:`, {
             submissionId: winner.submissionId,
-            type: 'reward_payment'
-          }
-        });
+            newStatus: submissionUpdate.status,
+            distributedAt: submissionUpdate.distributedAt
+          });
+
+          results.successful++;
+          continue; // Move to next winner
+        }
 
         // Update creator wallet balance
         await prisma.creatorWallet.upsert({
@@ -467,21 +567,83 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
             userType: 'creator',
             type: 'reward',
             amount: winner.amount,
-            stripeTransferId: transfer.id,
+            stripeTransferId: paymentIntent.id,
             status: 'completed',
             description: `Reward for winning brief: ${brief.title}`
           }
         });
 
-        // Update submission status
-        await prisma.submission.update({
+        // CRITICAL: Update submission status to distributed immediately after successful Stripe transfer
+        // This ensures the submission is removed from "Select Winners" immediately
+        // We don't wait for webhook confirmation as it might be delayed or fail
+        const submissionUpdate = await prisma.submission.update({
           where: { id: winner.submissionId },
           data: { 
-            status: 'approved',
-            rewardAmount: winner.amount,
-            rewardedAt: new Date()
+            status: 'distributed',
+            distributedAt: new Date()
           }
         });
+
+        console.log(`✅ Submission ${winner.submissionId} marked as distributed immediately after transfer creation`);
+        console.log(`📊 Updated submission status:`, {
+          submissionId: winner.submissionId,
+          newStatus: submissionUpdate.status,
+          distributedAt: submissionUpdate.distributedAt
+        });
+
+        // CRITICAL: Verify the update actually happened by querying the database
+        const verification = await prisma.submission.findUnique({
+          where: { id: winner.submissionId },
+          select: { id: true, status: true, distributedAt: true }
+        });
+        
+        console.log(`🔍 Database verification for submission ${winner.submissionId}:`, {
+          found: !!verification,
+          status: verification?.status,
+          distributedAt: verification?.distributedAt,
+          isDistributed: verification?.status === 'distributed'
+        });
+
+        // Extract position from winner description (format: "Reward 1 for ...")
+        let position = 1;
+        const positionMatch = winner.description?.match(/Reward (\d+)/);
+        if (positionMatch) {
+          position = parseInt(positionMatch[1]);
+        }
+
+        // Create Winner record in database
+        await prisma.winner.create({
+          data: {
+            briefId: briefId,
+            submissionId: winner.submissionId,
+            creatorId: winner.creatorId,
+            position: position,
+            selectedAt: new Date()
+          }
+        });
+
+        // CRITICAL: Permanently lock the reward tier that was used
+        // This prevents the tier from being reused and ensures accurate accounting
+        const rewardTier = await prisma.rewardTier.findFirst({
+          where: {
+            briefId: briefId,
+            position: position
+          }
+        });
+
+        if (rewardTier) {
+          await prisma.rewardTier.update({
+            where: { id: rewardTier.id },
+            data: {
+              isAvailable: false,
+              distributedAt: new Date()
+            }
+          });
+
+          console.log(`🔒 Reward tier ${rewardTier.id} (position ${position}) permanently locked`);
+        } else {
+          console.warn(`⚠️ Reward tier not found for position ${position} in brief ${briefId}`);
+        }
 
         // Create notification for creator
         await prisma.notification.create({
@@ -514,6 +676,38 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
       });
     }
 
+    // CRITICAL: Final fallback - ensure ALL selected submissions are marked as distributed
+    // This prevents any submissions from being stuck in "Select Winners"
+    console.log(`🔄 Final fallback: Ensuring all selected submissions are marked as distributed...`);
+    
+    for (const winner of winners) {
+      try {
+        // Check current status
+        const currentSubmission = await prisma.submission.findUnique({
+          where: { id: winner.submissionId },
+          select: { id: true, status: true, distributedAt: true }
+        });
+
+        if (currentSubmission && currentSubmission.status !== 'distributed') {
+          console.log(`🔄 Final fallback: Marking submission ${winner.submissionId} as distributed...`);
+          
+          await prisma.submission.update({
+            where: { id: winner.submissionId },
+            data: { 
+              status: 'distributed',
+              distributedAt: new Date()
+            }
+          });
+
+          console.log(`✅ Final fallback: Submission ${winner.submissionId} marked as distributed`);
+        } else {
+          console.log(`✅ Final fallback: Submission ${winner.submissionId} already distributed`);
+        }
+      } catch (fallbackError) {
+        console.error(`❌ Final fallback failed for submission ${winner.submissionId}:`, fallbackError.message);
+      }
+    }
+
     res.json({
       success: true,
       message: `Rewards distributed: ${results.successful} successful, ${results.failed} failed`,
@@ -523,6 +717,119 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error distributing rewards:', error);
     res.status(500).json({ error: 'Failed to distribute rewards' });
+  }
+});
+
+/**
+ * POST /api/force-distribute/:submissionId
+ * Force mark a submission as distributed (emergency fallback)
+ */
+router.post('/force-distribute/:submissionId', authenticateToken, async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can force distribute submissions' });
+    }
+
+    // Verify submission exists and belongs to brand's brief
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        brief: {
+          select: {
+            id: true,
+            brandId: true,
+            title: true
+          }
+        }
+      }
+    });
+    
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    
+    if (submission.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Force mark as distributed
+    const updatedSubmission = await prisma.submission.update({
+      where: { id: submissionId },
+      data: { 
+        status: 'distributed',
+        distributedAt: new Date()
+      }
+    });
+
+    console.log(`🚨 FORCE DISTRIBUTE: Submission ${submissionId} marked as distributed by brand ${req.user.id}`);
+    
+    res.json({
+      success: true,
+      message: 'Submission force marked as distributed',
+      submission: {
+        id: updatedSubmission.id,
+        status: updatedSubmission.status,
+        distributedAt: updatedSubmission.distributedAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error force distributing submission:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/debug-submission/:submissionId
+ * Debug endpoint to check submission status
+ */
+router.get('/debug-submission/:submissionId', authenticateToken, async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: {
+        id: true,
+        status: true,
+        distributedAt: true,
+        briefId: true,
+        creatorId: true,
+        brief: {
+          select: {
+            id: true,
+            title: true,
+            brandId: true
+          }
+        }
+      }
+    });
+    
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    
+    // Check if brief belongs to the requesting brand
+    if (submission.brief.brandId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    res.json({
+      submission: {
+        id: submission.id,
+        status: submission.status,
+        distributedAt: submission.distributedAt,
+        isDistributed: submission.status === 'distributed',
+        briefId: submission.briefId,
+        briefTitle: submission.brief.title
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error checking submission status:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

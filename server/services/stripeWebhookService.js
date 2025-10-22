@@ -63,6 +63,9 @@ class StripeWebhookService {
         case 'transfer.paid':
           result = await this.handleTransferPaid(event.data.object);
           break;
+        case 'transfer.succeeded':
+          result = await this.handleTransferSucceeded(event.data.object);
+          break;
         case 'payout.paid':
           result = await this.handlePayoutPaid(event.data.object);
           break;
@@ -399,6 +402,99 @@ class StripeWebhookService {
       return { success: true, message: 'Transfer paid successfully' };
     } catch (error) {
       console.error('Error handling transfer.paid:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle transfer.succeeded event
+   */
+  async handleTransferSucceeded(transfer) {
+    console.log(`✅ Processing transfer.succeeded for: ${transfer.id}`);
+    
+    try {
+      // Extract metadata for reward payments
+      const { briefId, creatorId, submissionId, type } = transfer.metadata || {};
+      
+      if (type === 'reward_payment' && briefId && creatorId && submissionId) {
+        // CRITICAL: Check if submission is already distributed to prevent double processing
+        const existingSubmission = await prisma.submission.findUnique({
+          where: { id: submissionId },
+          select: { status: true, distributedAt: true }
+        });
+
+        if (existingSubmission && existingSubmission.status === 'distributed') {
+          console.log(`⚠️ Submission ${submissionId} already distributed, skipping webhook processing`);
+          return { success: true, message: 'Submission already processed' };
+        }
+
+        // Update submission status to distributed (webhook confirmation)
+        // This is a backup in case the direct API update failed
+        const submissionUpdate = await prisma.submission.update({
+          where: { id: submissionId },
+          data: { 
+            status: 'distributed',
+            distributedAt: new Date()
+          }
+        });
+
+        console.log(`✅ Webhook confirmed: Submission ${submissionId} distributed`);
+        console.log(`📊 Webhook submission status update:`, {
+          submissionId: submissionId,
+          newStatus: submissionUpdate.status,
+          distributedAt: submissionUpdate.distributedAt
+        });
+
+        // Update reward tier availability
+        const winner = await prisma.winner.findFirst({
+          where: { submissionId: submissionId },
+          include: { brief: { include: { rewardTiers: true } } }
+        });
+
+        if (winner) {
+          const rewardTier = winner.brief.rewardTiers.find(tier => tier.position === winner.position);
+          if (rewardTier) {
+            await prisma.rewardTier.update({
+              where: { id: rewardTier.id },
+              data: {
+                isAvailable: false,
+                distributedAt: new Date()
+              }
+            });
+          }
+        }
+
+        // Update reward assignments
+        await prisma.rewardAssignment.updateMany({
+          where: { stripeTransferId: transfer.id },
+          data: { 
+            payoutStatus: 'completed',
+            paidAt: new Date()
+          }
+        });
+
+        // Create notification for creator
+        await this.createNotification(
+          creatorId,
+          'creator',
+          'Payment Confirmed! 🎉',
+          `Your reward payment of $${(transfer.amount / 100).toFixed(2)} has been successfully transferred to your account.`,
+          'payment_confirmed',
+          'reward',
+          {
+            briefId: briefId,
+            submissionId: submissionId,
+            amount: transfer.amount / 100,
+            transferId: transfer.id
+          }
+        );
+
+        console.log(`✅ Reward payment confirmed for submission ${submissionId}`);
+      }
+      
+      return { success: true, message: 'Transfer succeeded processed' };
+    } catch (error) {
+      console.error('Error handling transfer.succeeded:', error);
       throw error;
     }
   }

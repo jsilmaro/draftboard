@@ -473,6 +473,48 @@ router.post('/briefs', authenticateAdmin, async (req, res) => {
       }
     });
 
+    // Initialize reward tiers with proper availability
+    // Only create reward tiers if the brief has a reward amount
+    if (parseFloat(reward) > 0) {
+      // Create default reward tiers (1st, 2nd, 3rd place)
+      const rewardTiers = [
+        {
+          briefId: brief.id,
+          tierNumber: 1,
+          name: '1st Place',
+          description: 'First place winner',
+          amount: parseFloat(reward) * 0.5, // 50% of total reward
+          position: 1,
+          isActive: true,
+          isAvailable: true // CRITICAL: Start as available
+        },
+        {
+          briefId: brief.id,
+          tierNumber: 2,
+          name: '2nd Place',
+          description: 'Second place winner',
+          amount: parseFloat(reward) * 0.3, // 30% of total reward
+          position: 2,
+          isActive: true,
+          isAvailable: true // CRITICAL: Start as available
+        },
+        {
+          briefId: brief.id,
+          tierNumber: 3,
+          name: '3rd Place',
+          description: 'Third place winner',
+          amount: parseFloat(reward) * 0.2, // 20% of total reward
+          position: 3,
+          isActive: true,
+          isAvailable: true // CRITICAL: Start as available
+        }
+      ];
+
+      await prisma.rewardTier.createMany({
+        data: rewardTiers
+      });
+    }
+
     await logAdminAction(req.admin.id, 'CREATE_BRIEF', `Created brief: ${title}`, 'brief', brief.id);
     
     res.status(201).json(brief);

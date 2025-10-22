@@ -35,6 +35,7 @@ const { prisma } = require('./prisma');
 
 // Import new routes
 const paymentRoutes = require('./routes/payments');
+const stripeEnhancedRoutes = require('./routes/stripeEnhanced');
 // rewardRoutes removed - replaced with Stripe Connect functionality
 const adminRoutes = require('./routes/admin');
 const creatorRoutes = require('./routes/creators');
@@ -46,10 +47,10 @@ const eventsRoutes = require('./routes/events');
 const successStoriesRoutes = require('./routes/success-stories');
 const notificationsRoutes = require('./routes/notifications');
 const invitesRoutes = require('./routes/invites');
-const stripeConnectRoutes = require('./routes/stripeConnect');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
 const webhookRoutes = require('./routes/webhooks');
 const stripeRoutes = require('./routes/stripe');
+const stripeConnectRoutes = require('./routes/stripeConnect');
 const rewardManagementRoutes = require('./routes/rewardManagement');
 const brandsRoutes = require('./routes/brands');
 
@@ -389,7 +390,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/invites', invitesRoutes);
 
 // Stripe Connect routes
-app.use('/api', stripeConnectRoutes);
+app.use('/api/stripe-connect', stripeConnectRoutes);
 app.use('/api', stripeWebhookRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
@@ -399,6 +400,7 @@ app.use('/api', rewardManagementRoutes);
 // Stripe integration routes
 // Mount Stripe routes with selective authentication
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/stripe', stripeEnhancedRoutes); // Enhanced Stripe routes
 app.use('/api/brands', brandsRoutes);
 // Mock Stripe routes removed - using live Stripe Connect
 // app.use('/api/rewards-system', rewardsRoutes); // Removed - replaced with Stripe Connect
@@ -2384,6 +2386,15 @@ app.get('/api/brands/briefs', authenticateToken, async (req, res) => {
               status: true,
               submittedAt: true,
               createdAt: true,
+              rewardAmount: true,
+              rewardedAt: true,
+              winner: {
+                select: {
+                  id: true,
+                  position: true,
+                  selectedAt: true
+                }
+              },
               creator: {
                 select: {
                   id: true,

@@ -29,6 +29,8 @@ import SuccessStoriesPage from './components/SuccessStoriesPage'
 import MessagingSystem from './components/MessagingSystem'
 import NotificationsPage from './pages/NotificationsPage'
 import NotificationDetailPage from './pages/NotificationDetailPage'
+import StripeConnectTestPage from './pages/StripeConnectTestPage'
+import StripeSuccessPage from './components/StripeSuccessPage'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -132,6 +134,9 @@ function App() {
               <Route path="/payment/cancel" element={<PaymentCancel />} />
               <Route path="/briefs/:briefId/funding/success" element={<BriefFundingSuccess />} />
               <Route path="/briefs/:briefId/funding/cancel" element={<PaymentCancel />} />
+              
+              {/* Stripe Success Routes */}
+              <Route path="/dashboard" element={<StripeSuccessPage />} />
 
               {/* Notification Routes */}
               <Route 
@@ -147,6 +152,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <NotificationDetailPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Stripe Connect Test Route */}
+              <Route 
+                path="/stripe-connect-test" 
+                element={
+                  <ProtectedRoute>
+                    <StripeConnectTestPage />
                   </ProtectedRoute>
                 } 
               />

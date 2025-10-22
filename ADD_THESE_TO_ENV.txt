@@ -4,11 +4,6 @@ COPY THESE TO YOUR .env FILE
 
 Add these 4 lines to your .env file for temporary testing:
 
-VITE_STRIPE_PUBLISHABLE_KEY_TEST=pk_test_51HtemporaryKeyForLocalDevelopmentTesting123456789
-STRIPE_SECRET_KEY_TEST=sk_test_51HtemporarySecretKeyForLocalDevelopmentTesting123456789
-STRIPE_CONNECT_CLIENT_ID_TEST=ca_test_temporaryClientIdForLocalTesting
-STRIPE_WEBHOOK_SECRET_TEST=whsec_test_temporaryWebhookSecretForLocalTesting
-
 ==========================================
 HOW TO ADD THEM:
 ==========================================
