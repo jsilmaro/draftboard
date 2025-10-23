@@ -223,7 +223,7 @@ const CreatorWallet: React.FC = () => {
                   Current Balance
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  ${walletBalance.toFixed(2)}
+                  ${(walletBalance || 0).toFixed(2)}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-full">
@@ -241,7 +241,7 @@ const CreatorWallet: React.FC = () => {
                   Total Earned
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  ${totalEarned.toFixed(2)}
+                  ${(totalEarned || 0).toFixed(2)}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -410,18 +410,18 @@ const CreatorWallet: React.FC = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {payout.brief.title}
+                        {payout.briefTitle || payout.brief?.title || 'Unknown Brief'}
                       </h4>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Brand: {payout.brief.brand.name}
+                        Brand: {payout.brandName || payout.brief?.brand?.name || 'Unknown Brand'}
                       </p>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Submission: {payout.submission.title}
+                        Submission: {payout.submissionTitle || payout.submission?.title || 'Unknown Submission'}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                        ${payout.netAmount.toFixed(2)}
+                        ${(payout.netAmount || payout.amount || 0).toFixed(2)}
                       </p>
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                         payout.status === 'paid'
@@ -439,9 +439,9 @@ const CreatorWallet: React.FC = () => {
                     isDark ? 'text-gray-400' : 'text-gray-600'
                   }`}>
                     <div>
-                      <span>Gross: ${payout.amount.toFixed(2)}</span>
+                      <span>Gross: ${(payout.amount || 0).toFixed(2)}</span>
                       <span className="mx-2">•</span>
-                      <span>Fee: ${payout.platformFee.toFixed(2)}</span>
+                      <span>Fee: ${(payout.platformFee || 0).toFixed(2)}</span>
                     </div>
                     <div>
                       {payout.paidAt ? (

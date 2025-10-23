@@ -97,15 +97,15 @@ interface Earning {
   transactionId?: string;
 }
 
-interface SubmissionData {
-  id: string;
-  briefTitle?: string;
-  briefId: string;
-  brandName?: string;
-  amount: number;
-  status: string;
-  submittedAt: string;
-}
+// interface SubmissionData {
+//   id: string;
+//   briefTitle?: string;
+//   briefId: string;
+//   brandName?: string;
+//   amount: number;
+//   status: string;
+//   submittedAt: string;
+// }
 
 interface SearchResult {
   type: 'brief' | 'submission';
@@ -439,12 +439,6 @@ const CreatorDashboard: React.FC = () => {
     }
   }, [activeTab, fetchMarketplaceBriefs]);
 
-  // Fetch earnings data when earnings tab is active
-  useEffect(() => {
-    if (activeTab === 'earnings') {
-      fetchEarningsData(); // Fetch real earnings data from database
-    }
-  }, [activeTab]);
 
   // Search functionality
   const handleSearchSubmit = async (e: React.FormEvent) => {
@@ -598,24 +592,8 @@ const CreatorDashboard: React.FC = () => {
       }
 
       const payoutsData = await response.json();
-      // Transform payouts data to match earnings format
-      const earningsData = payoutsData.data?.map((payout: { 
-        id: string; 
-        brief: { title: string; brand: { companyName: string } }; 
-        netAmount: number; 
-        status: string; 
-        createdAt: string;
-        paidAt?: string;
-      }) => ({
-        id: payout.id,
-        briefTitle: payout.brief.title,
-        brandName: payout.brief.brand.companyName,
-        amount: payout.netAmount,
-        rewardType: 'CASH' as const, // Stripe Connect always pays cash
-        status: payout.status === 'paid' ? 'paid' as const : 'pending' as const,
-        submittedAt: payout.createdAt,
-        paidAt: payout.paidAt
-      })) || [];
+      // Use the earnings data directly from the API
+      const earningsData = payoutsData.data || [];
       setEarnings(earningsData);
 
       // Calculate detailed metrics from wallet transactions
@@ -651,77 +629,13 @@ const CreatorDashboard: React.FC = () => {
     }
   };
 
-  // Function to fetch all submissions (including pending ones) for demonstration
-  const fetchAllSubmissions = async () => {
-    try {
-      setEarningsLoading(true);
-      setEarningsError(null);
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Fetch all submissions to show potential earnings
-      const response = await fetch('/api/creators/submissions', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch submissions: ${response.status}`);
-      }
-
-      const submissionsData = await response.json();
-      // Submissions data received successfully
-      
-      // Transform submissions to earnings format
-      const potentialEarnings: Earning[] = submissionsData.map((submission: SubmissionData) => ({
-        id: submission.id,
-        briefTitle: submission.briefTitle || 'Unknown Brief',
-        briefId: submission.briefId,
-        brandName: submission.brandName || 'Unknown Brand',
-        amount: submission.amount || 0, // Use the actual amount from database
-        rewardType: 'CASH' as const,
-        status: submission.status === 'approved' ? 'paid' as const : 
-                submission.status === 'pending' ? 'pending' as const : 'processing' as const,
-        submittedAt: submission.submittedAt,
-        approvedAt: submission.status === 'approved' ? submission.submittedAt : undefined,
-        paidAt: submission.status === 'approved' ? submission.submittedAt : undefined,
-        position: 1
-      }));
-
-      setEarnings(potentialEarnings);
-
-      // Calculate detailed metrics from submissions
-      const totalEarnings = potentialEarnings.reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
-      const paidEarnings = potentialEarnings.filter((e: Earning) => e.status === 'paid').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
-      const pendingEarnings = potentialEarnings.filter((e: Earning) => e.status === 'pending').reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
-      
-      // Calculate this month's earnings
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const thisMonthEarnings = potentialEarnings.filter((e: Earning) => {
-        const earningDate = new Date(e.paidAt || e.submittedAt || new Date());
-        return earningDate.getMonth() === currentMonth && earningDate.getFullYear() === currentYear;
-      }).reduce((sum: number, earning: Earning) => sum + earning.amount, 0);
-
-      setMetrics(prev => ({
-        ...prev,
-        totalEarnings,
-        paidEarnings,
-        pendingEarnings,
-        thisMonthEarnings
-      }));
-
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      // console.error('Error fetching submissions:', error);
-      setEarningsError(error instanceof Error ? error.message : 'Failed to fetch submissions');
-      setEarnings([]);
-    } finally {
-      setEarningsLoading(false);
+  // Fetch earnings data when earnings tab is active
+  useEffect(() => {
+    if (activeTab === 'earnings') {
+      fetchEarningsData(); // Fetch real earnings data from database
     }
-  };
+  }, [activeTab]);
+
 
   // Recent activity carousel
   // useEffect(() => {
@@ -1423,18 +1337,8 @@ const CreatorDashboard: React.FC = () => {
     return (
     <div className="space-y-6">
         <div className="flex justify-between items-center">
-      <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Earnings</h2>
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Earnings</h2>
           <div className="flex space-x-2">
-            <button
-              onClick={() => fetchEarningsData()}
-              disabled={earningsLoading}
-              className="btn btn-outline flex items-center space-x-2"
-            >
-              <svg className={`w-4 h-4 ${earningsLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>{earningsLoading ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
             <button
               onClick={() => {
                 const csvContent = generateEarningsCSV(earnings);
@@ -1447,15 +1351,6 @@ const CreatorDashboard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => fetchAllSubmissions()}
-              className="btn btn-primary flex items-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>View All Submissions</span>
             </button>
           </div>
         </div>
@@ -1588,7 +1483,7 @@ const CreatorDashboard: React.FC = () => {
               <span className="text-red-300">{earningsError}</span>
             </div>
             <p className="text-red-300 text-sm mt-2">
-              Click &quot;Refresh&quot; to try again or &quot;View All Submissions&quot; to see your submission history. Earnings are based on wallet transactions.
+              Earnings are based on wallet transactions. The data will refresh automatically.
             </p>
           </div>
         )}
@@ -1631,12 +1526,6 @@ const CreatorDashboard: React.FC = () => {
                         <span className="text-4xl">💰</span>
                         <p className={`${isDark ? 'text-gray-300' : 'text-gray-800'}`}>No earnings found</p>
                         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Earnings are based on wallet transactions. Start submitting to briefs to earn rewards!</p>
-                        <button
-                          onClick={() => fetchAllSubmissions()}
-                          className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
-                        >
-                          View All Submissions
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -2455,7 +2344,23 @@ const CreatorDashboard: React.FC = () => {
   };
 
   // Analytics state
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalSubmissions: number;
+    approvedSubmissions: number;
+    pendingSubmissions: number;
+    rejectedSubmissions: number;
+    totalEarnings: number;
+    thisMonthEarnings: number;
+    successRate: number;
+    recentSubmissions: Array<{
+      id: string;
+      briefTitle: string;
+      status: string;
+      submittedAt: string;
+      brandName: string;
+      amount: number;
+    }>;
+  } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
@@ -2480,7 +2385,6 @@ const CreatorDashboard: React.FC = () => {
       }
 
     } catch (error) {
-      console.error('Error fetching analytics:', error);
       showToast('Failed to load analytics data', 'error');
     } finally {
       setAnalyticsLoading(false);
@@ -2680,7 +2584,7 @@ const CreatorDashboard: React.FC = () => {
                 Recent Submissions
               </h3>
               <div className="space-y-3">
-                {analyticsData.recentSubmissions.map((submission: any) => (
+                {analyticsData.recentSubmissions.map((submission) => (
                   <div key={submission.id} className={`flex items-center justify-between p-3 rounded-lg ${
                     isDark ? 'bg-gray-700' : 'bg-gray-50'
                   }`}>

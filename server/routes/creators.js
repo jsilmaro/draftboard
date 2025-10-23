@@ -1032,5 +1032,55 @@ router.get('/analytics', authenticateCreator, async (req, res) => {
   }
 });
 
+// Get creator payouts/earnings
+router.get('/payouts', authenticateCreator, async (req, res) => {
+  try {
+    const creatorId = req.creator.id;
+
+    // Get all approved submissions with earnings
+    const submissions = await prisma.submission.findMany({
+      where: {
+        creatorId,
+        status: 'approved'
+      },
+      include: {
+        brief: {
+          select: {
+            id: true,
+            title: true,
+            brand: {
+              select: {
+                companyName: true,
+                logo: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { submittedAt: 'desc' }
+    });
+
+    // Transform submissions to earnings format
+    const earnings = submissions.map(submission => ({
+      id: submission.id,
+      briefTitle: submission.brief?.title || 'Unknown Brief',
+      brandName: submission.brief?.brand?.companyName || 'Unknown Brand',
+      brandLogo: submission.brief?.brand?.logo || null,
+      amount: submission.amount || 0,
+      rewardType: 'CASH',
+      status: 'paid', // All approved submissions are considered paid
+      submittedAt: submission.submittedAt,
+      paidAt: submission.reviewedAt || submission.submittedAt
+    }));
+
+    res.json({
+      data: earnings
+    });
+
+  } catch (error) {
+    console.error('Error fetching creator payouts:', error);
+    res.status(500).json({ error: 'Failed to fetch payouts data' });
+  }
+});
 
 module.exports = router;

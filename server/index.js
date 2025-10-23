@@ -48,6 +48,11 @@ const successStoriesRoutes = require('./routes/success-stories');
 const notificationsRoutes = require('./routes/notifications');
 const invitesRoutes = require('./routes/invites');
 const stripeWebhookRoutes = require('./routes/stripeWebhooks');
+
+// Import new Stripe integration routes
+const brandPaymentsRoutes = require('./routes/brandPayments');
+const creatorStripeRoutes = require('./routes/creatorStripe');
+const paymentDistributionRoutes = require('./routes/paymentDistribution');
 const webhookRoutes = require('./routes/webhooks');
 const stripeRoutes = require('./routes/stripe');
 const stripeConnectRoutes = require('./routes/stripeConnect');
@@ -396,6 +401,11 @@ app.use('/api/webhooks', webhookRoutes);
 
 // Reward Management routes
 app.use('/api', rewardManagementRoutes);
+
+// New Stripe Integration routes
+app.use('/api/brand-payments', brandPaymentsRoutes);
+app.use('/api/creator-stripe', creatorStripeRoutes);
+app.use('/api/payment-distribution', paymentDistributionRoutes);
 
 // Stripe integration routes
 // Mount Stripe routes with selective authentication
