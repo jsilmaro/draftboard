@@ -279,92 +279,116 @@ const BrandDashboard: React.FC = () => {
       }
       
       // Load briefs
-      const briefsResponse = await fetch('/api/brands/briefs', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (briefsResponse.ok) {
-        const briefsData = await briefsResponse.json();
-        setBriefs(briefsData);
-        setMetrics(prev => ({
-          ...prev,
-          activeBriefs: briefsData.filter((b: Brief) => b.status === 'published').length
-        }));
+      try {
+        const briefsResponse = await fetch('/api/brands/briefs', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (briefsResponse.ok) {
+          const briefsData = await briefsResponse.json();
+          setBriefs(briefsData);
+          setMetrics(prev => ({
+            ...prev,
+            activeBriefs: briefsData.filter((b: Brief) => b.status === 'published').length
+          }));
+        } else {
+          console.error('Failed to load briefs:', briefsResponse.status);
+        }
+      } catch (error) {
+        console.error('Error loading briefs:', error);
       }
 
       // Load submissions
-      const submissionsResponse = await fetch('/api/brands/submissions', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (submissionsResponse.ok) {
-        const submissionsData = await submissionsResponse.json();
-        setSubmissions(submissionsData);
-        const thisWeek = submissionsData.filter((s: Submission) => {
-          const submissionDate = new Date(s.submittedAt);
-          const weekAgo = new Date();
-          weekAgo.setDate(weekAgo.getDate() - 7);
-          return submissionDate >= weekAgo;
-        }).length;
-        setMetrics(prev => ({
-          ...prev,
-          submissionsThisWeek: thisWeek
-        }));
+      try {
+        const submissionsResponse = await fetch('/api/brands/submissions', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (submissionsResponse.ok) {
+          const submissionsData = await submissionsResponse.json();
+          setSubmissions(submissionsData);
+          const thisWeek = submissionsData.filter((s: Submission) => {
+            const submissionDate = new Date(s.submittedAt);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return submissionDate >= weekAgo;
+          }).length;
+          setMetrics(prev => ({
+            ...prev,
+            submissionsThisWeek: thisWeek
+          }));
+        } else {
+          console.error('Failed to load submissions:', submissionsResponse.status);
+        }
+      } catch (error) {
+        console.error('Error loading submissions:', error);
       }
 
       // Load creators - ONLY creators, NEVER brands
-      const creatorsResponse = await fetch('/api/brands/creators', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Load invited creators list
-      const invitedResponse = await fetch('/api/creators/invited', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      let invitedIds: string[] = [];
-      if (invitedResponse.ok) {
-        const invitedData = await invitedResponse.json();
-        invitedIds = invitedData.invitedCreators || [];
-        // Loaded previously invited creators
-      }
-      
-      if (creatorsResponse.ok) {
-        const creatorsData = await creatorsResponse.json();
-        
-        // STRICT VALIDATION: ONLY accept if explicitly marked as 'creator'
-        const verifiedCreators = creatorsData.filter((user: Creator) => {
-          // MUST have userType === 'creator' (NO exceptions!)
-          if (user.userType !== 'creator') {
-            // Rejected: Not explicitly marked as creator
-            return false;
-          }
-          
-          // MUST have required creator fields
-          if (!user.userName || !user.email) {
-            // Rejected: Missing creator fields
-            return false;
-          }
-          
-          return true;
+      try {
+        const creatorsResponse = await fetch('/api/brands/creators', {
+          headers: { Authorization: `Bearer ${token}` }
         });
         
-        // Loaded verified creators only
-        setCreators(verifiedCreators);
+        // Load invited creators list
+        const invitedResponse = await fetch('/api/creators/invited', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        let invitedIds: string[] = [];
+        if (invitedResponse.ok) {
+          const invitedData = await invitedResponse.json();
+          invitedIds = invitedData.invitedCreators || [];
+          // Loaded previously invited creators
+        }
+        
+        if (creatorsResponse.ok) {
+          const creatorsData = await creatorsResponse.json();
+          
+          // STRICT VALIDATION: ONLY accept if explicitly marked as 'creator'
+          const verifiedCreators = creatorsData.filter((user: Creator) => {
+            // MUST have userType === 'creator' (NO exceptions!)
+            if (user.userType !== 'creator') {
+              // Rejected: Not explicitly marked as creator
+              return false;
+            }
+            
+            // MUST have required creator fields
+            if (!user.userName || !user.email) {
+              // Rejected: Missing creator fields
+              return false;
+            }
+            
+            return true;
+          });
+          
+          // Loaded verified creators only
+          setCreators(verifiedCreators);
+        } else {
+          console.error('Failed to load creators:', creatorsResponse.status);
+        }
         
         // Set invited creators from backend
         setInvitedCreators(new Set(invitedIds));
+      } catch (error) {
+        console.error('Error loading creators:', error);
       }
 
       // Load analytics data
-      const analyticsResponse = await fetch('/api/rewards/analytics/brand', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (analyticsResponse.ok) {
-        const analyticsData = await analyticsResponse.json();
-        setAnalytics(analyticsData);
+      try {
+        const analyticsResponse = await fetch('/api/rewards/analytics/brand', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (analyticsResponse.ok) {
+          const analyticsData = await analyticsResponse.json();
+          setAnalytics(analyticsData);
+        } else {
+          console.error('Failed to load analytics:', analyticsResponse.status);
+        }
+      } catch (error) {
+        console.error('Error loading analytics:', error);
       }
 
     } catch (error) {
-      // console.error('Error loading dashboard data:', error);
+      console.error('Error loading dashboard data:', error);
       showErrorToast('Failed to load dashboard data');
     } finally {
       setLoading(false);
