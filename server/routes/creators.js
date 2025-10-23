@@ -910,4 +910,127 @@ router.get('/stripe-account', authenticateToken, async (req, res) => {
   }
 });
 
+// Get creator analytics - simplified overview
+router.get('/analytics', authenticateCreator, async (req, res) => {
+  try {
+    const creatorId = req.creator.id;
+    
+    // Get core analytics data
+    const [
+      totalSubmissions,
+      approvedSubmissions,
+      pendingSubmissions,
+      rejectedSubmissions,
+      totalEarnings,
+      thisMonthEarnings,
+      recentSubmissions
+    ] = await Promise.all([
+      // Total submissions
+      prisma.submission.count({
+        where: { creatorId }
+      }),
+      
+      // Approved submissions
+      prisma.submission.count({
+        where: { 
+          creatorId,
+          status: 'approved'
+        }
+      }),
+      
+      // Pending submissions
+      prisma.submission.count({
+        where: { 
+          creatorId,
+          status: 'pending'
+        }
+      }),
+      
+      // Rejected submissions
+      prisma.submission.count({
+        where: { 
+          creatorId,
+          status: 'rejected'
+        }
+      }),
+      
+      // Total earnings
+      prisma.submission.aggregate({
+        where: { 
+          creatorId,
+          status: 'approved'
+        },
+        _sum: { amount: true }
+      }),
+      
+      // This month earnings
+      prisma.submission.aggregate({
+        where: { 
+          creatorId,
+          status: 'approved',
+          submittedAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          }
+        },
+        _sum: { amount: true }
+      }),
+      
+      // Recent submissions (last 5)
+      prisma.submission.findMany({
+        where: { creatorId },
+        include: {
+          brief: {
+            select: {
+              id: true,
+              title: true,
+              brand: {
+                select: {
+                  companyName: true,
+                  logo: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { submittedAt: 'desc' },
+        take: 5
+      })
+    ]);
+
+    // Calculate derived metrics
+    const successRate = totalSubmissions > 0 ? (approvedSubmissions / totalSubmissions) * 100 : 0;
+    const averageEarnings = approvedSubmissions > 0 ? (totalEarnings._sum.amount || 0) / approvedSubmissions : 0;
+
+    res.json({
+      // Core metrics
+      totalSubmissions,
+      approvedSubmissions,
+      pendingSubmissions,
+      rejectedSubmissions,
+      totalEarnings: totalEarnings._sum.amount || 0,
+      thisMonthEarnings: thisMonthEarnings._sum.amount || 0,
+      
+      // Performance metrics
+      successRate: Math.round(successRate * 10) / 10,
+      averageEarnings: Math.round(averageEarnings * 100) / 100,
+      
+      // Recent activity
+      recentSubmissions: recentSubmissions.map(sub => ({
+        id: sub.id,
+        briefTitle: sub.brief.title,
+        brandName: sub.brief.brand.companyName,
+        brandLogo: sub.brief.brand.logo,
+        status: sub.status,
+        amount: sub.amount,
+        submittedAt: sub.submittedAt
+      }))
+    });
+
+  } catch (error) {
+    console.error('Error fetching creator analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics data' });
+  }
+});
+
+
 module.exports = router;

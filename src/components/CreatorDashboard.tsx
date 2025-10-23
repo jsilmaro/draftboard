@@ -18,6 +18,7 @@ import NotificationBell from './NotificationBell';
 import SettingsModal from './SettingsModal';
 import MessagingSystem from './MessagingSystem';
 import ThemeToggle from './ThemeToggle';
+import LoadingSpinner from './LoadingSpinner';
 
 
 
@@ -2453,107 +2454,276 @@ const CreatorDashboard: React.FC = () => {
     );
   };
 
-  const renderAnalytics = () => (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
-          Analytics Dashboard
-        </h1>
-        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg`}>
-          Track your performance and growth as a creator
-        </p>
-      </div>
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
-      {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Total Submissions
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {mySubmissions.length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-          </div>
-        </div>
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        showToast('Authentication required', 'error');
+        return;
+      }
 
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Approved Submissions
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {mySubmissions.filter(s => s.status === 'approved').length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+      const analyticsResponse = await fetch('/api/creators/analytics', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Total Earnings
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                ${earnings.reduce((sum, earning) => sum + earning.amount, 0).toFixed(2)}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-          </div>
-        </div>
+      if (analyticsResponse.ok) {
+        const analytics = await analyticsResponse.json();
+        setAnalyticsData(analytics);
+      } else {
+        showToast('Failed to load analytics data', 'error');
+      }
 
-        <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Success Rate
-              </p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {mySubmissions.length > 0 
-                  ? ((mySubmissions.filter(s => s.status === 'approved').length / mySubmissions.length) * 100).toFixed(1)
-                  : 0}%
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      showToast('Failed to load analytics data', 'error');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [showToast]);
 
-      {/* Performance Chart Placeholder */}
-      <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          Performance Over Time
-        </h3>
-        <div className={`h-64 flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-gray-50'} rounded-lg`}>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Chart visualization coming soon...
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchAnalytics();
+    }
+  }, [activeTab, fetchAnalytics]);
+
+  const renderAnalytics = () => {
+
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount);
+    };
+
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'approved': return 'text-green-600 dark:text-green-400';
+        case 'pending': return 'text-yellow-600 dark:text-yellow-400';
+        case 'rejected': return 'text-red-600 dark:text-red-400';
+        default: return 'text-gray-600 dark:text-gray-400';
+      }
+    };
+
+    const getStatusIcon = (status: string) => {
+      switch (status) {
+        case 'approved': return '✓';
+        case 'pending': return '⏳';
+        case 'rejected': return '✗';
+        default: return '?';
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="mb-8">
+          <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+            Analytics Dashboard
+          </h1>
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg`}>
+            Track your performance and growth as a creator
           </p>
         </div>
+
+        {analyticsLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <LoadingSpinner />
+          </div>
+        ) : analyticsData ? (
+          <>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className={`p-6 rounded-lg border ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Total Submissions
+                    </p>
+                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {analyticsData.totalSubmissions}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-lg border ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Success Rate
+                    </p>
+                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {analyticsData.successRate.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-lg border ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Total Earnings
+                    </p>
+                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {formatCurrency(analyticsData.totalEarnings)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-lg border ${
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      This Month
+                    </p>
+                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {formatCurrency(analyticsData.thisMonthEarnings)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Submission Status Breakdown */}
+            <div className={`p-6 rounded-lg border ${
+              isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Submission Status Breakdown
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-50'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Approved</p>
+                      <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {analyticsData.approvedSubmissions}
+                      </p>
+                    </div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-50'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Pending</p>
+                      <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {analyticsData.pendingSubmissions}
+                      </p>
+                    </div>
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-50'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Rejected</p>
+                      <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {analyticsData.rejectedSubmissions}
+                      </p>
+                    </div>
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className={`p-6 rounded-lg border ${
+              isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Recent Submissions
+              </h3>
+              <div className="space-y-3">
+                {analyticsData.recentSubmissions.map((submission: any) => (
+                  <div key={submission.id} className={`flex items-center justify-between p-3 rounded-lg ${
+                    isDark ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        submission.status === 'approved' ? 'bg-green-100 text-green-600' :
+                        submission.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                        'bg-red-100 text-red-600'
+                      }`}>
+                        {getStatusIcon(submission.status)}
+                      </div>
+                      <div>
+                        <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {submission.briefTitle}
+                        </p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {submission.brandName}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {formatCurrency(submission.amount)}
+                      </p>
+                      <p className={`text-sm ${getStatusColor(submission.status)}`}>
+                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              No analytics data available
+            </p>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
 
   // Fetch invites when tab is activated
@@ -3708,6 +3878,7 @@ const CreatorDashboard: React.FC = () => {
           } : undefined}
         />
       )}
+
 
       </div>
     </div>
