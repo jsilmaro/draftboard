@@ -3383,6 +3383,185 @@ app.get('/api/briefs/:id/funding/status', authenticateToken, async (req, res) =>
   }
 });
 
+// Create funding session for a brief
+app.post('/api/briefs/:id/fund', authenticateToken, async (req, res) => {
+  try {
+    const { id: briefId } = req.params;
+    
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can fund briefs' });
+    }
+
+    // Verify brief exists and belongs to brand
+    const brief = await prisma.brief.findFirst({
+      where: { 
+        id: briefId,
+        brandId: req.user.id 
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    if (brief.isFunded) {
+      return res.status(400).json({ error: 'Brief is already funded' });
+    }
+
+    // Create Stripe Checkout session for funding
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Calculate platform fee (5% of total amount)
+    const totalAmount = brief.reward;
+    const platformFee = totalAmount * 0.05;
+    const netAmount = totalAmount - platformFee;
+    
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Fund Brief: ${brief.title}`,
+              description: brief.description,
+            },
+            unit_amount: Math.round(totalAmount * 100), // Convert to cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/briefs/${briefId}/funding/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/briefs/${briefId}/funding/cancel`,
+      metadata: {
+        briefId: briefId,
+        brandId: req.user.id,
+        type: 'brief_funding',
+        totalAmount: totalAmount.toString(),
+        platformFee: platformFee.toString(),
+        netAmount: netAmount.toString()
+      }
+    });
+
+    console.log(`💰 Created funding session for brief ${briefId}: ${session.id}`);
+
+    res.json({
+      success: true,
+      data: {
+        sessionId: session.id,
+        url: session.url
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating funding session:', error);
+    res.status(500).json({ error: 'Failed to create funding session' });
+  }
+});
+
+// Confirm brief funding after successful payment
+app.post('/api/briefs/:id/fund/confirm', authenticateToken, async (req, res) => {
+  try {
+    const { id: briefId } = req.params;
+    const { sessionId } = req.body;
+    
+    if (req.user.type !== 'brand') {
+      return res.status(403).json({ error: 'Only brands can confirm funding' });
+    }
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    // Verify brief exists and belongs to brand
+    const brief = await prisma.brief.findFirst({
+      where: { 
+        id: briefId,
+        brandId: req.user.id 
+      }
+    });
+
+    if (!brief) {
+      return res.status(404).json({ error: 'Brief not found or access denied' });
+    }
+
+    // Check if brief is already funded
+    if (brief.isFunded) {
+      return res.json({
+        success: true,
+        message: 'Brief is already funded',
+        alreadyFunded: true
+      });
+    }
+
+    // Verify the Stripe session exists and is completed
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    try {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      
+      if (session.payment_status !== 'paid') {
+        return res.status(400).json({ error: 'Payment not completed' });
+      }
+
+      // Calculate funding amounts
+      const totalAmount = brief.reward;
+      const platformFee = totalAmount * 0.05;
+      const netAmount = totalAmount - platformFee;
+
+      // Create funding record and update brief status
+      await prisma.$transaction(async (tx) => {
+        // Create funding record
+        await tx.briefFunding.create({
+          data: {
+            briefId: briefId,
+            brandId: req.user.id,
+            totalAmount: totalAmount,
+            platformFee: platformFee,
+            netAmount: netAmount,
+            stripeCheckoutSessionId: sessionId,
+            stripePaymentIntentId: session.payment_intent,
+            status: 'completed',
+            fundedAt: new Date()
+          }
+        });
+
+        // Update brief status
+        await tx.brief.update({
+          where: { id: briefId },
+          data: {
+            isFunded: true,
+            fundedAt: new Date()
+          }
+        });
+
+      });
+
+      console.log(`✅ Brief funding confirmed for brief ${briefId}: ${sessionId}`);
+
+      res.json({
+        success: true,
+        message: 'Brief funding confirmed successfully',
+        fundingDetails: {
+          totalAmount,
+          platformFee,
+          netAmount,
+          sessionId
+        }
+      });
+
+    } catch (stripeError) {
+      console.error('Error verifying Stripe session:', stripeError);
+      return res.status(400).json({ error: 'Invalid session ID' });
+    }
+
+  } catch (error) {
+    console.error('Error confirming funding:', error);
+    res.status(500).json({ error: 'Failed to confirm funding' });
+  }
+});
+
 // Get all public briefs for marketplace (no authentication required)
 // IMPORTANT: This route must come BEFORE /api/briefs/:id to avoid route matching issues
 app.get('/api/briefs/public', async (req, res) => {

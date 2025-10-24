@@ -548,7 +548,7 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
         }
 
         // Update creator wallet balance
-        await prisma.creatorWallet.upsert({
+        const walletUpdate = await prisma.creatorWallet.upsert({
           where: { creatorId: winner.creatorId },
           update: {
             balance: { increment: winner.amount },
@@ -558,6 +558,13 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
             creatorId: winner.creatorId,
             balance: winner.amount
           }
+        });
+
+        console.log(`💰 Creator wallet updated for ${winner.creatorId}:`, {
+          previousBalance: walletUpdate.balance - winner.amount,
+          rewardAmount: winner.amount,
+          newBalance: walletUpdate.balance,
+          updatedAt: walletUpdate.updatedAt
         });
 
         // Record transaction
@@ -592,16 +599,16 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
         });
 
         // CRITICAL: Verify the update actually happened by querying the database
-        const verification = await prisma.submission.findUnique({
+        const submissionVerification = await prisma.submission.findUnique({
           where: { id: winner.submissionId },
           select: { id: true, status: true, distributedAt: true }
         });
         
         console.log(`🔍 Database verification for submission ${winner.submissionId}:`, {
-          found: !!verification,
-          status: verification?.status,
-          distributedAt: verification?.distributedAt,
-          isDistributed: verification?.status === 'distributed'
+          found: !!submissionVerification,
+          status: submissionVerification?.status,
+          distributedAt: submissionVerification?.distributedAt,
+          isDistributed: submissionVerification?.status === 'distributed'
         });
 
         // Extract position from winner description (format: "Reward 1 for ...")
@@ -632,7 +639,13 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
         });
 
         if (rewardTier) {
-          await prisma.rewardTier.update({
+          // Verify the tier amount matches the winner amount for accuracy
+          const tierAmount = parseFloat(rewardTier.amount.toString()) || 0;
+          if (tierAmount > 0 && Math.abs(tierAmount - winner.amount) > 0.01) {
+            console.warn(`⚠️ Amount mismatch: Tier amount (${tierAmount}) vs Winner amount (${winner.amount})`);
+          }
+
+          const lockedTier = await prisma.rewardTier.update({
             where: { id: rewardTier.id },
             data: {
               isAvailable: false,
@@ -640,7 +653,15 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
             }
           });
 
-          console.log(`🔒 Reward tier ${rewardTier.id} (position ${position}) permanently locked`);
+          console.log(`🔒 Reward tier ${rewardTier.id} (position ${position}) permanently locked:`, {
+            tierId: rewardTier.id,
+            position: position,
+            tierAmount: tierAmount,
+            winnerAmount: winner.amount,
+            wasAvailable: rewardTier.isAvailable,
+            nowAvailable: lockedTier.isAvailable,
+            distributedAt: lockedTier.distributedAt
+          });
         } else {
           console.warn(`⚠️ Reward tier not found for position ${position} in brief ${briefId}`);
         }
@@ -707,6 +728,21 @@ router.post('/distribute-with-stripe', authenticateToken, async (req, res) => {
         console.error(`❌ Final fallback failed for submission ${winner.submissionId}:`, fallbackError.message);
       }
     }
+
+    // CRITICAL: Final summary of fund distribution and tier locking
+    console.log(`📊 FINAL DISTRIBUTION SUMMARY for brief ${briefId}:`, {
+      totalWinners: winners.length,
+      successfulDistributions: results.successful,
+      failedDistributions: results.failed,
+      totalAmountDistributed: winners.reduce((sum, w) => sum + w.amount, 0),
+      briefFunding: brief.briefFunding?.netAmount || 0,
+      remainingFunding: (brief.briefFunding?.netAmount || 0) - winners.reduce((sum, w) => sum + w.amount, 0),
+      rewardTiersUsed: winners.map(w => {
+        const positionMatch = w.description?.match(/Reward (\d+)/);
+        return positionMatch ? parseInt(positionMatch[1]) : 1;
+      }),
+      errors: results.errors
+    });
 
     res.json({
       success: true,

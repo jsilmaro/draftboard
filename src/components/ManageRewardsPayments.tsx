@@ -89,7 +89,7 @@ const ManageRewardsPayments: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'review' | 'winners' | 'payments' | 'finish'>('review');
   const [selectedWinners, setSelectedWinners] = useState<Winner[]>([]);
   const [processingPayment, setProcessingPayment] = useState(false);
-  const [submissionsFilter, setSubmissionsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'distributed'>('pending');
+  const [submissionsFilter, setSubmissionsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'distributed'>('all');
   const [usedRewardTiers, setUsedRewardTiers] = useState<Set<number>>(new Set());
   const { showErrorToast, showSuccessToast } = useToast();
 
@@ -111,10 +111,23 @@ const ManageRewardsPayments: React.FC = () => {
           return hasSubmissions;
         });
         
+        // eslint-disable-next-line no-console
+        console.log('📋 Fetched briefs:', {
+          totalBriefs: data.length,
+          briefsWithSubmissions: briefsWithSubmissions.length,
+          briefDetails: briefsWithSubmissions.map(b => ({
+            id: b.id,
+            title: b.title,
+            submissionsCount: b.submissions.length,
+            distributedCount: b.submissions.filter(s => s.status === 'distributed').length
+          }))
+        });
         
         setBriefs(briefsWithSubmissions);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('❌ Error fetching briefs:', error);
       showErrorToast('Failed to fetch briefs');
     } finally {
       setLoading(false);
@@ -124,6 +137,7 @@ const ManageRewardsPayments: React.FC = () => {
   useEffect(() => {
     fetchBriefs();
   }, [fetchBriefs]);
+
 
   // Calculate remaining reward pool
   const calculateRemainingRewardPool = (brief: Brief) => {
@@ -262,15 +276,41 @@ const ManageRewardsPayments: React.FC = () => {
   };
 
 
-  const handleBriefSelect = (brief: Brief) => {
+  const handleBriefSelect = async (brief: Brief) => {
     // CRITICAL: Reset all state when selecting a new brief
     // This prevents state pollution between different briefs
     setSelectedBrief(brief);
     setActiveSection('review');
     setSelectedWinners([]);
     setUsedRewardTiers(new Set()); // Reset used reward tiers when selecting new brief
-    setSubmissionsFilter('pending');
+    setSubmissionsFilter('all'); // Changed from 'pending' to 'all' to show all submissions by default
     
+    // Refresh the brief data to ensure we have the latest submission statuses
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await fetch('/api/brands/briefs', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const updatedBrief = data.find((b: Brief) => b.id === brief.id);
+          if (updatedBrief) {
+            setSelectedBrief(updatedBrief);
+            // eslint-disable-next-line no-console
+            console.log('🔄 Brief data refreshed on selection:', {
+              briefId: updatedBrief.id,
+              submissionsCount: updatedBrief.submissions.length,
+              distributedCount: updatedBrief.submissions.filter(s => s.status === 'distributed').length
+            });
+          }
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('❌ Error refreshing brief data on selection:', error);
+    }
   };
 
   const handleAcceptSubmission = async (submissionId: string) => {
@@ -435,6 +475,7 @@ const ManageRewardsPayments: React.FC = () => {
     });
   };
 
+
   const handleDistributeRewards = async () => {
     if (!selectedBrief || selectedWinners.length === 0) {
       showErrorToast('Please select winners first');
@@ -495,30 +536,45 @@ const ManageRewardsPayments: React.FC = () => {
       // Refresh briefs data and update selected brief with winner information
       const refreshToken = localStorage.getItem('token');
       if (refreshToken) {
-        const refreshResponse = await fetch('/api/brands/briefs', {
-          headers: { Authorization: `Bearer ${refreshToken}` }
-        });
-        
-        if (refreshResponse.ok) {
-          const updatedBriefs = await refreshResponse.json();
-          const briefsWithSubmissions = updatedBriefs.filter((brief: Brief) => {
-            const hasSubmissions = brief.submissions && brief.submissions.length > 0;
-            return hasSubmissions;
+        try {
+          const refreshResponse = await fetch('/api/brands/briefs', {
+            headers: { Authorization: `Bearer ${refreshToken}` }
           });
           
-          setBriefs(briefsWithSubmissions);
-          
-          // Update the selected brief with fresh data
-          if (selectedBrief) {
-            const updatedBrief = briefsWithSubmissions.find((b: Brief) => b.id === selectedBrief.id);
-            if (updatedBrief) {
-              setSelectedBrief(updatedBrief);
-            } else {
-              // Brief not found in refreshed data
+          if (refreshResponse.ok) {
+            const updatedBriefs = await refreshResponse.json();
+            const briefsWithSubmissions = updatedBriefs.filter((brief: Brief) => {
+              const hasSubmissions = brief.submissions && brief.submissions.length > 0;
+              return hasSubmissions;
+            });
+            
+            setBriefs(briefsWithSubmissions);
+            
+            // Update the selected brief with fresh data
+            if (selectedBrief) {
+              const updatedBrief = briefsWithSubmissions.find((b: Brief) => b.id === selectedBrief.id);
+              if (updatedBrief) {
+                setSelectedBrief(updatedBrief);
+                // eslint-disable-next-line no-console
+                console.log('✅ Brief data refreshed after distribution:', {
+                  briefId: updatedBrief.id,
+                  submissionsCount: updatedBrief.submissions.length,
+                  distributedCount: updatedBrief.submissions.filter(s => s.status === 'distributed').length
+                });
+              } else {
+                // eslint-disable-next-line no-console
+                console.log('⚠️ Brief not found in refreshed data - may have been completed');
+                // Brief might have been completed and removed from the list
+                setSelectedBrief(null);
+              }
             }
+          } else {
+            // eslint-disable-next-line no-console
+            console.error('❌ Failed to refresh brief data:', refreshResponse.status);
           }
-        } else {
-          // Failed to refresh brief data
+        } catch (refreshError) {
+          // eslint-disable-next-line no-console
+          console.error('❌ Error refreshing brief data:', refreshError);
         }
       }
       
@@ -578,6 +634,7 @@ const ManageRewardsPayments: React.FC = () => {
     } else if (submissionsFilter === 'distributed') {
       filtered = filtered.filter(sub => sub.status === 'distributed');
     }
+    
     
     return filtered;
   };
@@ -1202,100 +1259,52 @@ const ManageRewardsPayments: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        {selectedWinners.some(w => w.submissionId === submission.id) && (
-                          <div className="flex items-center space-x-3">
-                            {(() => {
-                              const winner = selectedWinners.find(w => w.submissionId === submission.id);
-                              const positionMatch = winner?.description.match(/Reward (\d+)/);
-                              const position = positionMatch ? parseInt(positionMatch[1]) : 1;
-                              
-                              
-                              return (
-                                <>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Position:</span>
-                                    <select
-                                      value={position}
-                                      onChange={(e) => handlePositionChange(submission.id, parseInt(e.target.value))}
-                                      className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                      {selectedBrief?.rewardTiers?.map(tier => {
-                                        const pos = tier.position;
-                                        const emoji = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏅';
-                                        
-                                        // Calculate amount for this position
-                                        let amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
-                                        if (amount === 0 && tier.amount) {
-                                          amount = parseFloat(tier.amount.toString()) || 0;
-                                        }
-                                        
-                                        // Check if this position is already used (by others OR by database)
-                                        const isUsedByOthers = selectedWinners.some(w => {
-                                          const winnerPos = w.description.match(/Reward (\d+)/);
-                                          return winnerPos && parseInt(winnerPos[1]) === pos && w.submissionId !== submission.id;
-                                        });
-                                        const isDistributed = isPositionDistributed(selectedBrief, pos);
-                                        const isDisabled = !tier.isAvailable;
-                                        const isTaken = isUsedByOthers || isDistributed || isDisabled;
-                                        
-                                        return (
-                                          <option 
-                                            key={pos} 
-                                            value={pos}
-                                            disabled={isTaken}
-                                            style={isTaken ? { opacity: 0.4, textDecoration: 'line-through' } : {}}
-                                          >
-                                            {emoji} Reward {pos} (${amount.toFixed(2)}) {isTaken ? (isDisabled ? '✗ DISABLED' : '✗ USED/DISTRIBUTED') : ''}
-                                          </option>
-                                        );
-                                      })}
-                                    </select>
-                                  </div>
-                                  {/* Show ALL used reward tiers (database + current selection) */}
-                                  {selectedBrief && getAllUsedRewardTiers(selectedBrief).length > 0 && (
-                                    <div className="mt-2">
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Used Reward Tiers (Cancelled Out):</div>
-                                      <div className="flex flex-wrap gap-1">
-                                        {getAllUsedRewardTiers(selectedBrief).map(pos => {
-                                          const tier = selectedBrief?.rewardTiers?.find(t => t.position === pos);
-                                          const emoji = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏅';
-                                          let amount = 0;
-                                          if (tier) {
-                                            amount = (tier.cashAmount || 0) + (tier.creditAmount || 0);
-                                            if (amount === 0 && tier.amount) {
-                                              amount = parseFloat(tier.amount.toString()) || 0;
-                                            }
-                                          }
-                                          
-                                          // Check if it's from database (already distributed) or current selection
-                                          const isDistributed = isPositionDistributed(selectedBrief, pos);
-                                          
-                                          return (
-                                            <span 
-                                              key={pos} 
-                                              className={`inline-flex items-center px-2 py-1 text-xs rounded-md line-through ${
-                                                isDistributed 
-                                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700' 
-                                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                              }`}
-                                            >
-                                              {emoji} Reward {pos} (${amount.toFixed(2)}) {isDistributed && '✓ Paid'}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-700">
-                                    <span className="text-sm text-green-700 dark:text-green-300 font-semibold">
-                                      ${winner?.amount?.toFixed(2) || '0.00'}
-                                    </span>
-                                  </div>
-                                </>
-                              );
-                            })()}
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Position:</span>
+                            <select
+                              value={(() => {
+                                const winner = selectedWinners.find(w => w.submissionId === submission.id);
+                                const positionMatch = winner?.description.match(/Reward (\d+)/);
+                                return positionMatch ? parseInt(positionMatch[1]) : 1;
+                              })()}
+                              onChange={(e) => handlePositionChange(submission.id, parseInt(e.target.value))}
+                              className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              {!selectedBrief?.rewardTiers || selectedBrief.rewardTiers.length === 0 ? (
+                                <option value={1}>No reward tiers available</option>
+                              ) : (
+                                selectedBrief.rewardTiers.map(tier => {
+                                const pos = tier.position;
+                                const emoji = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏅';
+                                
+                                // Calculate amount for this position
+                                const amount = parseFloat(tier.amount.toString()) || 0;
+                                
+                                // Check if this position is already used (by others OR by database)
+                                const isUsedByOthers = selectedWinners.some(w => {
+                                  const winnerPos = w.description.match(/Reward (\d+)/);
+                                  return winnerPos && parseInt(winnerPos[1]) === pos && w.submissionId !== submission.id;
+                                });
+                                const isDistributed = isPositionDistributed(selectedBrief, pos);
+                                const isDisabled = !tier.isAvailable;
+                                const isTaken = isUsedByOthers || isDistributed || isDisabled;
+                                
+                                return (
+                                  <option 
+                                    key={pos} 
+                                    value={pos}
+                                    disabled={isTaken}
+                                    style={isTaken ? { opacity: 0.4, textDecoration: 'line-through' } : {}}
+                                  >
+                                    {emoji} Reward {pos} (${amount.toFixed(2)}) {isTaken ? (isDisabled ? '✗ DISABLED' : '✗ USED/DISTRIBUTED') : ''}
+                                  </option>
+                                );
+                              })
+                              )}
+                            </select>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   ))}
