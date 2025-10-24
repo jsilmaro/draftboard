@@ -291,9 +291,11 @@ const BrandDashboard: React.FC = () => {
             activeBriefs: briefsData.filter((b: Brief) => b.status === 'published').length
           }));
         } else {
+          // eslint-disable-next-line no-console
           console.error('Failed to load briefs:', briefsResponse.status);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading briefs:', error);
       }
 
@@ -316,9 +318,11 @@ const BrandDashboard: React.FC = () => {
             submissionsThisWeek: thisWeek
           }));
         } else {
+          // eslint-disable-next-line no-console
           console.error('Failed to load submissions:', submissionsResponse.status);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading submissions:', error);
       }
 
@@ -363,12 +367,14 @@ const BrandDashboard: React.FC = () => {
           // Loaded verified creators only
           setCreators(verifiedCreators);
         } else {
+          // eslint-disable-next-line no-console
           console.error('Failed to load creators:', creatorsResponse.status);
         }
         
         // Set invited creators from backend
         setInvitedCreators(new Set(invitedIds));
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading creators:', error);
       }
 
@@ -381,13 +387,16 @@ const BrandDashboard: React.FC = () => {
           const analyticsData = await analyticsResponse.json();
           setAnalytics(analyticsData);
         } else {
+          // eslint-disable-next-line no-console
           console.error('Failed to load analytics:', analyticsResponse.status);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading analytics:', error);
       }
 
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading dashboard data:', error);
       showErrorToast('Failed to load dashboard data');
     } finally {
@@ -974,7 +983,6 @@ const BrandDashboard: React.FC = () => {
               }}
               onViewSubmissionsClick={(_brief) => {
                 // Navigate to submissions for this brief
-                // console.log('View submissions for brief:', brief.id);
                 // Switch to manage rewards tab to review submissions
                 handleTabChange('manage-rewards');
                 showSuccessToast(`View submissions in Manage Rewards & Payments`);

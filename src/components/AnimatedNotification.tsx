@@ -113,18 +113,18 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
     <div className={`fixed top-4 right-4 z-50 transition-all duration-500 transform ${
       isVisible ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
     }`}>
-      <div className={`max-w-sm w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg backdrop-blur-sm ${getToastStyles()}`}>
-        <div className="p-4">
+      <div className={`min-w-80 max-w-md w-auto bg-white dark:bg-gray-900 border rounded-xl shadow-lg backdrop-blur-sm ${getToastStyles()}`}>
+        <div className="p-5">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 flex items-center justify-center">
                 {getIcon()}
               </div>
             </div>
-            <div className="ml-3 w-0 flex-1">
-              <p className="text-sm font-medium">{displayTitle}</p>
+            <div className="ml-4 w-0 flex-1 min-w-0">
+              <p className="text-sm font-medium break-words leading-relaxed">{displayTitle}</p>
               {displayDescription && (
-                <p className="mt-1 text-sm opacity-90">{displayDescription}</p>
+                <p className="mt-2 text-sm opacity-90 break-words leading-relaxed">{displayDescription}</p>
               )}
             </div>
             <div className="ml-4 flex-shrink-0 flex">
