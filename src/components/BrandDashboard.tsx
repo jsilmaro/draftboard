@@ -1872,7 +1872,7 @@ const BrandDashboard: React.FC = () => {
       isDark ? 'bg-black' : 'bg-gray-50'
     }`}>
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white/10 dark:bg-gray-950/20 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/30 px-4 py-3">
+      <div className="lg:hidden bg-white/10 dark:bg-gray-950/20 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/30 px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Logo />
@@ -1905,7 +1905,7 @@ const BrandDashboard: React.FC = () => {
       {/* Modern Sidebar */}
       <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 rounded-r-2xl shadow-lg`}>
+      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 rounded-r-2xl shadow-lg max-h-screen overflow-y-auto`}>
         <div className="p-4 flex flex-col h-full overflow-hidden">
           
           {/* Header with Logo */}
@@ -2096,9 +2096,11 @@ const BrandDashboard: React.FC = () => {
       {/* Main Content */}
       <div className={`flex-1 overflow-auto transition-all duration-300 ${
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      } ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
+      } ${isDark ? 'bg-black' : 'bg-gray-50'} px-4 sm:px-6 lg:px-8`}>
         {/* Desktop Header */}
-        <div className="hidden lg:block border-b border-gray-200 dark:border-gray-700 px-8 py-4">
+        <div className={`hidden lg:block border-b transition-colors duration-300 ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        } px-8 py-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <h1 className={`text-2xl font-bold ${
@@ -2210,7 +2212,7 @@ const BrandDashboard: React.FC = () => {
         <div className={`fixed inset-0 z-50 flex ${
           isDark ? 'bg-black bg-opacity-50' : 'bg-gray-900 bg-opacity-50'
         }`}>
-          <div className="ml-auto w-full max-w-4xl h-full bg-white dark:bg-black shadow-xl">
+          <div className="ml-auto w-full max-w-4xl h-full bg-white dark:bg-black shadow-xl mobile-modal">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className={`text-xl font-semibold ${
                 isDark ? 'text-white' : 'text-gray-900'

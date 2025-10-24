@@ -141,9 +141,11 @@ const MessageContent: React.FC<MessageContentProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`p-4 border-b transition-colors duration-300 ${
+        isDark ? 'border-gray-700' : 'border-gray-200'
+      } flex-shrink-0`}>
         {conversationInfo && (
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium text-white ${
@@ -174,7 +176,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
 
       {/* Messages */}
       {!loading && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {messages.map((message) => (
             <motion.div
               key={message.id}
@@ -221,7 +223,9 @@ const MessageContent: React.FC<MessageContentProps> = ({
       )}
 
       {/* Message Input */}
-      <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`p-4 border-t transition-colors duration-300 ${
+        isDark ? 'border-gray-700' : 'border-gray-200'
+      } flex-shrink-0`}>
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <input

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface AnimatedNotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -20,6 +21,7 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
   duration = 5000
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (autoClose) {
@@ -95,29 +97,48 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
   }
 
   const getToastStyles = () => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300';
-      case 'error':
-        return 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
-      case 'warning':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300';
-      case 'info':
-        return 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-800 dark:bg-gray-900/20 dark:border-gray-800 dark:text-gray-300';
+    if (isDark) {
+      switch (type) {
+        case 'success':
+          return 'bg-green-900/20 border-green-800 text-green-300';
+        case 'error':
+          return 'bg-red-900/20 border-red-800 text-red-300';
+        case 'warning':
+          return 'bg-yellow-900/20 border-yellow-800 text-yellow-300';
+        case 'info':
+          return 'bg-blue-900/20 border-blue-800 text-blue-300';
+        default:
+          return 'bg-gray-900/20 border-gray-800 text-gray-300';
+      }
+    } else {
+      switch (type) {
+        case 'success':
+          return 'bg-green-50 border-green-200 text-green-800';
+        case 'error':
+          return 'bg-red-50 border-red-200 text-red-800';
+        case 'warning':
+          return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+        case 'info':
+          return 'bg-blue-50 border-blue-200 text-blue-800';
+        default:
+          return 'bg-gray-50 border-gray-200 text-gray-800';
+      }
     }
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-50 transition-all duration-500 transform ${
+    <div className={`fixed top-4 right-2 sm:right-4 z-50 transition-all duration-500 transform ${
       isVisible ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
     }`}>
-      <div className={`min-w-80 max-w-md w-auto bg-white dark:bg-gray-900 border rounded-xl shadow-lg backdrop-blur-sm ${getToastStyles()}`}>
+      <div className={`min-w-72 sm:min-w-80 max-w-sm sm:max-w-md w-auto transition-colors duration-300 ${
+        isDark ? 'bg-gray-900' : 'bg-white'
+      } border rounded-xl shadow-lg backdrop-blur-sm ${getToastStyles()}`}>
         <div className="p-5">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 flex items-center justify-center">
+              <div className={`w-8 h-8 rounded-full transition-colors duration-300 ${
+                isDark ? 'bg-gray-800/80' : 'bg-white/80'
+              } flex items-center justify-center`}>
                 {getIcon()}
               </div>
             </div>
@@ -130,7 +151,11 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
             <div className="ml-4 flex-shrink-0 flex">
               <button
                 onClick={handleClose}
-                className="inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md p-1"
+                className={`inline-flex transition-colors duration-300 ${
+                  isDark 
+                    ? 'text-gray-400 hover:text-gray-300' 
+                    : 'text-gray-400 hover:text-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md p-1`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

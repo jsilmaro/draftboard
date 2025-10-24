@@ -426,6 +426,54 @@ body {
   @apply mx-4 my-8 max-h-[calc(100vh-4rem)] overflow-y-auto;
 }
 
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  .mobile-modal {
+    @apply mx-2 my-4 max-h-[calc(100vh-2rem)];
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Touch-friendly button sizing */
+  button, .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile form improvements */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Theme synchronization fixes */
+.dark {
+  /* Ensure all components respect dark mode */
+  color-scheme: dark;
+}
+
+.light {
+  /* Ensure all components respect light mode */
+  color-scheme: light;
+}
+
+/* Force theme synchronization on all elements */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure proper theme inheritance */
+.dark * {
+  color-scheme: dark;
+}
+
+.light * {
+  color-scheme: light;
+}
+
 /* Mobile form improvements */
 .mobile-form-field {
   @apply mb-4 sm:mb-6;

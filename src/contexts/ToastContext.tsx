@@ -79,7 +79,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed top-4 right-4 z-50 space-y-3 w-auto">
+      <div className="fixed top-4 right-2 sm:right-4 z-50 space-y-3 w-auto max-w-[calc(100vw-1rem)] sm:max-w-none">
         {toasts.map((toast) => (
           <AnimatedNotification
             key={toast.id}

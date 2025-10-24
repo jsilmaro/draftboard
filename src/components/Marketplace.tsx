@@ -160,8 +160,12 @@ const Marketplace = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-48 mb-3 animate-pulse" />
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse" />
+                <div className={`h-10 rounded w-48 mb-3 animate-pulse ${
+                  isDark ? 'bg-gray-600' : 'bg-gray-300'
+                }`} />
+                <div className={`h-6 rounded w-64 animate-pulse ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                }`} />
               </div>
             </div>
           </div>
@@ -200,7 +204,9 @@ const Marketplace = () => {
           >
             ⚠️
           </motion.div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{error}</h2>
+          <h2 className={`text-2xl font-bold mb-4 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>{error}</h2>
           <motion.button
             onClick={fetchBriefs}
             className="mt-6 px-8 py-4 bg-gradient-to-r from-accent-green to-accent-green-hover text-white rounded-xl hover:from-accent-green-hover hover:to-accent-green-dark font-medium shadow-lg hover:shadow-xl transition-all duration-300"
@@ -270,11 +276,11 @@ const Marketplace = () => {
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Results Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h2 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {filteredBriefs.length} Briefs Found
           </h2>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}

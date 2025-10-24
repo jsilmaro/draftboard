@@ -54,36 +54,36 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   return (
     <div className="space-y-6">
       {/* Marketplace Header */}
-      <div className="mb-8">
-        <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+      <div className="mb-8 px-4 sm:px-0">
+        <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
           Discover Opportunities
         </h1>
-        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg`}>
+        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-base sm:text-lg`}>
           Find briefs that match your skills and start earning
         </p>
       </div>
 
       {/* Navigation Tabs */}
-      <div className={`${isDark ? 'bg-gray-900/90 border-gray-800/50' : 'bg-white border-gray-200'} backdrop-blur-sm rounded-xl border p-6 mb-8 shadow-sm`}>
-        <div className="flex flex-wrap gap-4">
-          <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+      <div className={`${isDark ? 'bg-gray-900/90 border-gray-800/50' : 'bg-white border-gray-200'} backdrop-blur-sm rounded-xl border p-4 sm:p-6 mb-8 shadow-sm`}>
+        <div className="flex flex-wrap gap-2 sm:gap-4">
+          <button className="px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm sm:text-base">
             Marketplace
           </button>
           <Link 
             to="/community" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
+            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
           >
             Community
           </Link>
           <Link 
             to="/events" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
+            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
           >
             Events
           </Link>
           <Link 
             to="/success-stories" 
-            className={`px-6 py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors`}
+            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
           >
             Success Stories
           </Link>
@@ -91,7 +91,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 mb-8 shadow-sm`}>
+      <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-4 sm:p-6 mb-8 shadow-sm`}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <input

@@ -128,9 +128,9 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
       }`}>
         
         {/* Header with Brand Info and Payout Rate */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+        <div className="flex items-start justify-between p-4 border-b border-gray-200 dark:border-gray-700 gap-3">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
               {brief.brand.logo ? (
                 <img
                   src={brief.brand.logo}
@@ -143,13 +143,13 @@ const EnhancedMarketplaceBriefCard: React.FC<EnhancedMarketplaceBriefCardProps> 
                 </span>
               )}
             </div>
-            <div>
-              <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <div className="min-w-0 flex-1">
+              <h3 className={`font-semibold text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {brief.brand.companyName}
               </h3>
             </div>
           </div>
-          <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+          <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0">
             {brief.rewardTiers && brief.rewardTiers.length > 0 
               ? `${formatCurrency(brief.rewardTiers[0].amount)} - ${formatCurrency(brief.rewardTiers[brief.rewardTiers.length - 1].amount)}`
               : formatCurrency(brief.reward / brief.amountOfWinners)

@@ -107,9 +107,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Search Bar with Add Chat Button */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className={`p-4 border-b transition-colors duration-300 ${
+        isDark ? 'border-gray-700' : 'border-gray-200'
+      } flex-shrink-0`}>
         <div className="flex items-center gap-2 mb-3">
           <h2 className={`text-lg font-semibold flex-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Messages
@@ -147,7 +149,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700">
+      <div className={`flex border-b transition-colors duration-300 ${
+        isDark ? 'border-gray-700' : 'border-gray-200'
+      } flex-shrink-0`}>
         <button
           onClick={() => setActiveTab('unread')}
           className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
@@ -219,12 +223,14 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
 
       {/* Conversations List */}
       {!loading && filteredConversations.length > 0 && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {filteredConversations.map((conversation) => (
             <motion.div
               key={conversation.id}
               whileHover={{ backgroundColor: isDark ? '#374151' : '#f9fafb' }}
-              className={`p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer transition-colors ${
+              className={`p-4 border-b transition-colors duration-300 ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              } cursor-pointer transition-colors ${
                 selectedConversation === conversation.id
                   ? (isDark ? 'bg-gray-700' : 'bg-gray-50')
                   : ''

@@ -1203,38 +1203,37 @@ const CreatorDashboard: React.FC = () => {
 
   const renderSubmissions = () => (
     <div className="space-y-6">
-      <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>My Submissions</h2>
+      <h2 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} px-4 sm:px-0`}>My Submissions</h2>
       
       {/* Submissions List */}
-      <div className="space-y-4">
+      <div className="space-y-4 px-4 sm:px-0">
         {mySubmissions.map((submission) => (
-          <div key={submission.id} className={`card ${
+          <div key={submission.id} className={`rounded-xl border transition-colors ${
             isDark ? 'bg-gray-900 border-gray-800 hover:bg-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'
-          } transition-colors`}>
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center border ${
-                    isDark 
-                      ? 'bg-gray-900 border-gray-800' 
-                      : 'bg-gray-100 border-gray-200'
-                  }`}>
-                    <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" />
+          }`}>
+            <div className="p-4 sm:p-6">
+              {/* Mobile Layout */}
+              <div className="block sm:hidden">
+                {/* Header with Avatar and Status */}
+                <div className="flex items-start justify-between mb-4 gap-3">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 ${
+                      isDark 
+                        ? 'bg-gray-800 border-gray-700' 
+                        : 'bg-gray-100 border-gray-200'
+                    }`}>
+                      <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {submission.briefTitle}
+                      </h3>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {new Date(submission.submittedAt).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.briefTitle}</h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Submitted by you</p>
-                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {new Date(submission.submittedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${submission.amount}</p>
-                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Reward</p>
-                  </div>
-                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap flex-shrink-0 ${
                     submission.status === 'approved' 
                       ? isDark 
                         ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
@@ -1249,33 +1248,120 @@ const CreatorDashboard: React.FC = () => {
                   }`}>
                     {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                   </span>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleViewSubmission(submission)}
-                      className="btn btn-outline"
-                    >
-                      View
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteSubmission(submission)}
-                      disabled={submission.status === 'approved' || submission.status === 'rejected'}
-                      className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                        submission.status === 'approved' || submission.status === 'rejected'
-                          ? isDark 
-                            ? 'text-gray-500 cursor-not-allowed bg-gray-800'
-                            : 'text-gray-400 cursor-not-allowed bg-gray-100'
-                          : isDark 
-                            ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20'
-                            : 'text-red-600 hover:text-red-700 hover:bg-red-50'
-                      }`}
-                      title={
-                        submission.status === 'approved' || submission.status === 'rejected'
-                          ? 'Cannot delete approved or rejected submissions'
-                          : 'Delete submission'
-                      }
-                    >
-                      Delete
-                    </button>
+                </div>
+
+                {/* Reward Amount */}
+                <div className="mb-4">
+                  <div className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    ${submission.amount}
+                  </div>
+                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Potential Reward
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => handleViewSubmission(submission)}
+                    className="flex-1 py-2 px-4 text-sm font-medium rounded-lg border transition-colors ${
+                      isDark 
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white' 
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }"
+                  >
+                    View Details
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteSubmission(submission)}
+                    disabled={submission.status === 'approved' || submission.status === 'rejected'}
+                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors ${
+                      submission.status === 'approved' || submission.status === 'rejected'
+                        ? isDark 
+                          ? 'text-gray-500 cursor-not-allowed bg-gray-800 border border-gray-700'
+                          : 'text-gray-400 cursor-not-allowed bg-gray-100 border border-gray-200'
+                        : isDark 
+                          ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20 border border-red-700'
+                          : 'text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200'
+                    }`}
+                    title={
+                      submission.status === 'approved' || submission.status === 'rejected'
+                        ? 'Cannot delete approved or rejected submissions'
+                        : 'Delete submission'
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {/* Desktop Layout */}
+              <div className="hidden sm:block">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4 min-w-0 flex-1">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center border flex-shrink-0 ${
+                      isDark 
+                        ? 'bg-gray-800 border-gray-700' 
+                        : 'bg-gray-100 border-gray-200'
+                    }`}>
+                      <DefaultAvatar name={user?.fullName || 'Creator'} size="sm" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{submission.briefTitle}</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Submitted by you</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        {new Date(submission.submittedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 flex-shrink-0">
+                    <div className="text-right">
+                      <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${submission.amount}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Reward</p>
+                    </div>
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full whitespace-nowrap ${
+                      submission.status === 'approved' 
+                        ? isDark 
+                          ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
+                          : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                        : submission.status === 'rejected' 
+                        ? isDark 
+                          ? 'bg-red-900/30 text-red-400 border border-red-700' 
+                          : 'bg-red-50 text-red-600 border border-red-200'
+                        : isDark 
+                          ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
+                          : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                    }`}>
+                      {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                    </span>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleViewSubmission(submission)}
+                        className="btn btn-outline"
+                      >
+                        View
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSubmission(submission)}
+                        disabled={submission.status === 'approved' || submission.status === 'rejected'}
+                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                          submission.status === 'approved' || submission.status === 'rejected'
+                            ? isDark 
+                              ? 'text-gray-500 cursor-not-allowed bg-gray-800'
+                              : 'text-gray-400 cursor-not-allowed bg-gray-100'
+                            : isDark 
+                              ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20'
+                              : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                        }`}
+                        title={
+                          submission.status === 'approved' || submission.status === 'rejected'
+                            ? 'Cannot delete approved or rejected submissions'
+                            : 'Delete submission'
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1285,7 +1371,7 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {mySubmissions.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12 px-4 sm:px-0">
           <p className={`text-lg ${
             isDark ? 'text-gray-400' : 'text-gray-500'
           }`}>
@@ -1336,21 +1422,22 @@ const CreatorDashboard: React.FC = () => {
 
     return (
     <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Earnings</h2>
-          <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-4 sm:px-0">
+          <h2 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Earnings</h2>
+          <div className="flex space-x-2 w-full sm:w-auto">
             <button
               onClick={() => {
                 const csvContent = generateEarningsCSV(earnings);
                 downloadCSV(csvContent, 'earnings.csv');
               }}
               disabled={earnings.length === 0}
-              className="btn btn-secondary flex items-center space-x-2"
+              className="btn btn-secondary flex items-center space-x-2 flex-1 sm:flex-none"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Export CSV</span>
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
             </button>
           </div>
         </div>
@@ -1416,58 +1503,131 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Filters and Sorting */}
         <div className="card">
-          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Filter:</label>
+          <div className="p-4 sm:p-6">
+            {/* Mobile Layout */}
+            <div className="block sm:hidden space-y-4">
+              {/* Filter Section */}
+              <div className="space-y-3">
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Filter by Status
+                </label>
                 <select
                   value={earningsFilter}
                   onChange={(e) => setEarningsFilter(e.target.value as 'all' | 'paid' | 'pending' | 'processing')}
-                  className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark 
                       ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
                       : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  <option value="all">All</option>
+                  <option value="all">All Earnings</option>
                   <option value="paid">Paid</option>
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
                 </select>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Sort by:</label>
-                <select
-                  value={earningsSortBy}
-                  onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
-                  className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDark 
-                      ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
-                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <option value="date">Date</option>
-                  <option value="amount">Amount</option>
-                  <option value="brief">Brief</option>
-                </select>
+
+              {/* Sort Section */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Sort by
+                  </label>
+                  <select
+                    value={earningsSortBy}
+                    onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
+                    className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
+                        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <option value="date">Date</option>
+                    <option value="amount">Amount</option>
+                    <option value="brief">Brief</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Order
+                  </label>
+                  <button
+                    onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
+                    className={`w-full px-3 py-2 border rounded-md text-sm transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                      isDark 
+                        ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                    <span>{earningsSortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+                  </button>
+                </div>
               </div>
-              
-              <button
-                onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
-                className={`px-4 py-2 border rounded-md text-sm transition-colors duration-200 flex items-center space-x-2 ${
-                  isDark 
-                    ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900'
-                }`}
-              >
-                <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
-                <span>{earningsSortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
-              </button>
+
+              {/* Results Count */}
+              <div className={`text-sm text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Showing {sortedEarnings.length} of {earnings.length} earnings
+              </div>
             </div>
-            
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Showing {sortedEarnings.length} of {earnings.length} earnings
+
+            {/* Desktop Layout */}
+            <div className="hidden sm:block">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-3">
+                    <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Filter:</label>
+                    <select
+                      value={earningsFilter}
+                      onChange={(e) => setEarningsFilter(e.target.value as 'all' | 'paid' | 'pending' | 'processing')}
+                      className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
+                          : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <option value="all">All</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Sort by:</label>
+                    <select
+                      value={earningsSortBy}
+                      onChange={(e) => setEarningsSortBy(e.target.value as 'date' | 'amount' | 'brief')}
+                      className={`px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
+                          : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <option value="date">Date</option>
+                      <option value="amount">Amount</option>
+                      <option value="brief">Brief</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    onClick={() => setEarningsSortOrder(earningsSortOrder === 'asc' ? 'desc' : 'asc')}
+                    className={`px-4 py-2 border rounded-md text-sm transition-colors duration-200 flex items-center space-x-2 ${
+                      isDark 
+                        ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <span>{earningsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                    <span>{earningsSortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
+                  </button>
+                </div>
+                
+                <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Showing {sortedEarnings.length} of {earnings.length} earnings
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1627,7 +1787,7 @@ const CreatorDashboard: React.FC = () => {
     return (
       <div className="space-y-8">
         {/* Modern Header with Glass Effect */}
-        <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700/50' : 'bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-xl border border-gray-200/50'} shadow-2xl`}>
+        <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10"></div>
           <div className="relative p-8">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -1665,7 +1825,7 @@ const CreatorDashboard: React.FC = () => {
         {/* Profile Information & Social Media */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Personal Information */}
-          <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+          <div className={`rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg p-6`}>
             <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
               <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1716,7 +1876,7 @@ const CreatorDashboard: React.FC = () => {
           </div>
 
           {/* Social Media */}
-          <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+          <div className={`rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg p-6`}>
             <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
               <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-9 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2" />
@@ -1771,7 +1931,7 @@ const CreatorDashboard: React.FC = () => {
         </div>
 
         {/* Brand Interaction History */}
-        <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+        <div className={`rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg p-6`}>
           <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
             <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1799,7 +1959,7 @@ const CreatorDashboard: React.FC = () => {
         </div>
 
         {/* Featured Work Portfolio */}
-        <div className={`rounded-2xl ${isDark ? 'bg-gray-900/50 backdrop-blur-xl border border-gray-700/50' : 'bg-white/50 backdrop-blur-xl border border-gray-200/50'} shadow-xl p-6`}>
+        <div className={`rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg p-6`}>
           <h3 className={`text-xl font-semibold mb-6 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
             <svg className="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -3052,12 +3212,16 @@ const CreatorDashboard: React.FC = () => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full">
       {/* Mobile Header */}
-       <div className="lg:hidden glass-nav border-b border-white/20 px-4 py-3">
+       <div className={`lg:hidden transition-colors duration-300 ${
+         isDark 
+           ? 'bg-gray-900/90 backdrop-blur-xl border-b border-gray-700/50' 
+           : 'bg-white/90 backdrop-blur-xl border-b border-gray-200/50'
+       } px-4 py-3`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             {/* Logo */}
             <img 
-              src="/logo-light2.svg" 
+              src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
               alt="DraftBoard" 
               className="w-22 h-7 mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]"
             />
@@ -3065,7 +3229,11 @@ const CreatorDashboard: React.FC = () => {
           <div className="flex items-center">
             <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
-              className="text-gray-400 hover:text-white"
+              className={`transition-colors duration-300 ${
+                isDark 
+                  ? 'text-gray-400 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -3083,13 +3251,21 @@ const CreatorDashboard: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleSearchKeyPress}
               placeholder="Search briefs, brands, or topics..."
-               className="w-full pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+               className={`w-full pl-4 pr-10 py-2 text-sm rounded-lg transition-colors duration-300 ${
+                 isDark 
+                   ? 'bg-gray-800/50 border-gray-600 text-white placeholder-gray-400' 
+                   : 'bg-gray-100/50 border-gray-300 text-gray-900 placeholder-gray-500'
+               } border focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={clearSearch}
-                className="absolute right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+                className={`absolute right-8 top-1/2 transform -translate-y-1/2 p-1 transition-colors duration-300 ${
+                  isDark 
+                    ? 'text-gray-400 hover:text-gray-300' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -3099,7 +3275,11 @@ const CreatorDashboard: React.FC = () => {
             <button
               type="button"
               onClick={handleSearchSubmit}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300"
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 transition-colors duration-300 ${
+                isDark 
+                  ? 'text-gray-400 hover:text-gray-300' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
