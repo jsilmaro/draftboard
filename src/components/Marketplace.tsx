@@ -238,7 +238,7 @@ const Marketplace = () => {
         >
           <div className="mb-4 flex justify-center">
             <img 
-              src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+              src="/icons/draftboard-logo.svg" 
               alt="DraftBoard" 
               className="h-12 w-auto"
             />

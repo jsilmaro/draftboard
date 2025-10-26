@@ -15,6 +15,7 @@ import CreatorApplicationForm from './CreatorApplicationForm';
 // StripeConnectButton and PaymentStatusCard now handled by CreatorWallet component
 
 import NotificationBell from './NotificationBell';
+import useNotifications from '../hooks/useNotifications';
 import SettingsModal from './SettingsModal';
 import MessagingSystem from './MessagingSystem';
 import ThemeToggle from './ThemeToggle';
@@ -128,6 +129,7 @@ const CreatorDashboard: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
   const { isDark } = useTheme();
   const { showToast } = useToast();
+  const { stats: notificationStats } = useNotifications();
   const [activeTab, setActiveTab] = useState('overview');
   
   // Profile form state
@@ -153,6 +155,20 @@ const CreatorDashboard: React.FC = () => {
       socialYouTube: user?.socialYouTube || '',
     });
   }, [user]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    const isMobileMenuOpen = activeTab === 'mobile-menu';
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activeTab]);
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
@@ -843,6 +859,7 @@ const CreatorDashboard: React.FC = () => {
   // Navigation items (flattened without grouping) - matching BrandDashboard structure
   const navigationItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'notifications', label: 'Notifications', icon: 'notifications' },
     { id: 'wallet', label: 'Wallet', icon: 'wallet' },
     { id: 'invites', label: 'Invitations', icon: 'invites' },
     { id: 'messaging', label: 'Messages', icon: 'messaging' },
@@ -993,35 +1010,49 @@ const CreatorDashboard: React.FC = () => {
                   return (
                     <div key={brief.id} className="relative">
                       <div className={`${isDark ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-200'} border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200`}>
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className={`w-12 h-12 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl flex items-center justify-center`}>
+                        <div className="flex items-start space-x-3 mb-3 relative">
+                          <div className={`w-12 h-12 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} border rounded-xl flex items-center justify-center flex-shrink-0`}>
                             <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-700'}`}>
                               {brief.brandName?.charAt(0) || 'B'}
                             </span>
                           </div>
-                          <div className="flex-1">
-                            <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{brief.brandName || 'Brand'}</p>
-                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{brief.title}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              brief.status === 'published' 
-                                ? isDark 
-                                  ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
-                                  : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                : brief.status === 'draft' 
-                                ? isDark 
-                                  ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
-                                  : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                                : isDark 
-                                  ? 'bg-gray-900 text-gray-400 border border-gray-800' 
-                                  : 'bg-gray-50 text-gray-600 border border-gray-200'
-                            }`}>
-                              {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
-                            </span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} truncate`}>{brief.brandName || 'Brand'}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>{brief.title}</p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
+                        
+                        {/* Status badges - displayed inline to avoid overlap */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                            brief.status === 'published' 
+                              ? isDark 
+                                ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700' 
+                                : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                              : brief.status === 'draft' 
+                              ? isDark 
+                                ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' 
+                                : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                              : isDark 
+                                ? 'bg-gray-900 text-gray-400 border border-gray-800' 
+                                : 'bg-gray-50 text-gray-600 border border-gray-200'
+                          }`}>
+                            {brief.status.charAt(0).toUpperCase() + brief.status.slice(1)}
+                          </span>
+                          {hasSubmittedToBrief(brief.id) && (
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                              getSubmissionStatus(brief.id) === 'approved' ? (isDark ? 'bg-green-900/30 text-green-400 border border-green-700' : 'bg-green-50 text-green-600 border border-green-200') :
+                              getSubmissionStatus(brief.id) === 'rejected' ? (isDark ? 'bg-red-900/30 text-red-400 border border-red-700' : 'bg-red-50 text-red-600 border border-red-200') :
+                              (isDark ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' : 'bg-yellow-50 text-yellow-600 border border-yellow-200')
+                            }`}>
+                              {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
+                               getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
+                               'Pending Review'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                           <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                             Reward: ${brief.reward}
                           </span>
@@ -1030,25 +1061,12 @@ const CreatorDashboard: React.FC = () => {
                               setSelectedBriefId(brief.id);
                               setShowBriefDetailsModal(true);
                             }}
-                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            className="text-green-600 hover:text-green-800 text-sm font-medium whitespace-nowrap"
                           >
                             View Details →
                           </button>
                         </div>
                       </div>
-                      {hasSubmittedToBrief(brief.id) && (
-                        <div className="absolute top-4 right-4 z-10">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            getSubmissionStatus(brief.id) === 'approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
-                            getSubmissionStatus(brief.id) === 'rejected' ? 'bg-red-50 text-red-600 border border-red-200' :
-                            'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                          }`}>
-                            {getSubmissionStatus(brief.id) === 'approved' ? 'Approved' :
-                             getSubmissionStatus(brief.id) === 'rejected' ? 'Rejected' :
-                             'Pending Review'}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -1786,9 +1804,8 @@ const CreatorDashboard: React.FC = () => {
 
     return (
       <div className="space-y-8">
-        {/* Modern Header with Glass Effect */}
+        {/* Modern Header */}
         <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10"></div>
           <div className="relative p-8">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <div className="relative">
@@ -2006,7 +2023,7 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Performance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20' : 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200'} shadow-xl`}>
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-xl`}>
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-green-500 rounded-xl">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2020,7 +2037,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20' : 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200'} shadow-xl`}>
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-xl`}>
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-blue-500 rounded-xl">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2034,7 +2051,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20' : 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200'} shadow-xl`}>
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-xl`}>
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-purple-500 rounded-xl">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2269,9 +2286,9 @@ const CreatorDashboard: React.FC = () => {
           >
             <div className="mb-4 flex justify-center">
               <img 
-                src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+                src="/icons/draftboard-logo.svg" 
                 alt="DraftBoard" 
-                className="h-12 w-auto"
+                className="h-16 w-auto"
               />
             </div>
             <p className={`text-lg mb-12 ${
@@ -2896,38 +2913,38 @@ const CreatorDashboard: React.FC = () => {
       key={invite.id}
       className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl border ${isDark ? 'border-gray-700' : 'border-gray-200'} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden`}
     >
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* Brand Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-start justify-between mb-4 gap-2">
+          <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
             {invite.brand?.logo ? (
               <img 
                 src={invite.brand.logo} 
                 alt={invite.brand.companyName}
-                className="w-14 h-14 rounded-xl object-cover"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-xl object-cover flex-shrink-0"
               />
             ) : (
-              <div className={`w-14 h-14 rounded-xl ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center`}>
-                <svg className={`w-7 h-7 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center flex-shrink-0`}>
+                <svg className={`w-6 h-6 md:w-7 md:h-7 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
             )}
-            <div>
-              <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+            <div className="flex-1 min-w-0">
+              <h3 className={`text-base md:text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1 truncate`}>
                 {invite.brand?.companyName || 'Unknown Brand'}
               </h3>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`text-xs md:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 Invited {new Date(invite.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col items-end space-y-2 flex-shrink-0">
             <button
               onClick={() => {
                 setSelectedBrandId(invite.brand?.id || null);
               }}
-              className={`px-3 py-1 rounded-lg text-xs font-medium ${
+              className={`px-2 md:px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap ${
                 isDark 
                   ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30' 
                   : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
@@ -2936,17 +2953,17 @@ const CreatorDashboard: React.FC = () => {
               View Brand
             </button>
             {invite.status === 'PENDING' && (
-              <span className="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-xs font-medium">
-                New Invitation
+              <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${isDark ? 'bg-pink-500/20 text-pink-400' : 'bg-pink-100 text-pink-600'}`}>
+                New
               </span>
             )}
             {invite.status === 'ACCEPTED' && (
-              <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+              <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
                 Accepted
               </span>
             )}
             {invite.status === 'DECLINED' && (
-              <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium">
+              <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
                 Declined
               </span>
             )}
@@ -2955,8 +2972,8 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Message */}
         {invite.message && (
-          <div className={`mb-4 p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>
+          <div className={`mb-4 p-3 md:p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={`text-xs md:text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>
               &ldquo;{invite.message}&rdquo;
             </p>
           </div>
@@ -2964,22 +2981,22 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Brief Info (if available) */}
         {invite.brief && (
-          <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-white'}`}>
+          <div className={`mb-4 p-3 md:p-4 rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
             <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>
               Related Brief
             </p>
-            <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+            <h4 className={`text-sm md:text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
               {invite.brief.title}
             </h4>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2 line-clamp-2`}>
+            <p className={`text-xs md:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2 line-clamp-2`}>
               {invite.brief.description}
             </p>
-            <div className="flex items-center space-x-4 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-4 text-xs md:text-sm">
               <span className={isDark ? 'text-green-400' : 'text-green-600'}>
                 💰 ${invite.brief.reward.toLocaleString()}
               </span>
               <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                📅 Deadline: {new Date(invite.brief.deadline).toLocaleDateString()}
+                📅 {new Date(invite.brief.deadline).toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -2987,11 +3004,11 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Action Buttons (only for pending invites) */}
         {showActions && invite.status === 'PENDING' && (
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <button
               onClick={() => handleInviteAction(invite.id, 'accept')}
               disabled={processingInviteId === invite.id}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex-1 px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
                 processingInviteId === invite.id
                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                   : 'bg-green-500 text-white hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-0.5'
@@ -2999,7 +3016,7 @@ const CreatorDashboard: React.FC = () => {
             >
               {processingInviteId === invite.id ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-4 w-4 md:h-5 md:w-5 mr-2" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -3007,7 +3024,7 @@ const CreatorDashboard: React.FC = () => {
                 </span>
               ) : (
                 <span className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Accept
@@ -3017,7 +3034,7 @@ const CreatorDashboard: React.FC = () => {
             <button
               onClick={() => handleInviteAction(invite.id, 'decline')}
               disabled={processingInviteId === invite.id}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex-1 px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
                 processingInviteId === invite.id
                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                   : isDark
@@ -3026,7 +3043,7 @@ const CreatorDashboard: React.FC = () => {
               }`}
             >
               <span className="flex items-center justify-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 Decline
@@ -3037,7 +3054,7 @@ const CreatorDashboard: React.FC = () => {
 
         {/* Response date for accepted/declined invites */}
         {invite.respondedAt && (
-          <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+          <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               Responded on {new Date(invite.respondedAt).toLocaleDateString()}
             </p>
@@ -3080,12 +3097,12 @@ const CreatorDashboard: React.FC = () => {
     }
 
     return (
-      <div className="space-y-8 p-6">
+      <div className="space-y-8 p-4 md:p-6">
         {/* Pending Invitations */}
         {invites.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg md:text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Pending Invitations ({invites.length})
               </h2>
             </div>
@@ -3099,7 +3116,7 @@ const CreatorDashboard: React.FC = () => {
         {acceptedInvites.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg md:text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Accepted Invitations ({acceptedInvites.length})
               </h2>
             </div>
@@ -3113,7 +3130,7 @@ const CreatorDashboard: React.FC = () => {
         {rejectedInvites.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg md:text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Rejected Invitations ({rejectedInvites.length})
               </h2>
             </div>
@@ -3126,10 +3143,38 @@ const CreatorDashboard: React.FC = () => {
     );
   };
 
+  const renderNotificationsContent = () => {
+    return (
+      <div className={`w-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'} min-h-screen`}>
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Notifications
+            </h1>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-2`}>
+              Stay updated with all your activity
+            </p>
+          </div>
+          
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="p-6 text-center">
+              <div className="text-4xl mb-4">🔔</div>
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Notifications will appear here
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
         return renderOverview();
+      case 'notifications':
+        return renderNotificationsContent();
       case 'marketplace':
         return renderMarketplace();
       case 'briefs':
@@ -3154,60 +3199,7 @@ const CreatorDashboard: React.FC = () => {
   };
 
   return (
-     <div className="min-h-screen bg-black flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans">
-      {/* Dark Green Background with Glowing Green Accents */}
-      <div className="absolute inset-0">
-        {/* Primary black background */}
-        <div className="absolute inset-0 bg-black"></div>
-        
-        {/* Neon green light beam - diagonal from bottom right */}
-        <div className="absolute inset-0 opacity-30">
-          <div 
-            className="absolute bottom-0 right-0 w-full h-full"
-            style={{
-              background: `linear-gradient(135deg, transparent 0%, transparent 40%, rgba(34, 197, 94, 0.3) 60%, rgba(34, 197, 94, 0.5) 80%, rgba(34, 197, 94, 0.2) 100%)`,
-              clipPath: 'polygon(60% 100%, 100% 40%, 100% 100%)'
-            }}
-          ></div>
-        </div>
-        
-        {/* Secondary neon green accent - upper right */}
-        <div className="absolute inset-0 opacity-15">
-          <div 
-            className="absolute top-0 right-0 w-1/2 h-1/2"
-            style={{
-              background: `linear-gradient(45deg, transparent 0%, rgba(34, 197, 94, 0.2) 50%, transparent 100%)`,
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
-            }}
-          ></div>
-        </div>
-        
-        {/* Subtle animated neon green glow effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 via-transparent to-green-600/3 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-tl from-green-500/4 via-transparent to-green-400/2 animate-pulse" style={{animationDelay: '2s'}}></div>
-        
-        {/* Floating glass panels with glassmorphism accents */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-64 glass opacity-15 animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-80 h-48 glass opacity-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-56 glass opacity-14 animate-pulse" style={{animationDelay: '2s'}}></div>
-        
-        {/* Glowing neon green particles */}
-        <div className="absolute top-1/6 right-1/6 w-3 h-3 bg-green-400 rounded-full opacity-40 animate-bounce" style={{animation: 'float 8s ease-in-out infinite'}}></div>
-        <div className="absolute bottom-1/3 left-1/6 w-2 h-2 bg-green-300 rounded-full opacity-35 animate-bounce" style={{animation: 'float 6s ease-in-out infinite 1s'}}></div>
-        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-500 rounded-full opacity-28 animate-bounce" style={{animation: 'float 7s ease-in-out infinite 2s'}}></div>
-        
-        {/* CSS Animations */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            @keyframes float {
-              0%, 100% { transform: translateY(0px) translateX(0px); }
-              25% { transform: translateY(-10px) translateX(5px); }
-              50% { transform: translateY(-20px) translateX(-3px); }
-              75% { transform: translateY(-10px) translateX(-5px); }
-            }
-          `
-        }} />
-      </div>
+     <div className={`min-h-screen flex flex-col lg:flex-row transition-colors duration-300 relative overflow-hidden font-sans ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       
       {/* Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full">
@@ -3219,26 +3211,29 @@ const CreatorDashboard: React.FC = () => {
        } px-4 py-3`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-            {/* Logo */}
-            <img 
-              src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
-              alt="DraftBoard" 
-              className="w-22 h-7 mr-3 drop-shadow-[0_0_4px_rgba(34,197,94,0.3)]"
-            />
-          </div>
-          <div className="flex items-center">
+            {/* Mobile Menu Toggle */}
             <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
-              className={`transition-colors duration-300 ${
+              className={`p-2 mr-2 transition-colors ${
                 isDark 
-                  ? 'text-gray-400 hover:text-white' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
+            {/* Logo */}
+            <img 
+              src="/icons/draftboard-logo.svg" 
+              alt="DraftBoard" 
+              className="w-10 h-10"
+            />
+          </div>
+          <div className="flex items-center">
+            <ThemeToggle />
+            <NotificationBell onTabChange={setActiveTab} />
           </div>
         </div>
         
@@ -3290,20 +3285,38 @@ const CreatorDashboard: React.FC = () => {
       </div>
 
       {/* Modern Sidebar */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
+      <div className={`${activeTab === 'mobile-menu' ? 'fixed inset-0 lg:relative lg:inset-auto flex items-center justify-center' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 shadow-xl`}>
-        <div className="p-4 flex flex-col h-full overflow-hidden">
+      } ${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 shadow-xl z-50 lg:shadow-xl lg:items-start lg:justify-start`}>
+        {/* Mobile Close Button */}
+        {activeTab === 'mobile-menu' && (
+          <div className="absolute top-4 right-4 lg:hidden z-10">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+        
+        <div className="p-4 flex flex-col h-full overflow-hidden w-full lg:w-auto">
           
           {/* Header with Logo */}
-            <div className="mb-8">
+            <div className="mb-8 lg:block">
             <div className="flex items-center justify-between mb-4">
               {!sidebarCollapsed ? (
                 <div className="flex items-center space-x-3">
                   <img 
                     src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
                     alt="DraftBoard" 
-                    className="w-36 h-10"
+                    className="h-10 w-auto"
                   />
                 </div>
               ) : (
@@ -3311,7 +3324,7 @@ const CreatorDashboard: React.FC = () => {
                   <img 
                     src="/icons/draftboard-logo.svg" 
                     alt="DraftBoard" 
-                    className="w-10 h-10"
+                    className="h-10 w-auto"
                   />
                   <button
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -3365,85 +3378,96 @@ const CreatorDashboard: React.FC = () => {
                 title={sidebarCollapsed ? item.label : ''}
               >
                 {item.icon === 'overview' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                     </svg>
                   </span>
                 )}
+                {item.icon === 'notifications' && (
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </span>
+                )}
                 {item.icon === 'wallet' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'messaging' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'invites' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'marketplace' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'briefs' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'submissions' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'payments' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'statistics' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'awards' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'profile' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </span>
                 )}
                 {!sidebarCollapsed && (
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                )}
+                {/* Red dot indicator for unread notifications */}
+                {(item.id === 'messaging' || item.id === 'notifications') && notificationStats.unread > 0 && (
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto"></span>
                 )}
               </button>
             ))}
@@ -3497,7 +3521,9 @@ const CreatorDashboard: React.FC = () => {
       {/* Main Content */}
        <div className={`flex-1 overflow-auto transition-all duration-300 ${
          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-       } ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
+       } ${isDark ? 'bg-black' : 'bg-gray-50'} ${
+         activeTab === 'mobile-menu' ? 'blur-sm pointer-events-none' : ''
+       }`}>
         {/* Desktop Header */}
         <div className={`hidden lg:block border-b ${isDark ? 'border-gray-900' : 'border-gray-200'} px-8 py-4 ${isDark ? 'bg-black' : 'bg-white'}`}>
           <div className="flex items-center justify-between">
@@ -3523,7 +3549,7 @@ const CreatorDashboard: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
                     placeholder="Search briefs, brands, or topics..."
-                     className="w-80 pl-4 pr-10 py-2 text-sm glass-input rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                     className="w-80 pl-4 pr-10 py-2 text-sm rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                   {searchQuery && (
                     <button
@@ -3550,7 +3576,7 @@ const CreatorDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle size="md" />
-              <NotificationBell />
+              <NotificationBell onTabChange={setActiveTab} />
             </div>
           </div>
         </div>

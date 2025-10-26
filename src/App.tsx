@@ -48,8 +48,8 @@ function App() {
         // Google OAuth script load error - continuing without OAuth
       }}
     >
-      <ToastProvider>
-        <ThemeProvider>
+      <ThemeProvider>
+        <ToastProvider>
           <AuthProvider>
             <StripeProvider>
               <div className="min-h-screen bg-background text-foreground animate-fade-in transition-colors duration-300 overflow-x-hidden">
@@ -169,11 +169,11 @@ function App() {
 
             </Routes>
             </div>
-            </StripeProvider>
-          </AuthProvider>
-        </ThemeProvider>
+          </StripeProvider>
+        </AuthProvider>
       </ToastProvider>
-      </GoogleOAuthProvider>
+    </ThemeProvider>
+    </GoogleOAuthProvider>
   )
 }
 

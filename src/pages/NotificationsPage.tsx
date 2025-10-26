@@ -43,12 +43,15 @@ const NotificationsPage: React.FC = () => {
       const response = await fetch('/api/notifications');
       if (response.ok) {
         const data = await response.json();
-        setNotifications(data);
+        // Ensure data is an array
+        setNotifications(Array.isArray(data) ? data : []);
       } else {
         setError('Failed to load notifications');
+        setNotifications([]);
       }
     } catch (err) {
       setError('Error loading notifications');
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -117,12 +120,12 @@ const NotificationsPage: React.FC = () => {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
-  const filteredNotifications = notifications.filter(notification => {
+  const filteredNotifications = Array.isArray(notifications) ? notifications.filter(notification => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !notification.isRead;
     if (filter === 'read') return notification.isRead;
     return true;
-  });
+  }) : [];
 
   const handleNotificationClick = (notification: Notification) => {
     // If notification has actionUrl, redirect there, otherwise go to detail page
@@ -174,8 +177,8 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
-      {/* Sidebar */}
-      <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r w-64 min-h-screen fixed left-0 top-0 z-40 flex flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
+      {/* Sidebar - Hidden on mobile, full screen on desktop */}
+      <div className={`hidden lg:flex ${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-gray-800' : 'bg-white/95 backdrop-blur-xl border-gray-200'} border-r w-64 min-h-screen fixed left-0 top-0 z-40 flex-col overflow-y-auto transition-all duration-300 shadow-xl`}>
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -237,22 +240,22 @@ const NotificationsPage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64 w-full">
         {/* Header */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b sticky top-0 z-30`}>
-          <div className="px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notifications</h1>
-                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {notifications.length} total notifications
+          <div className="px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notifications</h1>
+                <span className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {Array.isArray(notifications) ? notifications.length : 0} total notifications
                 </span>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
                 <ThemeToggle size="md" />
                 <button
                   onClick={() => navigate(-1)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto ${
                     isDark 
                       ? 'bg-gray-700 text-white hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
@@ -266,19 +269,19 @@ const NotificationsPage: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Filter Tabs */}
-          <div className="mb-8">
-            <div className={`flex space-x-1 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} p-1 rounded-xl w-fit`}>
+          <div className="mb-6 sm:mb-8">
+            <div className={`flex flex-wrap gap-2 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} p-1 rounded-xl w-full sm:w-fit`}>
               {[
-                { key: 'all', label: 'All', count: notifications.length },
-                { key: 'unread', label: 'Unread', count: notifications.filter(n => !n.isRead).length },
-                { key: 'read', label: 'Read', count: notifications.filter(n => n.isRead).length }
+                { key: 'all', label: 'All', count: Array.isArray(notifications) ? notifications.length : 0 },
+                { key: 'unread', label: 'Unread', count: Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0 },
+                { key: 'read', label: 'Read', count: Array.isArray(notifications) ? notifications.filter(n => n.isRead).length : 0 }
               ].map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setFilter(tab.key as 'all' | 'unread' | 'read')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                     filter === tab.key
                       ? isDark
                         ? 'bg-white text-gray-900 shadow-sm'
@@ -331,12 +334,12 @@ const NotificationsPage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} text-lg font-medium leading-tight mb-2 ${
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} text-base sm:text-lg font-medium leading-tight mb-2 ${
                               !notification.isRead ? 'font-semibold' : ''
                             }`}>
                               {notification.title}
                             </h3>
-                            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm leading-relaxed mb-3 line-clamp-2`}>
+                            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-xs sm:text-sm leading-relaxed mb-3 line-clamp-2`}>
                               {notification.message}
                             </p>
                             <div className="flex items-center justify-between">

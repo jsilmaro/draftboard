@@ -20,7 +20,11 @@ interface Notification {
   createdAt: string;
 }
 
-const NotificationBell: React.FC = () => {
+interface NotificationBellProps {
+  onTabChange?: (tab: string) => void;
+}
+
+const NotificationBell: React.FC<NotificationBellProps> = ({ onTabChange }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -214,10 +218,10 @@ const NotificationBell: React.FC = () => {
       {/* Notification Bell Button */}
       <button
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) {
-            // Force fetch notifications when opening
-            fetchNotifications();
+          if (onTabChange) {
+            onTabChange('notifications');
+          } else {
+            navigate('/notifications');
           }
         }}
         className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
@@ -234,12 +238,21 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Notification Dropdown */}
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 backdrop-blur-xl">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      {/* Notification Dropdown - Removed, using dedicated page instead */}
+      {false && isOpen && (
+        <div className="fixed lg:absolute inset-0 lg:right-0 lg:mt-2 lg:w-96 lg:inset-auto bg-white dark:bg-gray-900 lg:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 backdrop-blur-xl overflow-y-auto">
+          <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
+                {/* Mobile Close Button */}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-white dark:hover:bg-gray-800 transition-colors mr-2"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z" />
@@ -319,7 +332,7 @@ const NotificationBell: React.FC = () => {
           </div>
           
 
-          <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="max-h-96 lg:max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-3 lg:px-3">
             {loading ? (
               <div className="p-8 text-center">
                 <div className="flex justify-center mb-4">
@@ -340,14 +353,14 @@ const NotificationBell: React.FC = () => {
                 </button>
               </div>
             ) : filteredNotifications && filteredNotifications.length > 0 ? (
-              <div className="p-3">
+              <div className="p-2 lg:p-3">
                 {filteredNotifications.map((notification: Notification) => (
                   <div
                     key={notification.id}
                     className="w-full mb-2 last:mb-0"
                   >
                     <div
-                      className={`cursor-pointer flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                      className={`cursor-pointer flex items-start gap-2 lg:gap-3 p-3 lg:p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
                         notification.isRead 
                           ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700' 
                           : 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-700 shadow-sm'
@@ -514,10 +527,10 @@ const NotificationBell: React.FC = () => {
         </div>
       )}
 
-      {/* Backdrop */}
+      {/* Backdrop - Desktop only */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="hidden lg:block fixed inset-0 z-40"
           onClick={() => setIsOpen(false)}
         />
       )}

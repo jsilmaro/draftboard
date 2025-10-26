@@ -180,7 +180,7 @@ const PublicBrandBriefs: React.FC = () => {
               <div className="flex items-center space-x-4">
                                  <Link to="/" className="group">
                                                                       <img 
-                       src="/logo-light2.svg" 
+                       src="/icons/draftboard-logo.svg" 
                        className="w-28 h-14 group-hover:scale-110 transition-transform duration-300"
                      />
                  </Link>

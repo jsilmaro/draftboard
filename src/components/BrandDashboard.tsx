@@ -7,9 +7,9 @@ import BrandBriefCard from './BrandBriefCard';
 import BriefDetailsModal from './BriefDetailsModal';
 import MessagingSystem from './MessagingSystem';
 import NotificationBell from './NotificationBell';
+import useNotifications from '../hooks/useNotifications';
 import LoadingSpinner from './LoadingSpinner';
 import SettingsModal from './SettingsModal';
-import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import CreateBrief from './CreateBrief';
 import ManageRewardsPayments from './ManageRewardsPayments';
@@ -155,6 +155,7 @@ const BrandDashboard: React.FC = () => {
   const { isDark } = useTheme();
   const { showSuccessToast, showErrorToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { stats: notificationStats } = useNotifications();
   // const navigate = useNavigate();
 
   // State management
@@ -246,6 +247,19 @@ const BrandDashboard: React.FC = () => {
     }
   }, [searchParams, setSearchParams, showSuccessToast]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    const isMobileMenuOpen = activeTab === 'mobile-menu';
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activeTab]);
 
   // Clear selected brief when switching away from submissions
   const handleTabChange = (tab: string) => {
@@ -425,6 +439,7 @@ const BrandDashboard: React.FC = () => {
   // Navigation items (flattened without grouping)
   const navigationItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: 'overview' },
+    { id: 'notifications', label: 'Notifications', icon: 'notifications' },
     { id: 'messaging', label: 'Messages', icon: 'messaging' },
     { id: 'create-brief', label: 'Create Brief', icon: 'create' },
     { id: 'briefs', label: 'My Briefs', icon: 'briefs' },
@@ -1817,6 +1832,34 @@ const BrandDashboard: React.FC = () => {
     );
   };
 
+  const renderNotificationsContent = () => {
+    // Import and render just the main content from NotificationsPage
+    // We'll create a simple inline version without the sidebar
+    return (
+      <div className={`w-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'} min-h-screen`}>
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Notifications
+            </h1>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-2`}>
+              Stay updated with all your activity
+            </p>
+          </div>
+          
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="p-6 text-center">
+              <div className="text-4xl mb-4">🔔</div>
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Notifications will appear here
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderCreateBrief = () => {
     // Open the side modal when this tab is active
     if (!showCreateBriefModal) {
@@ -1855,6 +1898,8 @@ const BrandDashboard: React.FC = () => {
         return renderCreators();
       case 'analytics':
         return renderAnalytics();
+      case 'notifications':
+        return renderNotificationsContent();
       // Wallet removed - brands pay directly via Stripe Checkout when funding briefs
       case 'messaging':
         return <MessagingSystem />;
@@ -1875,9 +1920,14 @@ const BrandDashboard: React.FC = () => {
       <div className="lg:hidden bg-white/10 dark:bg-gray-950/20 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/30 px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Logo />
+            <img 
+              src="/icons/draftboard-logo.svg" 
+              alt="DraftBoard" 
+              className="h-10 w-auto"
+            />
             <h1 className="text-lg font-semibold text-white">
               {activeTab === 'overview' ? 'Dashboard' : 
+               activeTab === 'notifications' ? 'Notifications' :
                activeTab === 'briefs' ? 'My Briefs' :
                activeTab === 'funded-briefs' ? 'Brief Management' :
                activeTab === 'winners' ? 'Select Winners' :
@@ -1889,7 +1939,7 @@ const BrandDashboard: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <NotificationBell />
+            <NotificationBell onTabChange={setActiveTab} />
             <button
               onClick={() => setActiveTab(activeTab === 'mobile-menu' ? 'overview' : 'mobile-menu')}
               className="text-gray-400 hover:text-white"
@@ -1903,20 +1953,38 @@ const BrandDashboard: React.FC = () => {
       </div>
 
       {/* Modern Sidebar */}
-      <div className={`${activeTab === 'mobile-menu' ? 'block' : 'hidden'} lg:block w-full ${
+      <div className={`${activeTab === 'mobile-menu' ? 'fixed inset-0 lg:relative lg:inset-auto flex items-center justify-center' : 'hidden'} lg:block w-full ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 rounded-r-2xl shadow-lg max-h-screen overflow-y-auto`}>
-        <div className="p-4 flex flex-col h-full overflow-hidden">
+      } ${isDark ? 'bg-gray-950' : 'bg-white'} border-r ${isDark ? 'border-gray-900' : 'border-gray-200'} lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:z-40 flex flex-col transition-all duration-300 lg:rounded-r-2xl shadow-lg max-h-screen overflow-y-auto z-50 lg:max-h-none lg:items-start lg:justify-start`}>
+        {/* Mobile Close Button */}
+        {activeTab === 'mobile-menu' && (
+          <div className="absolute top-4 right-4 lg:hidden z-10">
+            <button
+              onClick={() => handleTabChange('overview')}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+        
+        <div className="p-4 flex flex-col h-full overflow-hidden w-full lg:w-auto">
           
           {/* Header with Logo */}
-            <div className="mb-8">
+            <div className="mb-8 lg:block">
             <div className="flex items-center justify-between mb-4">
               {!sidebarCollapsed ? (
                 <div className="flex items-center space-x-3">
                   <img 
                     src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
                     alt="DraftBoard" 
-                    className="w-36 h-10"
+                    className="h-10 w-auto"
                   />
                 </div>
               ) : (
@@ -1924,7 +1992,7 @@ const BrandDashboard: React.FC = () => {
                   <img 
                     src="/icons/draftboard-logo.svg" 
                     alt="DraftBoard" 
-                    className="w-10 h-10"
+                    className="h-10 w-auto"
                   />
                   <button
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1984,71 +2052,82 @@ const BrandDashboard: React.FC = () => {
                 title={sidebarCollapsed ? item.label : ''}
               >
                 {item.icon === 'overview' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                     </svg>
                   </span>
                 )}
+                {item.icon === 'notifications' && (
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </span>
+                )}
                 {item.icon === 'wallet' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'messaging' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'create' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'briefs' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'submissions' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'creators' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'statistics' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </span>
                 )}
                 {item.icon === 'rewards-payments' && (
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                     </svg>
                   </span>
                 )}
                 {!sidebarCollapsed && (
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                )}
+                {/* Red dot indicator for unread notifications */}
+                {(item.id === 'messaging' || item.id === 'notifications') && notificationStats.unread > 0 && (
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto"></span>
                 )}
               </button>
             ))}
@@ -2068,7 +2147,7 @@ const BrandDashboard: React.FC = () => {
                   }`}
                   title={sidebarCollapsed ? item.label : ''}
                 >
-                  <span className={sidebarCollapsed ? '' : 'mr-3'}>
+                  <span className={`hidden lg:block ${sidebarCollapsed ? '' : 'mr-3'}`}>
                     {item.id === 'settings' ? (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -2096,7 +2175,9 @@ const BrandDashboard: React.FC = () => {
       {/* Main Content */}
       <div className={`flex-1 overflow-auto transition-all duration-300 ${
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      } ${isDark ? 'bg-black' : 'bg-gray-50'} px-4 sm:px-6 lg:px-8`}>
+      } ${isDark ? 'bg-black' : 'bg-gray-50'} px-4 sm:px-6 lg:px-8 ${
+        activeTab === 'mobile-menu' ? 'blur-sm pointer-events-none' : ''
+      }`}>
         {/* Desktop Header */}
         <div className={`hidden lg:block border-b transition-colors duration-300 ${
           isDark ? 'border-gray-700' : 'border-gray-200'
@@ -2107,6 +2188,7 @@ const BrandDashboard: React.FC = () => {
                 isDark ? 'text-white' : 'text-gray-900'
               }`}>
                 {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'notifications' ? 'Notifications' :
                  activeTab === 'briefs' ? 'My Briefs' :
                  activeTab === 'funded-briefs' ? 'Brief Management' :
                  activeTab === 'winners' ? 'Select Winners' :
@@ -2119,7 +2201,7 @@ const BrandDashboard: React.FC = () => {
             
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <NotificationBell />
+              <NotificationBell onTabChange={setActiveTab} />
             </div>
           </div>
         </div>
@@ -2204,15 +2286,15 @@ const BrandDashboard: React.FC = () => {
             setShowBriefDetails(false);
             setSelectedBrief(null);
           }}
-        />
+                />
       )}
 
       {/* Create Brief Side Modal */}
       {showCreateBriefModal && (
-        <div className={`fixed inset-0 z-50 flex ${
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
           isDark ? 'bg-black bg-opacity-50' : 'bg-gray-900 bg-opacity-50'
         }`}>
-          <div className="ml-auto w-full max-w-4xl h-full bg-white dark:bg-black shadow-xl mobile-modal">
+          <div className="w-full max-w-5xl max-h-[95vh] bg-white dark:bg-black shadow-xl rounded-2xl overflow-hidden mobile-modal">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className={`text-xl font-semibold ${
                 isDark ? 'text-white' : 'text-gray-900'
@@ -2235,7 +2317,7 @@ const BrandDashboard: React.FC = () => {
                 </svg>
               </button>
             </div>
-            <div className="h-full overflow-y-auto">
+            <div className="max-h-[calc(95vh-80px)] overflow-y-auto">
               <CreateBrief isSideModal={true} onClose={() => {
                 setShowCreateBriefModal(false);
                 setActiveTab(previousTab);

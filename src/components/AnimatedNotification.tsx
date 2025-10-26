@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface AnimatedNotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -9,6 +8,7 @@ interface AnimatedNotificationProps {
   onClose?: () => void;
   autoClose?: boolean;
   duration?: number;
+  isDark?: boolean; // Passed from ToastProvider
 }
 
 const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
@@ -18,10 +18,10 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
   description,
   onClose,
   autoClose = true,
-  duration = 5000
+  duration = 5000,
+  isDark = false // Default to light mode
 }) => {
   const [isVisible, setIsVisible] = useState(true);
-  const { isDark } = useTheme();
 
   useEffect(() => {
     if (autoClose) {

@@ -18,9 +18,9 @@ const LandingPage = () => {
       <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-8 sm:py-8">
         <div className="flex items-center">
             <img 
-              src={isDark ? "/logo-light2.svg" : "/logo.svg"} 
+              src="/icons/draftboard-logo.svg" 
               alt="DraftBoard Logo" 
-              className="w-36 h-18 object-contain object-center"
+              className="h-10 w-auto object-contain object-center"
             />
         </div>
         

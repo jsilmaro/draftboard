@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from './ThemeContext';
 import AnimatedNotification from '../components/AnimatedNotification';
 
 interface Toast {
@@ -31,6 +32,7 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
+  const { isDark } = useTheme();
 
   const removeToast = React.useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
@@ -88,6 +90,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
             onClose={() => removeToast(toast.id)}
             autoClose={true}
             duration={5000}
+            isDark={isDark}
           />
         ))}
       </div>
