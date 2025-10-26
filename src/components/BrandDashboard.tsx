@@ -1925,17 +1925,19 @@ const BrandDashboard: React.FC = () => {
               alt="DraftBoard" 
               className="h-10 w-auto"
             />
-            <h1 className="text-lg font-semibold text-white">
-              {activeTab === 'overview' ? 'Dashboard' : 
-               activeTab === 'notifications' ? 'Notifications' :
-               activeTab === 'briefs' ? 'My Briefs' :
-               activeTab === 'funded-briefs' ? 'Brief Management' :
-               activeTab === 'winners' ? 'Select Winners' :
-               activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
-               activeTab === 'creators' ? 'Creators' :
-               activeTab === 'analytics' ? 'Analytics' :
-               activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
-            </h1>
+            {!isDark && (
+              <h1 className="text-lg font-semibold text-white">
+                {activeTab === 'overview' ? 'Dashboard' : 
+                 activeTab === 'notifications' ? 'Notifications' :
+                 activeTab === 'briefs' ? 'My Briefs' :
+                 activeTab === 'funded-briefs' ? 'Brief Management' :
+                 activeTab === 'winners' ? 'Select Winners' :
+                 activeTab === 'manage-rewards' ? 'Manage Rewards & Payments' :
+                 activeTab === 'creators' ? 'Creators' :
+                 activeTab === 'analytics' ? 'Analytics' :
+                 activeTab === 'messaging' ? 'Messages' : 'Dashboard'}
+              </h1>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
