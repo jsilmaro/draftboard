@@ -2142,9 +2142,9 @@ const BrandDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={item.action}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-4' : 'px-4 py-3'} rounded-lg text-sm transition-colors ${
+                  className={`w-full flex items-center justify-center lg:justify-start ${sidebarCollapsed ? 'justify-center p-2' : 'px-4 py-3'} rounded-lg text-sm transition-colors ${
                     isDark
-                      ? 'text-gray-400 hover:bg-gray-900 hover:text-white'
+                      ? 'text-gray-300 hover:bg-gray-900 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                   title={sidebarCollapsed ? item.label : ''}
