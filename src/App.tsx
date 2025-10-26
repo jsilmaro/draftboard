@@ -23,9 +23,6 @@ import Marketplace from './components/Marketplace'
 import PublicBriefDetails from './components/PublicBriefDetails'
 import ApplyToBriefPage from './pages/ApplyToBriefPage'
 // ReviewSubmissionsPage removed - now integrated into ManageRewardsPayments
-import CommunityPage from './components/CommunityPage'
-import EventsPage from './components/EventsPage'
-import SuccessStoriesPage from './components/SuccessStoriesPage'
 import MessagingSystem from './components/MessagingSystem'
 import NotificationsPage from './pages/NotificationsPage'
 import NotificationDetailPage from './pages/NotificationDetailPage'
@@ -61,10 +58,7 @@ function App() {
               <Route path="/brief/:briefId/apply" element={<ApplyToBriefPage />} />
               <Route path="/brand/:brandId/briefs" element={<PublicBrandBriefs />} />
               
-              {/* Public Community Routes */}
-              <Route path="/community" element={<CommunityPage />} />
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/success-stories" element={<SuccessStoriesPage />} />
+              {/* Public Routes */}
               <Route path="/messages" element={<MessagingSystem />} />
               
               {/* Authentication Routes */}

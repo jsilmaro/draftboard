@@ -53,30 +53,6 @@ const MarketplaceNav = () => {
               Home
             </Link>
             <Link
-              to="/community"
-              className={`marketplace-nav-item ${
-                isActive('/community') ? 'active' : ''
-              }`}
-            >
-              Community
-            </Link>
-            <Link
-              to="/events"
-              className={`marketplace-nav-item ${
-                isActive('/events') ? 'active' : ''
-              }`}
-            >
-              Events
-            </Link>
-            <Link
-              to="/success-stories"
-              className={`marketplace-nav-item ${
-                isActive('/success-stories') ? 'active' : ''
-              }`}
-            >
-              Success Stories
-            </Link>
-            <Link
               to="/messages"
               className={`marketplace-nav-item ${
                 isActive('/messages') ? 'active' : ''

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import EnhancedMarketplaceBriefCard from './EnhancedMarketplaceBriefCard';
 
@@ -69,24 +68,6 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
           <button className="px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm sm:text-base">
             Marketplace
           </button>
-          <Link 
-            to="/community" 
-            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
-          >
-            Community
-          </Link>
-          <Link 
-            to="/events" 
-            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
-          >
-            Events
-          </Link>
-          <Link 
-            to="/success-stories" 
-            className={`px-4 sm:px-6 py-2 sm:py-3 ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'} rounded-lg font-medium transition-colors text-sm sm:text-base`}
-          >
-            Success Stories
-          </Link>
         </div>
       </div>
 

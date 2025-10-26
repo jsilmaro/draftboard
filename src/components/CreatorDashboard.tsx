@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -2321,81 +2321,12 @@ const CreatorDashboard: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Top Navigation Tabs (Marketplace | Community | Events | Success Stories) */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`${
-            isDark 
-              ? 'bg-gradient-to-br from-gray-900/90 via-gray-900/80 to-gray-800/80 border-gray-800/60' 
-              : 'bg-gradient-to-br from-white via-white to-gray-50 border-gray-200'
-          } backdrop-blur-sm rounded-2xl border p-3 sm:p-4 mb-4 sm:mb-6 shadow-lg ${isDark ? 'shadow-black/30' : 'shadow-gray-200'}`}>
-            {(() => {
-              const base = 'px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium border transition-all duration-200 inline-flex items-center gap-2';
-              const inactive = isDark 
-                ? 'bg-gray-800/50 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/60 hover:border-gray-600 focus:outline-none focus:ring-1 focus:ring-accent/25 hover:shadow-md hover:shadow-black/20' 
-                : 'bg-white/70 border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-white focus:outline-none focus:ring-1 focus:ring-accent/25 hover:shadow-md hover:shadow-gray-200';
-              const active = isDark 
-                ? 'bg-accent/20 border-accent text-white ring-2 ring-accent/60 shadow-lg shadow-green-500/10' 
-                : 'bg-accent/10 border-accent text-gray-900 ring-2 ring-accent/40 shadow-lg shadow-green-400/10';
-
-              const isOnCommunity = location.pathname.startsWith('/community');
-              const isOnEvents = location.pathname.startsWith('/events');
-              const isOnSuccess = location.pathname.startsWith('/success-stories');
-              const isOnMarketplace = activeTab === 'marketplace' && !isOnCommunity && !isOnEvents && !isOnSuccess;
-
-              return (
-                <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
-                  <button
-                    onClick={() => setActiveTab('marketplace')}
-                    className={`${base} ${isOnMarketplace ? active : inactive} ${isDark ? 'shadow-black/20' : 'shadow-gray-200'} shadow-sm`}
-                  >
-                    {/* bag icon */}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7V6a6 6 0 1112 0v1m-9 4a3 3 0 006 0M5 7h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7z" />
-                    </svg>
-                    Marketplace
-                  </button>
-                  <Link 
-                    to="/community" 
-                    className={`${base} ${isOnCommunity ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
-                  >
-                    {/* users icon */}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m6-6a4 4 0 11-8 0 4 4 0 018 0zm6 4a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    Community
-                  </Link>
-                  <Link 
-                    to="/events" 
-                    className={`${base} ${isOnEvents ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
-                  >
-                    {/* calendar icon */}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Events
-                  </Link>
-                  <Link 
-                    to="/success-stories" 
-                    className={`${base} ${isOnSuccess ? active : inactive} ${isDark ? 'shadow-black/10' : 'shadow-gray-100'} shadow-sm`}
-                  >
-                    {/* trophy icon */}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 21h8m-4-4v4m8-16h-3a3 3 0 01-3 3H8a3 3 0 01-3-3H2v2a5 5 0 005 5h10a5 5 0 005-5V5z" />
-                    </svg>
-                    Success Stories
-                  </Link>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-
-        {/* Results Section */}
+        {/* All Briefs Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Results Header */}
           <div className="flex justify-between items-center mb-8">
             <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {filteredBriefs.length} Briefs Found
+              All Briefs ({filteredBriefs.length})
             </h2>
             <div className="flex items-center space-x-4">
               <select
