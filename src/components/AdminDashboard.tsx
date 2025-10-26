@@ -1596,26 +1596,26 @@ const AdminDashboard: React.FC = () => {
 
             {/* Enhanced Modal System for CRUD Operations */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className={`${isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-lg border shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden`}>
+        <div className={`fixed inset-0 ${isDark ? 'bg-black/70' : 'bg-black/50'} flex items-center justify-center z-50 p-4 backdrop-blur-sm`}>
+          <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-2xl border-2 shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden`}>
             {/* Modal Header */}
-            <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b px-6 py-4 rounded-t-lg`}>
+            <div className={`${isDark ? 'bg-gradient-to-r from-gray-800 to-gray-750 border-gray-700' : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'} border-b-2 px-6 py-5`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-lg">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-12 h-12 ${isDark ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'} rounded-xl flex items-center justify-center shadow-lg`}>
+                    <span className="text-white text-xl">
                       {modalType === 'view' ? '👁️' : 
                        modalType === 'edit' ? '✏️' : 
                        modalType === 'create' ? '➕' : '🗑️'}
                     </span>
                   </div>
                   <div>
-                    <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {modalType === 'view' ? 'View Details' : 
                        modalType === 'edit' ? 'Edit Item' : 
                        modalType === 'create' ? 'Create New' : 'Confirm Delete'}
                     </h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       {modalType === 'view' ? 'Detailed information' : 
                        modalType === 'edit' ? 'Modify existing item' : 
                        modalType === 'create' ? 'Add new item' : 'Delete confirmation'}
@@ -1630,7 +1630,7 @@ const AdminDashboard: React.FC = () => {
                     setFormData({});
                     setIsEditing(false);
                   }}
-                  className={`w-8 h-8 ${isDark ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'} rounded-lg flex items-center justify-center hover:text-white transition-all duration-200`}
+                  className={`w-10 h-10 ${isDark ? 'bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white' : 'bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600'} rounded-xl flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg`}
                 >
                   ✕
                 </button>
@@ -1638,18 +1638,18 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className="p-8 overflow-y-auto max-h-[calc(95vh-100px)]">
               {/* View Mode */}
               {modalType === 'view' && selectedItem && (
                 <div className="space-y-8">
                   {/* Header Section */}
-                  <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-8 border`}>
-                    <div className="flex items-center space-x-4 mb-6">
-                      <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <img src="/icons/profile.png" alt="Brand" className="w-12 h-12" />
+                  <div className={`${isDark ? 'bg-gradient-to-br from-gray-700/90 to-gray-800/90 border-gray-600' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'} rounded-2xl p-10 border-2 shadow-lg mb-8`}>
+                    <div className="flex items-center space-x-6">
+                      <div className={`w-20 h-20 ${isDark ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-blue-500 to-blue-600'} rounded-2xl flex items-center justify-center shadow-xl`}>
+                        <img src="/icons/profile.png" alt="Brand" className="w-14 h-14" />
                       </div>
-                      <div>
-                        <h4 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                      <div className="flex-1">
+                        <h4 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
                           {selectedItem.companyName || selectedItem.title || selectedItem.userName || 'Item Details'}
                         </h4>
                         <p className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -1660,51 +1660,64 @@ const AdminDashboard: React.FC = () => {
                   </div>
 
                   {/* Main Content Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column - Basic Information */}
                     <div className="space-y-6">
-                      <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-6 border`}>
-                        <h5 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center`}>
-                          <img src="/icons/Green_icons/Brief1.png" alt="Info" className="w-5 h-5 mr-3" />
+                      <div className={`${isDark ? 'bg-gradient-to-br from-gray-750 to-gray-800 border-gray-700' : 'bg-gradient-to-br from-gray-50 to-white border-gray-300'} rounded-2xl p-8 border-2 shadow-lg`}>
+                        <h5 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-8 flex items-center`}>
+                          <div className={`w-10 h-10 ${isDark ? 'bg-blue-500/20' : 'bg-blue-500/10'} rounded-xl flex items-center justify-center mr-4`}>
+                            <img src="/icons/Green_icons/Brief1.png" alt="Info" className="w-6 h-6" />
+                          </div>
                           Basic Information
                         </h5>
                         <div className="space-y-4">
-                          {Object.entries(selectedItem).map(([key, value]) => {
-                            // Skip certain fields that are handled separately
-                            if (['id', 'admin', 'brand', 'creator', 'brief', 'submission', 'title', 'description', 'additionalFields', 'companyName', 'email', 'userName'].includes(key)) return null;
-                            
-                            // Format values
-                            let displayValue = value;
-                            let label = key.replace(/([A-Z])/g, ' $1').trim();
-                            
-                            if (key === 'createdAt' || key === 'updatedAt' || key === 'submittedAt' || key === 'deadline') {
-                              displayValue = new Date(value as string).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              });
-                            } else if (key === 'reward' || key === 'amount') {
-                              displayValue = `$${Number(value).toFixed(2)}`;
-                            } else if (typeof value === 'boolean') {
-                              displayValue = value ? '✅ Yes' : '❌ No';
-                            } else if (key === 'isVerified') {
-                              displayValue = value ? '✅ Verified' : '⏳ Pending';
-                            } else if (key === 'status') {
-                              displayValue = (value as string).charAt(0).toUpperCase() + (value as string).slice(1);
-                            } else if (key === 'isPrivate') {
-                              label = 'Private Brief';
-                              displayValue = value ? '✅ Yes' : '❌ No';
-                            }
-                            
-                            return (
-                              <div key={key} className={`${isDark ? 'bg-gray-600 border-gray-500 hover:bg-gray-500' : 'bg-white border-gray-200 hover:bg-gray-50'} rounded-lg p-4 border transition-all duration-300`}>
-                                <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{label}</div>
-                                <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{String(displayValue)}</div>
-                              </div>
-                            );
-                          })}
+                          {Object.entries(selectedItem)
+                            .filter(([key, value]) => {
+                              // Skip these fields (handled separately or not needed)
+                              if (['id', 'admin', 'brand', 'creator', 'brief', 'submission', 'title', 'description', 'additionalFields', 'companyName', 'email', 'userName', '__typename'].includes(key)) return false;
+                              
+                              // Only show fields that have actual values
+                              if (value === null || value === undefined || value === '') return false;
+                              if (Array.isArray(value) && value.length === 0) return false;
+                              if (typeof value === 'object' && Object.keys(value).length === 0) return false;
+                              
+                              return true;
+                            })
+                            .map(([key, value]) => {
+                              // Format values
+                              let displayValue = value;
+                              let label = key.replace(/([A-Z])/g, ' $1').trim();
+                              
+                              if (key === 'createdAt' || key === 'updatedAt' || key === 'submittedAt' || key === 'deadline') {
+                                displayValue = new Date(value as string).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                });
+                              } else if (key === 'reward' || key === 'amount') {
+                                displayValue = `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                              } else if (typeof value === 'boolean') {
+                                displayValue = value ? '✅ Yes' : '❌ No';
+                              } else if (key === 'isVerified') {
+                                displayValue = value ? '✅ Verified' : '⏳ Pending';
+                              } else if (key === 'status') {
+                                displayValue = (value as string).charAt(0).toUpperCase() + (value as string).slice(1);
+                              } else if (key === 'isPrivate') {
+                                label = 'Private Brief';
+                                displayValue = value ? '✅ Yes' : '❌ No';
+                              } else if (typeof value === 'number') {
+                                displayValue = value.toLocaleString();
+                              }
+                              
+                              return (
+                                <div key={key} className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                                  <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</div>
+                                  <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl break-words`}>{String(displayValue)}</div>
+                                </div>
+                              );
+                            })}
                         </div>
                       </div>
                     </div>
@@ -1713,9 +1726,11 @@ const AdminDashboard: React.FC = () => {
                     <div className="space-y-6">
                       {/* Additional Fields for Briefs */}
                       {selectedItem.additionalFields && (
-                        <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-6 border`}>
-                          <h5 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center`}>
-                            <img src="/icons/Green_icons/Brief1.png" alt="Requirements" className="w-5 h-5 mr-3" />
+                        <div className={`${isDark ? 'bg-gradient-to-br from-gray-750 to-gray-800 border-gray-700' : 'bg-gradient-to-br from-gray-50 to-white border-gray-300'} rounded-2xl p-8 border-2 shadow-lg`}>
+                          <h5 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-8 flex items-center`}>
+                            <div className={`w-10 h-10 ${isDark ? 'bg-green-500/20' : 'bg-green-500/10'} rounded-xl flex items-center justify-center mr-4`}>
+                              <img src="/icons/Green_icons/Brief1.png" alt="Requirements" className="w-6 h-6" />
+                            </div>
                             Additional Requirements
                           </h5>
                           <div className="space-y-4">
@@ -1736,15 +1751,15 @@ const AdminDashboard: React.FC = () => {
                                   const label = fieldKey.replace(/([A-Z])/g, ' $1').trim();
                                   
                                   return (
-                                    <div key={fieldKey} className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                                      <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{label}</div>
-                                      <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>{String(displayValue)}</div>
+                                    <div key={fieldKey} className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                                      <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</div>
+                                      <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl break-words`}>{String(displayValue)}</div>
                                     </div>
                                   );
                                 });
                               } catch (error) {
                                 return (
-                                  <div className="text-gray-400 text-sm bg-gray-600 rounded-lg p-4">
+                                  <div className={`${isDark ? 'text-gray-400 bg-gray-700' : 'text-gray-600 bg-gray-100'} text-sm rounded-xl p-4`}>
                                     Unable to parse additional fields
                                   </div>
                                 );
@@ -1756,19 +1771,21 @@ const AdminDashboard: React.FC = () => {
 
                       {/* Brand Information for Briefs */}
                       {selectedItem.brand && (
-                        <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-6 border`}>
-                          <h5 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center`}>
-                            <img src="/icons/profile.png" alt="Brand" className="w-9 h-9 mr-3" />
+                        <div className={`${isDark ? 'bg-gradient-to-br from-gray-750 to-gray-800 border-gray-700' : 'bg-gradient-to-br from-gray-50 to-white border-gray-300'} rounded-2xl p-8 border-2 shadow-lg`}>
+                          <h5 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-8 flex items-center`}>
+                            <div className={`w-10 h-10 ${isDark ? 'bg-blue-500/20' : 'bg-blue-500/10'} rounded-xl flex items-center justify-center mr-4`}>
+                              <img src="/icons/profile.png" alt="Brand" className="w-6 h-6" />
+                            </div>
                             Brand Information
                           </h5>
                           <div className="space-y-4">
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Company Name</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{selectedItem.brand.companyName}</div>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Company Name</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl`}>{selectedItem.brand.companyName}</div>
                             </div>
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Email</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{selectedItem.brand.email}</div>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl break-words`}>{selectedItem.brand.email}</div>
                             </div>
                           </div>
                         </div>
@@ -1776,27 +1793,29 @@ const AdminDashboard: React.FC = () => {
 
                       {/* Creator Information for Submissions */}
                       {selectedItem.creator && (
-                        <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-6 border`}>
-                          <h5 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center`}>
-                            <img src="/icons/profile.png" alt="Creator" className="w-9 h-9 mr-3" />
+                        <div className={`${isDark ? 'bg-gradient-to-br from-gray-750 to-gray-800 border-gray-700' : 'bg-gradient-to-br from-gray-50 to-white border-gray-300'} rounded-2xl p-8 border-2 shadow-lg`}>
+                          <h5 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-8 flex items-center`}>
+                            <div className={`w-10 h-10 ${isDark ? 'bg-purple-500/20' : 'bg-purple-500/10'} rounded-xl flex items-center justify-center mr-4`}>
+                              <img src="/icons/profile.png" alt="Creator" className="w-6 h-6" />
+                            </div>
                             Creator Information
                           </h5>
                           <div className="space-y-4">
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Username</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{selectedItem.creator.userName}</div>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Username</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl`}>{selectedItem.creator.userName}</div>
                             </div>
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Full Name</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{selectedItem.creator.fullName}</div>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Full Name</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl break-words`}>{selectedItem.creator.fullName}</div>
                             </div>
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Email</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>{selectedItem.creator.email}</div>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl break-words`}>{selectedItem.creator.email}</div>
                             </div>
-                            <div className={`${isDark ? 'bg-gray-600 hover:bg-gray-500' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg p-4 transition-all duration-300`}>
-                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>Verification Status</div>
-                              <div className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold text-lg`}>
+                            <div className={`${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 border-2' : 'bg-gray-50 border-gray-200 hover:bg-white border-2'} rounded-xl p-5 transition-all duration-300 shadow-sm hover:shadow-md`}>
+                              <div className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Verification Status</div>
+                              <div className={`${isDark ? 'text-gray-100' : 'text-gray-900'} font-bold text-xl`}>
                                 {selectedItem.creator.isVerified ? '✅ Verified' : '⏳ Pending'}
                               </div>
                             </div>
